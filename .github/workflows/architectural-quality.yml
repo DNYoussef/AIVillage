@@ -24,7 +24,7 @@ jobs:
           fetch-depth: 0  # Full history for trend analysis
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -54,7 +54,8 @@ jobs:
           }
 
           # Quick security scan of core architecture
-          bandit -r core/ infrastructure/ -ll --format json -o arch-security-precheck.json
+          mkdir -p artifacts/security
+          bandit -r core/ infrastructure/ -ll --format json -o artifacts/security/bandit-report.json
 
           echo "✅ Security pre-check passed"
 
@@ -285,7 +286,7 @@ EOF
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -338,7 +339,7 @@ EOF
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 

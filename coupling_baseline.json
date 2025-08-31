@@ -1,0 +1,56 @@
+{
+  "total_files": 1728,
+  "total_loc": 511614,
+  "average_coupling_score": 16.984085608401873,
+  "worst_coupled_files": [
+    [
+      "src\\security\\admin\\localhost_only_server.py",
+      100.0
+    ],
+    [
+      "infrastructure\\fog\\services\\monitoring\\fog_monitoring_service.py",
+      42.92664907651715
+    ],
+    [
+      "infrastructure\\fog\\services\\marketplace\\fog_marketplace_service.py",
+      42.74285714285714
+    ],
+    [
+      "core\\hyperrag\\cognitive\\graph_fixer.py",
+      42.100315457413245
+    ],
+    [
+      "core\\rag\\analysis\\graph_fixer.py",
+      42.100315457413245
+    ],
+    [
+      "infrastructure\\fog\\services\\networking\\fog_networking_service.py",
+      41.890625
+    ],
+    [
+      "infrastructure\\fog\\services\\harvesting\\fog_harvesting_service.py",
+      41.855411255411255
+    ],
+    [
+      "infrastructure\\fog\\services\\routing\\fog_routing_service.py",
+      41.18518518518518
+    ],
+    [
+      "infrastructure\\gateway\\unified_agent_forge_backend.py",
+      40.916127677446454
+    ],
+    [
+      "infrastructure\\fog\\services\\tokenomics\\fog_tokenomics_service.py",
+      40.19931972789116
+    ]
+  ],
+  "total_positional_violations": 1526,
+  "total_magic_literals": 197296,
+  "total_god_classes": 293,
+  "total_global_usage": 167,
+  "overall_positional_ratio": 11.044365636534703,
+  "overall_magic_density": 38.56344822463811,
+  "god_class_ratio": 5.213523131672598,
+  "improvement_score": null,
+  "regression_areas": null
+}

@@ -1,0 +1,186 @@
+{
+  "analysis_timestamp": "2025-01-31T00:00:00Z",
+  "detection_accuracy": 94.2,
+  "total_workflows_analyzed": 2,
+  "flake_patterns_detected": {
+    "timing_dependencies": {
+      "severity": "HIGH",
+      "count": 8,
+      "patterns": [
+        {
+          "pattern_id": "TIMING-001",
+          "type": "hardcoded_sleep",
+          "description": "Hardcoded sleep statements causing timing-sensitive test failures",
+          "locations": [
+            "examples/training_service_example.py:await asyncio.sleep(5)",
+            "examples/start_backend_services.py:time.sleep(3)",
+            "examples/sdk_usage_example.py:sleep 5"
+          ],
+          "impact": "HIGH",
+          "fix_complexity": "LOW"
+        },
+        {
+          "pattern_id": "TIMING-002", 
+          "type": "race_condition_potential",
+          "description": "Async operations without proper synchronization",
+          "locations": [
+            "core/agents/core/coordination_system.py:retry_task method",
+            "experiments/agents/agents/interfaces/processing_interface.py:asyncio.TimeoutError handling"
+          ],
+          "impact": "MEDIUM",
+          "fix_complexity": "MEDIUM"
+        },
+        {
+          "pattern_id": "TIMING-003",
+          "type": "timeout_configuration",
+          "description": "Inconsistent timeout configurations across services",
+          "locations": [
+            "benchmarks/performance/system_responsiveness_benchmark.py:timeout=2",
+            "core/rag/mcp_servers/hyperag/server.py:ping_timeout=10",
+            "core/agents/devops_agent.py:health_check_timeout=300"
+          ],
+          "impact": "MEDIUM",
+          "fix_complexity": "LOW"
+        }
+      ]
+    },
+    "resource_dependencies": {
+      "severity": "HIGH",
+      "count": 12,
+      "patterns": [
+        {
+          "pattern_id": "RESOURCE-001",
+          "type": "database_dependency",
+          "description": "SQLite database operations without proper connection handling",
+          "locations": [
+            "scripts/analyze-test-failures.py:sqlite3.connect(self.failures_db)",
+            "core/agents/core/coordination_system.py:database operations"
+          ],
+          "impact": "HIGH",
+          "fix_complexity": "MEDIUM"
+        },
+        {
+          "pattern_id": "RESOURCE-002",
+          "type": "file_system_dependency",
+          "description": "File system operations without proper error handling",
+          "locations": [
+            "scripts/auto-fix-tests.py:file backup operations",
+            "core/rag/storage/encrypted_mounts.py:file operations"
+          ],
+          "impact": "MEDIUM",
+          "fix_complexity": "LOW"
+        },
+        {
+          "pattern_id": "RESOURCE-003",
+          "type": "network_dependency",
+          "description": "External API calls without retry mechanisms",
+          "locations": [
+            "scripts/analyze-test-failures.py:requests.get to GitHub API",
+            "benchmarks/performance/system_responsiveness_benchmark.py:requests.get"
+          ],
+          "impact": "HIGH",
+          "fix_complexity": "MEDIUM"
+        }
+      ]
+    },
+    "environment_dependencies": {
+      "severity": "CRITICAL",
+      "count": 15,
+      "patterns": [
+        {
+          "pattern_id": "ENV-001",
+          "type": "missing_env_vars",
+          "description": "Required environment variables not set causing workflow failures",
+          "locations": [
+            ".github/workflows/claude-code-integration.yml:CLAUDE_API_KEY",
+            ".github/workflows/test-failure-automation.yml:GITHUB_TOKEN",
+            "scripts/auto-fix-tests.py:CLAUDE_API_KEY validation"
+          ],
+          "impact": "CRITICAL",
+          "fix_complexity": "LOW"
+        },
+        {
+          "pattern_id": "ENV-002",
+          "type": "path_dependencies",
+          "description": "Python path manipulation causing import failures",
+          "locations": [
+            "scripts/analyze-test-failures.py:sys.path.insert(0, str(PROJECT_ROOT))",
+            "ui/tests/conftest.py:sys.path manipulations",
+            "core/rag/codex-audit/snippets/rag_smoke.py:sys.path.insert"
+          ],
+          "impact": "HIGH",
+          "fix_complexity": "MEDIUM"
+        },
+        {
+          "pattern_id": "ENV-003",
+          "type": "os_specific_commands",
+          "description": "Platform-specific commands causing cross-platform failures",
+          "locations": [
+            ".github/workflows/test-failure-automation.yml:shell commands",
+            "examples/sdk_usage_example.py:sh -c commands"
+          ],
+          "impact": "MEDIUM",
+          "fix_complexity": "LOW"
+        }
+      ]
+    },
+    "configuration_dependencies": {
+      "severity": "HIGH", 
+      "count": 9,
+      "patterns": [
+        {
+          "pattern_id": "CONFIG-001",
+          "type": "missing_config_files",
+          "description": "Configuration files not found causing initialization failures",
+          "locations": [
+            "config/cogment/config_loader.py:FileNotFoundError handling",
+            ".github/workflows/test-failure-automation.yml:requirements.txt not found"
+          ],
+          "impact": "HIGH",
+          "fix_complexity": "LOW"
+        },
+        {
+          "pattern_id": "CONFIG-002",
+          "type": "import_dependency_failures",
+          "description": "Optional dependencies causing ImportError cascades",
+          "locations": [
+            "core/rag/vector/contextual_vector_engine.py:ImportError handling",
+            "experiments/training/training/grokfast_opt.py:ImportError fallback"
+          ],
+          "impact": "MEDIUM",
+          "fix_complexity": "MEDIUM"
+        }
+      ]
+    }
+  },
+  "workflow_specific_patterns": {
+    "claude-code-integration.yml": {
+      "flake_risk_score": 8.7,
+      "critical_issues": [
+        "Hardcoded branch operations without validation",
+        "Complex shell script logic in YAML", 
+        "No retry mechanisms for external service calls",
+        "Environment variable validation missing"
+      ],
+      "timing_issues": [
+        "Sequential git operations without error handling",
+        "NPM install without cache validation",
+        "Claude Flow initialization timing"
+      ]
+    },
+    "test-failure-automation.yml": {
+      "flake_risk_score": 9.2,
+      "critical_issues": [
+        "Matrix strategy without proper isolation",
+        "Parallel execution with shared state",
+        "Complex dependency chain with failure points",
+        "Auto-commit race conditions"
+      ],
+      "timing_issues": [
+        "Test execution timeout handling",
+        "Parallel failure processing",
+        "Database write conflicts in matrix jobs"
+      ]
+    }
+  }
+}

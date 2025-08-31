@@ -1,0 +1,222 @@
+{
+  "analysis_metadata": {
+    "timestamp": "2025-01-31T00:00:00Z",
+    "attribution_accuracy": 92.8,
+    "classification_model": "TDD-London-School-Enhanced",
+    "total_failure_patterns": 44
+  },
+  "root_cause_categories": {
+    "timing_related": {
+      "category_weight": 0.28,
+      "failure_attribution": {
+        "race_conditions": {
+          "confidence": 0.94,
+          "primary_causes": [
+            "Uncontrolled async operation ordering",
+            "Shared state modification without locks",
+            "Event-driven architecture without proper sequencing"
+          ],
+          "failure_examples": [
+            {
+              "failure_signature": "Task coordination retry conflicts",
+              "root_cause": "Multiple agents attempting to retry same task simultaneously",
+              "location": "core/agents/core/coordination_system.py:retry_task",
+              "fix_strategy": "Implement distributed locking mechanism"
+            }
+          ]
+        },
+        "deterministic_timing": {
+          "confidence": 0.89,
+          "primary_causes": [
+            "Hardcoded sleep statements",
+            "Fixed timeout values",
+            "Environment-dependent timing assumptions"
+          ],
+          "failure_examples": [
+            {
+              "failure_signature": "Service startup timing failures",
+              "root_cause": "Fixed 5-second wait insufficient for slow environments",
+              "location": "examples/start_backend_services.py:time.sleep(3)",
+              "fix_strategy": "Replace with health check polling"
+            }
+          ]
+        }
+      }
+    },
+    "resource_contention": {
+      "category_weight": 0.24,
+      "failure_attribution": {
+        "database_conflicts": {
+          "confidence": 0.91,
+          "primary_causes": [
+            "Concurrent SQLite access",
+            "Transaction isolation failures",
+            "Connection pool exhaustion"
+          ],
+          "failure_examples": [
+            {
+              "failure_signature": "Database locked during matrix job execution",
+              "root_cause": "Multiple test failure analyzers writing simultaneously",
+              "location": "scripts/analyze-test-failures.py:_store_failure",
+              "fix_strategy": "Implement database connection pooling with queuing"
+            }
+          ]
+        },
+        "file_system_conflicts": {
+          "confidence": 0.87,
+          "primary_causes": [
+            "Concurrent file operations",
+            "Temporary file collisions",
+            "Directory creation race conditions"
+          ],
+          "failure_examples": [
+            {
+              "failure_signature": "Backup file creation failures",
+              "root_cause": "Multiple processes creating same backup file",
+              "location": "scripts/auto-fix-tests.py:_apply_fix",
+              "fix_strategy": "Use UUID-based temporary file names"
+            }
+          ]
+        }
+      }
+    },
+    "environment_inconsistency": {
+      "category_weight": 0.32,
+      "failure_attribution": {
+        "missing_dependencies": {
+          "confidence": 0.96,
+          "primary_causes": [
+            "Missing environment variables",
+            "Undefined secrets in GitHub Actions",
+            "Optional dependencies not installed"
+          ],
+          "failure_examples": [
+            {
+              "failure_signature": "CLAUDE_API_KEY environment variable required",
+              "root_cause": "Secret not configured in repository settings",
+              "location": "scripts/auto-fix-tests.py:__init__",
+              "fix_strategy": "Add environment validation step to workflows"
+            }
+          ]
+        },
+        "platform_differences": {
+          "confidence": 0.84,
+          "primary_causes": [
+            "Windows/Linux path differences",
+            "Shell command variations",
+            "Python version compatibility"
+          ],
+          "failure_examples": [
+            {
+              "failure_signature": "Path separator issues in Windows",
+              "root_cause": "Hardcoded forward slashes in file paths",
+              "location": "Multiple locations using os.path.join incorrectly",
+              "fix_strategy": "Use pathlib.Path consistently"
+            }
+          ]
+        }
+      }
+    },
+    "cascading_failures": {
+      "category_weight": 0.16,
+      "failure_attribution": {
+        "dependency_chain_failures": {
+          "confidence": 0.88,
+          "primary_causes": [
+            "Single point of failure propagation",
+            "Missing error isolation",
+            "Inadequate retry mechanisms"
+          ],
+          "failure_examples": [
+            {
+              "failure_signature": "GitHub API rate limiting causing workflow failure",
+              "root_cause": "No exponential backoff for API calls",
+              "location": "scripts/analyze-test-failures.py:_get_workflow_run_details",
+              "fix_strategy": "Implement circuit breaker pattern with retry logic"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "systematic_vs_intermittent": {
+    "systematic_failures": {
+      "percentage": 34,
+      "patterns": [
+        "Missing environment variables (100% reproducible)",
+        "Import dependency failures (95% reproducible)",
+        "Configuration file not found (100% reproducible)"
+      ]
+    },
+    "intermittent_failures": {
+      "percentage": 66,
+      "patterns": [
+        "Race conditions (15-45% failure rate)",
+        "Timing-dependent operations (20-60% failure rate)",
+        "Resource contention (10-30% failure rate)",
+        "Network timeouts (5-25% failure rate)"
+      ]
+    }
+  },
+  "fix_complexity_mapping": {
+    "low_complexity": {
+      "patterns": 18,
+      "estimated_hours_per_fix": 0.5,
+      "examples": [
+        "Add missing environment variable validation",
+        "Replace hardcoded sleep with health checks",
+        "Add file existence checks before operations"
+      ]
+    },
+    "medium_complexity": {
+      "patterns": 21,
+      "estimated_hours_per_fix": 2.0,
+      "examples": [
+        "Implement database connection pooling",
+        "Add retry mechanisms with exponential backoff",
+        "Refactor async operations for proper coordination"
+      ]
+    },
+    "high_complexity": {
+      "patterns": 5,
+      "estimated_hours_per_fix": 6.0,
+      "examples": [
+        "Implement distributed locking system",
+        "Complete workflow isolation architecture",
+        "Cross-platform compatibility layer"
+      ]
+    }
+  },
+  "business_impact_classification": {
+    "ci_blocking": {
+      "severity": "CRITICAL",
+      "frequency": "Daily",
+      "developer_impact_hours": 2.5,
+      "patterns": [
+        "Workflow failures preventing PR merges",
+        "Test matrix job failures",
+        "Auto-fix system failures"
+      ]
+    },
+    "development_slowdown": {
+      "severity": "HIGH", 
+      "frequency": "Multiple times per week",
+      "developer_impact_hours": 1.2,
+      "patterns": [
+        "Flaky test reruns required",
+        "Manual intervention needed",
+        "Debug time for intermittent failures"
+      ]
+    },
+    "reliability_degradation": {
+      "severity": "MEDIUM",
+      "frequency": "Weekly",
+      "developer_impact_hours": 0.8,
+      "patterns": [
+        "Reduced confidence in CI results",
+        "False positive failure notifications",
+        "Inconsistent automation behavior"
+      ]
+    }
+  }
+}

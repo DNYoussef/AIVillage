@@ -1,0 +1,305 @@
+{
+  "consolidation_metadata": {
+    "timestamp": "2025-08-31T14:40:00Z",
+    "analyzer": "Code Review Swarm - Consolidation Content Planning",
+    "total_workflows_analyzed": 5,
+    "consolidation_scenarios": 3,
+    "estimated_total_savings": "45% execution time, 60% maintenance overhead"
+  },
+  
+  "consolidation_scenario_1": {
+    "scenario_name": "Primary Security Consolidation",
+    "priority": "CRITICAL",
+    "target_workflow": "security-comprehensive.yml",
+    "source_workflows": ["security-scan.yml", "security-compliance.yml"],
+    "consolidation_rationale": "85% tool overlap, complementary SBOM and compliance functions, shared trigger patterns",
+    
+    "merged_job_structure": {
+      "security-baseline-comprehensive": {
+        "name": "Comprehensive Security Baseline",
+        "source_jobs": [
+          "security-scan.yml:python-security", 
+          "security-scan.yml:nodejs-security",
+          "security-scan.yml:rust-security",
+          "security-scan.yml:go-security",
+          "security-compliance.yml:security-baseline"
+        ],
+        "consolidated_tools": {
+          "python": ["pip-audit", "safety", "bandit", "semgrep", "cyclonedx-bom"],
+          "nodejs": ["npm audit", "retire.js", "@cyclonedx/cdxgen"],  
+          "rust": ["cargo-audit", "cargo-deny"],
+          "go": ["govulncheck", "nancy"],
+          "secrets": ["detect-secrets"],
+          "crypto": ["custom crypto validation"]
+        },
+        "standardized_config": {
+          "python_version": "3.11",
+          "bandit_args": "-r core/ infrastructure/ -f json --exclude tests/ --skip B101,B601 -ll",
+          "safety_args": "--json --output artifacts/security/safety-report.json",
+          "output_directory": "artifacts/security/"
+        }
+      },
+      
+      "sbom-generation-enhanced": {
+        "name": "Enhanced SBOM Generation & Vulnerability Analysis",
+        "source_jobs": [
+          "security-scan.yml:aggregate-results",
+          "security-compliance.yml:sbom-generation"
+        ],
+        "consolidated_tools": {
+          "sbom_generators": ["cyclonedx-bom", "cyclonedx-npm", "syft"],
+          "vulnerability_scanners": ["grype", "pip-audit", "trivy"],
+          "analysis": ["custom aggregation", "dashboard generation"]
+        },
+        "enhanced_features": [
+          "Multi-language SBOM generation",
+          "Comprehensive vulnerability analysis with Grype",
+          "Security dashboard with trends",
+          "Automated issue creation for critical findings"
+        ]
+      },
+      
+      "compliance-validation-integrated": {
+        "name": "Integrated Compliance & Security Validation", 
+        "source_jobs": ["security-compliance.yml:compliance-validation"],
+        "unique_functions": [
+          "GDPR compliance validation",
+          "Security controls audit",
+          "Regulatory compliance reporting",
+          "Security metrics collection"
+        ]
+      },
+      
+      "container-security-basic": {
+        "name": "Basic Container Security Scan",
+        "source_jobs": ["security-scan.yml:container-security"],
+        "tools": ["trivy"],
+        "trigger_condition": "hashFiles('**/Dockerfile') != ''",
+        "note": "Lightweight version for general container scanning, specialized scanning remains in image-security-scan.yml"
+      }
+    },
+    
+    "workflow_structure": {
+      "triggers": {
+        "push": {"branches": ["main", "develop"]},
+        "pull_request": {"branches": ["main", "develop"]},
+        "schedule": [{"cron": "0 2 * * *"}],
+        "workflow_dispatch": {
+          "inputs": {
+            "scan_depth": {"type": "choice", "options": ["basic", "comprehensive", "maximum"]},
+            "generate_sbom": {"type": "boolean", "default": "true"},
+            "compliance_check": {"type": "boolean", "default": "true"}
+          }
+        }
+      },
+      "environment_variables": {
+        "PYTHON_VERSION": "3.11",
+        "NODE_VERSION": "18", 
+        "SECURITY_SCAN_DEPTH": "comprehensive"
+      }
+    },
+    
+    "estimated_benefits": {
+      "execution_time_reduction": "45%",
+      "maintenance_reduction": "60%", 
+      "consistency_improvement": "85%",
+      "duplicate_tool_elimination": 12,
+      "consolidated_artifacts": "Single security dashboard and SBOM artifacts"
+    }
+  },
+  
+  "consolidation_scenario_2": {
+    "scenario_name": "CI Security Integration Enhancement",
+    "priority": "HIGH",
+    "target_workflow": "main-ci.yml (enhanced security job)",
+    "source_workflows": ["main-ci.yml", "partial scion_production.yml"],
+    "consolidation_rationale": "Centralize standard CI security checks, reduce CI-specific duplication",
+    
+    "enhanced_security_job": {
+      "name": "Enhanced Security Gate for CI",
+      "integration_points": [
+        "Pre-flight security validation from scion_production.yml",
+        "Enhanced CVE blocking logic", 
+        "Production-ready secret sanitization",
+        "Crypto algorithm validation"
+      ],
+      "security_gate_logic": {
+        "blocking_conditions": [
+          "High/Critical CVEs detected",
+          "New secrets found", 
+          "High severity security issues in Bandit/Semgrep",
+          "Weak cryptographic algorithms"
+        ],
+        "gate_bypass": "Emergency bypass with security override token (production only)"
+      },
+      "standardized_toolchain": {
+        "secret_detection": "detect-secrets with baseline validation",
+        "dependency_scanning": "pip-audit + safety with CVE blocking",
+        "sast": "bandit + semgrep with severity thresholds",
+        "crypto_validation": "custom cryptographic algorithm validation"
+      }
+    },
+    
+    "estimated_benefits": {
+      "ci_execution_time_reduction": "25%",
+      "security_coverage_improvement": "35%",
+      "consistency_with_production": "90%"
+    }
+  },
+  
+  "consolidation_scenario_3": {
+    "scenario_name": "Specialized Workflow Preservation",
+    "priority": "MEDIUM",
+    "target_workflows": "Keep separate with minor enhancements",
+    "workflows_to_preserve": [
+      {
+        "workflow": "image-security-scan.yml",
+        "reason": "Container-specific triggers (Dockerfile changes), matrix-based multi-image scanning",
+        "enhancements": [
+          "Standardize Python/tool versions with consolidated workflows",
+          "Adopt consistent artifact output patterns",
+          "Integrate with consolidated security dashboard"
+        ]
+      },
+      {
+        "workflow": "scion_production.yml (production gates only)",
+        "reason": "Production-specific security gates, emergency bypass logic",
+        "enhancements": [
+          "Remove duplicate security scanning (use consolidated)",
+          "Keep production gates and emergency procedures", 
+          "Standardize tool versions and configurations"
+        ]
+      },
+      {
+        "workflow": "security-labeling.yml",
+        "reason": "Issue/PR specific automation, unique trigger patterns",
+        "enhancements": [
+          "No consolidation needed - serves different purpose",
+          "Standardize security team notification patterns"
+        ]
+      }
+    ]
+  },
+  
+  "implementation_plan": {
+    "phase_1_critical": {
+      "duration": "1-2 days",
+      "tasks": [
+        {
+          "task": "Create security-comprehensive.yml workflow",
+          "effort": "4 hours",
+          "details": "Merge security-scan.yml and security-compliance.yml with standardized configurations"
+        },
+        {
+          "task": "Standardize Python/Node versions across all workflows", 
+          "effort": "30 minutes",
+          "details": "Update all workflows to Python 3.11, Node 18"
+        },
+        {
+          "task": "Create missing requirements-security.txt file",
+          "effort": "15 minutes", 
+          "details": "Extract security dependencies into dedicated file"
+        },
+        {
+          "task": "Standardize Bandit configurations",
+          "effort": "30 minutes",
+          "details": "Apply consistent bandit arguments across all workflows"
+        }
+      ]
+    },
+    
+    "phase_2_integration": {
+      "duration": "2-3 days",
+      "tasks": [
+        {
+          "task": "Enhance main-ci.yml security job",
+          "effort": "3 hours", 
+          "details": "Integrate production security validations into CI pipeline"
+        },
+        {
+          "task": "Standardize artifact output directories",
+          "effort": "1 hour",
+          "details": "Update all workflows to use artifacts/security/ pattern"  
+        },
+        {
+          "task": "Update GitHub Actions versions",
+          "effort": "30 minutes",
+          "details": "Standardize to latest stable action versions"
+        }
+      ]
+    },
+    
+    "phase_3_optimization": {
+      "duration": "1-2 days", 
+      "tasks": [
+        {
+          "task": "Remove deprecated workflows",
+          "effort": "30 minutes",
+          "details": "Archive security-scan.yml and security-compliance.yml"
+        },
+        {
+          "task": "Update workflow dependencies", 
+          "effort": "1 hour",
+          "details": "Update other workflows that depend on consolidated security workflows"
+        },
+        {
+          "task": "Validate consolidation",
+          "effort": "2 hours",
+          "details": "End-to-end testing of consolidated workflows"
+        }
+      ]
+    }
+  },
+  
+  "risk_mitigation": {
+    "consolidation_risks": [
+      {
+        "risk": "Loss of specialized functionality during consolidation",
+        "mitigation": "Comprehensive mapping of all unique functions before merger",
+        "probability": "LOW"
+      },
+      {
+        "risk": "Workflow execution failures during transition",
+        "mitigation": "Parallel execution of old and new workflows during validation phase",
+        "probability": "MEDIUM"
+      },
+      {
+        "risk": "Security gap during transition period",
+        "mitigation": "Keep existing workflows active until new consolidated workflows are validated",
+        "probability": "LOW"
+      }
+    ],
+    
+    "rollback_plan": {
+      "trigger_conditions": [
+        "Consolidated workflow fails 3+ times",
+        "Missing security coverage identified",
+        "Critical functionality loss detected"
+      ],
+      "rollback_steps": [
+        "Reactivate archived workflows",
+        "Update workflow dependencies",
+        "Investigate consolidation issues",
+        "Re-plan consolidation with lessons learned"
+      ]
+    }
+  },
+  
+  "success_metrics": {
+    "execution_efficiency": {
+      "baseline_total_time": "45 minutes",
+      "target_total_time": "25 minutes", 
+      "target_improvement": "45%"
+    },
+    "maintenance_efficiency": {
+      "baseline_update_points": 18,
+      "target_update_points": 7,
+      "target_improvement": "60%"
+    },
+    "consistency_metrics": {
+      "baseline_consistency": "62%",
+      "target_consistency": "90%",
+      "target_improvement": "28 percentage points"
+    }
+  }
+}

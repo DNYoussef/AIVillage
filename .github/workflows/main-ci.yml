@@ -261,7 +261,8 @@ jobs:
       - name: 🔐 Bandit Security Scan
         run: |
           echo "Running Bandit security scan..."
-          bandit -r core/ infrastructure/ -f json -o bandit-report.json -ll
+          mkdir -p artifacts/security
+          bandit -r core/ infrastructure/ -f json -o artifacts/security/bandit-report.json -ll
           echo "[OK] Security scan completed"
 
       - name: 🔍 Semgrep SAST (Enhanced)

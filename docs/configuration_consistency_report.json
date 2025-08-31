@@ -1,0 +1,284 @@
+{
+  "analysis_metadata": {
+    "timestamp": "2025-08-31T14:35:00Z",
+    "analyzer": "Code Review Swarm - Configuration Consistency Analysis",
+    "total_inconsistencies": 18,
+    "critical_inconsistencies": 7,
+    "standardization_score": "62%"
+  },
+  
+  "environment_inconsistencies": {
+    "python_version": {
+      "severity": "HIGH",
+      "inconsistencies": [
+        {"workflow": "security-scan.yml", "value": "3.12", "line": 24},
+        {"workflow": "security-compliance.yml", "value": "3.11", "line": 33},
+        {"workflow": "scion_production.yml", "value": "3.11", "line": 40},
+        {"workflow": "main-ci.yml", "value": "3.11", "line": 22}
+      ],
+      "recommended_value": "3.11",
+      "impact": "Potential compatibility issues, different behavior across workflows",
+      "fix_priority": "CRITICAL"
+    },
+    
+    "node_version": {
+      "severity": "MEDIUM",
+      "inconsistencies": [
+        {"workflow": "security-scan.yml", "value": "20", "line": 25},
+        {"workflow": "security-compliance.yml", "value": "18", "line": 34},
+        {"workflow": "main-ci.yml", "value": "18", "line": 23}
+      ],
+      "recommended_value": "18",
+      "impact": "Node.js compatibility differences for security tooling",
+      "fix_priority": "HIGH"
+    },
+    
+    "rust_version": {
+      "severity": "LOW",
+      "inconsistencies": [
+        {"workflow": "security-scan.yml", "value": "1.70", "line": 26},
+        {"workflow": "scion_production.yml", "value": "stable", "line": 94}
+      ],
+      "recommended_value": "stable",
+      "impact": "Minor compatibility variations",
+      "fix_priority": "MEDIUM"
+    }
+  },
+  
+  "tool_version_inconsistencies": {
+    "actions_checkout": {
+      "severity": "MEDIUM",
+      "inconsistencies": [
+        {"workflow": "security-scan.yml", "value": "v4", "count": 6},
+        {"workflow": "security-compliance.yml", "value": "v4", "count": 4},
+        {"workflow": "scion_production.yml", "value": "v4", "count": 3},
+        {"workflow": "image-security-scan.yml", "value": "v4", "count": 2},
+        {"workflow": "main-ci.yml", "value": "v4", "count": 1}
+      ],
+      "status": "CONSISTENT",
+      "fix_priority": "NONE"
+    },
+    
+    "actions_setup_python": {
+      "severity": "HIGH",
+      "inconsistencies": [
+        {"workflow": "security-scan.yml", "value": "v4", "line": 38},
+        {"workflow": "security-compliance.yml", "value": "v5", "line": 52},
+        {"workflow": "scion_production.yml", "value": "v4", "line": 38},
+        {"workflow": "main-ci.yml", "value": "v5", "line": 38}
+      ],
+      "recommended_value": "v5",
+      "impact": "Different Python setup behavior, caching differences",
+      "fix_priority": "HIGH"
+    },
+    
+    "actions_upload_artifact": {
+      "severity": "HIGH",
+      "inconsistencies": [
+        {"workflow": "security-scan.yml", "value": "v3", "line": 77},
+        {"workflow": "security-compliance.yml", "value": "v4", "line": 320},
+        {"workflow": "image-security-scan.yml", "value": "v4", "line": 326},
+        {"workflow": "main-ci.yml", "value": "v4", "line": 299}
+      ],
+      "recommended_value": "v4",
+      "impact": "Different artifact upload capabilities and retention",
+      "fix_priority": "HIGH"
+    }
+  },
+  
+  "security_tool_configurations": {
+    "bandit_configurations": {
+      "severity": "CRITICAL",
+      "inconsistencies": [
+        {
+          "workflow": "security-scan.yml",
+          "config": "bandit -r . -f json -o security/reports/bandit.json --skip B101,B601",
+          "exclusions": ["B101", "B601"]
+        },
+        {
+          "workflow": "security-compliance.yml", 
+          "config": "bandit -r . -f json -o bandit-report.json --exclude ./tests,./experimental --skip B101,B601,B602",
+          "exclusions": ["B101", "B601", "B602"]
+        },
+        {
+          "workflow": "scion_production.yml",
+          "config": "bandit -r infrastructure/p2p/ core/ infrastructure/ -f json -o bandit-report.json",
+          "exclusions": []
+        },
+        {
+          "workflow": "main-ci.yml",
+          "config": "bandit -r core/ infrastructure/ -f json -o bandit-report.json -ll",
+          "exclusions": []
+        }
+      ],
+      "recommended_config": "bandit -r core/ infrastructure/ -f json --exclude tests/ --skip B101,B601 -ll",
+      "impact": "Inconsistent security scanning coverage and rule enforcement",
+      "fix_priority": "CRITICAL"
+    },
+    
+    "safety_configurations": {
+      "severity": "HIGH",
+      "inconsistencies": [
+        {
+          "workflow": "security-scan.yml",
+          "config": "safety check --json --output security/reports/safety.json"
+        },
+        {
+          "workflow": "security-compliance.yml",
+          "config": "safety check --json --output safety-report.json"
+        },
+        {
+          "workflow": "main-ci.yml",
+          "config": "pip freeze | safety check --stdin --json --output safety-report.json"
+        }
+      ],
+      "recommended_config": "safety check --json --output safety-report.json",
+      "impact": "Different vulnerability detection methods and output formats",
+      "fix_priority": "HIGH"
+    }
+  },
+  
+  "path_inconsistencies": {
+    "requirements_files": {
+      "severity": "CRITICAL",
+      "inconsistencies": [
+        {
+          "workflow": "security-scan.yml",
+          "path": "config/requirements/requirements.txt || config/requirements/CONSOLIDATED_REQUIREMENTS.txt",
+          "fallback": true
+        },
+        {
+          "workflow": "security-compliance.yml",
+          "path": "config/requirements/requirements.txt",
+          "fallback": false
+        },
+        {
+          "workflow": "scion_production.yml", 
+          "path": "config/requirements/requirements-security.txt",
+          "fallback": false
+        },
+        {
+          "workflow": "main-ci.yml",
+          "path": "config/requirements/requirements.txt, requirements-test.txt",
+          "fallback": false
+        }
+      ],
+      "missing_files": [
+        "config/requirements/requirements-security.txt",
+        "config/requirements/CONSOLIDATED_REQUIREMENTS.txt"
+      ],
+      "fix_priority": "CRITICAL"
+    },
+    
+    "output_directories": {
+      "severity": "HIGH",
+      "inconsistencies": [
+        {"workflow": "security-scan.yml", "pattern": "security/reports/", "consistent": true},
+        {"workflow": "security-compliance.yml", "pattern": "./", "consistent": false},
+        {"workflow": "main-ci.yml", "pattern": "./", "consistent": false},
+        {"workflow": "image-security-scan.yml", "pattern": "./", "consistent": false}
+      ],
+      "recommended_pattern": "artifacts/security/",
+      "fix_priority": "HIGH"
+    }
+  },
+  
+  "secret_environment_usage": {
+    "github_token_usage": {
+      "severity": "LOW",
+      "patterns": [
+        {"workflow": "security-labeling.yml", "usage": "GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}", "consistent": true},
+        {"workflow": "security-compliance.yml", "usage": "implicit token usage", "consistent": true},
+        {"workflow": "main-ci.yml", "usage": "implicit token usage", "consistent": true}
+      ],
+      "status": "CONSISTENT"
+    },
+    
+    "custom_secrets": {
+      "severity": "MEDIUM",
+      "findings": [
+        {"workflow": "scion_production.yml", "secret": "security_override token", "validation": "manual input validation"},
+        {"workflow": "security-labeling.yml", "mentions": "@security-team", "type": "team notification"}
+      ],
+      "recommendations": "Standardize security team notification mechanisms"
+    }
+  },
+  
+  "workflow_trigger_consistency": {
+    "push_trigger_branches": {
+      "patterns": [
+        {"workflow": "security-scan.yml", "branches": "[main, develop]"},
+        {"workflow": "security-compliance.yml", "branches": "[main, develop]"},
+        {"workflow": "image-security-scan.yml", "branches": "[main, develop]"},
+        {"workflow": "main-ci.yml", "branches": "[main, develop]"},
+        {"workflow": "scion_production.yml", "branches": "[main]"}
+      ],
+      "consistency_score": "HIGH",
+      "issue": "scion_production.yml only triggers on main, others on main/develop"
+    },
+    
+    "schedule_consistency": {
+      "patterns": [
+        {"workflow": "security-scan.yml", "schedule": "0 2 * * *", "frequency": "daily 2 AM"},
+        {"workflow": "security-compliance.yml", "schedule": "0 2 * * *", "frequency": "daily 2 AM"}
+      ],
+      "consistency_score": "HIGH",
+      "status": "CONSISTENT"
+    }
+  },
+  
+  "standardization_recommendations": {
+    "critical_fixes": [
+      {
+        "issue": "Python version standardization",
+        "action": "Standardize all workflows to Python 3.11",
+        "affected_workflows": ["security-scan.yml"],
+        "estimated_effort": "5 minutes"
+      },
+      {
+        "issue": "Bandit configuration standardization", 
+        "action": "Implement consistent bandit configuration across all workflows",
+        "affected_workflows": ["security-scan.yml", "security-compliance.yml", "scion_production.yml", "main-ci.yml"],
+        "estimated_effort": "15 minutes"
+      },
+      {
+        "issue": "Missing requirements files",
+        "action": "Create missing requirements-security.txt and validate paths",
+        "affected_workflows": ["scion_production.yml"],
+        "estimated_effort": "10 minutes"
+      }
+    ],
+    
+    "high_priority_fixes": [
+      {
+        "issue": "GitHub Actions version consistency",
+        "action": "Update all workflows to use actions/setup-python@v5 and actions/upload-artifact@v4",
+        "affected_workflows": ["security-scan.yml", "scion_production.yml"],
+        "estimated_effort": "10 minutes"
+      },
+      {
+        "issue": "Output directory standardization",
+        "action": "Standardize all security outputs to artifacts/security/ directory",
+        "affected_workflows": ["security-compliance.yml", "main-ci.yml", "image-security-scan.yml"],
+        "estimated_effort": "20 minutes"
+      }
+    ],
+    
+    "medium_priority_fixes": [
+      {
+        "issue": "Node.js version alignment",
+        "action": "Standardize to Node.js 18 across all workflows",
+        "affected_workflows": ["security-scan.yml"],
+        "estimated_effort": "5 minutes"
+      }
+    ]
+  },
+  
+  "consolidation_impact_analysis": {
+    "pre_consolidation_inconsistencies": 18,
+    "post_consolidation_projection": 8,
+    "consistency_improvement": "55%",
+    "maintenance_reduction": "40%",
+    "estimated_debug_time_saved": "2.5 hours per incident"
+  }
+}

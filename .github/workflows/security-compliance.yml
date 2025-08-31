@@ -86,10 +86,11 @@ jobs:
           echo "Running SAST with Bandit..."
           
           # Run Bandit with security-focused rules
-          bandit -r . -f json -o bandit-report.json \
+          mkdir -p artifacts/security
+          bandit -r core/ infrastructure/ -f json -o artifacts/security/bandit-report.json \
             --exclude ./tests,./experimental,./archive,./tools/development \
             --skip B101,B601,B602 \
-            --severity-level medium || echo "Bandit found issues"
+            --severity-level medium -ll || echo "Bandit found issues"
           
           # Process Bandit results
           python3 << 'EOF'

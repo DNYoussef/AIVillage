@@ -1,0 +1,311 @@
+{
+  "debug_analysis_metadata": {
+    "timestamp": "2025-08-31T14:45:00Z",
+    "analyzer": "Code Review Swarm - Real-time Debug Detection",
+    "total_issues_found": 23,
+    "critical_issues": 8,
+    "immediate_fix_required": 6
+  },
+  
+  "missing_file_references": {
+    "critical_missing_files": [
+      {
+        "file": "config/requirements/requirements-security.txt",
+        "referenced_in": ["scion_production.yml:45", "main-ci.yml:212"],
+        "impact": "Security tool installation will fail",
+        "failure_probability": "HIGH",
+        "immediate_fix": "Create file or update references to existing requirements.txt"
+      },
+      {
+        "file": "config/requirements/CONSOLIDATED_REQUIREMENTS.txt", 
+        "referenced_in": ["security-scan.yml:74"],
+        "impact": "SBOM generation fallback will fail",
+        "failure_probability": "MEDIUM",
+        "immediate_fix": "Remove fallback reference or create consolidated requirements"
+      },
+      {
+        "file": ".secrets.baseline",
+        "referenced_in": [
+          "security-compliance.yml:70",
+          "scion_production.yml:53", 
+          "main-ci.yml:217"
+        ],
+        "impact": "Secret detection will fail or create false baseline",
+        "failure_probability": "HIGH",
+        "immediate_fix": "Initialize secrets baseline: detect-secrets scan --all-files --baseline .secrets.baseline"
+      }
+    ],
+    
+    "script_references": [
+      {
+        "script": "scripts/validate_secret_sanitization.py",
+        "referenced_in": ["scion_production.yml:59", "main-ci.yml:230"],
+        "status": "EXISTS",
+        "validation": "PASSED"
+      },
+      {
+        "script": "scripts/validate_secret_externalization.py", 
+        "referenced_in": ["scion_production.yml:321", "main-ci.yml:231"],
+        "status": "EXISTS",
+        "validation": "PASSED"
+      },
+      {
+        "script": "scripts/aggregate-security-results.py",
+        "referenced_in": ["security-scan.yml:252"],
+        "status": "UNKNOWN",
+        "impact": "Security aggregation will fail",
+        "immediate_fix": "Verify script exists or create placeholder"
+      },
+      {
+        "script": "scripts/generate-security-dashboard.py",
+        "referenced_in": ["security-scan.yml:256"],
+        "status": "UNKNOWN", 
+        "impact": "Dashboard generation will fail",
+        "immediate_fix": "Verify script exists or create placeholder"
+      }
+    ]
+  },
+  
+  "broken_path_issues": {
+    "hardcoded_paths": [
+      {
+        "workflow": "security-scan.yml",
+        "line": 95,
+        "path": "apps/web/package-lock.json",
+        "issue": "Hardcoded Node.js app path may not exist",
+        "failure_condition": "No apps/web directory",
+        "fix": "Add conditional check: if [ -f 'apps/web/package.json' ]"
+      },
+      {
+        "workflow": "security-scan.yml", 
+        "line": 118,
+        "path": "cd apps/web",
+        "issue": "Directory change without validation",
+        "failure_condition": "Directory doesn't exist",
+        "fix": "Add existence check before cd command"
+      },
+      {
+        "workflow": "scion_production.yml",
+        "lines": [104, 122, 175],
+        "path": "build/core-build/Cargo.toml vs packages/p2p/betanet-bounty/Cargo.toml", 
+        "issue": "Inconsistent Rust workspace paths",
+        "failure_condition": "Workspace structure changes",
+        "fix": "Standardize workspace detection logic"
+      }
+    ],
+    
+    "directory_creation_issues": [
+      {
+        "workflow": "security-scan.yml",
+        "line": 54,
+        "command": "mkdir -p security/reports security/sboms",
+        "issue": "Creates directories in root, conflicts with artifact patterns",
+        "fix": "Change to: mkdir -p artifacts/security/reports artifacts/security/sboms"
+      },
+      {
+        "workflow": "security-compliance.yml",
+        "line": 340,
+        "command": "mkdir -p compliance-reports",
+        "issue": "Inconsistent artifact directory structure",
+        "fix": "Change to: mkdir -p artifacts/compliance"
+      }
+    ]
+  },
+  
+  "tool_installation_conflicts": {
+    "version_conflicts": [
+      {
+        "workflow": "security-scan.yml",
+        "tool": "actions/setup-node@v3",
+        "conflict_with": "main-ci.yml uses @v4",
+        "impact": "Different Node.js installation behavior",
+        "fix": "Standardize to @v4"
+      },
+      {
+        "workflow": "security-compliance.yml",
+        "tool": "npm install -g @cyclonedx/cyclonedx-npm audit-ci",
+        "issue": "Global npm installs in parallel jobs can conflict",
+        "fix": "Use npm ci with local package.json"
+      }
+    ],
+    
+    "installation_order_issues": [
+      {
+        "workflow": "security-scan.yml",
+        "issue": "Cargo install cargo-audit cargo-deny without proper error handling",
+        "line": 142,
+        "impact": "Installation failure will break workflow",
+        "fix": "Add || echo 'Cargo tool installation failed, continuing' for non-critical tools"
+      },
+      {
+        "workflow": "image-security-scan.yml", 
+        "issue": "Trivy installation through curl without verification",
+        "lines": [364, 365],
+        "security_concern": "Untrusted installation source",
+        "fix": "Use official GitHub action or add checksum verification"
+      }
+    ]
+  },
+  
+  "environment_setup_problems": {
+    "missing_directories": [
+      {
+        "workflow": "Multiple workflows",
+        "directory": "artifacts/security/", 
+        "issue": "Expected by standardized output but not created",
+        "impact": "Artifact upload will fail",
+        "fix": "Add mkdir -p artifacts/security/ to each workflow"
+      },
+      {
+        "workflow": "scion_production.yml",
+        "directory": "compliance-reports/",
+        "line": 340,
+        "issue": "Directory created but not used consistently",
+        "fix": "Standardize compliance artifact directory"
+      }
+    ],
+    
+    "permission_issues": [
+      {
+        "workflow": "security-compliance.yml",
+        "issue": "Git operations without proper user configuration",
+        "lines": [531, 532],
+        "impact": "SBOM branch push will fail",
+        "fix": "Move git config before git operations"
+      },
+      {
+        "workflow": "image-security-scan.yml",
+        "issue": "Docker operations may require elevated permissions",
+        "line": 197,
+        "mitigation": "Ensure GitHub runner has Docker access"
+      }
+    ],
+    
+    "environment_variable_issues": [
+      {
+        "workflow": "security-scan.yml",
+        "missing_vars": ["GITHUB_REPOSITORY", "GITHUB_SHA"], 
+        "usage_context": "Aggregation scripts expect these variables",
+        "fix": "These are automatically provided by GitHub Actions, no fix needed"
+      },
+      {
+        "workflow": "scion_production.yml",
+        "variable": "OPENSSL_VENDORED",
+        "issue": "Set to 1 but may conflict with system OpenSSL",
+        "impact": "Rust compilation issues",
+        "fix": "Add error handling for OpenSSL compilation failures"
+      }
+    ]
+  },
+  
+  "workflow_logic_issues": {
+    "conditional_logic_problems": [
+      {
+        "workflow": "security-scan.yml",
+        "issue": "Go security job runs only 'if: hashFiles('**/go.mod') != '''"
+      },
+      {
+        "workflow": "image-security-scan.yml", 
+        "issue": "Complex matrix strategy without proper error handling",
+        "line": 107,
+        "impact": "Single image failure blocks entire matrix",
+        "fix": "Add fail-fast: false and continue-on-error where appropriate"
+      }
+    ],
+    
+    "artifact_dependency_issues": [
+      {
+        "workflow": "security-scan.yml",
+        "issue": "aggregate-results job needs all previous jobs but uses if: always()",
+        "line": 232,
+        "problem": "Will run even if dependencies fail, potentially with missing data",
+        "fix": "Add explicit success checks for critical dependencies"
+      }
+    ]
+  },
+  
+  "immediate_fix_priorities": {
+    "critical_priority_1": [
+      {
+        "issue": "Create missing .secrets.baseline file",
+        "command": "detect-secrets scan --all-files --baseline .secrets.baseline",
+        "estimated_time": "2 minutes",
+        "blocking_workflows": 3
+      },
+      {
+        "issue": "Create config/requirements/requirements-security.txt",
+        "solution": "Extract security dependencies from main requirements.txt",
+        "estimated_time": "5 minutes", 
+        "blocking_workflows": 2
+      }
+    ],
+    
+    "critical_priority_2": [
+      {
+        "issue": "Fix hardcoded paths in security-scan.yml",
+        "lines": [95, 118],
+        "solution": "Add conditional checks before directory operations",
+        "estimated_time": "10 minutes"
+      },
+      {
+        "issue": "Standardize artifact directory structure",
+        "solution": "Update all workflows to use artifacts/ prefix",
+        "estimated_time": "15 minutes"
+      }
+    ],
+    
+    "high_priority": [
+      {
+        "issue": "Validate security aggregation scripts exist",
+        "scripts": ["aggregate-security-results.py", "generate-security-dashboard.py"],
+        "solution": "Create placeholder scripts or update workflow",
+        "estimated_time": "20 minutes"
+      },
+      {
+        "issue": "Standardize GitHub Actions versions",
+        "solution": "Update to latest stable versions across all workflows", 
+        "estimated_time": "10 minutes"
+      }
+    ]
+  },
+  
+  "testing_validation_plan": {
+    "pre_consolidation_testing": [
+      {
+        "test": "Dry-run each workflow with missing files identified",
+        "purpose": "Validate all immediate fixes resolve blocking issues"
+      },
+      {
+        "test": "Matrix testing for image-security-scan.yml",
+        "purpose": "Ensure matrix strategy works with current repository structure"
+      }
+    ],
+    
+    "post_consolidation_testing": [
+      {
+        "test": "End-to-end security workflow execution",
+        "purpose": "Validate consolidated workflows maintain all functionality"
+      },
+      {
+        "test": "Artifact generation and upload validation", 
+        "purpose": "Ensure standardized artifact structure works correctly"
+      }
+    ]
+  },
+  
+  "automated_fixes": {
+    "script_generatable": [
+      "Update GitHub Actions versions across all workflows",
+      "Standardize Python/Node versions",
+      "Fix artifact directory paths",
+      "Add missing directory creation commands"
+    ],
+    
+    "manual_required": [
+      "Create missing requirements-security.txt file",
+      "Initialize .secrets.baseline",
+      "Validate security script dependencies",
+      "Test consolidated workflow logic"
+    ]
+  }
+}

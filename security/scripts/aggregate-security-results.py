@@ -473,12 +473,12 @@ def main():
     aggregator.process_all_results()
     aggregator.save_results("security/reports")
     
-    print(f"✅ Security aggregation complete!")
-    print(f"📊 Total vulnerabilities: {len(aggregator.report.vulnerabilities)}")
-    print(f"🚨 Critical: {aggregator.report.summary['critical']}")
-    print(f"⚠️  High: {aggregator.report.summary['high']}")
-    print(f"📝 Medium: {aggregator.report.summary['medium']}")
-    print(f"ℹ️  Low: {aggregator.report.summary['low']}")
+    print("SUCCESS: Security aggregation complete!")
+    print(f"Total vulnerabilities: {len(aggregator.report.vulnerabilities)}")
+    print(f"Critical: {aggregator.report.summary['critical']}")
+    print(f"High: {aggregator.report.summary['high']}")
+    print(f"Medium: {aggregator.report.summary['medium']}")
+    print(f"Low: {aggregator.report.summary['low']}")
 
 if __name__ == "__main__":
     main()

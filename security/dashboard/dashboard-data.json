@@ -1,0 +1,9 @@
+{
+  "generated_at": "2025-08-31T12:36:39.950910Z",
+  "summary": {},
+  "charts_data": {
+    "severity_distribution": "{\"labels\": [], \"datasets\": [{\"data\": [], \"backgroundColor\": [\"#ff4444\", \"#ff8800\", \"#ffaa00\", \"#00aa00\"], \"borderWidth\": 1}]}",
+    "tools_comparison": "{\"labels\": [], \"datasets\": [{\"label\": \"Issues Found\", \"data\": [], \"backgroundColor\": \"#4CAF50\", \"borderColor\": \"#45a049\", \"borderWidth\": 1}]}",
+    "timeline": "{\"labels\": [\"2025-08-31\"], \"datasets\": [{\"label\": \"Critical\", \"data\": [0], \"borderColor\": \"#ff4444\", \"backgroundColor\": \"#ff444430\", \"fill\": false}, {\"label\": \"High\", \"data\": [0], \"borderColor\": \"#ff8800\", \"backgroundColor\": \"#ff880030\", \"fill\": false}, {\"label\": \"Medium\", \"data\": [0], \"borderColor\": \"#ffaa00\", \"backgroundColor\": \"#ffaa0030\", \"fill\": false}, {\"label\": \"Low\", \"data\": [0], \"borderColor\": \"#00aa00\", \"backgroundColor\": \"#00aa0030\", \"fill\": false}]}"
+  }
+}

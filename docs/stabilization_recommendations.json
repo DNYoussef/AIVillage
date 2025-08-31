@@ -1,0 +1,293 @@
+{
+  "recommendations_metadata": {
+    "methodology": "TDD London School with Mock-Heavy Testing",
+    "analysis_date": "2025-01-31T00:00:00Z",
+    "target_stability": "98.5%",
+    "current_baseline": "92.8%",
+    "recommendations_count": 24
+  },
+  "tdd_london_school_principles": {
+    "mock_external_dependencies": {
+      "principle": "Mock all external systems to eliminate environmental flakiness",
+      "implementation_recommendations": [
+        {
+          "area": "GitHub API Integration",
+          "current_issue": "Direct API calls causing rate limiting and network failures",
+          "london_school_solution": {
+            "approach": "Mock GitHub API responses with contract testing",
+            "implementation": "Create GitHubAPIClient interface with mock implementation",
+            "test_structure": "Unit tests mock all API calls, integration tests use contract verification",
+            "code_example": "Mock GitHub workflow run responses, API rate limits, network timeouts"
+          },
+          "files_to_modify": [
+            "scripts/analyze-test-failures.py",
+            "tests/integration/test_github_integration.py"
+          ]
+        },
+        {
+          "area": "Database Operations",
+          "current_issue": "SQLite locking and concurrent access failures",
+          "london_school_solution": {
+            "approach": "Mock database layer with in-memory test repositories",
+            "implementation": "Create DatabaseRepository interface with mock implementation",
+            "test_structure": "All unit tests use mock repositories, integration tests use test-specific databases",
+            "code_example": "Mock failure storage, coordination database operations"
+          },
+          "files_to_modify": [
+            "core/agents/core/coordination_system.py",
+            "tests/unit/test_coordination_mocks.py"
+          ]
+        },
+        {
+          "area": "File System Operations", 
+          "current_issue": "File system race conditions and permission issues",
+          "london_school_solution": {
+            "approach": "Mock file system with virtual filesystem",
+            "implementation": "Create FileSystemAdapter interface with mock implementation",
+            "test_structure": "Unit tests use virtual filesystem, integration tests use temporary directories",
+            "code_example": "Mock backup file operations, configuration file reading"
+          },
+          "files_to_modify": [
+            "scripts/auto-fix-tests.py",
+            "tests/unit/test_filesystem_mocks.py"
+          ]
+        }
+      ]
+    },
+    "behavior_verification": {
+      "principle": "Focus on behavior contracts rather than state verification",
+      "implementation_recommendations": [
+        {
+          "area": "Test Failure Analysis",
+          "current_issue": "State-based testing causing intermittent failures",
+          "london_school_solution": {
+            "approach": "Verify behavior interactions with external systems",
+            "implementation": "Test that correct API calls are made with expected parameters",
+            "test_structure": "Mock.assert_called_with() for behavior verification",
+            "code_example": "Verify GitHub API called with correct run_id, not response content"
+          }
+        },
+        {
+          "area": "Workflow Coordination",
+          "current_issue": "Complex state assertions causing timing issues",
+          "london_school_solution": {
+            "approach": "Verify coordination messages and event sequences",
+            "implementation": "Mock event bus and verify message publishing behavior",
+            "test_structure": "Test event publishing patterns, not final state",
+            "code_example": "Verify task retry events published, not final retry count"
+          }
+        }
+      ]
+    },
+    "isolated_unit_tests": {
+      "principle": "Each test should be completely isolated with no shared state",
+      "implementation_recommendations": [
+        {
+          "area": "Test Data Management", 
+          "current_issue": "Shared test data causing cascade failures",
+          "london_school_solution": {
+            "approach": "Generate fresh test data for each test with builders",
+            "implementation": "Test data builders with fluent interfaces",
+            "test_structure": "Each test creates own data, no shared fixtures",
+            "code_example": "FailureBuilder().withType('syntax').withSeverity('high').build()"
+          }
+        }
+      ]
+    }
+  },
+  "specific_stabilization_recommendations": {
+    "high_priority_mocks": [
+      {
+        "component": "GitHubWorkflowAnalyzer",
+        "mock_strategy": "Mock all GitHub API endpoints",
+        "implementation_priority": 1,
+        "estimated_hours": 6,
+        "stability_impact": "25%",
+        "mock_interfaces": [
+          "GitHubAPIClient",
+          "WorkflowRunRepository", 
+          "JobLogRepository"
+        ],
+        "test_scenarios": [
+          "API rate limiting responses",
+          "Network timeout simulation",
+          "Invalid authentication handling",
+          "Empty response handling"
+        ]
+      },
+      {
+        "component": "TestFailureStorage",
+        "mock_strategy": "Mock database layer completely",
+        "implementation_priority": 2,
+        "estimated_hours": 4,
+        "stability_impact": "20%",
+        "mock_interfaces": [
+          "FailureRepository",
+          "DatabaseConnectionManager",
+          "TransactionManager"
+        ],
+        "test_scenarios": [
+          "Database connection failures",
+          "Transaction rollback simulation",
+          "Concurrent write conflict handling",
+          "Database locking scenarios"
+        ]
+      },
+      {
+        "component": "AutoTestFixer",
+        "mock_strategy": "Mock Claude API and file operations",
+        "implementation_priority": 3,
+        "estimated_hours": 8,
+        "stability_impact": "18%",
+        "mock_interfaces": [
+          "ClaudeAPIClient",
+          "FileSystemAdapter",
+          "ProcessExecutor"
+        ],
+        "test_scenarios": [
+          "Claude API authentication failures",
+          "File permission denied scenarios",
+          "Process execution timeouts",
+          "Backup file creation conflicts"
+        ]
+      }
+    ],
+    "coordination_mocks": [
+      {
+        "component": "SwarmCoordinator",
+        "mock_strategy": "Mock inter-agent communication",
+        "implementation_priority": 4,
+        "estimated_hours": 6,
+        "stability_impact": "15%",
+        "mock_interfaces": [
+          "MessageBroker",
+          "AgentRegistry",
+          "TaskDistributor"
+        ],
+        "test_scenarios": [
+          "Agent communication failures",
+          "Task distribution race conditions",
+          "Agent registration conflicts",
+          "Message delivery failures"
+        ]
+      }
+    ],
+    "timing_stabilization": [
+      {
+        "component": "ServiceStartupCoordinator",
+        "mock_strategy": "Mock service health checks",
+        "implementation_priority": 5,
+        "estimated_hours": 4,
+        "stability_impact": "12%",
+        "mock_interfaces": [
+          "HealthChecker",
+          "ServiceRegistry",
+          "StartupSequencer"
+        ],
+        "test_scenarios": [
+          "Service startup timeout simulation",
+          "Health check failure handling",
+          "Dependency chain failures",
+          "Startup sequence race conditions"
+        ]
+      }
+    ]
+  },
+  "test_architecture_recommendations": {
+    "directory_structure": {
+      "tests/unit/mocks/": "All mock implementations and test doubles",
+      "tests/integration/contracts/": "Contract tests for external integrations",
+      "tests/acceptance/": "End-to-end tests with minimal mocking",
+      "tests/builders/": "Test data builders following builder pattern"
+    },
+    "mock_framework_setup": {
+      "recommended_library": "unittest.mock with pytest",
+      "mock_configuration": {
+        "auto_spec": true,
+        "spec_set": true,
+        "return_value_validation": "enabled"
+      },
+      "mock_lifecycle": "Fresh mocks for each test method"
+    },
+    "contract_testing": {
+      "approach": "Consumer-driven contract testing",
+      "tools": ["Pact", "JSON Schema validation"],
+      "implementation": "Mock providers honor contracts defined by consumers"
+    }
+  },
+  "implementation_roadmap": {
+    "week_1": {
+      "focus": "Core Infrastructure Mocking",
+      "deliverables": [
+        "GitHubAPIClient mock implementation",
+        "DatabaseRepository mock implementation", 
+        "Basic test data builders"
+      ],
+      "expected_stability_gain": "35%"
+    },
+    "week_2": {
+      "focus": "File System and Process Mocking",
+      "deliverables": [
+        "FileSystemAdapter mock implementation",
+        "ProcessExecutor mock implementation",
+        "Advanced test scenarios"
+      ],
+      "expected_stability_gain": "25%"
+    },
+    "week_3": {
+      "focus": "Coordination and Timing Mocks",
+      "deliverables": [
+        "MessageBroker mock implementation",
+        "HealthChecker mock implementation",
+        "Timing-sensitive test scenarios"
+      ],
+      "expected_stability_gain": "20%"
+    },
+    "week_4": {
+      "focus": "Integration and Validation",
+      "deliverables": [
+        "Contract test suite",
+        "Mock validation framework",
+        "Comprehensive test coverage"
+      ],
+      "expected_stability_gain": "15%"
+    }
+  },
+  "mock_implementation_examples": {
+    "github_api_mock": {
+      "interface": "GitHubAPIClient",
+      "mock_methods": [
+        "get_workflow_run(run_id) -> MockWorkflowRun",
+        "get_workflow_jobs(run_id) -> List[MockJob]", 
+        "get_job_logs(job_id) -> MockLogContent"
+      ],
+      "failure_simulation": [
+        "RateLimitExceeded",
+        "AuthenticationError",
+        "NetworkTimeout",
+        "InvalidRunId"
+      ]
+    },
+    "database_mock": {
+      "interface": "FailureRepository",
+      "mock_methods": [
+        "store_failure(failure) -> None",
+        "get_failures_by_type(type) -> List[Failure]",
+        "update_fix_attempts(failure_id, attempts) -> None"
+      ],
+      "failure_simulation": [
+        "DatabaseLockedException",
+        "ConnectionTimeoutException", 
+        "TransactionRollbackException",
+        "ConcurrentModificationException"
+      ]
+    }
+  },
+  "success_metrics": {
+    "target_ci_stability": "98.5%",
+    "flake_reduction_target": "90%",
+    "test_execution_time_improvement": "40%",
+    "developer_confidence_score": "9.2/10",
+    "mean_time_to_resolution": "< 2 minutes"
+  }
+}

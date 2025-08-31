@@ -1,0 +1,191 @@
+{
+  "version": "1.0.0",
+  "rules": {
+    "project_management": {
+      "task_management": {
+        "enabled": true,
+        "best_practices": {
+          "use_todo_lists": "Always use TodoWrite for task tracking",
+          "batch_operations": "Execute all related operations in a single message",
+          "progress_tracking": "Mark tasks as in_progress before starting, completed after finishing",
+          "priority_levels": ["critical", "high", "medium", "low"],
+          "task_breakdown": "Break complex tasks into 5-10 subtasks minimum"
+        },
+        "industry_standards": {
+          "agile_methodology": true,
+          "sprint_planning": true,
+          "kanban_board": true,
+          "user_stories": "As a [user], I want [feature] so that [benefit]",
+          "acceptance_criteria": "Given [context], When [action], Then [outcome]"
+        },
+        "automation": {
+          "auto_create_pr": true,
+          "auto_assign_reviewers": true,
+          "auto_label_issues": true,
+          "auto_milestone_tracking": true
+        }
+      },
+      "workflow_optimization": {
+        "concurrent_execution": "Always batch operations for 2.8-4.4x performance",
+        "swarm_coordination": "Use MCP tools for complex multi-step tasks",
+        "sparc_methodology": "Follow Specification, Pseudocode, Architecture, Refinement, Completion",
+        "performance_monitoring": "Track metrics and bottlenecks continuously"
+      }
+    },
+    "code_quality": {
+      "connascence_management": {
+        "strength_hierarchy": [
+          "Name (CoN)",
+          "Type (CoT)",
+          "Meaning (CoM)",
+          "Position (CoP)",
+          "Algorithm (CoA)",
+          "Execution (CoE)",
+          "Timing (CoTg)",
+          "Value (CoV)",
+          "Identity (CoI)"
+        ],
+        "refactoring_rules": {
+          "reduce_degree": "If >2 call sites co-vary, introduce facade",
+          "weaken_strength": "Position→Name, Meaning→Type, Algorithm→Single API",
+          "improve_locality": "Move strong connascence into same class/function"
+        }
+      },
+      "anti_patterns": {
+        "prohibited": [
+          "big_ball_of_mud",
+          "god_object",
+          "magic_numbers",
+          "copy_paste_programming",
+          "database_as_ipc",
+          "sequential_coupling"
+        ],
+        "auto_fix": true,
+        "suggest_alternatives": true
+      },
+      "file_organization": {
+        "max_lines_per_file": 500,
+        "max_params_per_function": 3,
+        "directory_structure": {
+          "src": "Source code files",
+          "tests": "Test files",
+          "docs": "Documentation",
+          "config": "Configuration",
+          "scripts": "Utility scripts"
+        }
+      }
+    },
+    "testing": {
+      "tdd_approach": "Write tests before implementation",
+      "coverage_threshold": 80,
+      "test_types": ["unit", "integration", "e2e", "performance"],
+      "behavioral_testing": "Test contracts not internals",
+      "mock_strategy": "Use dependency injection over mocks"
+    },
+    "documentation": {
+      "auto_generate": true,
+      "formats": ["markdown", "openapi", "jsdoc"],
+      "update_on_change": true,
+      "include_examples": true
+    },
+    "github_integration": {
+      "pr_automation": {
+        "auto_review": true,
+        "require_tests": true,
+        "require_docs": true,
+        "auto_merge_on_pass": false,
+        "squash_commits": true
+      },
+      "issue_automation": {
+        "auto_triage": true,
+        "auto_assign": true,
+        "auto_label": true,
+        "create_pr_from_issue": true
+      },
+      "claude_mentions": {
+        "trigger_keywords": ["@claude", "/claude"],
+        "response_time_sla": "5 minutes",
+        "capabilities": [
+          "code_review",
+          "implementation",
+          "documentation",
+          "testing",
+          "refactoring"
+        ]
+      }
+    },
+    "content_generation": {
+      "templates": {
+        "prd": {
+          "sections": [
+            "executive_summary",
+            "problem_statement",
+            "solution_overview",
+            "user_stories",
+            "acceptance_criteria",
+            "technical_requirements",
+            "success_metrics"
+          ]
+        },
+        "xml_prompts": {
+          "format": "structured_xml",
+          "include_context": true,
+          "include_examples": true
+        },
+        "api_docs": {
+          "format": "openapi_3.0",
+          "include_schemas": true,
+          "include_examples": true
+        }
+      }
+    },
+    "performance": {
+      "optimization_targets": {
+        "token_reduction": "32.3%",
+        "speed_improvement": "2.8-4.4x",
+        "solve_rate": "84.8%"
+      },
+      "monitoring": {
+        "track_metrics": true,
+        "alert_on_regression": true,
+        "benchmark_regularly": true
+      }
+    },
+    "security": {
+      "never_commit_secrets": true,
+      "use_environment_variables": true,
+      "security_scanning": true,
+      "dependency_checking": true
+    }
+  },
+  "hooks": {
+    "pre_task": {
+      "validate_requirements": true,
+      "check_dependencies": true,
+      "prepare_environment": true
+    },
+    "post_task": {
+      "run_tests": true,
+      "update_documentation": true,
+      "notify_stakeholders": true
+    },
+    "pre_commit": {
+      "lint": true,
+      "format": true,
+      "test": true,
+      "security_scan": true
+    }
+  },
+  "agents": {
+    "auto_spawn": true,
+    "preferred_topology": "adaptive",
+    "max_concurrent": 8,
+    "specializations": [
+      "coder",
+      "reviewer",
+      "tester",
+      "architect",
+      "planner"
+    ]
+  }
+}

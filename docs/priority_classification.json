@@ -1,0 +1,275 @@
+{
+  "metadata": {
+    "analysis_timestamp": "2025-01-31T20:33:00Z",
+    "analyzer": "GitHub Orchestrator - Priority Classification Router",
+    "classification_framework": "SLO Recovery Routing Rules",
+    "target_routing_accuracy": "95%+",
+    "dspy_optimization_target": "92.8% success rate"
+  },
+  "priority_classification_matrix": {
+    "P0_CRITICAL_SECURITY": {
+      "classification_criteria": [
+        "Security baseline validation failures",
+        "Critical security gate bypassed",
+        "Authentication/authorization failures",
+        "Secrets management failures"
+      ],
+      "time_to_resolution_sla": "< 5 minutes",
+      "escalation_threshold": "immediate",
+      "resource_allocation": "maximum",
+      "identified_issues": [
+        {
+          "issue": "Security workflow redundancy causing resource contention",
+          "workflows_affected": ["security-scan.yml", "security-compliance.yml", "security-labeling.yml", "image-security-scan.yml"],
+          "severity_score": 9.2,
+          "business_impact": "Security validation completely blocked",
+          "estimated_resolution": "25-30 minutes (workflow consolidation)",
+          "required_expertise": "DevSecOps, Workflow optimization"
+        },
+        {
+          "issue": "CLAUDE_API_KEY missing across critical workflows", 
+          "workflows_affected": ["claude-code-integration.yml", "test-failure-automation.yml"],
+          "severity_score": 9.8,
+          "business_impact": "Claude integration completely non-functional",
+          "estimated_resolution": "2-3 minutes (secret configuration)",
+          "required_expertise": "Security configuration"
+        }
+      ]
+    },
+    "P1_HIGH_DEPENDENCY": {
+      "classification_criteria": [
+        "Missing core dependencies blocking workflow execution",
+        "Package installation failures",
+        "Environment setup failures",
+        "Critical file dependencies missing"
+      ],
+      "time_to_resolution_sla": "< 15 minutes", 
+      "escalation_threshold": "15 minutes",
+      "resource_allocation": "high",
+      "identified_issues": [
+        {
+          "issue": "requirements.txt missing causing Python dependency failures",
+          "workflows_affected": ["test-failure-automation.yml"],
+          "severity_score": 8.7,
+          "business_impact": "Test failure automation completely blocked",
+          "estimated_resolution": "2-3 minutes (file creation)",
+          "required_expertise": "Python dependencies"
+        },
+        {
+          "issue": "claude-flow@alpha package installation failures",
+          "workflows_affected": ["claude-code-integration.yml"],
+          "severity_score": 8.5,
+          "business_impact": "Claude Flow functionality unavailable",
+          "estimated_resolution": "5-8 minutes (package resolution)",
+          "required_expertise": "Node.js package management"
+        },
+        {
+          "issue": "Script import errors in analyze-test-failures.py",
+          "workflows_affected": ["test-failure-automation.yml"],
+          "severity_score": 8.1,
+          "business_impact": "Test failure analysis non-functional",
+          "estimated_resolution": "10-15 minutes (dependency resolution)",
+          "required_expertise": "Python development, SQLite"
+        }
+      ]
+    },
+    "P2_MEDIUM_CONFIGURATION": {
+      "classification_criteria": [
+        "Configuration drift causing intermittent failures",
+        "Hardcoded paths breaking on environment changes",
+        "Cache misses due to incorrect cache keys",
+        "Workflow trigger over-execution"
+      ],
+      "time_to_resolution_sla": "< 30 minutes",
+      "escalation_threshold": "45 minutes",
+      "resource_allocation": "standard",
+      "identified_issues": [
+        {
+          "issue": "Hardcoded paths without existence validation",
+          "workflows_affected": ["claude-code-integration.yml", "test-failure-automation.yml"],
+          "severity_score": 6.8,
+          "business_impact": "Intermittent path resolution failures",
+          "estimated_resolution": "8-12 minutes (path validation)",
+          "required_expertise": "Workflow engineering"
+        },
+        {
+          "issue": "Overly broad workflow trigger conditions",
+          "workflows_affected": ["test-failure-automation.yml"],
+          "severity_score": 6.5,
+          "business_impact": "Resource waste, excessive executions",
+          "estimated_resolution": "10-15 minutes (trigger optimization)",
+          "required_expertise": "GitHub Actions expertise"
+        },
+        {
+          "issue": "Environment setup order causing conflicts",
+          "workflows_affected": ["test-failure-automation.yml"],
+          "severity_score": 6.2,
+          "business_impact": "Potential environment conflicts",
+          "estimated_resolution": "5-8 minutes (reordering steps)",
+          "required_expertise": "Environment configuration"
+        }
+      ]
+    },
+    "P3_LOW_OPTIMIZATION": {
+      "classification_criteria": [
+        "Performance optimizations",
+        "Optional file handling improvements", 
+        "Cache efficiency improvements",
+        "Documentation updates"
+      ],
+      "time_to_resolution_sla": "< 60 minutes",
+      "escalation_threshold": "2 hours",
+      "resource_allocation": "low",
+      "identified_issues": [
+        {
+          "issue": "Optional file references without proper error handling",
+          "workflows_affected": ["claude-code-integration.yml"],
+          "severity_score": 3.8,
+          "business_impact": "Potential warning noise, graceful degradation",
+          "estimated_resolution": "5-10 minutes (error handling)",
+          "required_expertise": "Workflow scripting"
+        },
+        {
+          "issue": "Cache key patterns not optimized for hit rates",
+          "workflows_affected": ["claude-code-integration.yml"], 
+          "severity_score": 3.5,
+          "business_impact": "Slower build times, reduced cache efficiency",
+          "estimated_resolution": "8-12 minutes (cache optimization)",
+          "required_expertise": "GitHub Actions caching"
+        }
+      ]
+    }
+  },
+  "routing_decision_matrix": {
+    "security_high_routing": {
+      "rule": "IF (security_workflow_affected AND severity_score > 8.0) THEN route_to = security_analysis_agent",
+      "priority": "P0",
+      "sla": "immediate response",
+      "success_criteria": "Security validation restored within 30 minutes"
+    },
+    "dependency_fast_track_routing": {
+      "rule": "IF (dependency_missing AND workflow_blocked) THEN route_to = dependency_resolution_agent",
+      "priority": "P1",
+      "sla": "< 15 minutes",
+      "success_criteria": "Workflow execution restored"
+    },
+    "configuration_standard_routing": {
+      "rule": "IF (configuration_drift AND severity_score > 5.0 AND < 8.0) THEN route_to = configuration_agent",
+      "priority": "P2",
+      "sla": "< 30 minutes", 
+      "success_criteria": "Configuration consistency restored"
+    },
+    "optimization_background_routing": {
+      "rule": "IF (performance_issue OR optional_enhancement) THEN route_to = optimization_agent",
+      "priority": "P3",
+      "sla": "< 60 minutes",
+      "success_criteria": "Performance improvement measurable"
+    }
+  },
+  "swarm_coordination_routing": {
+    "flake_detector_agent_input": {
+      "high_priority_patterns": [
+        "Security workflow resource contention",
+        "Dependency resolution cascading failures",
+        "Configuration drift causing intermittent issues"
+      ],
+      "pattern_signatures": {
+        "security_contention": "Multiple security workflows + resource competition",
+        "dependency_cascade": "Missing file → import error → script failure → job failure", 
+        "config_drift": "Hardcoded path + environment change → path resolution failure"
+      },
+      "required_analysis_depth": "behavioral pattern recognition"
+    },
+    "slo_recovery_routing_agent_coordination": {
+      "routing_queue_management": {
+        "P0_queue": {
+          "max_concurrent": 1,
+          "timeout": "5 minutes",
+          "escalation": "immediate to human operator"
+        },
+        "P1_queue": {
+          "max_concurrent": 3,
+          "timeout": "15 minutes",
+          "escalation": "senior engineer notification"
+        },
+        "P2_queue": {
+          "max_concurrent": 5,
+          "timeout": "30 minutes",
+          "escalation": "standard team notification"
+        },
+        "P3_queue": {
+          "max_concurrent": 8,
+          "timeout": "60 minutes", 
+          "escalation": "optional team notification"
+        }
+      }
+    },
+    "security_analysis_agent_coordination": {
+      "security_workflow_consolidation": {
+        "input_data": "4 security workflows with 85% overlap",
+        "target_output": "2 optimized security workflows",
+        "success_criteria": "60% resource reduction, maintained security coverage",
+        "coordination_protocol": "Review consolidation plan before implementation"
+      }
+    }
+  },
+  "dspy_optimization_classification": {
+    "behavioral_testing_priorities": [
+      {
+        "behavior": "Workflow dependency validation",
+        "priority": "P1",
+        "test_contract": "All dependencies must be validated before workflow execution",
+        "success_target": "95% dependency validation success rate"
+      },
+      {
+        "behavior": "Security workflow efficiency", 
+        "priority": "P0",
+        "test_contract": "Security validation must complete within SLA without resource contention",
+        "success_target": "100% security SLA compliance"
+      },
+      {
+        "behavior": "Configuration drift detection",
+        "priority": "P2",
+        "test_contract": "Configuration changes must be detected and validated automatically",
+        "success_target": "90% configuration drift detection accuracy"
+      }
+    ]
+  },
+  "success_metrics_tracking": {
+    "current_state": {
+      "workflow_success_rate": "25%",
+      "security_validation_success": "15%",
+      "dependency_resolution_success": "40%",
+      "configuration_consistency_score": "62%"
+    },
+    "target_state": {
+      "workflow_success_rate": "92.8%+",
+      "security_validation_success": "95%+",
+      "dependency_resolution_success": "98%+", 
+      "configuration_consistency_score": "95%+"
+    },
+    "improvement_tracking": {
+      "P0_resolution_time": "target < 5 minutes",
+      "P1_resolution_time": "target < 15 minutes",
+      "P2_resolution_time": "target < 30 minutes",
+      "overall_mttf": "target > 48 hours between failures"
+    }
+  },
+  "next_phase_coordination": {
+    "harvest_to_implementation_handoff": {
+      "data_packages": [
+        "workflow_failure_inventory.json",
+        "dependency_chain_analysis.json", 
+        "configuration_drift_report.json",
+        "priority_classification.json"
+      ],
+      "receiving_agents": [
+        "flake_detector_agent",
+        "slo_recovery_routing_agent",
+        "security_analysis_agent"
+      ],
+      "coordination_protocol": "Parallel processing with priority-based resource allocation",
+      "success_validation": "Each agent must acknowledge receipt and processing plan"
+    }
+  }
+}

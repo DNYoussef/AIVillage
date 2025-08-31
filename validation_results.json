@@ -1,0 +1,48 @@
+{
+  "python_versions": {
+    "architectural-quality.yml": "3.11 OK",
+    "main-ci.yml": "3.11 OK",
+    "p2p-test-suite.yml": "3.11 OK",
+    "pre-commit-optimization.yml": "3.11 OK",
+    "scion-gateway-ci.yml": "3.11 OK",
+    "scion_production.yml": "3.11 OK",
+    "security-compliance.yml": "3.11 OK",
+    "security-scan.yml": "3.11 OK",
+    "test-failure-automation.yml": "3.11 OK"
+  },
+  "actions_versions": {
+    "architectural-quality.yml_python": "v4 legacy",
+    "architectural-quality.yml_upload": "v4 OK",
+    "image-security-scan.yml_upload": "v4 OK",
+    "main-ci.yml_python": "v5 OK",
+    "main-ci.yml_upload": "v4 OK",
+    "p2p-test-suite.yml_python": "v5 OK",
+    "p2p-test-suite.yml_upload": "v4 OK",
+    "pre-commit-optimization.yml_python": "v5 OK",
+    "pre-commit-optimization.yml_upload": "v4 OK",
+    "scion-gateway-ci.yml_python": "v5 OK",
+    "scion-gateway-ci.yml_upload": "v4 OK",
+    "scion_production.yml_python": "v5 OK",
+    "scion_production.yml_upload": "v4 OK",
+    "security-compliance.yml_python": "v5 OK",
+    "security-compliance.yml_upload": "v4 OK",
+    "security-labeling.yml_upload": "v4 OK",
+    "security-scan.yml_python": "v5 OK",
+    "security-scan.yml_upload": "v4 OK",
+    "test-failure-automation.yml_python": "v5 OK"
+  },
+  "bandit_configs": {
+    "architectural-quality.yml": "STANDARDIZED OK",
+    "main-ci.yml": "STANDARDIZED OK",
+    "p2p-test-suite.yml": "STANDARDIZED OK",
+    "scion-gateway-ci.yml": "NON-STANDARD",
+    "scion_production.yml": "STANDARDIZED OK",
+    "security-compliance.yml": "STANDARDIZED OK",
+    "security-scan.yml": "STANDARDIZED OK"
+  },
+  "inconsistencies": [
+    "architectural-quality.yml: setup-python should be v5",
+    "scion-gateway-ci.yml: Bandit output not standardized"
+  ],
+  "score": 94.28571428571428
+}
