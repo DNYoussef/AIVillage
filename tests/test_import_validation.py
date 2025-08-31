@@ -159,8 +159,9 @@ class ImportValidator:
                 if file_module in import_name or import_name in file_module:
                     return True
 
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.exception("Import validation circular dependency check failed: %s", str(e))
 
         return False
 

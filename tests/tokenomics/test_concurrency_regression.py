@@ -145,8 +145,9 @@ class TokenomicsConcurrencyTester:
             # Add earning rule if not exists
             try:
                 system.add_earning_rule(EarningRule("CONCURRENT_TEST", 10, {}, {}))
-            except:
-                pass  # Rule might already exist
+            except Exception as e:
+                import logging
+                logging.exception("Failed to add earning rule CONCURRENT_TEST (might already exist): %s", str(e))
 
             for i in range(operations):
                 try:
@@ -191,8 +192,9 @@ class TestTokenomicsConcurrencyRegression:
         # Cleanup
         try:
             os.unlink(db_path)
-        except:
-            pass
+        except Exception as e:
+            import logging
+            logging.exception("Failed to cleanup temporary database file %s: %s", db_path, str(e))
 
     def test_concurrent_balance_race_condition_detection(self, temp_db_path):
         """CRITICAL: Detect the race condition in concurrent balance updates.
@@ -566,8 +568,9 @@ def test_tokenomics_concurrency_smoke_test():
         # Cleanup temp file
         try:
             os.unlink(db_path)
-        except:
-            pass
+        except Exception as e:
+            import logging
+            logging.exception("Failed to cleanup temporary database file %s during smoke test: %s", db_path, str(e))
 
 
 if __name__ == "__main__":

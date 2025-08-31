@@ -164,9 +164,10 @@ class TestEvoMergeIntegration:
                 asyncio.run(phase._load_base_models(["test_model"]))
                 # Should have tried twice: once with seeds, once with base models
                 assert mock_load.call_count >= 1
-            except Exception:
+            except Exception as e:
                 # Expected due to mocking
-                pass
+                import logging
+                logging.exception("EvoMerge phase load_base_models failed (expected due to mocking): %s", str(e))
 
     def test_evomerge_config_seed_fields(self):
         """Test EvoMerge config has proper seed model fields."""

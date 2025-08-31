@@ -66,7 +66,8 @@ class SecurityPerformanceBenchmark:
                     
             except Exception as e:
                 # Some auth attempts may fail due to user limits, that's expected
-                pass
+                import logging
+                logging.exception("Authentication performance test iteration failed (expected): %s", str(e))
         
         benchmark_result = {
             "test_type": "authentication_performance",

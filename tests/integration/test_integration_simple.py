@@ -493,8 +493,9 @@ def run_integration_tests():
             failed += 1
             try:
                 test_instance.teardown_method()
-            except:
-                pass
+            except Exception as e:
+                import logging
+                logging.exception("Test teardown_method failed for test instance: %s", str(e))
 
     print("\n=== Integration Test Results ===")
     print(f"Passed: {passed}")

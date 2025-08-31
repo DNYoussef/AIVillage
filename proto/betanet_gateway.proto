@@ -1,0 +1,101 @@
+syntax = "proto3";
+
+package betanet.gateway;
+
+// BetaNet Gateway Service Definition
+service BetanetGateway {
+    // Send SCION packet through the gateway
+    rpc SendScionPacket(SendScionPacketRequest) returns (SendScionPacketResponse);
+    
+    // Receive SCION packet from the gateway
+    rpc RecvScionPacket(RecvScionPacketRequest) returns (RecvScionPacketResponse);
+    
+    // Register a new path
+    rpc RegisterPath(RegisterPathRequest) returns (RegisterPathResponse);
+    
+    // Query available paths
+    rpc QueryPaths(QueryPathsRequest) returns (QueryPathsResponse);
+    
+    // Health check
+    rpc Health(HealthRequest) returns (HealthResponse);
+    
+    // Get statistics
+    rpc Stats(StatsRequest) returns (StatsResponse);
+    
+    // Validate sequence
+    rpc ValidateSequence(ValidateSequenceRequest) returns (ValidateSequenceResponse);
+}
+
+// Request/Response messages
+message SendScionPacketRequest {
+    bytes packet_data = 1;
+    string destination = 2;
+    uint32 sequence = 3;
+}
+
+message SendScionPacketResponse {
+    bool success = 1;
+    string message = 2;
+    uint32 packet_id = 3;
+}
+
+message RecvScionPacketRequest {
+    uint32 timeout_ms = 1;
+}
+
+message RecvScionPacketResponse {
+    bytes packet_data = 1;
+    string source = 2;
+    uint64 timestamp = 3;
+}
+
+message RegisterPathRequest {
+    string path_id = 1;
+    repeated string hops = 2;
+}
+
+message RegisterPathResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message QueryPathsRequest {
+    string destination = 1;
+}
+
+message QueryPathsResponse {
+    repeated PathInfo paths = 1;
+}
+
+message PathInfo {
+    string path_id = 1;
+    repeated string hops = 2;
+    uint32 latency_ms = 3;
+    double reliability = 4;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+    bool healthy = 1;
+    string status = 2;
+}
+
+message StatsRequest {}
+
+message StatsResponse {
+    uint64 packets_sent = 1;
+    uint64 packets_received = 2;
+    uint64 bytes_transferred = 3;
+    uint32 active_paths = 4;
+}
+
+message ValidateSequenceRequest {
+    uint32 sequence = 1;
+    string source = 2;
+}
+
+message ValidateSequenceResponse {
+    bool valid = 1;
+    string message = 2;
+}

@@ -270,4 +270,5 @@ class TestCORSBehavioralContracts:
                     
             except Exception as e:
                 # If function throws exception, that's acceptable defensive behavior
-                pass
+                import logging
+                logging.exception("CORS validation failed for malicious input '%s': %s", malicious, str(e))

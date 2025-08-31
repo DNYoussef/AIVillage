@@ -1,0 +1,36 @@
+{
+  "timestamp": "2025-08-31 08:55:27",
+  "validation_summary": {
+    "overall_success_rate": 32.266666666666666,
+    "quality_gates_passed": 3,
+    "total_quality_gates": 6,
+    "performance_improvement": 60.0,
+    "security_validation": true,
+    "production_ready": false
+  },
+  "loop_results": {
+    "Flake Stabilization": {
+      "success_rate": 0.0,
+      "status": "FAILED",
+      "error": "INFO:__main__:Stress testing workflow: .github/workflows/security-comprehensive.yml\nERROR:__main__:Failed to parse workflow .github/workflows/security-comprehensive.yml: while scanning a simple key\n  "
+    },
+    "SLO Recovery": {
+      "success_rate": 96.8,
+      "status": "PASSED",
+      "target_met": true
+    },
+    "Documentation Freshness": {
+      "success_rate": 0.0,
+      "status": "FAILED",
+      "error": "INFO:__main__:Discovered 7011 documentation files\n"
+    }
+  },
+  "quality_gates": {
+    "flake_stabilization": false,
+    "slo_recovery": false,
+    "documentation_freshness": false,
+    "security_comprehensive": true,
+    "performance_benchmarks": true,
+    "workflow_integration": true
+  }
+}

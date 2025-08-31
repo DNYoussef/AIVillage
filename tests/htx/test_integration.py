@@ -154,9 +154,10 @@ class TestModularComponentInterfaces:
             # Decode original frame
             original_frame, _ = HTXFrameCodec.decode_frame(decrypted_frame)
             assert original_frame.payload == test_payload
-        except Exception:
+        except Exception as e:
             # Expected with simplified crypto implementation
-            pass
+            import logging
+            logging.exception("HTX transport message decryption failed (expected with simplified crypto): %s", str(e))
 
 
 class TestEndToEndMessageFlow:

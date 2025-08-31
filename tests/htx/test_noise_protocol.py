@@ -347,9 +347,10 @@ class TestNoiseTransportEncryption:
         try:
             decrypted = responder.decrypt_transport_message(ciphertext)
             assert decrypted == plaintext
-        except Exception:
+        except Exception as e:
             # Expected with simplified crypto implementation
-            pass
+            import logging
+            logging.exception("Noise protocol transport decryption failed (expected with simplified crypto): %s", str(e))
 
     def test_nonce_increment(self):
         """Test that nonce increments properly."""

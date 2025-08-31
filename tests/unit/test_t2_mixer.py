@@ -500,8 +500,9 @@ class TestIntegration:
             expert_lib = {"bad_expert": {"rank": "invalid"}}  # Invalid rank
             mixer = T2Mixer({}, expert_lib, model_shapes)
             # Should handle gracefully
-        except Exception:
-            pass  # Expected to handle errors
+        except Exception as e:
+            import logging
+            logging.exception("Unit test T2Mixer malformed expert spec test failed (expected): %s", str(e))
 
         # Test feature extraction with invalid inputs
         extractor = FeatureExtractor()
