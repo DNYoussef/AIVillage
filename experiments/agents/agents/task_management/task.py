@@ -3,6 +3,9 @@ from enum import Enum
 from typing import Any
 import uuid
 
+# Import constants for magic literal elimination
+from infrastructure.constants import TaskConstants, get_config_manager
+
 
 class TaskStatus(Enum):
     PENDING = "pending"
@@ -19,7 +22,7 @@ class Task:
     status: TaskStatus = TaskStatus.PENDING
     result: Any | None = None
     deadline: str | None = None
-    priority: int = 1
+    priority: int = field(default_factory=lambda: get_config_manager().get_default_priority())
     dependencies: list[str] = field(default_factory=list)
 
     def update_status(self, new_status: TaskStatus) -> "Task":

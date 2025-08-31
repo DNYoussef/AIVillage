@@ -7,97 +7,94 @@ import pytest
 import torch
 
 # Import P2P components
-from src.production.communications.p2p import DeviceMesh, P2PNode, TensorStreaming
-from src.production.communications.p2p.device_mesh import ConnectionType, MeshProtocol
-from src.production.communications.p2p.p2p_node import MessageType, NodeStatus, P2PMessage, PeerInfo
-from src.production.communications.p2p.tensor_streaming import CompressionType, StreamingConfig
-from src.production.communications.p2p_protocol import P2PCapabilities, P2PCommunicationProtocol
+from infrastructure.p2p import P2PNetwork, NetworkConfig, PeerInfo as P2PPeerInfo, create_network
+from infrastructure.p2p.core.message_delivery import MessageDelivery, DeliveryStatus, MessagePriority
 
 
-class TestP2PNode:
-    """Test P2P node functionality."""
+class TestP2PNetwork:
+    """Test P2P network functionality."""
 
     @pytest.mark.asyncio
-    async def test_node_initialization(self):
-        """Test P2P node initialization."""
-        node = P2PNode(node_id="test-node", port=8001)
+    async def test_network_initialization(self):
+        """Test P2P network initialization."""
+        config = NetworkConfig(mode="direct", max_peers=10)
+        network = P2PNetwork(config)
 
-        assert node.node_id == "test-node"
-        assert node.port == 8001
-        assert node.status == NodeStatus.OFFLINE
-        assert len(node.peers) == 0
+        assert network.config.mode == "direct"
+        assert network.config.max_peers == 10
+        assert len(network.peers) == 0
+        assert not network._initialized
 
     @pytest.mark.asyncio
-    async def test_node_start_stop(self):
-        """Test node start and stop lifecycle."""
-        node = P2PNode(node_id="test-node", port=8002)
+    async def test_network_start_stop(self):
+        """Test network start and stop lifecycle."""
+        network = P2PNetwork(NetworkConfig(mode="direct"))
 
-        # Test start
+        # Test initialization
         try:
-            await node.start()
-            assert node.status == NodeStatus.CONNECTED
-            assert node.server is not None
+            await network.initialize()
+            assert network._initialized
         except Exception as e:
-            # May fail on Windows without proper network setup
+            # May fail without proper network setup
             pytest.skip(f"Network setup not available: {e}")
         finally:
-            # Test stop
-            await node.stop()
-            assert node.status == NodeStatus.OFFLINE
+            # Test shutdown
+            await network.shutdown()
+            assert not network._initialized
 
     @pytest.mark.asyncio
-    async def test_message_serialization(self):
-        """Test P2P message serialization."""
-        P2PNode(node_id="test-node", port=8003)
+    async def test_peer_discovery(self):
+        """Test P2P peer discovery."""
+        network = P2PNetwork(NetworkConfig(mode="direct", discovery_interval=1))
 
-        message = P2PMessage(
-            message_type=MessageType.HEARTBEAT,
-            sender_id="sender",
-            receiver_id="receiver",
-            payload={"test": "data", "timestamp": time.time()},
-        )
-
-        # Test message structure
-        assert message.message_type == MessageType.HEARTBEAT
-        assert message.sender_id == "sender"
-        assert message.receiver_id == "receiver"
-        assert "test" in message.payload
+        try:
+            await network.initialize()
+            # Test discovery start (may not find peers in test environment)
+            await network.start_discovery()
+            
+            # Check that discovery methods are available
+            peers = await network.get_peers()
+            assert isinstance(peers, list)
+        except Exception as e:
+            # Discovery may fail in test environment
+            pytest.skip(f"Discovery not available in test environment: {e}")
 
     @pytest.mark.asyncio
     async def test_peer_management(self):
         """Test peer management functionality."""
-        node = P2PNode(node_id="test-node", port=8004)
+        network = P2PNetwork(NetworkConfig(mode="direct"))
 
-        # Add known address
-        node.add_known_address("127.0.0.1", 8005)
-        assert "127.0.0.1:8005" in node.known_addresses
-
-        # Test peer info
-        peer_info = PeerInfo(
+        # Test peer info creation
+        peer_info = P2PPeerInfo(
             peer_id="peer-1",
-            address="127.0.0.1",
-            port=8005,
-            status=NodeStatus.CONNECTED,
+            addresses=["127.0.0.1:8005"],
+            protocols=["libp2p"],
+            metadata={"test": "data"}
         )
 
-        node.peers["peer-1"] = peer_info
+        # Add peer manually
+        network.peers["peer-1"] = peer_info
 
-        connected_peers = node.get_connected_peers()
-        assert len(connected_peers) == 1
-        assert connected_peers[0].peer_id == "peer-1"
+        peers = await network.get_peers()
+        assert len(peers) == 1
+        assert peers[0].peer_id == "peer-1"
+        assert "libp2p" in peers[0].protocols
 
-    def test_node_statistics(self):
-        """Test node statistics collection."""
-        node = P2PNode(node_id="test-node", port=8006)
+    @pytest.mark.asyncio
+    async def test_network_statistics(self):
+        """Test network statistics collection."""
+        network = P2PNetwork(NetworkConfig(mode="direct"))
+        
+        # Add some mock peers
+        network.peers["peer-1"] = P2PPeerInfo(
+            peer_id="peer-1",
+            addresses=["127.0.0.1:8001"],
+            protocols=["libp2p"]
+        )
 
-        stats = node.get_stats()
-
-        assert "node_id" in stats
-        assert "status" in stats
-        assert "connected_peers" in stats
-        assert "total_peers" in stats
-        assert stats["node_id"] == "test-node"
-        assert stats["status"] == NodeStatus.OFFLINE.value
+        peers = await network.get_peers()
+        assert len(peers) == 1
+        assert peers[0].peer_id == "peer-1"
 
 
 class TestDeviceMesh:

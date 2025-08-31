@@ -49,6 +49,7 @@ License: MIT
 
 from typing import Dict, Any, Optional, List, Union
 import logging
+import json
 from dataclasses import dataclass
 from enum import Enum
 
@@ -214,9 +215,7 @@ class P2PNetwork:
             for transport in self.config.transport_priority:
                 await self._init_transport(transport)
         
-        # Start discovery if enabled
-        if self.config.discovery_interval > 0:
-            await self.start_discovery()
+        # Note: Discovery will be started separately via start_discovery() call
         
         self._initialized = True
         self.logger.info("P2P network initialized successfully")
@@ -300,8 +299,172 @@ class P2PNetwork:
     async def start_discovery(self) -> None:
         """Start peer discovery process."""
         self.logger.info("Starting peer discovery")
-        # Implementation would start discovery based on enabled transports
-        pass
+        
+        if not self._initialized:
+            await self.initialize()
+        
+        # Start discovery on all available transports
+        discovery_tasks = []
+        
+        # LibP2P DHT discovery
+        if LibP2PEnhancedManager and "libp2p" in self.config.transport_priority:
+            try:
+                libp2p_manager = LibP2PEnhancedManager()
+                await libp2p_manager.initialize()
+                discovery_tasks.append(self._discover_libp2p_peers(libp2p_manager))
+                self.logger.info("Started LibP2P DHT discovery")
+            except Exception as e:
+                self.logger.warning(f"LibP2P discovery failed to start: {e}")
+        
+        # BitChat mesh discovery
+        if BitChatMesh and "bitchat" in self.config.transport_priority:
+            try:
+                bitchat_mesh = BitChatMesh()
+                await bitchat_mesh.initialize()
+                discovery_tasks.append(self._discover_bitchat_peers(bitchat_mesh))
+                self.logger.info("Started BitChat mesh discovery")
+            except Exception as e:
+                self.logger.warning(f"BitChat discovery failed to start: {e}")
+        
+        # WebSocket discovery (local network scan)
+        if CommunicationsProtocol and "websocket" in self.config.transport_priority:
+            try:
+                discovery_tasks.append(self._discover_websocket_peers())
+                self.logger.info("Started WebSocket local discovery")
+            except Exception as e:
+                self.logger.warning(f"WebSocket discovery failed to start: {e}")
+        
+        # Start all discovery tasks concurrently
+        if discovery_tasks:
+            import asyncio
+            await asyncio.gather(*discovery_tasks, return_exceptions=True)
+            self.logger.info(f"Discovery started on {len(discovery_tasks)} transports")
+        else:
+            self.logger.warning("No discovery methods available")
+    
+    async def _discover_libp2p_peers(self, libp2p_manager) -> None:
+        """Discover peers using LibP2P DHT."""
+        try:
+            # Use LibP2P's built-in peer discovery
+            network_status = await libp2p_manager.get_network_status()
+            discovered_peers = network_status.get("discovered_peers", [])
+            
+            for peer_data in discovered_peers:
+                peer_id = peer_data.get("peer_id")
+                addresses = peer_data.get("addresses", [])
+                
+                if peer_id and addresses and peer_id not in self.peers:
+                    peer_info = PeerInfo(
+                        peer_id=peer_id,
+                        addresses=addresses,
+                        protocols=["libp2p"],
+                        metadata={"discovery_method": "libp2p_dht"}
+                    )
+                    self.peers[peer_id] = peer_info
+                    self.logger.debug(f"Discovered LibP2P peer: {peer_id}")
+                    
+        except Exception as e:
+            self.logger.error(f"LibP2P peer discovery error: {e}")
+    
+    async def _discover_bitchat_peers(self, bitchat_mesh) -> None:
+        """Discover peers using BitChat mesh scanning."""
+        try:
+            # Use BitChat's mesh peer discovery
+            mesh_status = await bitchat_mesh.get_mesh_status()
+            mesh_peers = mesh_status.get("connected_peers", [])
+            
+            for peer_data in mesh_peers:
+                peer_id = peer_data.get("peer_id")
+                address = peer_data.get("address")
+                
+                if peer_id and address and peer_id not in self.peers:
+                    peer_info = PeerInfo(
+                        peer_id=peer_id,
+                        addresses=[address],
+                        protocols=["bitchat"],
+                        metadata={"discovery_method": "bitchat_mesh"}
+                    )
+                    self.peers[peer_id] = peer_info
+                    self.logger.debug(f"Discovered BitChat peer: {peer_id}")
+                    
+        except Exception as e:
+            self.logger.error(f"BitChat peer discovery error: {e}")
+    
+    async def _discover_websocket_peers(self) -> None:
+        """Discover peers using WebSocket local network scanning."""
+        try:
+            import socket
+            import asyncio
+            
+            # Simple local network scanning for WebSocket peers
+            local_ip = socket.gethostbyname(socket.gethostname())
+            network_base = '.'.join(local_ip.split('.')[:-1]) + '.'
+            
+            # Scan common P2P ports on local network
+            scan_ports = [8000, 8001, 8080, 9000]
+            discovery_tasks = []
+            
+            for i in range(1, 255):
+                target_ip = f"{network_base}{i}"
+                if target_ip != local_ip:  # Don't scan self
+                    for port in scan_ports:
+                        discovery_tasks.append(self._try_websocket_peer(target_ip, port))
+            
+            # Limit concurrent scans
+            sem = asyncio.Semaphore(20)
+            async def bounded_scan(task):
+                async with sem:
+                    return await task
+            
+            results = await asyncio.gather(
+                *[bounded_scan(task) for task in discovery_tasks[:100]], # Limit to 100 scans
+                return_exceptions=True
+            )
+            
+            discovered_count = sum(1 for r in results if r is True)
+            self.logger.info(f"WebSocket discovery found {discovered_count} peers")
+                    
+        except Exception as e:
+            self.logger.error(f"WebSocket peer discovery error: {e}")
+    
+    async def _try_websocket_peer(self, ip: str, port: int) -> bool:
+        """Try to connect to a potential WebSocket peer."""
+        try:
+            import asyncio
+            import aiohttp
+            
+            # Quick connection test with short timeout
+            timeout = aiohttp.ClientTimeout(total=2)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                url = f"ws://{ip}:{port}"
+                async with session.ws_connect(url) as ws:
+                    # Send discovery ping
+                    await ws.send_str('{"type": "discovery_ping"}')
+                    
+                    # Wait for response
+                    msg = await asyncio.wait_for(ws.receive(), timeout=1)
+                    if msg.type == aiohttp.WSMsgType.TEXT:
+                        response = json.loads(msg.data)
+                        if response.get("type") == "discovery_pong":
+                            # Valid P2P peer found
+                            peer_id = response.get("peer_id", f"{ip}:{port}")
+                            
+                            if peer_id not in self.peers:
+                                peer_info = PeerInfo(
+                                    peer_id=peer_id,
+                                    addresses=[f"{ip}:{port}"],
+                                    protocols=["websocket"],
+                                    metadata={"discovery_method": "websocket_scan"}
+                                )
+                                self.peers[peer_id] = peer_info
+                                self.logger.debug(f"Discovered WebSocket peer: {peer_id}")
+                                return True
+                            
+        except Exception:
+            # Expected to fail for non-P2P endpoints
+            pass
+        
+        return False
     
     async def get_peers(self) -> List[PeerInfo]:
         """Get list of connected peers."""

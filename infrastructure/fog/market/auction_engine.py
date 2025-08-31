@@ -39,6 +39,9 @@ class AuctionType(str, Enum):
     FORWARD = "forward"  # Consumers bid up on price
     DUTCH = "dutch"  # Decreasing price auction
     VICKREY = "vickrey"  # Second-price sealed-bid
+    FEDERATED_INFERENCE = "federated_inference"  # Specialized for inference workloads
+    FEDERATED_TRAINING = "federated_training"  # Specialized for training workloads
+    MULTI_CRITERIA = "multi_criteria"  # Multi-objective auction (cost, latency, privacy)
 
 
 class AuctionStatus(str, Enum):
@@ -80,6 +83,18 @@ class ResourceRequirement:
     max_latency_ms: Decimal = Decimal("500")
     required_regions: list[str] = field(default_factory=list)
     required_capabilities: list[str] = field(default_factory=list)
+
+    # Federated workload specifications
+    workload_type: str = "general"  # "inference", "training", "general"
+    model_size: str = ""  # "small", "medium", "large", "xlarge"
+    participants_needed: int = 1  # Number of nodes needed for federated task
+    privacy_level: str = "medium"  # "low", "medium", "high", "critical"
+    reliability_requirement: str = "standard"  # "best_effort", "standard", "high", "guaranteed"
+    
+    # Performance requirements for federated workloads
+    min_compute_power: Decimal = Decimal("1.0")  # GFLOPS or equivalent
+    max_communication_latency: Decimal = Decimal("100")  # ms between nodes
+    min_uptime_percentage: Decimal = Decimal("95")  # Required uptime %
 
     def __post_init__(self):
         """Ensure all values are Decimal for precision"""
@@ -127,17 +142,19 @@ class AuctionBid:
 
     # Bid price (total for entire resource requirement)
     bid_price: Decimal  # Total price willing to accept (reverse) or pay (forward)
-    per_hour_rate: Decimal = field(init=False)
-
+    
     # Deposit for anti-griefing
     deposit_amount: Decimal
-    deposit_tx_hash: str = ""
-    deposit_confirmed: bool = False
 
-    # Bidder capabilities
+    # Bidder capabilities (required fields)
     trust_score: Decimal
     reputation_score: Decimal
     latency_ms: Decimal
+    
+    # Optional fields with defaults
+    per_hour_rate: Decimal = field(init=False)
+    deposit_tx_hash: str = ""
+    deposit_confirmed: bool = False
     available_resources: dict[str, Decimal] = field(default_factory=dict)
 
     # Bid metadata
@@ -917,3 +934,146 @@ async def submit_provider_bid(
         available_resources=resources_decimal,
         **kwargs,
     )
+
+
+# Federated workload auction functions
+async def create_federated_inference_auction(
+    requester_id: str,
+    model_size: str,
+    participants_needed: int,
+    duration_hours: float,
+    privacy_level: str = "medium",
+    max_latency_ms: float = 100.0,
+    reserve_price: float = None,
+    **kwargs,
+) -> str:
+    """Create auction specifically for federated inference workload"""
+    
+    # Calculate resource requirements based on model size
+    resource_multipliers = {
+        "small": {"cpu": 2.0, "memory": 4.0},
+        "medium": {"cpu": 4.0, "memory": 8.0}, 
+        "large": {"cpu": 8.0, "memory": 16.0},
+        "xlarge": {"cpu": 16.0, "memory": 32.0},
+    }
+    
+    multiplier = resource_multipliers.get(model_size, {"cpu": 4.0, "memory": 8.0})
+    
+    requirements = ResourceRequirement(
+        cpu_cores=Decimal(str(multiplier["cpu"])),
+        memory_gb=Decimal(str(multiplier["memory"])),
+        storage_gb=Decimal("10.0"),  # Storage for model and data
+        bandwidth_mbps=Decimal("50.0"),  # High bandwidth for inference
+        duration_hours=Decimal(str(duration_hours)),
+        workload_type="inference",
+        model_size=model_size,
+        participants_needed=participants_needed,
+        privacy_level=privacy_level,
+        max_latency_ms=Decimal(str(max_latency_ms)),
+        max_communication_latency=Decimal(str(max_latency_ms)),
+        **kwargs,
+    )
+
+    engine = await get_auction_engine()
+    return await engine.create_auction(
+        requester_id=requester_id,
+        requirements=requirements,
+        auction_type=AuctionType.FEDERATED_INFERENCE,
+        reserve_price=Decimal(str(reserve_price)) if reserve_price else None,
+        duration_minutes=15,  # Shorter duration for inference auctions
+        **kwargs,
+    )
+
+
+async def create_federated_training_auction(
+    requester_id: str,
+    model_size: str,
+    participants_needed: int,
+    duration_hours: float,
+    privacy_level: str = "high",
+    reliability_requirement: str = "high",
+    reserve_price: float = None,
+    **kwargs,
+) -> str:
+    """Create auction specifically for federated training workload"""
+    
+    # Training requires more resources than inference
+    resource_multipliers = {
+        "small": {"cpu": 4.0, "memory": 8.0},
+        "medium": {"cpu": 8.0, "memory": 16.0},
+        "large": {"cpu": 16.0, "memory": 32.0},
+        "xlarge": {"cpu": 32.0, "memory": 64.0},
+    }
+    
+    multiplier = resource_multipliers.get(model_size, {"cpu": 8.0, "memory": 16.0})
+    
+    requirements = ResourceRequirement(
+        cpu_cores=Decimal(str(multiplier["cpu"])),
+        memory_gb=Decimal(str(multiplier["memory"])),
+        storage_gb=Decimal("50.0"),  # More storage for training data
+        bandwidth_mbps=Decimal("100.0"),  # High bandwidth for model updates
+        duration_hours=Decimal(str(duration_hours)),
+        workload_type="training",
+        model_size=model_size,
+        participants_needed=participants_needed,
+        privacy_level=privacy_level,
+        reliability_requirement=reliability_requirement,
+        min_trust_score=Decimal("0.7"),  # Higher trust for training
+        min_uptime_percentage=Decimal("98"),  # Higher uptime for training
+        **kwargs,
+    )
+
+    engine = await get_auction_engine()
+    return await engine.create_auction(
+        requester_id=requester_id,
+        requirements=requirements,
+        auction_type=AuctionType.FEDERATED_TRAINING,
+        reserve_price=Decimal(str(reserve_price)) if reserve_price else None,
+        duration_minutes=30,  # Longer duration for training auctions
+        **kwargs,
+    )
+
+
+async def create_multi_criteria_auction(
+    requester_id: str,
+    requirements: dict[str, Any],
+    criteria_weights: dict[str, float] = None,
+    **kwargs,
+) -> str:
+    """Create multi-criteria auction balancing cost, latency, privacy, and reliability"""
+    
+    # Default criteria weights
+    if criteria_weights is None:
+        criteria_weights = {
+            "cost": 0.4,
+            "latency": 0.2, 
+            "privacy": 0.2,
+            "reliability": 0.2,
+        }
+    
+    resource_req = ResourceRequirement(
+        cpu_cores=Decimal(str(requirements.get("cpu_cores", 4.0))),
+        memory_gb=Decimal(str(requirements.get("memory_gb", 8.0))),
+        storage_gb=Decimal(str(requirements.get("storage_gb", 20.0))),
+        bandwidth_mbps=Decimal(str(requirements.get("bandwidth_mbps", 50.0))),
+        duration_hours=Decimal(str(requirements.get("duration_hours", 1.0))),
+        workload_type=requirements.get("workload_type", "general"),
+        model_size=requirements.get("model_size", "medium"),
+        participants_needed=requirements.get("participants_needed", 1),
+        privacy_level=requirements.get("privacy_level", "medium"),
+        reliability_requirement=requirements.get("reliability_requirement", "standard"),
+        **kwargs,
+    )
+    
+    engine = await get_auction_engine()
+    auction_id = await engine.create_auction(
+        requester_id=requester_id,
+        requirements=resource_req,
+        auction_type=AuctionType.MULTI_CRITERIA,
+        reserve_price=Decimal(str(requirements.get("reserve_price", 50.0))),
+        duration_minutes=requirements.get("duration_minutes", 20),
+        metadata={"criteria_weights": criteria_weights},
+        **kwargs,
+    )
+    
+    return auction_id

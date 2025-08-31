@@ -248,6 +248,14 @@ class CouplingAnalyzer(ast.NodeVisitor):
                 self.magic_in_conditionals += 1
         self.generic_visit(node)
 
+    def visit_Constant(self, node: ast.Constant):
+        """Detect magic literals (Python 3.8+)."""
+        if isinstance(node.value, (int, float, str)) and self._is_magic_literal(node.value):
+            self.magic_literals += 1
+            if self._is_in_conditional_context(node):
+                self.magic_in_conditionals += 1
+        self.generic_visit(node)
+
     def visit_Num(self, node: ast.Num):
         """Detect magic numbers (Python < 3.8 compatibility)."""
         if self._is_magic_literal(node.n):

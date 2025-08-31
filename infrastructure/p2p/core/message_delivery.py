@@ -25,11 +25,15 @@ import pickle
 import sqlite3
 import time
 from typing import Any
+from typing import Dict, List, Optional, Union, Set
 import uuid
 
 from ..mobile_integration.libp2p_mesh import MeshMessage, MeshMessageType
 
 logger = logging.getLogger(__name__)
+
+# Export alias for compatibility
+MessageDelivery = None  # Will be set after class definition
 
 
 class DeliveryStatus(Enum):
@@ -896,3 +900,6 @@ if __name__ == "__main__":
         print("Test completed")
 
     asyncio.run(test_delivery_service())
+
+# Set the export alias
+MessageDelivery = MessageDeliveryService

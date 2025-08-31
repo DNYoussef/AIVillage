@@ -5,7 +5,7 @@ from .project_constants import ProjectStatus, ProjectDefaults, ProjectConstants
 from .timing_constants import TimingConstants, BatchProcessingDefaults
 from .performance_constants import PerformanceConstants, IncentiveDefaults, RewardConstants, TaskDifficultyConstants, PerformanceFieldNames
 from .message_constants import MessageConstants, MessageDefaults, ErrorMessageConstants
-from .config_manager import ConfigManager, get_config_manager, set_config_file
+from .config_manager import ConfigManager, get_config_manager, set_config_file, EnvironmentConfig
 
 __all__ = [
     "TaskConstants", 
@@ -26,5 +26,6 @@ __all__ = [
     "ErrorMessageConstants",
     "ConfigManager",
     "get_config_manager",
-    "set_config_file"
+    "set_config_file",
+    "EnvironmentConfig"
 ]

@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING
 
 from ..privacy.onion_routing import OnionRouter, OnionCircuit, NodeType, HiddenService
 from ..privacy.mixnet_integration import NymMixnetClient
+from ..privacy.onion_circuit_service import OnionCircuitService, PrivacyLevel as CircuitPrivacyLevel
 
 if TYPE_CHECKING:
     from .fog_coordinator import FogCoordinator
@@ -115,15 +116,13 @@ class FogOnionCoordinator:
         # Components
         self.onion_router: Optional[OnionRouter] = None
         self.mixnet_client: Optional[NymMixnetClient] = None
+        self.circuit_service: Optional[OnionCircuitService] = None
 
         # Task and service management
         self.privacy_tasks: Dict[str, PrivacyAwareTask] = {}
         self.privacy_services: Dict[str, PrivacyAwareService] = {}
         self.task_circuits: Dict[str, OnionCircuit] = {}
         self.service_circuits: Dict[str, OnionCircuit] = {}
-
-        # Circuit pools for different privacy levels
-        self.circuit_pools: Dict[PrivacyLevel, List[OnionCircuit]] = {level: [] for level in PrivacyLevel}
 
         # Statistics
         self.stats = {
@@ -172,8 +171,14 @@ class FogOnionCoordinator:
                 await self.mixnet_client.start()
                 logger.info("Mixnet client initialized")
 
-            # Pre-build circuit pools
-            await self._initialize_circuit_pools()
+            # Initialize circuit service
+            self.circuit_service = OnionCircuitService(
+                onion_router=self.onion_router,
+                max_circuits_per_level=self.max_circuits,
+                circuit_lifetime_minutes=60,
+                rotation_interval_minutes=5,
+            )
+            await self.circuit_service.start()
 
             # Start background tasks
             await self._start_background_tasks()
@@ -201,11 +206,9 @@ class FogOnionCoordinator:
         await asyncio.gather(*self._background_tasks, return_exceptions=True)
         self._background_tasks.clear()
 
-        # Close all circuits
-        for circuits in self.circuit_pools.values():
-            for circuit in circuits:
-                if self.onion_router:
-                    await self.onion_router.close_circuit(circuit.circuit_id)
+        # Stop circuit service
+        if self.circuit_service:
+            await self.circuit_service.stop()
 
         # Stop mixnet client
         if self.mixnet_client:
@@ -226,8 +229,21 @@ class FogOnionCoordinator:
                 logger.error(f"Privacy requirements validation failed for task {task.task_id}")
                 return False
 
-            # Get or create appropriate circuit
-            circuit = await self._get_circuit_for_privacy_level(task.privacy_level)
+            # Get circuit from circuit service
+            circuit_privacy_level = self._convert_privacy_level(task.privacy_level)
+            if self.circuit_service:
+                # Authenticate client with simple token
+                auth_token = f"auth_{task.client_id}_token"
+                self.circuit_service.authenticate_client(task.client_id, auth_token)
+                
+                circuit = await self.circuit_service.get_circuit(
+                    privacy_level=circuit_privacy_level,
+                    client_id=task.client_id,
+                    preferred_path_length=task.min_circuit_hops,
+                )
+            else:
+                circuit = None
+                
             if not circuit:
                 logger.error(f"Failed to establish circuit for privacy level {task.privacy_level.value}")
                 return False
@@ -290,8 +306,17 @@ class FogOnionCoordinator:
                 logger.info(f"Created hidden service: {hidden_service.onion_address}")
 
             # Create dedicated circuit for CONFIDENTIAL and above
-            if privacy_level in [PrivacyLevel.CONFIDENTIAL, PrivacyLevel.SECRET]:
-                circuit = await self._create_dedicated_circuit(privacy_level)
+            if privacy_level in [PrivacyLevel.CONFIDENTIAL, PrivacyLevel.SECRET] and self.circuit_service:
+                circuit_privacy_level = self._convert_privacy_level(privacy_level)
+                # Authenticate service
+                auth_token = f"auth_{service_id}_token"
+                self.circuit_service.authenticate_client(service_id, auth_token)
+                
+                circuit = await self.circuit_service.get_circuit(
+                    privacy_level=circuit_privacy_level,
+                    client_id=service_id,
+                )
+                
                 if circuit:
                     service.circuit_id = circuit.circuit_id
                     self.service_circuits[service_id] = circuit
@@ -331,13 +356,23 @@ class FogOnionCoordinator:
                 )
                 return packet_id is not None
             else:
-                # Use onion routing
-                circuit = await self._get_circuit_for_privacy_level(privacy_level)
-                if circuit and self.onion_router:
-                    return await self.onion_router.send_data(
-                        circuit.circuit_id,
-                        message,
+                # Use onion routing via circuit service
+                if self.circuit_service:
+                    circuit_privacy_level = self._convert_privacy_level(privacy_level)
+                    # Use a system client ID for gossip
+                    auth_token = f"auth_system_gossip_token"
+                    self.circuit_service.authenticate_client("system_gossip", auth_token)
+                    
+                    circuit = await self.circuit_service.get_circuit(
+                        privacy_level=circuit_privacy_level,
+                        client_id="system_gossip",
                     )
+                    
+                    if circuit and self.onion_router:
+                        return await self.onion_router.send_data(
+                            circuit.circuit_id,
+                            message,
+                        )
 
             return False
 
@@ -368,7 +403,7 @@ class FogOnionCoordinator:
             "privacy_stats": self.stats.copy(),
             "privacy_tasks": len(self.privacy_tasks),
             "privacy_services": len(self.privacy_services),
-            "circuit_pools": {level.value: len(circuits) for level, circuits in self.circuit_pools.items()},
+            "circuit_service": self.circuit_service.get_circuit_stats() if self.circuit_service else {},
             "onion_routing": onion_stats,
             "mixnet": mixnet_stats,
         }
@@ -376,6 +411,16 @@ class FogOnionCoordinator:
     # ============================================================================
     # PRIVATE HELPER METHODS
     # ============================================================================
+
+    def _convert_privacy_level(self, privacy_level: PrivacyLevel) -> CircuitPrivacyLevel:
+        """Convert fog privacy level to circuit service privacy level."""
+        mapping = {
+            PrivacyLevel.PUBLIC: CircuitPrivacyLevel.PUBLIC,
+            PrivacyLevel.PRIVATE: CircuitPrivacyLevel.PRIVATE,
+            PrivacyLevel.CONFIDENTIAL: CircuitPrivacyLevel.CONFIDENTIAL,
+            PrivacyLevel.SECRET: CircuitPrivacyLevel.SECRET,
+        }
+        return mapping.get(privacy_level, CircuitPrivacyLevel.PRIVATE)
 
     async def _validate_privacy_requirements(self, task: PrivacyAwareTask) -> bool:
         """Validate that privacy requirements can be satisfied."""
@@ -392,49 +437,6 @@ class FogOnionCoordinator:
 
         return True
 
-    async def _get_circuit_for_privacy_level(self, privacy_level: PrivacyLevel) -> Optional[OnionCircuit]:
-        """Get or create a circuit for the specified privacy level."""
-        if not self.onion_router:
-            return None
-
-        # Check circuit pool first
-        circuits = self.circuit_pools.get(privacy_level, [])
-        if circuits:
-            # Return least used circuit
-            circuit = min(circuits, key=lambda c: c.bytes_sent + c.bytes_received)
-            return circuit
-
-        # Create new circuit
-        return await self._create_dedicated_circuit(privacy_level)
-
-    async def _create_dedicated_circuit(self, privacy_level: PrivacyLevel) -> Optional[OnionCircuit]:
-        """Create a dedicated circuit for the privacy level."""
-        if not self.onion_router:
-            return None
-
-        # Determine path length based on privacy level
-        path_length = {
-            PrivacyLevel.PUBLIC: 1,
-            PrivacyLevel.PRIVATE: 3,
-            PrivacyLevel.CONFIDENTIAL: 5,
-            PrivacyLevel.SECRET: 7,
-        }.get(privacy_level, 3)
-
-        try:
-            circuit = await self.onion_router.build_circuit(
-                purpose=f"privacy_{privacy_level.value}", path_length=path_length
-            )
-
-            if circuit:
-                self.circuit_pools[privacy_level].append(circuit)
-                self.stats["circuits_created"] += 1
-                logger.debug(f"Created {privacy_level.value} circuit: {circuit.circuit_id}")
-
-            return circuit
-
-        except Exception as e:
-            logger.error(f"Failed to create circuit for {privacy_level.value}: {e}")
-            return None
 
     async def _route_task_privately(self, task: PrivacyAwareTask, circuit: OnionCircuit) -> bool:
         """Route task through privacy layers."""
@@ -458,6 +460,15 @@ class FogOnionCoordinator:
                     task_payload,
                     stream_id=f"task_{task.task_id}",
                 )
+                
+                # Update circuit usage statistics
+                if success and self.circuit_service:
+                    await self.circuit_service.update_circuit_usage(
+                        circuit.circuit_id,
+                        bytes_sent=len(task_payload),
+                        bytes_received=0,  # Will be updated when response is received
+                    )
+                
                 return success
 
             else:
@@ -510,31 +521,10 @@ class FogOnionCoordinator:
         logger.debug(f"Sending direct gossip to {recipient_id}: {len(message)} bytes")
         return True
 
-    async def _initialize_circuit_pools(self):
-        """Pre-build circuits for different privacy levels."""
-        logger.info("Initializing circuit pools...")
-
-        # Build circuits for each privacy level
-        tasks = []
-        for privacy_level in PrivacyLevel:
-            if privacy_level == PrivacyLevel.PUBLIC:
-                continue  # No circuits needed for public
-
-            # Build 2-3 circuits per privacy level
-            num_circuits = 3 if privacy_level == PrivacyLevel.PRIVATE else 2
-            for _ in range(num_circuits):
-                tasks.append(self._create_dedicated_circuit(privacy_level))
-
-        # Wait for all circuits to be built
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        successful_circuits = sum(1 for r in results if isinstance(r, OnionCircuit))
-        logger.info(f"Initialized {successful_circuits} circuits across privacy levels")
 
     async def _start_background_tasks(self):
         """Start background maintenance tasks."""
         tasks = [
-            self._circuit_maintenance_task(),
             self._privacy_metrics_task(),
             self._task_cleanup_task(),
         ]
@@ -545,40 +535,6 @@ class FogOnionCoordinator:
             task.add_done_callback(self._background_tasks.discard)
 
         logger.info("Started background tasks for fog onion coordinator")
-
-    async def _circuit_maintenance_task(self):
-        """Maintain circuit pools and rotate old circuits."""
-        while self._running:
-            try:
-                # Rotate old circuits
-                if self.onion_router:
-                    rotated = await self.onion_router.rotate_circuits()
-                    if rotated > 0:
-                        logger.debug(f"Rotated {rotated} circuits")
-
-                # Maintain circuit pool sizes
-                for privacy_level in PrivacyLevel:
-                    if privacy_level == PrivacyLevel.PUBLIC:
-                        continue
-
-                    circuits = self.circuit_pools[privacy_level]
-                    target_size = 3 if privacy_level == PrivacyLevel.PRIVATE else 2
-
-                    # Remove failed circuits
-                    active_circuits = [c for c in circuits if c.state.value == "established"]
-                    self.circuit_pools[privacy_level] = active_circuits
-
-                    # Add new circuits if needed
-                    if len(active_circuits) < target_size:
-                        missing = target_size - len(active_circuits)
-                        for _ in range(missing):
-                            await self._create_dedicated_circuit(privacy_level)
-
-                await asyncio.sleep(300)  # Check every 5 minutes
-
-            except Exception as e:
-                logger.error(f"Error in circuit maintenance: {e}")
-                await asyncio.sleep(60)
 
     async def _privacy_metrics_task(self):
         """Collect privacy and performance metrics."""
