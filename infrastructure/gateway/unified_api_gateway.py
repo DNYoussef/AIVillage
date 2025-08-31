@@ -179,8 +179,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 # This would be validated by JWT middleware later
                 # For now, assume standard tier
                 pass
-            except:
-                pass
+            except Exception as e:
+                logging.debug(f"Bearer token processing skipped: {e}")
 
         # Check rate limits
         if not self._check_rate_limit(client_ip, tier, current_time):

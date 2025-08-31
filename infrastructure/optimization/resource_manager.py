@@ -309,8 +309,8 @@ class MemoryManager:
                     tensor_info = self.tensor_references.pop(tensor_ref, {})
                     cleanup_stats['cleaned'] += 1
                     cleanup_stats['memory_freed'] += tensor_info.get('size_bytes', 0)
-                except:
-                    pass  # Reference already removed
+                except KeyError:
+                    logging.debug(f"Tensor reference {tensor_ref} already removed during cleanup")
             
             # Force cleanup of old tensors if in memory pressure
             if self.memory_pressure_level > 0.8:

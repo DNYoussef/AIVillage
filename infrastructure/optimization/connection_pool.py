@@ -297,8 +297,8 @@ class PooledConnection:
             if self.connection:
                 try:
                     await self.close()
-                except:
-                    pass  # Ignore cleanup errors during emergency
+                except Exception as e:
+                    logging.warning(f"Connection cleanup failed during emergency response: {e}")
             
             # Clear error state
             self.metrics.state = ConnectionState.IDLE

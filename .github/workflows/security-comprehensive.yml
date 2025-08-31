@@ -107,16 +107,233 @@ jobs:
           echo "No containers to scan" > security/reports/container-scan.json
         fi
 
-    # SBOM Generation
+    # SBOM Generation with Microsoft SBOM Tool
     - name: Generate Software Bill of Materials
       run: |
-        echo "Generating SBOM..."
-        if [ -f "config/requirements/requirements.txt" ]; then
-          pip-licenses --format=json --output-file=security/reports/sbom-python.json || echo '[]' > security/reports/sbom-python.json
+        echo "Generating comprehensive SBOM..."
+        
+        # Install Microsoft SBOM Tool with error handling
+        echo "Installing Microsoft SBOM Tool..."
+        SBOM_VERSION="1.6.0"
+        SBOM_URL="https://github.com/microsoft/sbom-tool/releases/download/v${SBOM_VERSION}/sbom-tool-linux-x64"
+        
+        MICROSOFT_SBOM_AVAILABLE=false
+        if curl -fsSL "$SBOM_URL" -o sbom-tool 2>/dev/null; then
+          chmod +x sbom-tool
+          sudo mv sbom-tool /usr/local/bin/sbom-tool || mv sbom-tool ./sbom-tool
+          echo "✅ Microsoft SBOM Tool installed successfully"
+          MICROSOFT_SBOM_AVAILABLE=true
+        else
+          echo "⚠️ Failed to download Microsoft SBOM Tool, using fallback methods"
         fi
+        
+        # Install additional SBOM tools
+        pip install cyclonedx-bom pip-licenses || echo "Some SBOM tools failed to install"
+        
+        # Generate Python SBOM
+        if [ -f "config/requirements/requirements.txt" ] || [ -f "requirements.txt" ]; then
+          echo "Generating Python SBOM..."
+          
+          # Method 1: pip-licenses (most reliable)
+          if pip-licenses --format=json --output-file=security/reports/sbom-python-licenses.json 2>/dev/null; then
+            echo "✅ Python licenses SBOM generated"
+          else
+            echo '[]' > security/reports/sbom-python-licenses.json
+          fi
+          
+          # Method 2: CycloneDX Python
+          if command -v cyclonedx-py &> /dev/null; then
+            cyclonedx-py --output-format json --output-file security/reports/sbom-python-cyclonedx.json . 2>/dev/null || echo '{"components": []}' > security/reports/sbom-python-cyclonedx.json
+          fi
+          
+          # Create consolidated Python SBOM
+          python3 << 'EOF'
+import json
+import os
+from datetime import datetime
+
+# Consolidate Python SBOMs
+consolidated = {
+    "bomFormat": "CycloneDX",
+    "specVersion": "1.4",
+    "version": 1,
+    "metadata": {
+        "timestamp": datetime.now().isoformat() + "Z",
+        "tools": [{"vendor": "GitHub Actions", "name": "consolidated-python-sbom"}]
+    },
+    "components": []
+}
+
+# Try to merge pip-licenses data
+try:
+    if os.path.exists('security/reports/sbom-python-licenses.json'):
+        with open('security/reports/sbom-python-licenses.json', 'r') as f:
+            licenses = json.load(f)
+        for pkg in licenses:
+            component = {
+                "type": "library",
+                "name": pkg.get("Name", "unknown"),
+                "version": pkg.get("Version", "unknown"),
+                "purl": f"pkg:pypi/{pkg.get('Name', 'unknown')}@{pkg.get('Version', 'unknown')}"
+            }
+            if pkg.get("License"):
+                component["licenses"] = [{"license": {"name": pkg["License"]}}]
+            consolidated["components"].append(component)
+except Exception as e:
+    print(f"Could not merge pip-licenses data: {e}")
+
+# Try to merge CycloneDX data
+try:
+    if os.path.exists('security/reports/sbom-python-cyclonedx.json'):
+        with open('security/reports/sbom-python-cyclonedx.json', 'r') as f:
+            cyclonedx = json.load(f)
+        existing_names = {c["name"] for c in consolidated["components"]}
+        for component in cyclonedx.get("components", []):
+            if component.get("name") not in existing_names:
+                consolidated["components"].append(component)
+except Exception as e:
+    print(f"Could not merge CycloneDX data: {e}")
+
+with open('security/reports/sbom-python.json', 'w') as f:
+    json.dump(consolidated, f, indent=2)
+
+print(f"✅ Consolidated Python SBOM with {len(consolidated['components'])} components")
+EOF
+        else
+          echo '{"components": [], "metadata": {"timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%S.%fZ)'"}}' > security/reports/sbom-python.json
+        fi
+        
+        # Generate Node.js SBOM
         if [ -f "package.json" ]; then
-          npm list --json > security/reports/sbom-node.json 2>/dev/null || echo '{}' > security/reports/sbom-node.json
+          echo "Generating Node.js SBOM..."
+          npm list --json > security/reports/sbom-node-raw.json 2>/dev/null || echo '{}' > security/reports/sbom-node-raw.json
+          
+          # Convert npm list to standard SBOM format
+          python3 << 'EOF'
+import json
+import os
+from datetime import datetime
+
+try:
+    with open('security/reports/sbom-node-raw.json', 'r') as f:
+        npm_data = json.load(f)
+    
+    sbom = {
+        "bomFormat": "CycloneDX",
+        "specVersion": "1.4",
+        "version": 1,
+        "metadata": {
+            "timestamp": datetime.now().isoformat() + "Z",
+            "tools": [{"vendor": "GitHub Actions", "name": "npm-list-converter"}]
+        },
+        "components": []
+    }
+    
+    def extract_dependencies(deps, components):
+        for name, info in deps.items():
+            if isinstance(info, dict):
+                component = {
+                    "type": "library",
+                    "name": name,
+                    "version": info.get("version", "unknown"),
+                    "purl": f"pkg:npm/{name}@{info.get('version', 'unknown')}"
+                }
+                components.append(component)
+                
+                # Recursively extract dependencies
+                if "dependencies" in info:
+                    extract_dependencies(info["dependencies"], components)
+    
+    if "dependencies" in npm_data:
+        extract_dependencies(npm_data["dependencies"], sbom["components"])
+    
+    with open('security/reports/sbom-node.json', 'w') as f:
+        json.dump(sbom, f, indent=2)
+    
+    print(f"✅ Node.js SBOM generated with {len(sbom['components'])} components")
+except Exception as e:
+    print(f"Error processing Node.js SBOM: {e}")
+    empty_sbom = {"bomFormat": "CycloneDX", "specVersion": "1.4", "version": 1, "components": []}
+    with open('security/reports/sbom-node.json', 'w') as f:
+        json.dump(empty_sbom, f)
+EOF
+        else
+          echo '{"components": [], "metadata": {"timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%S.%fZ)'"}}' > security/reports/sbom-node.json
         fi
+        
+        # Generate comprehensive SBOM with Microsoft tool if available
+        if [ "$MICROSOFT_SBOM_AVAILABLE" = "true" ]; then
+          echo "Generating comprehensive SBOM with Microsoft SBOM Tool..."
+          
+          # Create build manifest for Microsoft SBOM tool
+          mkdir -p ./_manifest/
+          
+          # Try to generate with Microsoft tool
+          if ./sbom-tool generate -b . -bc . -pn "AIVillage" -pv "1.0.0" -ps "GitHub" -nsb "https://github.com/microsoft/sbom-tool" 2>/dev/null; then
+            echo "✅ Microsoft SBOM generated successfully"
+            # Find and copy the generated SBOM
+            find _manifest/ -name "*.json" -exec cp {} security/reports/sbom-microsoft.json \; 2>/dev/null || echo "Could not copy Microsoft SBOM"
+          else
+            echo "⚠️ Microsoft SBOM tool execution failed"
+            echo '{"documentNamespace": "https://github.com/AIVillage", "packages": []}' > security/reports/sbom-microsoft.json
+          fi
+        else
+          echo "Microsoft SBOM tool not available, using consolidated approach"
+          
+          # Create comprehensive SBOM by merging existing ones
+          python3 << 'EOF'
+import json
+from datetime import datetime
+
+# Create comprehensive SBOM
+comprehensive = {
+    "bomFormat": "CycloneDX",
+    "specVersion": "1.4",
+    "version": 1,
+    "metadata": {
+        "timestamp": datetime.now().isoformat() + "Z",
+        "tools": [{"vendor": "GitHub Actions", "name": "comprehensive-sbom-generator"}]
+    },
+    "components": []
+}
+
+# Merge Python components
+try:
+    with open('security/reports/sbom-python.json', 'r') as f:
+        python_sbom = json.load(f)
+    comprehensive["components"].extend(python_sbom.get("components", []))
+    print(f"Merged {len(python_sbom.get('components', []))} Python components")
+except Exception as e:
+    print(f"Could not merge Python SBOM: {e}")
+
+# Merge Node.js components
+try:
+    with open('security/reports/sbom-node.json', 'r') as f:
+        node_sbom = json.load(f)
+    comprehensive["components"].extend(node_sbom.get("components", []))
+    print(f"Merged {len(node_sbom.get('components', []))} Node.js components")
+except Exception as e:
+    print(f"Could not merge Node.js SBOM: {e}")
+
+# Remove duplicates based on name and version
+seen = set()
+unique_components = []
+for component in comprehensive["components"]:
+    key = (component.get("name", ""), component.get("version", ""))
+    if key not in seen:
+        seen.add(key)
+        unique_components.append(component)
+
+comprehensive["components"] = unique_components
+
+with open('security/reports/sbom-comprehensive.json', 'w') as f:
+    json.dump(comprehensive, f, indent=2)
+
+print(f"✅ Comprehensive SBOM generated with {len(comprehensive['components'])} unique components")
+EOF
+        fi
+        
+        echo "SBOM generation completed."
 
     # Aggregate Security Results
     - name: Aggregate Security Results
@@ -481,7 +698,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: security-reports-${{ github.run_number }}
+        name: security-reports-${{ github.run_id }}
         path: |
           security/reports/
           security/dashboard/

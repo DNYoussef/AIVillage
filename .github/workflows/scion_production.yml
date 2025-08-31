@@ -247,7 +247,7 @@ jobs:
       - name: Upload metrics snapshot
         uses: actions/upload-artifact@v4
         with:
-          name: metrics-snapshot
+          name: metrics-snapshot-${{ github.sha }}
           path: test_performance_summary.json
           if-no-files-found: warn
 
@@ -257,7 +257,7 @@ jobs:
       - name: Upload bench results
         uses: actions/upload-artifact@v4
         with:
-          name: bench-results
+          name: bench-results-${{ github.sha }}
           path: bench.log
           if-no-files-found: warn
 

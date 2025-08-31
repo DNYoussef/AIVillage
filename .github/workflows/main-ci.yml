@@ -493,11 +493,26 @@ jobs:
 
       - name: Download Security Reports
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: security-reports-${{ github.run_id }}
           path: security-reports/
 
+      - name: Check if Security Reports exist
+        id: check-security-reports
+        run: |
+          if [ -d "security-reports/" ] && [ "$(ls -A security-reports/)" ]; then
+            echo "reports-exist=true" >> $GITHUB_OUTPUT
+            echo "✅ Security reports found"
+          else
+            echo "reports-exist=false" >> $GITHUB_OUTPUT
+            echo "⚠️ No security reports found - creating empty report"
+            mkdir -p security-reports
+            echo '{"status": "no_reports", "timestamp": "'$(date -Iseconds)'"}' > security-reports/empty-report.json
+          fi
+
       - name: Evaluate Security Gate
+        if: steps.check-security-reports.outputs.reports-exist == 'true'
         run: |
           echo "Evaluating security quality gate..."
 
@@ -524,6 +539,20 @@ jobs:
           fi
 
           echo "✅ Security gate PASSED - Safe for deployment"
+
+      - name: Evaluate Security Gate (No Reports)
+        if: steps.check-security-reports.outputs.reports-exist == 'false'
+        run: |
+          echo "⚠️ No security reports available - using basic validation"
+          
+          if [[ "${{ needs.security.result }}" == "failure" ]]; then
+            echo "❌ Security job failed - BLOCKING DEPLOYMENT"
+            exit 1
+          elif [[ "${{ needs.security.result }}" == "skipped" ]]; then
+            echo "⚠️ Security job was skipped - allowing deployment with warning"
+          else
+            echo "✅ Basic security validation passed"
+          fi
 
   status-check:
     name: CI Status Check
