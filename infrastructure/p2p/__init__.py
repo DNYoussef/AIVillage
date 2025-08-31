@@ -460,9 +460,9 @@ class P2PNetwork:
                                 self.logger.debug(f"Discovered WebSocket peer: {peer_id}")
                                 return True
                             
-        except Exception:
+        except Exception as e:
             # Expected to fail for non-P2P endpoints
-            pass
+            self.logger.debug(f"WebSocket discovery failed for {host}:{port} (expected for non-P2P endpoints): {e}")
         
         return False
     

@@ -226,8 +226,9 @@ def detect_format(data: bytes) -> Optional[SerializationFormat]:
         try:
             msgpack.unpackb(data, raw=False)
             return SerializationFormat.MSGPACK
-        except:
-            pass
+        except Exception as e:
+            import logging
+            logging.debug(f"Failed to detect MessagePack format: {e}")
     
     # Default to JSON if detection fails
     return SerializationFormat.JSON

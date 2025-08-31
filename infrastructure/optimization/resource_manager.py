@@ -295,7 +295,7 @@ class MemoryManager:
         if not self.config.enable_tensor_optimization:
             return {'cleaned': 0, 'memory_freed': 0}
         
-        cleanup_stats = {'cleaned': 0, 'memory_freed': 0}
+        cleanup_stats = {'cleaned': 0, 'memory_freed': 0, 'errors': 0}
         
         try:
             # Clean up weak references that are no longer valid
@@ -349,8 +349,9 @@ class MemoryManager:
                 
                 # Force garbage collection
                 del tensor_ref
-            except:
-                pass
+            except Exception as e:
+                logger.debug(f"Failed to cleanup tensor reference {tensor_ref}: {e}")
+                cleanup_stats['errors'] += 1
         
         if old_tensors:
             gc.collect()

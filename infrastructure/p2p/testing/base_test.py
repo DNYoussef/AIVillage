@@ -191,8 +191,9 @@ class AsyncP2PTestCase(P2PTestCase):
                 
                 if result:
                     return
-            except Exception:
-                pass
+            except Exception as e:
+                import logging
+                logging.debug(f"Wait condition check failed (attempt {attempt + 1}): {e}")
             
             await asyncio.sleep(interval)
         
