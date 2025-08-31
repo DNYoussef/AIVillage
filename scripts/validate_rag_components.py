@@ -11,6 +11,9 @@ import logging
 from pathlib import Path
 import sys
 import time
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -21,37 +24,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 
-class RAGComponentValidator:
-    """Focused validator for available RAG components."""
-
-    def __init__(self):
-        self.results = {}
-        self.errors = []
-
-    def log_result(self, test_name: str, success: bool, message: str = "", details: dict = None):
-        """Log test result."""
-        self.results[test_name] = {"success": success, "message": message, "details": details or {}}
-        status = "✅ PASS" if success else "❌ FAIL"
-        logger.info(f"{status} {test_name}: {message}")
-        if not success:
-            self.errors.append(f"{test_name}: {message}")
-
-    async def test_rag_core_imports(self):
-        """Test core RAG imports with graceful fallbacks."""
-        logger.info("Testing RAG core imports...")
-
-        try:
-            # Test HyperRAG with fallbacks
-            sys.path.insert(0, str(project_root / "core" / "rag"))
-
-            # Create minimal working version
-            exec(
-                """
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict, List, Optional
-import logging
-
+# Define RAG classes at module level to avoid F821 errors
 class QueryMode(Enum):
     FAST = "fast"
     BALANCED = "balanced"
@@ -59,11 +32,13 @@ class QueryMode(Enum):
     CREATIVE = "creative"
     ANALYTICAL = "analytical"
 
+
 class MemoryType(Enum):
     EPISODIC = "episodic"
     SEMANTIC = "semantic"
     VECTOR = "vector"
     ALL = "all"
+
 
 @dataclass
 class RAGConfig:
@@ -86,6 +61,7 @@ class RAGConfig:
     min_relevance_threshold: float = 0.5
     synthesis_confidence_threshold: float = 0.6
 
+
 @dataclass
 class RetrievedInformation:
     id: str
@@ -96,12 +72,14 @@ class RetrievedInformation:
     graph_connections: List[str] = field(default_factory=list)
     relationship_types: List[str] = field(default_factory=list)
 
+
 @dataclass
 class SynthesizedAnswer:
     answer: str
     confidence: float
     supporting_sources: List[str]
     synthesis_method: str
+
 
 @dataclass
 class QueryResult:
@@ -119,6 +97,7 @@ class QueryResult:
     confidence_score: float = 0.0
     edge_device_context: Optional[Dict[str, Any]] = None
     mobile_optimizations: Optional[Dict[str, Any]] = None
+
 
 class HyperRAG:
     def __init__(self, config: RAGConfig = None):
@@ -187,14 +166,50 @@ class HyperRAG:
                 "graph_enabled": self.config.enable_graph_rag
             }
         }
-""",
-                globals(),
+
+
+class RAGComponentValidator:
+    """Focused validator for available RAG components."""
+
+    def __init__(self):
+        self.results = {}
+        self.errors = []
+
+    def log_result(self, test_name: str, success: bool, message: str = "", details: dict = None):
+        """Log test result."""
+        self.results[test_name] = {"success": success, "message": message, "details": details or {}}
+        status = "✅ PASS" if success else "❌ FAIL"
+        logger.info(f"{status} {test_name}: {message}")
+        if not success:
+            self.errors.append(f"{test_name}: {message}")
+
+    async def test_rag_core_imports(self):
+        """Test core RAG imports with graceful fallbacks."""
+        logger.info("Testing RAG core imports...")
+
+        try:
+            # Test that RAG classes are available (they're defined at module level now)
+            # Verify the classes exist and can be instantiated
+            test_config = RAGConfig()
+            test_query_mode = QueryMode.BALANCED
+            test_retrieved = RetrievedInformation(
+                id="test", 
+                content="test", 
+                source="test", 
+                relevance_score=0.8, 
+                retrieval_confidence=0.8
+            )
+            test_synthesized = SynthesizedAnswer(
+                answer="test", 
+                confidence=0.8, 
+                supporting_sources=["test"], 
+                synthesis_method="test"
             )
 
-            self.log_result("rag_core_classes", True, "Core RAG classes created successfully")
+            self.log_result("rag_core_classes", True, "Core RAG classes are available and functional")
 
         except Exception as e:
-            self.log_result("rag_core_classes", False, f"Failed to create core RAG classes: {e}")
+            self.log_result("rag_core_classes", False, f"Failed to access core RAG classes: {e}")
 
     async def test_hyperrag_functionality(self):
         """Test HyperRAG basic functionality."""

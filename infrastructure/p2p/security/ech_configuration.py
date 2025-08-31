@@ -307,6 +307,7 @@ def generate_ech_keypair() -> Tuple[bytes, bytes]:
     try:
         # Try to use proper cryptography
         from cryptography.hazmat.primitives.asymmetric import x25519
+        from cryptography.hazmat.primitives import serialization
         
         private_key = x25519.X25519PrivateKey.generate()
         public_key = private_key.public_key()
