@@ -46,7 +46,7 @@ async def test_tensor_stream_round_trip(monkeypatch):
     assert tensor_id in recv_stream.tensor_metadata
 
     for chunk in recv_stream.pending_chunks[tensor_id].values():
-        assert hashlib.md5(chunk.data).hexdigest() == chunk.checksum
+        assert hashlib.md5(chunk.data, usedforsecurity=False).hexdigest() == chunk.checksum
 
     reconstructed, metadata = await recv_stream.receive_tensor(tensor_id)
     assert np.array_equal(reconstructed, tensor)

@@ -360,7 +360,12 @@ jobs:
       - name: Install SBOM tools
         run: |
           # Install Python SBOM tools
-          pip install cyclonedx-bom sbom-tool
+          pip install cyclonedx-bom
+          
+          # Install Microsoft SBOM Tool (binary, not pip package)
+          wget https://github.com/microsoft/sbom-tool/releases/latest/download/sbom-tool-linux-x64 -O sbom-tool
+          chmod +x sbom-tool
+          sudo mv sbom-tool /usr/local/bin/sbom-tool
           
           # Install Node.js SBOM tools
           npm install -g @cyclonedx/cyclonedx-npm

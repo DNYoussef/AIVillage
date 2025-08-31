@@ -1,0 +1,451 @@
+# Fog Coordinator Services Configuration Template
+# This configuration supports the 6-service architecture refactoring
+
+# ==============================================================================
+# Global Configuration
+# ==============================================================================
+global:
+  environment: "development"  # development, staging, production
+  log_level: "INFO"
+  metrics_enabled: true
+  tracing_enabled: true
+  
+  # Service discovery settings
+  service_registry:
+    host: "localhost"
+    port: 8500
+    health_check_interval: 30
+    timeout_seconds: 10
+    
+  # Event bus configuration
+  event_bus:
+    type: "redis"  # redis, kafka, inmemory
+    host: "localhost"
+    port: 6379
+    max_connections: 100
+    retry_attempts: 3
+    
+  # Security settings
+  security:
+    tls_enabled: true
+    certificate_path: "/etc/ssl/certs/fog-coordinator.pem"
+    private_key_path: "/etc/ssl/private/fog-coordinator.key"
+    api_key_required: true
+
+# ==============================================================================
+# 1. Fog Orchestration Service Configuration
+# ==============================================================================
+orchestration:
+  service:
+    name: "fog-orchestration"
+    version: "1.0.0"
+    host: "0.0.0.0"
+    port: 8080
+    max_connections: 1000
+    
+  service_discovery:
+    timeout_seconds: 30
+    retry_attempts: 3
+    circuit_breaker:
+      failure_threshold: 5
+      recovery_timeout: 60
+      half_open_max_calls: 3
+      
+  health_checks:
+    interval_seconds: 60
+    timeout_seconds: 10
+    healthy_threshold: 2
+    unhealthy_threshold: 5
+    endpoints:
+      - "/health"
+      - "/metrics"
+      - "/ready"
+      
+  messaging:
+    max_queue_size: 1000
+    retry_backoff_ms: 500
+    dead_letter_queue_enabled: true
+    message_ttl_seconds: 300
+    
+  performance:
+    worker_threads: 4
+    async_task_limit: 100
+    memory_limit_mb: 100
+    cpu_limit_percent: 50
+
+# ==============================================================================
+# 2. Fog Harvesting Service Configuration  
+# ==============================================================================
+harvesting:
+  service:
+    name: "fog-harvesting"
+    version: "1.0.0"
+    host: "0.0.0.0"
+    port: 8081
+    
+  device_discovery:
+    scan_interval_seconds: 120
+    discovery_timeout_seconds: 30
+    capability_cache_ttl_seconds: 300
+    max_concurrent_scans: 50
+    
+  participant_selection:
+    min_trust_score: 0.6
+    min_battery_percent: 50
+    min_ram_mb: 2048
+    min_compute_gflops: 1.0
+    min_bandwidth_mbps: 10.0
+    min_reliability_score: 0.7
+    
+  resource_allocation:
+    burst_timeout_minutes: 30
+    max_concurrent_bursts: 10
+    allocation_retry_attempts: 3
+    workload_balancing: "weighted"  # round_robin, weighted, least_loaded
+    
+  device_monitoring:
+    health_check_interval_seconds: 60
+    offline_threshold_seconds: 180
+    metrics_collection_interval: 30
+    max_devices_monitored: 1000
+    
+  performance:
+    memory_limit_mb: 150
+    cpu_limit_percent: 40
+    cache_size_mb: 50
+
+# ==============================================================================
+# 3. Fog Marketplace Service Configuration
+# ==============================================================================
+marketplace:
+  service:
+    name: "fog-marketplace"
+    version: "1.0.0" 
+    host: "0.0.0.0"
+    port: 8082
+    
+  pricing:
+    base_compute_rate_per_gflop_hour: 0.001
+    base_memory_rate_per_gb_hour: 0.0001
+    base_storage_rate_per_gb_hour: 0.00001
+    base_network_rate_per_mbps_hour: 0.0001
+    
+    # Dynamic pricing multipliers
+    demand_multiplier:
+      low_demand: 0.8      # < 30% utilization
+      normal_demand: 1.0   # 30-70% utilization  
+      high_demand: 1.5     # > 70% utilization
+      
+    quality_multipliers:
+      basic: 1.0
+      standard: 1.2
+      premium: 1.5
+      enterprise: 2.0
+      
+  auctions:
+    auction_duration_minutes: 10
+    min_bid_increment_percent: 5
+    reserve_price_ratio: 0.7
+    max_concurrent_auctions: 100
+    bid_timeout_seconds: 30
+    
+  revenue_sharing:
+    platform_fee_percent: 5
+    provider_base_share_percent: 85
+    validator_share_percent: 10
+    bonus_pool_percent: 0  # For high-quality providers
+    
+  market_analytics:
+    price_history_retention_days: 90
+    metrics_aggregation_interval_minutes: 5
+    trend_analysis_window_hours: 24
+    
+  performance:
+    memory_limit_mb: 200
+    cpu_limit_percent: 60
+    database_connections: 20
+
+# ==============================================================================
+# 4. Fog Privacy Service Configuration
+# ==============================================================================
+privacy:
+  service:
+    name: "fog-privacy"
+    version: "1.0.0"
+    host: "0.0.0.0" 
+    port: 8083
+    
+  differential_privacy:
+    default_epsilon: 1.0
+    default_delta: 1e-5
+    budget_per_participant: 10.0
+    noise_mechanism: "gaussian"  # gaussian, laplace
+    sensitivity_bound: 1.0
+    
+  secure_aggregation:
+    threshold_participants: 3
+    byzantine_tolerance_percent: 33
+    aggregation_timeout_seconds: 300
+    verification_required: true
+    
+  hidden_services:
+    max_services_per_node: 5
+    replication_factor: 3
+    access_fee_tokens: 0.001
+    data_encryption: "AES-256-GCM"
+    key_rotation_hours: 24
+    
+  onion_routing:
+    min_hops: 3
+    max_hops: 7
+    circuit_timeout_minutes: 30
+    max_circuits_per_node: 10
+    
+  byzantine_detection:
+    detection_algorithm: "krum"  # krum, trimmed_mean, median
+    outlier_threshold: 2.0  # standard deviations
+    min_honest_participants: 5
+    
+  performance:
+    crypto_worker_threads: 2
+    memory_limit_mb: 120
+    computation_timeout_seconds: 60
+
+# ==============================================================================
+# 5. Fog Tokenomics Service Configuration
+# ==============================================================================
+tokenomics:
+  service:
+    name: "fog-tokenomics"
+    version: "1.0.0"
+    host: "0.0.0.0"
+    port: 8084
+    
+  compute_mining:
+    base_reward_per_gflop_hour: 0.1
+    quality_bonus_multiplier: 1.5
+    reliability_bonus_multiplier: 1.2
+    participation_bonus: 0.05
+    
+  reward_distribution:
+    distribution_interval_minutes: 60
+    minimum_payout_threshold: 0.01
+    batch_size: 100
+    retry_failed_payments: true
+    
+  transaction_processing:
+    confirmation_blocks: 3
+    gas_price_gwei: 20
+    max_retry_attempts: 5
+    transaction_timeout_seconds: 300
+    
+  wallet_management:
+    default_initial_balance: 10.0
+    minimum_balance_warning: 0.1
+    auto_topup_enabled: false
+    auto_topup_threshold: 1.0
+    auto_topup_amount: 5.0
+    
+  credit_system:
+    credit_to_token_ratio: 1.0
+    credit_expiry_days: 365
+    transfer_fee_percent: 0.1
+    
+  blockchain_integration:
+    network: "ethereum"  # ethereum, polygon, binance
+    contract_address: "0x..."
+    rpc_endpoint: "https://mainnet.infura.io/v3/..."
+    private_key_encrypted: true
+    
+  performance:
+    memory_limit_mb: 100
+    database_connections: 15
+    transaction_queue_size: 1000
+
+# ==============================================================================
+# 6. Fog System Stats Service Configuration
+# ==============================================================================
+system_stats:
+  service:
+    name: "fog-system-stats"
+    version: "1.0.0"
+    host: "0.0.0.0"
+    port: 8085
+    
+  metrics_collection:
+    interval_seconds: 30
+    batch_size: 100
+    retention_policy:
+      raw_metrics_hours: 24
+      hourly_aggregates_days: 7
+      daily_aggregates_days: 30
+      monthly_aggregates_days: 365
+      
+  performance_monitoring:
+    cpu_threshold_percent: 80
+    memory_threshold_percent: 85
+    disk_threshold_percent: 90
+    latency_threshold_ms: 1000
+    error_rate_threshold_percent: 5
+    
+  alerting:
+    enabled: true
+    channels:
+      email:
+        enabled: true
+        smtp_host: "smtp.gmail.com"
+        smtp_port: 587
+        username: "alerts@fognetwork.com"
+        password_encrypted: true
+      slack:
+        enabled: true
+        webhook_url: "https://hooks.slack.com/services/..."
+        channel: "#fog-alerts"
+      webhook:
+        enabled: false
+        endpoint: "https://alertmanager.example.com/webhook"
+        
+    rules:
+      - name: "high_cpu_usage"
+        metric: "cpu_usage_percent"
+        threshold: 85
+        duration_minutes: 5
+        severity: "warning"
+        
+      - name: "service_down"
+        metric: "service_health"
+        condition: "equals"
+        value: "unhealthy"
+        duration_minutes: 1
+        severity: "critical"
+        
+  analytics:
+    enable_ml_predictions: true
+    prediction_models:
+      - "resource_demand_forecast"
+      - "failure_prediction"
+      - "performance_optimization"
+      
+  data_export:
+    formats: ["json", "csv", "parquet", "prometheus"]
+    compression: "gzip"
+    export_api_enabled: true
+    max_export_size_mb: 100
+    
+  performance:
+    memory_limit_mb: 80
+    time_series_db: "prometheus"  # prometheus, influxdb, timescaledb
+    max_series: 10000
+
+# ==============================================================================
+# External Dependencies Configuration
+# ==============================================================================
+external_dependencies:
+  # P2P Network Integration
+  p2p_network:
+    node_id: "fog-coordinator-node"
+    listen_address: "0.0.0.0:9000"
+    bootstrap_nodes:
+      - "/ip4/127.0.0.1/tcp/9001/p2p/QmBootstrapNode1"
+      - "/ip4/127.0.0.1/tcp/9002/p2p/QmBootstrapNode2"
+    max_connections: 50
+    
+  # Database Connections  
+  databases:
+    primary:
+      type: "postgresql"
+      host: "localhost"
+      port: 5432
+      database: "fog_coordinator"
+      username: "fog_user"
+      password_encrypted: true
+      max_connections: 25
+      
+    metrics:
+      type: "timescaledb"
+      host: "localhost" 
+      port: 5433
+      database: "fog_metrics"
+      username: "metrics_user"
+      password_encrypted: true
+      max_connections: 10
+      
+    cache:
+      type: "redis"
+      host: "localhost"
+      port: 6379
+      database: 0
+      max_connections: 20
+      
+  # Message Queue
+  message_queue:
+    type: "rabbitmq"  # rabbitmq, kafka, nats
+    host: "localhost"
+    port: 5672
+    username: "fog_queue"
+    password_encrypted: true
+    virtual_host: "fog"
+    
+# ==============================================================================
+# Development & Testing Configuration
+# ==============================================================================
+development:
+  # Mock services for testing
+  mock_services:
+    p2p_network: false
+    blockchain: true
+    external_apis: true
+    
+  # Debug settings
+  debug:
+    log_sql_queries: false
+    enable_profiling: true
+    mock_slow_operations: false
+    
+  # Test data
+  test_data:
+    create_sample_devices: 10
+    create_sample_wallets: 5
+    simulate_market_activity: true
+
+# ==============================================================================
+# Production Configuration Overrides
+# ==============================================================================
+production:
+  global:
+    log_level: "WARN"
+    
+  # Resource limits (production values)
+  resource_limits:
+    orchestration:
+      memory_limit_mb: 200
+      cpu_limit_percent: 60
+    harvesting:
+      memory_limit_mb: 300  
+      cpu_limit_percent: 50
+    marketplace:
+      memory_limit_mb: 400
+      cpu_limit_percent: 70
+    privacy:
+      memory_limit_mb: 250
+      cpu_limit_percent: 40
+    tokenomics:
+      memory_limit_mb: 200
+      cpu_limit_percent: 30
+    system_stats:
+      memory_limit_mb: 150
+      cpu_limit_percent: 20
+      
+  # High availability settings
+  high_availability:
+    replicas_per_service: 2
+    load_balancer_enabled: true
+    auto_scaling_enabled: true
+    health_check_aggressive: true
+    
+  # Security hardening
+  security:
+    encryption_at_rest: true
+    network_policies_enabled: true
+    pod_security_policies_enabled: true
+    secret_management: "vault"  # vault, k8s-secrets

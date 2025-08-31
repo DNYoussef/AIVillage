@@ -470,7 +470,7 @@ class SelfModificationFramework:
 
         import hashlib
 
-        return hashlib.md5(architecture_str.encode()).hexdigest()
+        return hashlib.md5(architecture_str.encode(), usedforsecurity=False).hexdigest()
 
     def apply_modification(self, model: nn.Module, modification_request: dict[str, Any]) -> dict[str, Any]:
         """Apply a self-modification request with safety checks."""

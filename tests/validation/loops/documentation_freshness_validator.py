@@ -93,7 +93,7 @@ class DocumentationFreshnessValidator:
                 content = ""
         
         # Calculate content hash for freshness tracking
-        content_hash = hashlib.md5(content.encode()).hexdigest()
+        content_hash = hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()
         
         # Extract links
         links = self._extract_links(content)

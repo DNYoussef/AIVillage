@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt_template>
+  <!-- XML-Style Prompt Template for Claude Code -->
+  
+  <metadata>
+    <version>1.0.0</version>
+    <created_by>Claude Code Automation</created_by>
+    <purpose>Structured prompt generation for consistent AI interactions</purpose>
+  </metadata>
+  
+  <context>
+    <project>
+      <name>{PROJECT_NAME}</name>
+      <description>{PROJECT_DESCRIPTION}</description>
+      <repository>{GITHUB_REPO}</repository>
+    </project>
+    
+    <environment>
+      <language>{PROGRAMMING_LANGUAGE}</language>
+      <framework>{FRAMEWORK}</framework>
+      <dependencies>{DEPENDENCIES}</dependencies>
+    </environment>
+    
+    <current_state>
+      <branch>{CURRENT_BRANCH}</branch>
+      <last_commit>{LAST_COMMIT_HASH}</last_commit>
+      <modified_files>{MODIFIED_FILES_LIST}</modified_files>
+    </current_state>
+  </context>
+  
+  <task>
+    <type>{TASK_TYPE}</type> <!-- implementation, review, test, refactor, document -->
+    <priority>{PRIORITY}</priority> <!-- critical, high, medium, low -->
+    <description>
+      <summary>{TASK_SUMMARY}</summary>
+      <details>{DETAILED_DESCRIPTION}</details>
+    </description>
+  </task>
+  
+  <requirements>
+    <functional>
+      <requirement id="FR-001">
+        <description>{FUNCTIONAL_REQUIREMENT_1}</description>
+        <acceptance_criteria>{ACCEPTANCE_CRITERIA_1}</acceptance_criteria>
+      </requirement>
+      <requirement id="FR-002">
+        <description>{FUNCTIONAL_REQUIREMENT_2}</description>
+        <acceptance_criteria>{ACCEPTANCE_CRITERIA_2}</acceptance_criteria>
+      </requirement>
+    </functional>
+    
+    <non_functional>
+      <performance>
+        <response_time>{MAX_RESPONSE_TIME}</response_time>
+        <throughput>{MIN_THROUGHPUT}</throughput>
+      </performance>
+      <security>
+        <authentication>{AUTH_METHOD}</authentication>
+        <authorization>{AUTH_STRATEGY}</authorization>
+      </security>
+      <quality>
+        <code_coverage>{MIN_COVERAGE}</code_coverage>
+        <connascence>{MAX_CONNASCENCE_STRENGTH}</connascence>
+      </quality>
+    </non_functional>
+  </requirements>
+  
+  <constraints>
+    <technical>
+      <constraint>{TECHNICAL_CONSTRAINT_1}</constraint>
+      <constraint>{TECHNICAL_CONSTRAINT_2}</constraint>
+    </technical>
+    <business>
+      <constraint>{BUSINESS_CONSTRAINT_1}</constraint>
+      <constraint>{BUSINESS_CONSTRAINT_2}</constraint>
+    </business>
+    <time>
+      <deadline>{DEADLINE}</deadline>
+      <effort_estimate>{EFFORT_HOURS}</effort_estimate>
+    </time>
+  </constraints>
+  
+  <guidelines>
+    <coding_standards>
+      <standard>Follow project's CLAUDE.md configuration</standard>
+      <standard>Use connascence-based refactoring</standard>
+      <standard>Maintain test coverage above 80%</standard>
+      <standard>Document all public APIs</standard>
+    </coding_standards>
+    
+    <best_practices>
+      <practice>Write tests before implementation (TDD)</practice>
+      <practice>Keep functions under 50 lines</practice>
+      <practice>Use dependency injection over globals</practice>
+      <practice>Batch all operations in single message</practice>
+    </best_practices>
+  </guidelines>
+  
+  <examples>
+    <example type="input">
+      <description>{INPUT_EXAMPLE_DESCRIPTION}</description>
+      <code><![CDATA[
+        {INPUT_EXAMPLE_CODE}
+      ]]></code>
+    </example>
+    
+    <example type="output">
+      <description>{OUTPUT_EXAMPLE_DESCRIPTION}</description>
+      <code><![CDATA[
+        {OUTPUT_EXAMPLE_CODE}
+      ]]></code>
+    </example>
+    
+    <example type="test">
+      <description>{TEST_EXAMPLE_DESCRIPTION}</description>
+      <code><![CDATA[
+        {TEST_EXAMPLE_CODE}
+      ]]></code>
+    </example>
+  </examples>
+  
+  <expected_output>
+    <format>{OUTPUT_FORMAT}</format> <!-- code, documentation, test, review -->
+    <structure>
+      <component>{EXPECTED_COMPONENT_1}</component>
+      <component>{EXPECTED_COMPONENT_2}</component>
+    </structure>
+    <validation>
+      <criterion>{VALIDATION_CRITERION_1}</criterion>
+      <criterion>{VALIDATION_CRITERION_2}</criterion>
+    </validation>
+  </expected_output>
+  
+  <workflow>
+    <step order="1">
+      <action>Analyze requirements</action>
+      <tool>Task tool with researcher agent</tool>
+    </step>
+    <step order="2">
+      <action>Design solution</action>
+      <tool>Task tool with architect agent</tool>
+    </step>
+    <step order="3">
+      <action>Implement solution</action>
+      <tool>Task tool with coder agent</tool>
+    </step>
+    <step order="4">
+      <action>Write tests</action>
+      <tool>Task tool with tester agent</tool>
+    </step>
+    <step order="5">
+      <action>Review and refactor</action>
+      <tool>Task tool with reviewer agent</tool>
+    </step>
+  </workflow>
+  
+  <error_handling>
+    <scenario type="validation_failure">
+      <action>Run linting and fix issues</action>
+      <fallback>Request human review</fallback>
+    </scenario>
+    <scenario type="test_failure">
+      <action>Debug and fix failing tests</action>
+      <fallback>Create issue for investigation</fallback>
+    </scenario>
+    <scenario type="build_failure">
+      <action>Check dependencies and configuration</action>
+      <fallback>Rollback to last working version</fallback>
+    </scenario>
+  </error_handling>
+  
+  <completion_criteria>
+    <criterion>All requirements implemented</criterion>
+    <criterion>All tests passing</criterion>
+    <criterion>Code review approved</criterion>
+    <criterion>Documentation updated</criterion>
+    <criterion>Performance benchmarks met</criterion>
+  </completion_criteria>
+  
+  <notes>
+    <!-- Additional context or special instructions -->
+    {ADDITIONAL_NOTES}
+  </notes>
+</prompt_template>

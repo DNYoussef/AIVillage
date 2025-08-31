@@ -241,9 +241,17 @@ class MessageQueue:
             loaded_count = 0
             for row in cursor.fetchall():
                 try:
-                    # Deserialize message
-                    message_data = pickle.loads(row[10])  # message_data
-                    message = MeshMessage.from_dict(message_data)
+                    # Security: Use safe JSON deserialization instead of pickle
+                    import json
+                    try:
+                        # Deserialize message safely using JSON
+                        message_data_json = row[10].decode('utf-8') if isinstance(row[10], bytes) else row[10]
+                        message_data = json.loads(message_data_json)
+                        message = MeshMessage.from_dict(message_data)
+                    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+                        # Fallback for legacy pickle data - log and skip
+                        logger.warning(f"Skipping legacy message data format: {e}")
+                        continue
 
                     # Create queued message
                     queued_msg = QueuedMessage(

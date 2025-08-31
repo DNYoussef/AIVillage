@@ -125,7 +125,7 @@ class AgentReasoningModel(ABC):
         self.agent_id = agent_id
         self.model_name = model_name
         self.config = config or {}
-        self.model_id = f"{agent_id}_{model_name}_{hashlib.md5(str(config).encode()).hexdigest()[:8]}"
+        self.model_id = f"{agent_id}_{model_name}_{hashlib.md5(str(config).encode(), usedforsecurity=False).hexdigest()[:8]}"  # Used for model ID generation, not security
         self.created_at = time.time()
         self.usage_stats = {
             "queries_processed": 0,

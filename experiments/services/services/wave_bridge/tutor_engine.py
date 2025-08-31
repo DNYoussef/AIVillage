@@ -584,7 +584,7 @@ Response:"""
     def get_cache_key(self, user_message: str, prompt: str, language: str) -> str:
         """Generate cache key for response caching."""
         combined = f"{user_message}_{prompt}_{language}"
-        return hashlib.md5(combined.encode()).hexdigest()
+        return hashlib.md5(combined.encode(), usedforsecurity=False).hexdigest()
 
     def update_model_performance(self, model: str, start_time: float, success: bool) -> None:
         """Update performance tracking for models."""

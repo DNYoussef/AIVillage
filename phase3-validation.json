@@ -1,0 +1,56 @@
+{
+  "total_files": 1662,
+  "total_loc": 494750,
+  "average_coupling_score": 16.874238935150075,
+  "worst_coupled_files": [
+    [
+      "src\\security\\admin\\localhost_only_server.py",
+      100.0
+    ],
+    [
+      "experiments\\agents\\agents\\sage\\sage_agent.py",
+      47.45811965811966
+    ],
+    [
+      "core\\hyperrag\\cognitive\\graph_fixer.py",
+      42.100315457413245
+    ],
+    [
+      "core\\rag\\analysis\\graph_fixer.py",
+      42.100315457413245
+    ],
+    [
+      "infrastructure\\gateway\\unified_agent_forge_backend.py",
+      40.916127677446454
+    ],
+    [
+      "infrastructure\\fog\\integration\\fog_coordinator.py",
+      39.81452513966481
+    ],
+    [
+      ".claude\\dspy_integration\\agents\\unified_agent.py",
+      39.6915021545245
+    ],
+    [
+      "experiments\\agents\\agents\\king\\task_management\\__init__.py",
+      39.5
+    ],
+    [
+      "infrastructure\\fog\\sdk\\python\\fog_client_original.py",
+      37.577777777777776
+    ],
+    [
+      "integrations\\clients\\fog-sdk\\python\\fog_client_original.py",
+      37.577777777777776
+    ]
+  ],
+  "total_positional_violations": 1481,
+  "total_magic_literals": 191118,
+  "total_god_classes": 279,
+  "total_global_usage": 163,
+  "overall_positional_ratio": 10.996435996435997,
+  "overall_magic_density": 38.62920667003537,
+  "god_class_ratio": 5.115511551155116,
+  "improvement_score": null,
+  "regression_areas": null
+}

@@ -1,0 +1,179 @@
+{
+  "model_name": "constitutional-harm-classifier",
+  "version": "1.0.0",
+  "description": "Constitutional harm taxonomy classifier for fog compute content moderation",
+  "architecture": {
+    "base_model": "distilbert-base-uncased",
+    "classification_heads": {
+      "harm_level": {
+        "input_size": 768,
+        "hidden_sizes": [256],
+        "output_size": 4,
+        "dropout": 0.1,
+        "activation": "relu"
+      },
+      "harm_categories": {
+        "input_size": 768,
+        "hidden_sizes": [512],
+        "output_size": 27,
+        "dropout": 0.1,
+        "activation": "sigmoid"
+      },
+      "viewpoint_diversity": {
+        "input_size": 768,
+        "hidden_sizes": [128],
+        "output_size": 1,
+        "dropout": 0.1,
+        "activation": "sigmoid"
+      },
+      "constitutional_alignment": {
+        "input_size": 768,
+        "hidden_sizes": [256],
+        "output_size": 6,
+        "dropout": 0.1,
+        "activation": "softmax"
+      }
+    }
+  },
+  "harm_levels": {
+    "H0": {
+      "name": "constitutional",
+      "description": "Protected constitutional speech and democratic discourse",
+      "severity_weight": 0.0,
+      "color": "#2E8B57"
+    },
+    "H1": {
+      "name": "minor_concerns",
+      "description": "Legal but potentially problematic content",
+      "severity_weight": 0.3,
+      "color": "#FFD700"
+    },
+    "H2": {
+      "name": "moderate_harm",
+      "description": "Significant concerns requiring attention",
+      "severity_weight": 0.7,
+      "color": "#FF8C00"
+    },
+    "H3": {
+      "name": "severe_harm",
+      "description": "Immediate danger or clearly harmful content",
+      "severity_weight": 1.0,
+      "color": "#FF0000"
+    }
+  },
+  "harm_categories": {
+    "count": 27,
+    "distribution": {
+      "H0": 6,
+      "H1": 7,
+      "H2": 8,
+      "H3": 6
+    },
+    "constitutional_principles": [
+      "free_speech",
+      "press_freedom",
+      "religious_liberty",
+      "assembly_rights",
+      "petition_rights",
+      "due_process",
+      "equal_protection"
+    ]
+  },
+  "training_config": {
+    "batch_size": 16,
+    "learning_rate": 2e-5,
+    "num_epochs": 10,
+    "warmup_steps": 1000,
+    "weight_decay": 0.01,
+    "gradient_clip_norm": 1.0,
+    "early_stopping_patience": 3,
+    "use_focal_loss": true,
+    "bias_mitigation": true,
+    "constitutional_augmentation": true,
+    "federated_learning": true,
+    "differential_privacy": true
+  },
+  "bias_detection": {
+    "enabled": true,
+    "fairness_thresholds": {
+      "demographic_parity": 0.8,
+      "equalized_odds": 0.8,
+      "calibration": 0.9,
+      "individual_fairness": 0.85,
+      "viewpoint_neutrality": 0.7
+    },
+    "bias_types": [
+      "political",
+      "demographic",
+      "ideological",
+      "cultural",
+      "linguistic",
+      "temporal",
+      "viewpoint",
+      "algorithmic"
+    ]
+  },
+  "constitutional_framework": {
+    "first_amendment_tests": {
+      "content_based_restrictions": "strict_scrutiny",
+      "content_neutral_restrictions": "intermediate_scrutiny",
+      "unprotected_categories": [
+        "incitement_to_lawless_action",
+        "true_threats",
+        "defamation",
+        "obscenity",
+        "child_pornography",
+        "fraud"
+      ]
+    },
+    "brandenburg_test": {
+      "imminent_lawless_action": true,
+      "likely_to_produce": true,
+      "intent_to_produce": true
+    },
+    "viewpoint_neutrality": {
+      "required": true,
+      "exceptions": ["unprotected_speech", "illegal_content"],
+      "enforcement": "algorithmic_and_human"
+    }
+  },
+  "performance_metrics": {
+    "target_accuracy": 0.85,
+    "target_precision": 0.82,
+    "target_recall": 0.80,
+    "target_f1": 0.81,
+    "bias_threshold": 0.15,
+    "viewpoint_neutrality_threshold": 0.7,
+    "inference_latency_ms": 100,
+    "throughput_requests_per_second": 1000
+  },
+  "deployment": {
+    "fog_compute_compatible": true,
+    "edge_device_support": true,
+    "federated_learning_enabled": true,
+    "real_time_inference": true,
+    "batch_processing": true,
+    "api_endpoints": [
+      "/classify",
+      "/batch_classify",
+      "/evaluate_bias",
+      "/constitutional_analysis",
+      "/viewpoint_diversity"
+    ]
+  },
+  "compliance": {
+    "constitutional_law": "us_first_amendment",
+    "privacy_regulations": ["gdpr_compliant", "ccpa_compliant"],
+    "bias_testing": "required",
+    "transparency_reporting": "quarterly",
+    "human_oversight": "required_for_h3",
+    "appeals_process": "automated_and_human"
+  },
+  "monitoring": {
+    "bias_detection": "continuous",
+    "performance_tracking": "real_time",
+    "constitutional_compliance": "automated_and_periodic_audit",
+    "viewpoint_neutrality": "daily_assessment",
+    "fairness_metrics": "weekly_reporting"
+  }
+}

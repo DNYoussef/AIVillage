@@ -187,7 +187,7 @@ class TutorAgent(AgentInterface):
 
     async def get_embedding(self, text: str) -> list[float]:
         """Generate education-focused embeddings"""
-        hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
+        hash_value = int(hashlib.md5(text.encode(), usedforsecurity=False).hexdigest(), 16)  # Used for embedding generation, not security
         # Education embeddings focus on learning patterns and content relationships
         return [(hash_value % 1000) / 1000.0] * 512
 

@@ -172,7 +172,7 @@ async def get_tutor_response(message: str, from_number: str, session_id: str, de
 def generate_session_id(from_number: str, message_sid: str) -> str:
     """Generate unique session ID for tracking."""
     combined = f"{from_number}_{message_sid}_{int(time.time())}"
-    return hashlib.md5(combined.encode()).hexdigest()[:12]
+    return hashlib.md5(combined.encode(), usedforsecurity=False).hexdigest()[:12]
 
 
 def is_greeting_message(message: str, language: str) -> bool:

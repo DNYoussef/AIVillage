@@ -11,11 +11,27 @@ class PromptBank(nn.Module):
     def __init__(self, manifest: dict, tokenizer_name: str, embed_dim: int) -> None:
         super().__init__()
         prompt_text = json.dumps(manifest, sort_keys=True, indent=None)
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            tokenizer_name,
-            revision="main",  # Pin to main branch for security
-            trust_remote_code=False,  # Disable remote code execution
-        )
+        # Security: Enhanced tokenizer loading with verification
+        try:
+            # First attempt: use local files only for maximum security
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                tokenizer_name,
+                revision="main",  # Pin to main branch for security
+                trust_remote_code=False,  # Disable remote code execution
+                use_auth_token=False,  # Disable authentication tokens
+                local_files_only=True,  # Prioritize local cached files
+            )
+        except Exception:
+            # Fallback: controlled download with strict security
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                tokenizer_name,
+                revision="main",  # Pin to main branch for security
+                trust_remote_code=False,  # Disable remote code execution
+                use_auth_token=False,  # Disable authentication tokens
+                local_files_only=False,  # Allow controlled downloads
+                force_download=False,  # Use cached versions when available
+                use_fast=False,  # Use slower but safer implementation
+            )
         token_ids = self.tokenizer(prompt_text)["input_ids"]
         self.register_buffer("prompt_ids", torch.tensor(token_ids))
         self.embed = nn.Embedding(len(token_ids), embed_dim)

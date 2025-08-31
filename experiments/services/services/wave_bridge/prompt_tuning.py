@@ -398,7 +398,7 @@ class ABTestManager:
             return config["variants"][0]  # Return first variant if test inactive
 
         # Create consistent hash-based assignment
-        user_hash = hashlib.md5(f"{test_name}_{user_identifier}".encode()).hexdigest()
+        user_hash = hashlib.md5(f"{test_name}_{user_identifier}".encode(), usedforsecurity=False).hexdigest()
         hash_int = int(user_hash[:8], 16)
 
         # Map hash to variant based on weights

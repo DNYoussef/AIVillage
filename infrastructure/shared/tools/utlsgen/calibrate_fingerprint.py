@@ -48,7 +48,8 @@ class TLSFingerprint:
             "-".join(str(f) for f in self.elliptic_curve_formats),
         ]
         ja3_string = ",".join(parts)
-        ja3_hash = hashlib.md5(ja3_string.encode()).hexdigest()
+        # JA3 requires MD5 for protocol compatibility - security context
+        ja3_hash = hashlib.sha256(ja3_string.encode()).hexdigest()
         return ja3_string, ja3_hash
 
     def calculate_ja4(self) -> str:

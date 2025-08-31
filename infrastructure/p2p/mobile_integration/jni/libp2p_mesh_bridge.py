@@ -386,7 +386,10 @@ class LibP2PMeshBridge:
 
         # Start in background thread to avoid blocking
         def run_server() -> None:
-            uvicorn.run(self.app, host="0.0.0.0", port=self.rest_port, log_level="info")
+            # Security: Use environment variable for host binding
+            import os
+            host = os.getenv("LIBP2P_BRIDGE_HOST", "127.0.0.1")
+            uvicorn.run(self.app, host=host, port=self.rest_port, log_level="info")
 
         server_thread = Thread(target=run_server, daemon=True)
         server_thread.start()
