@@ -152,8 +152,8 @@ class ProductionDeployment:
                 if result == 0:
                     logger.warning(f"Port {port} ({service_name}) already in use")
                 sock.close()
-            except:
-                pass
+            except Exception as e:
+                logging.debug(f"Failed to check port {port} for service {service_name}: {e}")
 
         return True
 
@@ -339,8 +339,8 @@ class ProductionDeployment:
                                 self.deployment_status[service_name]["status"] = "healthy"
                                 return True
 
-            except Exception:
-                pass
+            except Exception as e:
+                logging.debug(f"Failed to perform health check for service {service_name}: {e}")
 
             await asyncio.sleep(2)
 

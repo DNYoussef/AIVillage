@@ -543,8 +543,8 @@ class ArchitecturalFitnessChecker:
             if isinstance(value, str) and len(value) == 0:
                 return True
 
-        except:
-            pass
+        except Exception as e:
+            logging.debug(f"Failed to check magic literal value: {e}")
 
         return False
 

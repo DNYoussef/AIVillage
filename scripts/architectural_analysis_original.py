@@ -18,6 +18,7 @@ import argparse
 import ast
 from collections import defaultdict
 from dataclasses import asdict, dataclass
+import logging
 from datetime import datetime
 import json
 import os
@@ -199,8 +200,8 @@ class ConnascenceAnalyzer:
             self._detect_meaning_connascence(tree, file_path)
             self._detect_position_connascence(tree, file_path)
 
-        except Exception:
-            pass
+        except Exception as e:
+            logging.warning(f"Failed to analyze connascence for {file_path}: {e}")
 
     def _detect_name_connascence(self, tree: ast.AST, file_path: Path):
         """Detect connascence of name."""

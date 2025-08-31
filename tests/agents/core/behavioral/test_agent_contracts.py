@@ -6,6 +6,7 @@ Follows connascence principles by minimizing test-to-implementation coupling.
 """
 
 import asyncio
+import logging
 from datetime import datetime
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -461,9 +462,18 @@ class TestAgentContracts:
             result = await mock_agent.process_task(error_task)
             # Even if processing succeeds with None content, that's fine
             assert result is not None
-        except Exception:
+        except Exception as e:
             # If exception occurs, agent should remain stable
-            pass
+            logging.info(
+                "Agent handled error task gracefully by raising exception",
+                extra={
+                    "test_case": "test_agent_handles_malformed_tasks",
+                    "task_id": error_task.task_id,
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                    "expected_behavior": "agent_remains_stable_after_error"
+                }
+            )
 
         # Agent should remain healthy after error
         post_error_health = await mock_agent.health_check()

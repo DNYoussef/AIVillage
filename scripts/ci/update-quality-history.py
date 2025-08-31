@@ -7,6 +7,7 @@ Maintains historical quality metrics for trend analysis.
 import argparse
 from datetime import datetime
 import json
+import logging
 from pathlib import Path
 import sqlite3
 
@@ -319,8 +320,8 @@ class QualityHistoryManager:
             try:
                 with open(coupling_file) as f:
                     return json.load(f)
-            except Exception:
-                pass
+            except Exception as e:
+                logging.warning(f"Failed to load coupling data from {coupling_file}: {e}")
         return {}
 
     def _load_antipatterns_data(self, reports_dir: Path) -> dict:
@@ -330,8 +331,8 @@ class QualityHistoryManager:
             try:
                 with open(antipatterns_file) as f:
                     return json.load(f)
-            except Exception:
-                pass
+            except Exception as e:
+                logging.warning(f"Failed to load anti-patterns data from {antipatterns_file}: {e}")
         return {}
 
     def _load_quality_gate_data(self, reports_dir: Path) -> dict:
@@ -341,8 +342,8 @@ class QualityHistoryManager:
             try:
                 with open(quality_gate_file) as f:
                     return json.load(f)
-            except Exception:
-                pass
+            except Exception as e:
+                logging.warning(f"Failed to load quality gate data from {quality_gate_file}: {e}")
         return {}
 
     def get_quality_trends(self, days: int = 30) -> list[dict]:

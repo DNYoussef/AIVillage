@@ -103,8 +103,8 @@ class MigrationPlanner:
                             "reason": "File exceeds recommended size limit",
                         }
                     )
-            except Exception:
-                pass  # nosec B110
+            except Exception as e:
+                logging.debug(f"Failed to analyze file {file_path}: {e}")
 
         return analysis
 
@@ -163,8 +163,8 @@ class MigrationPlanner:
                 elif isinstance(node, ast.ImportFrom):
                     if node.module and self._is_internal_import(node.module):
                         dependencies.append(node.module)
-        except Exception:
-            pass  # nosec B110
+        except Exception as e:
+            logging.debug(f"Failed to extract dependencies from {file_path}: {e}")
 
         return dependencies
 

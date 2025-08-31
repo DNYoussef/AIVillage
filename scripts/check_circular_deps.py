@@ -7,6 +7,7 @@ Detects circular dependencies in Python modules.
 import argparse
 import ast
 from collections import defaultdict, deque
+import logging
 import os
 from pathlib import Path
 import sys
@@ -85,9 +86,9 @@ class CircularDependencyDetector:
                     if node.module:
                         imports.add(node.module.split(".")[0])
 
-        except Exception:
+        except Exception as e:
             # Skip files that can't be parsed
-            pass
+            logging.debug(f"Failed to parse file {file_path} for imports: {e}")
 
         return imports
 

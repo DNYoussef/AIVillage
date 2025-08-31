@@ -365,8 +365,16 @@ class WebSocketService(IWebSocketService):
         for connection in self.connections.values():
             try:
                 await connection.websocket.close()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(
+                    "Failed to close WebSocket connection during shutdown",
+                    extra={
+                        "connection_id": connection.connection_id,
+                        "client_id": getattr(connection, 'client_id', 'unknown'),
+                        "error": str(e),
+                        "error_type": type(e).__name__
+                    }
+                )
         
         self.connections.clear()
         self.topic_subscribers.clear()
