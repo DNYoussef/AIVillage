@@ -37,4 +37,4 @@ dataclasses-json>=0.5.14
 
 # Development and Testing Security
 pytest-bandit>=0.1.0
-pytest-security>=0.1.0
+# pytest-security>=0.1.0  # Package not available on PyPI
