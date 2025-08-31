@@ -1,0 +1,219 @@
+{
+  "metadata": {
+    "generated_at": "2025-08-31T00:00:00Z",
+    "version": "1.0.0",
+    "description": "SLO Recovery Router - Breach Classification Matrix with Priority-Based Routing",
+    "target_success_rate": 0.928,
+    "target_mttr_minutes": 30
+  },
+  "classification_patterns": [
+    {
+      "pattern_id": "SEC001",
+      "category": "security_baseline_failure",
+      "severity": "critical",
+      "priority_score": 95,
+      "indicators": [
+        "security.*baseline.*fail",
+        "authentication.*error",
+        "authorization.*denied",
+        "crypto.*error",
+        "ssl.*certificate.*fail",
+        "security.*scan.*critical"
+      ],
+      "confidence_threshold": 0.90,
+      "recovery_time_estimate": 15,
+      "routing_recommendation": "immediate_security_remediation",
+      "escalation_required": true
+    },
+    {
+      "pattern_id": "DEP001",
+      "category": "deployment_blocking",
+      "severity": "critical",
+      "priority_score": 90,
+      "indicators": [
+        "deployment.*fail.*block",
+        "build.*fail.*critical",
+        "pipeline.*abort",
+        "production.*deploy.*error",
+        "rollback.*trigger"
+      ],
+      "confidence_threshold": 0.88,
+      "recovery_time_estimate": 20,
+      "routing_recommendation": "immediate_security_remediation",
+      "escalation_required": true
+    },
+    {
+      "pattern_id": "DEP002",
+      "category": "dependency_conflicts",
+      "severity": "high",
+      "priority_score": 80,
+      "indicators": [
+        "dependency.*conflict",
+        "version.*mismatch",
+        "package.*resolve.*fail",
+        "npm.*install.*error",
+        "pip.*install.*error",
+        "requirements.*not.*satisfied"
+      ],
+      "confidence_threshold": 0.78,
+      "recovery_time_estimate": 25,
+      "routing_recommendation": "dependency_resolution_workflow",
+      "escalation_required": false
+    },
+    {
+      "pattern_id": "TOOL001",
+      "category": "tool_installation_failure",
+      "severity": "high",
+      "priority_score": 75,
+      "indicators": [
+        "tool.*install.*fail",
+        "binary.*not.*found",
+        "command.*not.*found",
+        "PATH.*error",
+        "executable.*permission"
+      ],
+      "confidence_threshold": 0.75,
+      "recovery_time_estimate": 20,
+      "routing_recommendation": "dependency_resolution_workflow",
+      "escalation_required": false
+    },
+    {
+      "pattern_id": "CFG001",
+      "category": "configuration_drift",
+      "severity": "medium",
+      "priority_score": 60,
+      "indicators": [
+        "config.*mismatch",
+        "environment.*variable.*missing",
+        "settings.*incorrect",
+        "configuration.*drift"
+      ],
+      "confidence_threshold": 0.68,
+      "recovery_time_estimate": 15,
+      "routing_recommendation": "configuration_standardization",
+      "escalation_required": false
+    },
+    {
+      "pattern_id": "PATH001",
+      "category": "path_issues",
+      "severity": "medium",
+      "priority_score": 50,
+      "indicators": [
+        "path.*not.*found",
+        "file.*not.*exist",
+        "directory.*not.*found",
+        "import.*error.*module"
+      ],
+      "confidence_threshold": 0.65,
+      "recovery_time_estimate": 10,
+      "routing_recommendation": "configuration_standardization",
+      "escalation_required": false
+    },
+    {
+      "pattern_id": "DOC001",
+      "category": "documentation_formatting",
+      "severity": "low",
+      "priority_score": 35,
+      "indicators": [
+        "format.*error",
+        "lint.*warning",
+        "documentation.*missing",
+        "comment.*missing"
+      ],
+      "confidence_threshold": 0.55,
+      "recovery_time_estimate": 5,
+      "routing_recommendation": "documentation_improvement",
+      "escalation_required": false
+    }
+  ],
+  "severity_mapping": {
+    "critical": {
+      "priority_range": [85, 100],
+      "max_recovery_time": 20,
+      "escalation_threshold": 0.80,
+      "routing_urgency": "immediate"
+    },
+    "high": {
+      "priority_range": [70, 84],
+      "max_recovery_time": 25,
+      "escalation_threshold": 0.70,
+      "routing_urgency": "high"
+    },
+    "medium": {
+      "priority_range": [45, 69],
+      "max_recovery_time": 15,
+      "escalation_threshold": 0.60,
+      "routing_urgency": "normal"
+    },
+    "low": {
+      "priority_range": [0, 44],
+      "max_recovery_time": 10,
+      "escalation_threshold": 0.50,
+      "routing_urgency": "low"
+    }
+  },
+  "confidence_thresholds": {
+    "critical": 0.85,
+    "high": 0.75,
+    "medium": 0.65,
+    "low": 0.55
+  },
+  "routing_recommendations": {
+    "security_baseline_failure": "immediate_security_remediation",
+    "deployment_blocking": "immediate_security_remediation", 
+    "dependency_conflicts": "dependency_resolution_workflow",
+    "tool_installation_failure": "dependency_resolution_workflow",
+    "configuration_drift": "configuration_standardization",
+    "path_issues": "configuration_standardization",
+    "documentation_formatting": "documentation_improvement"
+  },
+  "priority_scoring": {
+    "critical_threshold": 85,
+    "high_threshold": 75,
+    "medium_threshold": 50,
+    "low_threshold": 35,
+    "escalation_threshold": 90
+  },
+  "adaptive_intelligence": {
+    "confidence_adaptation": {
+      "enabled": true,
+      "learning_rate": 0.1,
+      "success_rate_target": 0.85,
+      "adjustment_factor": 0.05
+    },
+    "pattern_learning": {
+      "enabled": true,
+      "minimum_samples": 10,
+      "update_frequency": "hourly"
+    },
+    "threshold_optimization": {
+      "enabled": true,
+      "optimization_window": "24h",
+      "performance_metrics": ["success_rate", "mttr", "escalation_rate"]
+    }
+  },
+  "routing_rules": {
+    "parallel_routing": {
+      "security_baseline_failure": ["security-manager", "production-validator"],
+      "dependency_conflicts": ["dependency-resolver", "build-specialist"],
+      "configuration_drift": ["config-manager", "path-validator"],
+      "documentation_formatting": ["doc-formatter"]
+    },
+    "sequential_routing": {
+      "multi_category_failures": [
+        "security-manager",
+        "dependency-resolver", 
+        "config-manager",
+        "production-validator"
+      ]
+    },
+    "escalation_routing": {
+      "human_intervention_required": [
+        "critical_security_breach",
+        "repeated_failures", 
+        "unknown_patterns",
+        "confidence_below_threshold"
+      ]
+    }
+  }
+}

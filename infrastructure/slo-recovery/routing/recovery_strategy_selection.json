@@ -1,0 +1,260 @@
+{
+  "metadata": {
+    "generated_at": "2025-08-31T00:00:00Z",
+    "version": "1.0.0",
+    "description": "SLO Recovery Router - Recovery Strategy Selection with Condition-Based Routing",
+    "optimization_target": "92.8% success rate with 30min MTTR"
+  },
+  "strategies": [
+    {
+      "strategy_id": "ISR001",
+      "name": "immediate_security_remediation",
+      "conditions": [
+        "security_baseline_failure AND deployment_blocking",
+        "security_baseline_failure AND critical_severity",
+        "deployment_blocking AND security_context"
+      ],
+      "route": "immediate_security_remediation",
+      "priority": "critical",
+      "agents": ["security-manager", "production-validator"],
+      "estimated_duration": 15,
+      "success_rate": 0.92,
+      "prerequisites": ["security_scan_complete", "baseline_identified"],
+      "parallel_execution": true,
+      "resource_requirements": {
+        "memory_mb": 1024,
+        "cpu_cores": 2,
+        "parallel_slots": 2
+      }
+    },
+    {
+      "strategy_id": "DRW001",
+      "name": "dependency_resolution_workflow", 
+      "conditions": [
+        "dependency_conflicts AND tool_failures",
+        "dependency_conflicts AND high_severity",
+        "tool_installation_failure AND dependency_context"
+      ],
+      "route": "dependency_resolution_workflow",
+      "priority": "high",
+      "agents": ["dependency-resolver", "build-specialist"],
+      "estimated_duration": 25,
+      "success_rate": 0.88,
+      "prerequisites": ["dependency_tree_analysis", "conflict_identification"],
+      "parallel_execution": true,
+      "resource_requirements": {
+        "memory_mb": 1024,
+        "cpu_cores": 2,
+        "parallel_slots": 2
+      }
+    },
+    {
+      "strategy_id": "CS001",
+      "name": "configuration_standardization",
+      "conditions": [
+        "configuration_drift AND path_errors",
+        "configuration_drift AND medium_severity", 
+        "path_issues AND configuration_context"
+      ],
+      "route": "configuration_standardization",
+      "priority": "medium",
+      "agents": ["config-manager", "path-validator"],
+      "estimated_duration": 15,
+      "success_rate": 0.85,
+      "prerequisites": ["config_baseline", "path_validation"],
+      "parallel_execution": false,
+      "resource_requirements": {
+        "memory_mb": 512,
+        "cpu_cores": 1,
+        "parallel_slots": 1
+      }
+    },
+    {
+      "strategy_id": "DI001",
+      "name": "documentation_improvement",
+      "conditions": [
+        "documentation_formatting AND low_severity",
+        "documentation_missing AND low_priority"
+      ],
+      "route": "documentation_improvement",
+      "priority": "low",
+      "agents": ["doc-formatter"],
+      "estimated_duration": 5,
+      "success_rate": 0.95,
+      "prerequisites": ["style_guide_available"],
+      "parallel_execution": false,
+      "resource_requirements": {
+        "memory_mb": 256,
+        "cpu_cores": 1,
+        "parallel_slots": 1
+      }
+    },
+    {
+      "strategy_id": "MVR001",
+      "name": "multi_vector_recovery",
+      "conditions": [
+        "multiple_failure_categories",
+        "high_complexity AND multiple_systems",
+        "cascading_failures"
+      ],
+      "route": "multi_vector_recovery",
+      "priority": "critical",
+      "agents": ["security-manager", "dependency-resolver", "config-manager", "production-validator"],
+      "estimated_duration": 30,
+      "success_rate": 0.82,
+      "prerequisites": ["full_system_analysis", "impact_assessment"],
+      "parallel_execution": true,
+      "resource_requirements": {
+        "memory_mb": 2048,
+        "cpu_cores": 4,
+        "parallel_slots": 4
+      }
+    },
+    {
+      "strategy_id": "GR001",
+      "name": "general_remediation",
+      "conditions": [
+        "unknown_failure_pattern",
+        "low_confidence_classification",
+        "fallback_required"
+      ],
+      "route": "general_remediation",
+      "priority": "medium",
+      "agents": ["general-fixer", "build-specialist"],
+      "estimated_duration": 20,
+      "success_rate": 0.75,
+      "prerequisites": ["basic_diagnostics"],
+      "parallel_execution": false,
+      "resource_requirements": {
+        "memory_mb": 512,
+        "cpu_cores": 2,
+        "parallel_slots": 1
+      }
+    }
+  ],
+  "condition_evaluation": {
+    "supported_operators": ["AND", "OR", "NOT"],
+    "context_variables": [
+      "security_baseline_failure",
+      "deployment_blocking", 
+      "dependency_conflicts",
+      "tool_failures",
+      "tool_installation_failure",
+      "configuration_drift",
+      "path_errors",
+      "path_issues",
+      "documentation_formatting",
+      "documentation_missing",
+      "critical_severity",
+      "high_severity",
+      "medium_severity", 
+      "low_severity",
+      "security_context",
+      "dependency_context",
+      "configuration_context",
+      "multiple_failure_categories",
+      "high_complexity",
+      "multiple_systems",
+      "cascading_failures",
+      "unknown_failure_pattern",
+      "low_confidence_classification",
+      "fallback_required",
+      "low_priority"
+    ],
+    "evaluation_logic": {
+      "variable_resolution": "context_based",
+      "boolean_evaluation": "python_eval",
+      "error_handling": "graceful_fallback"
+    }
+  },
+  "agent_capabilities": {
+    "security-manager": "security_remediation_and_validation",
+    "production-validator": "production_readiness_validation",
+    "dependency-resolver": "dependency_conflict_resolution", 
+    "build-specialist": "build_system_optimization",
+    "config-manager": "configuration_standardization",
+    "path-validator": "path_resolution_and_validation",
+    "doc-formatter": "documentation_formatting",
+    "general-fixer": "general_issue_resolution"
+  },
+  "priority_matrix": {
+    "critical": {
+      "score_range": [85, 100],
+      "max_duration": 20,
+      "resource_priority": "highest",
+      "escalation_threshold": 0.80
+    },
+    "high": {
+      "score_range": [70, 84],
+      "max_duration": 25,
+      "resource_priority": "high", 
+      "escalation_threshold": 0.70
+    },
+    "medium": {
+      "score_range": [45, 69],
+      "max_duration": 15,
+      "resource_priority": "normal",
+      "escalation_threshold": 0.60
+    },
+    "low": {
+      "score_range": [0, 44],
+      "max_duration": 10,
+      "resource_priority": "low",
+      "escalation_threshold": 0.50
+    }
+  },
+  "performance_metrics": {
+    "target_success_rate": 0.928,
+    "target_mttr": 30,
+    "confidence_threshold": 0.75,
+    "optimization_goals": [
+      "maximize_success_rate",
+      "minimize_recovery_time",
+      "minimize_escalations",
+      "optimize_resource_usage"
+    ]
+  },
+  "strategy_selection_algorithm": {
+    "scoring_weights": {
+      "condition_match": 0.4,
+      "historical_performance": 0.3,
+      "priority_alignment": 0.2,
+      "duration_penalty": 0.1
+    },
+    "selection_criteria": {
+      "minimum_score": 0.6,
+      "confidence_threshold": 0.7,
+      "alternative_strategies": 2
+    },
+    "optimization_features": {
+      "adaptive_scoring": true,
+      "performance_learning": true,
+      "dynamic_thresholds": true
+    }
+  },
+  "execution_planning": {
+    "phase_templates": {
+      "immediate_security_remediation": [
+        {"phase": "security_assessment", "duration": 5, "agents": ["security-manager"]},
+        {"phase": "vulnerability_remediation", "duration": 8, "agents": ["security-manager", "production-validator"]},
+        {"phase": "validation_testing", "duration": 2, "agents": ["production-validator"]}
+      ],
+      "dependency_resolution_workflow": [
+        {"phase": "dependency_analysis", "duration": 8, "agents": ["dependency-resolver"]},
+        {"phase": "conflict_resolution", "duration": 12, "agents": ["dependency-resolver", "build-specialist"]},
+        {"phase": "build_validation", "duration": 5, "agents": ["build-specialist"]}
+      ],
+      "configuration_standardization": [
+        {"phase": "config_audit", "duration": 5, "agents": ["config-manager"]},
+        {"phase": "path_validation", "duration": 5, "agents": ["path-validator"]},
+        {"phase": "standardization", "duration": 5, "agents": ["config-manager"]}
+      ]
+    },
+    "checkpoint_schedule": [
+      {"checkpoint": "prerequisites_verified", "time_offset": 0},
+      {"checkpoint": "remediation_started", "time_offset": 2},
+      {"checkpoint": "progress_assessment", "time_offset": "50%"},
+      {"checkpoint": "remediation_complete", "time_offset": "100%"}
+    ]
+  }
+}
