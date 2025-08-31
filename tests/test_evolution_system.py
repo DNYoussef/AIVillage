@@ -38,6 +38,21 @@ class CodeTransformations:
         """Mock error handling addition."""
         return f'try:\n    {code.replace(chr(10), chr(10) + "    ")}\nexcept Exception as e:\n    pass'
 
+
+# Mock standalone functions
+async def initialize_evolution_system(evolution_data_path=None, population_size=4, auto_evolution=False):
+    """Mock function for initializing evolution system"""
+    return AgentEvolutionEngine(population_size=population_size)
+
+async def quick_evolution_cycle():
+    """Mock function for quick evolution cycle"""
+    return {
+        'generations_run': 1,
+        'best_fitness_history': [0.8],
+        'diversity_history': [0.5],
+        'initial_population': 4
+    }
+
 sys.path.insert(0, os.path.abspath("src"))
 sys.path.insert(0, os.path.abspath("src/agent_forge/evolution"))
 
