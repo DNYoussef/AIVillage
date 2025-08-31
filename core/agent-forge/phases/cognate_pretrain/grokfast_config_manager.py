@@ -23,6 +23,7 @@ import warnings
 
 import torch
 import torch.nn as nn
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 

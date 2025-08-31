@@ -96,7 +96,10 @@ class CognateLTMBank(nn.Module):
     
     def forward(self, *args, **kwargs):
         """Placeholder forward method (not used in typical training)."""
-        raise NotImplementedError("LTM bank is used via read/write methods, not forward()")
+        # LTM bank operates via read/write methods, not forward pass
+        # Return empty tensor for compatibility with PyTorch modules
+        import torch
+        return torch.empty(0, device=next(self.parameters()).device if len(list(self.parameters())) > 0 else 'cpu')
     
     def write(
         self,

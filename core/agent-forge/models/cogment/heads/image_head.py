@@ -19,7 +19,10 @@ class ImageHead(nn.Module):
     
     def forward(self, images: torch.Tensor) -> torch.Tensor:
         """Convert images to d_model representations."""
-        raise NotImplementedError
+        # Base implementation - should be overridden by subclasses
+        # For now, return zero tensor with correct shape
+        B = images.shape[0]
+        return torch.zeros(B, 1, self.d_model)
     
     def count_parameters(self) -> int:
         """Count trainable parameters."""

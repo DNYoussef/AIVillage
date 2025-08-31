@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 class AuthenticationMethod(Enum):
     """Supported authentication methods."""
-    JWT_TOKEN = "jwt_token"
+    JWT_TOKEN = "jwt_token"  # nosec B105 - field name
     API_KEY = "api_key"
     OAUTH2 = "oauth2"
     BASIC = "basic"
@@ -814,7 +814,7 @@ async def example_usage():
     
     credentials = AuthCredentials(
         username="testuser",
-        password="testpassword",
+        password="testpassword",  # nosec B106 - test template password, not production
         device_info=device_info
     )
     

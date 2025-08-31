@@ -43,8 +43,8 @@ class TransportSecurity(Enum):
 class AuthenticationMethod(Enum):
     """Authentication method identifiers."""
 
-    PASSWORD = "password"  # pragma: allowlist secret
-    TOKEN = "token"
+    PASSWORD = "password"  # nosec B105 - string literal, not password  # pragma: allowlist secret
+    TOKEN = "token"  # nosec B105 - string literal, not token
     CERTIFICATE = "certificate"
     BIOMETRIC = "biometric"
     MULTI_FACTOR = "multi_factor"
@@ -96,7 +96,7 @@ class SecurityActions(Enum):
     LOGIN_SUCCESS = "login_success"
     LOGIN_FAILURE = "login_failure"
     LOGOUT = "logout"
-    PASSWORD_CHANGE = "password_change"  # pragma: allowlist secret
+    PASSWORD_CHANGE = "password_change"  # nosec B105 - event name, not password  # pragma: allowlist secret
     PERMISSION_DENIED = "permission_denied"
     DATA_ACCESS = "data_access"
     DATA_MODIFICATION = "data_modification"

@@ -233,7 +233,9 @@ class NoiseProtocolEncryption(EncryptionManager):
         if aes:
             return aes.encrypt(plaintext, key)
         
-        raise NotImplementedError("Noise Protocol encryption not fully implemented")
+        # Fallback error since no implementation available
+        logger.error("Noise Protocol encryption not available and no fallback encryption found")
+        raise RuntimeError("Encryption unavailable - install cryptography package")
     
     def decrypt(self, encrypted_data: EncryptedData, key: bytes) -> bytes:
         """Decrypt using Noise Protocol."""
@@ -243,7 +245,9 @@ class NoiseProtocolEncryption(EncryptionManager):
         if aes:
             return aes.decrypt(encrypted_data, key)
         
-        raise NotImplementedError("Noise Protocol decryption not fully implemented")
+        # Fallback error since no implementation available  
+        logger.error("Noise Protocol decryption not available and no fallback encryption found")
+        raise RuntimeError("Decryption unavailable - install cryptography package")
 
 
 # Default encryption managers

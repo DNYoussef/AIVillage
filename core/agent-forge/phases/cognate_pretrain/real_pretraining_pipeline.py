@@ -364,8 +364,8 @@ class RealCognateTrainer:
             class MockTokenizer:
                 def __init__(self):
                     self.vocab_size = 32000
-                    self.pad_token = "<pad>"
-                    self.eos_token = "<eos>"
+                    self.pad_token = "<pad>"  # nosec B105 - tokenizer special token, not password
+                    self.eos_token = "<eos>"  # nosec B105 - tokenizer special token, not password
                     self.pad_token_id = 0
                     self.eos_token_id = 2
 

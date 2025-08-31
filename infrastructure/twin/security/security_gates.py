@@ -31,10 +31,10 @@ class SecurityLevel(Enum):
 class GateResult(Enum):
     """Security gate validation results."""
 
-    PASS = "pass"
-    WARN = "warn"
-    FAIL = "fail"
-    SKIP = "skip"
+    PASS = "PASS"  # nosec B105 - enum value, not password
+    WARN = "WARN"
+    FAIL = "FAIL"
+    SKIP = "SKIP"
 
 
 @dataclass

@@ -65,7 +65,7 @@ class ReportType(Enum):
     """Types of compliance reports."""
 
     GOVERNANCE_ACTIVITY = "governance_activity"
-    TOKEN_TRANSACTIONS = "token_transactions"
+    TOKEN_TRANSACTIONS = "token_transactions"  # nosec B105 - field name
     PARTICIPANT_ACTIVITY = "participant_activity"
     REGULATORY_FILING = "regulatory_filing"
     AUDIT_TRAIL = "audit_trail"

@@ -1,0 +1,107 @@
+# Testing requirements for comprehensive agent testing suite
+
+# Core testing framework
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.0
+pytest-timeout>=2.1.0
+pytest-html>=3.2.0
+pytest-json-report>=1.5.0
+pytest-xdist>=3.3.0  # For parallel test execution
+
+# Coverage and reporting
+coverage>=7.2.0
+coverage[toml]>=7.2.0
+
+# Performance testing
+pytest-benchmark>=4.0.0
+psutil>=5.9.0
+memory-profiler>=0.60.0
+
+# Mocking and fixtures
+responses>=0.23.0
+factory-boy>=3.2.0
+freezegun>=1.2.0
+hypothesis>=6.75.0  # Property-based testing
+
+# Async testing utilities
+aioresponses>=0.7.4
+asyncio-mqtt>=0.13.0
+pytest-aiohttp>=1.0.4
+
+# Data generation and manipulation
+faker>=18.10.0
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Visualization for test reporting
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.14.0
+
+# Load testing and chaos engineering
+locust>=2.15.0
+chaos-toolkit>=1.14.0
+pumba>=0.9.0  # Container chaos testing
+
+# Network and communication testing
+requests>=2.31.0
+httpx>=0.24.0
+websockets>=11.0.0
+grpcio>=1.54.0
+grpcio-tools>=1.54.0
+
+# Database and storage testing
+sqlalchemy>=2.0.0
+redis>=4.5.0
+pymongo>=4.3.0
+
+# Security testing
+bandit>=1.7.5
+safety>=2.3.0
+cryptography>=41.0.0
+
+# Monitoring and observability
+prometheus-client>=0.17.0
+opentelemetry-api>=1.17.0
+opentelemetry-sdk>=1.17.0
+
+# Utilities
+click>=8.1.0  # For CLI test utilities
+rich>=13.4.0  # For enhanced console output
+pydantic>=2.0.0  # For data validation in tests
+tenacity>=8.2.0  # For retry logic testing
+
+# Development and debugging
+ipdb>=0.13.0
+pdb++>=0.10.3
+pytest-pdb>=0.2.0
+
+# Type checking for tests
+mypy>=1.4.0
+types-requests>=2.31.0
+types-redis>=4.5.0
+
+# Linting for test code
+flake8>=6.0.0
+black>=23.3.0
+isort>=5.12.0
+
+# Documentation generation
+sphinx>=7.0.0
+sphinx-rtd-theme>=1.2.0
+
+# Environment management
+python-dotenv>=1.0.0
+pyyaml>=6.0
+
+# Specialized testing libraries
+mutmut>=2.4.0  # Mutation testing
+sure>=2.0.0  # Assertion library
+expects>=0.9.0  # Expressive assertions
+
+# AI/ML testing specific
+torch>=2.0.0  # For neural network testing
+transformers>=4.30.0  # For LLM testing
+scikit-learn>=1.3.0  # For ML model testing

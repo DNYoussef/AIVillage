@@ -394,7 +394,12 @@ class CognateModelCreator:
 
             class CognateTokenizer(PreTrainedTokenizer):
                 def __init__(self):
-                    super().__init__(pad_token="<pad>", eos_token="</s>", bos_token="<s>", unk_token="<unk>")
+                    super().__init__(
+                        pad_token="<pad>",  # nosec B106 - tokenizer special token, not password
+                        eos_token="</s>",   # nosec B106 - tokenizer special token, not password
+                        bos_token="<s>",    # nosec B106 - tokenizer special token, not password
+                        unk_token="<unk>"   # nosec B106 - tokenizer special token, not password
+                    )
 
                 @property
                 def vocab_size(self):

@@ -21,10 +21,10 @@ logger = logging.getLogger(__name__)
 
 
 class ValidationResult(Enum):
-    PASS = "pass"  # nosec B105
-    FAIL = "fail"
-    WARNING = "warning"
-    SKIP = "skip"
+    PASS = "PASS"  # nosec B105 - enum value, not password
+    FAIL = "FAIL"
+    WARNING = "WARNING"
+    SKIP = "SKIP"
 
 
 @dataclass

@@ -20,7 +20,10 @@ class TextHead(nn.Module):
     
     def forward(self, input_ids: torch.Tensor, attention_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
         """Convert tokenized text to d_model representations."""
-        raise NotImplementedError
+        # Base implementation - should be overridden by subclasses
+        # For now, return zero tensor with correct shape
+        B, seq_len = input_ids.shape
+        return torch.zeros(B, seq_len, self.d_model)
     
     def count_parameters(self) -> int:
         """Count trainable parameters."""

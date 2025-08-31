@@ -89,16 +89,16 @@ class ConstitutionalPricingTier:
     h200_hour_peak_rate: Decimal      # Peak demand rate
     h200_hour_off_peak_rate: Decimal  # Off-peak rate
     
-    # Constitutional bonuses/discounts
+    # Tier limits and guarantees (non-default fields must come before default fields)
+    max_h200_hours_monthly: Decimal
+    guaranteed_availability: Decimal  # Percentage
+    max_queue_time_minutes: Decimal
+    
+    # Constitutional bonuses/discounts (fields with defaults)
     transparency_bonus: Decimal = Decimal("0.05")      # 5% discount for transparency
     governance_participation_bonus: Decimal = Decimal("0.03")  # 3% discount for governance
     privacy_premium: Decimal = Decimal("0.20")         # 20% premium for privacy features
     audit_trail_discount: Decimal = Decimal("0.10")    # 10% discount for audit compliance
-    
-    # Tier limits and guarantees
-    max_h200_hours_monthly: Decimal
-    guaranteed_availability: Decimal  # Percentage
-    max_queue_time_minutes: Decimal
     priority_multiplier: Decimal = Decimal("1.0")
     
     # Constitutional requirements
