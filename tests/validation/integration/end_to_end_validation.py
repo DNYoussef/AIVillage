@@ -6,8 +6,9 @@ Tests complete system integration with all loops active
 
 import asyncio
 import json
-import time
 import logging
+import sys
+import time
 from pathlib import Path
 from typing import Dict, List, Any
 

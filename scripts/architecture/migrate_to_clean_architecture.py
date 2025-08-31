@@ -104,7 +104,7 @@ class MigrationPlanner:
                         }
                     )
             except Exception as e:
-                logging.debug(f"Failed to analyze file {file_path}: {e}")
+                logging.debug(f"Failed to analyze file {py_file}: {e}")
 
         return analysis
 

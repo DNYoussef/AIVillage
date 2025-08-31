@@ -336,7 +336,7 @@ class GeometricSelfAwareness:
         # This is a simplified metric - in production would use more sophisticated measures
         complexity_score = 0.0
 
-        for param in model.parameters():
+        for layer_name, param in model.named_parameters():
             if param.requires_grad and len(param.shape) >= 2:
                 # Calculate condition number as a measure of complexity
                 param_2d = param.data.view(param.shape[0], -1).cpu().numpy()

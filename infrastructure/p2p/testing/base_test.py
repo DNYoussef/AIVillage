@@ -181,6 +181,7 @@ class AsyncP2PTestCase(P2PTestCase):
                                     interval: float = 0.1, message: str = None):
         """Async version of assert_eventually."""
         start_time = time.time()
+        attempt = 0
         
         while time.time() - start_time < timeout:
             try:
@@ -195,6 +196,7 @@ class AsyncP2PTestCase(P2PTestCase):
                 import logging
                 logging.debug(f"Wait condition check failed (attempt {attempt + 1}): {e}")
             
+            attempt += 1
             await asyncio.sleep(interval)
         
         if message:

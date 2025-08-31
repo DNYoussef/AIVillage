@@ -350,7 +350,7 @@ class MemoryManager:
                 # Force garbage collection
                 del tensor_ref
             except Exception as e:
-                logger.debug(f"Failed to cleanup tensor reference {tensor_ref}: {e}")
+                logger.debug(f"Failed to cleanup tensor reference {locals().get('tensor_ref', 'unknown')}: {e}")
                 cleanup_stats['errors'] += 1
         
         if old_tensors:
