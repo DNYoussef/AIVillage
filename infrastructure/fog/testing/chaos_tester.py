@@ -49,8 +49,8 @@ class ExperimentStatus(Enum):
     CANCELLED = "cancelled"
 
 
-class ValidationResult(Enum):
-    """Results of validation tests."""
+class ChaosValidationResult(Enum):
+    """Results of chaos validation tests."""
 
     PASS = "pass"
     FAIL = "fail"
@@ -328,7 +328,7 @@ class ChaosTestingFramework:
             result = await self._run_validation_test(test_config)
             report.test_results.append(result)
 
-            if result["status"] == ValidationResult.PASS:
+            if result["status"] == ChaosValidationResult.PASS:
                 report.passed_tests += 1
             else:
                 report.failed_tests += 1
@@ -498,7 +498,7 @@ class ChaosTestingFramework:
         result = {
             "test_id": test_config.test_id,
             "name": test_config.name,
-            "status": ValidationResult.FAIL,
+            "status": ChaosValidationResult.FAIL,
             "duration_seconds": 0.0,
             "error_message": None,
             "metrics": {},
@@ -524,10 +524,10 @@ class ChaosTestingFramework:
             result["duration_seconds"] = time.time() - start_time
 
         except asyncio.TimeoutError:
-            result["status"] = ValidationResult.TIMEOUT
+            result["status"] = ChaosValidationResult.TIMEOUT
             result["error_message"] = "Test timed out"
         except Exception as e:
-            result["status"] = ValidationResult.FAIL
+            result["status"] = ChaosValidationResult.FAIL
             result["error_message"] = str(e)
             logger.error(f"Validation test {test_config.test_id} failed: {e}")
 
@@ -540,11 +540,11 @@ class ChaosTestingFramework:
 
         # Simulate success/failure
         if random.random() > 0.1:  # 90% success rate
-            result["status"] = ValidationResult.PASS
+            result["status"] = ChaosValidationResult.PASS
             result["metrics"]["avg_latency_ms"] = random.uniform(10, 50)
             result["metrics"]["packet_loss_percent"] = 0.0
         else:
-            result["status"] = ValidationResult.FAIL
+            result["status"] = ChaosValidationResult.FAIL
             result["error_message"] = "Network connectivity issues detected"
 
     async def _test_service_health(self, test_config: ValidationTest, result: dict[str, Any]):
@@ -565,11 +565,11 @@ class ChaosTestingFramework:
         result["metrics"]["health_percentage"] = (healthy_services / total_services) * 100
 
         if healthy_services == total_services:
-            result["status"] = ValidationResult.PASS
+            result["status"] = ChaosValidationResult.PASS
         elif healthy_services >= total_services * 0.8:  # 80% threshold
-            result["status"] = ValidationResult.PARTIAL
+            result["status"] = ChaosValidationResult.PARTIAL
         else:
-            result["status"] = ValidationResult.FAIL
+            result["status"] = ChaosValidationResult.FAIL
             result["error_message"] = f"Only {healthy_services}/{total_services} services healthy"
 
     async def _test_e2e_workflow(self, test_config: ValidationTest, result: dict[str, Any]):
@@ -602,9 +602,9 @@ class ChaosTestingFramework:
         result["metrics"]["success_percentage"] = (completed_steps / len(steps)) * 100
 
         if completed_steps == len(steps):
-            result["status"] = ValidationResult.PASS
+            result["status"] = ChaosValidationResult.PASS
         else:
-            result["status"] = ValidationResult.FAIL
+            result["status"] = ChaosValidationResult.FAIL
 
     async def _test_performance(self, test_config: ValidationTest, result: dict[str, Any]):
         """Test performance metrics."""
@@ -623,9 +623,9 @@ class ChaosTestingFramework:
 
         # Pass if metrics are within acceptable ranges
         if result["metrics"]["avg_response_time_ms"] < 150 and result["metrics"]["error_rate_percent"] < 1:
-            result["status"] = ValidationResult.PASS
+            result["status"] = ChaosValidationResult.PASS
         else:
-            result["status"] = ValidationResult.FAIL
+            result["status"] = ChaosValidationResult.FAIL
             result["error_message"] = "Performance metrics below threshold"
 
     async def _test_security(self, test_config: ValidationTest, result: dict[str, Any]):
@@ -652,9 +652,9 @@ class ChaosTestingFramework:
         result["metrics"]["security_score"] = (passed_checks / len(security_checks)) * 100
 
         if passed_checks == len(security_checks):
-            result["status"] = ValidationResult.PASS
+            result["status"] = ChaosValidationResult.PASS
         else:
-            result["status"] = ValidationResult.FAIL
+            result["status"] = ChaosValidationResult.FAIL
             result["error_message"] = f"Security checks failed: {len(security_checks) - passed_checks}"
 
     async def _test_data_consistency(self, test_config: ValidationTest, result: dict[str, Any]):
@@ -669,12 +669,12 @@ class ChaosTestingFramework:
         result["metrics"]["inconsistencies_detected"] = 100 - consistency_checks
 
         if consistency_checks >= 98:
-            result["status"] = ValidationResult.PASS
+            result["status"] = ChaosValidationResult.PASS
         elif consistency_checks >= 95:
-            result["status"] = ValidationResult.PARTIAL
+            result["status"] = ChaosValidationResult.PARTIAL
             result["error_message"] = f"Minor consistency issues detected: {100 - consistency_checks}"
         else:
-            result["status"] = ValidationResult.FAIL
+            result["status"] = ChaosValidationResult.FAIL
             result["error_message"] = f"Significant consistency issues: {100 - consistency_checks}"
 
     async def _execute_chaos_experiment(self, config: ChaosConfig, result: ExperimentResult):
@@ -994,7 +994,7 @@ class ChaosTestingFramework:
         failed_critical = sum(
             1
             for result in report.test_results
-            if result["status"] != ValidationResult.PASS and "critical" in str(result)
+            if result["status"] != ChaosValidationResult.PASS and "critical" in str(result)
         )
 
         if failed_critical > 0:

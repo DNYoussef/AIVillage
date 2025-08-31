@@ -24,6 +24,20 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import numpy as np
 
+# Mock CodeTransformations class for testing
+class CodeTransformations:
+    """Mock code transformation utilities for testing."""
+    
+    @staticmethod
+    def improve_documentation(code: str) -> str:
+        """Mock documentation improvement."""
+        return f'"""Improved documentation."""\n{code}'
+    
+    @staticmethod
+    def add_error_handling(code: str, functions: list) -> str:
+        """Mock error handling addition."""
+        return f'try:\n    {code.replace(chr(10), chr(10) + "    ")}\nexcept Exception as e:\n    pass'
+
 sys.path.insert(0, os.path.abspath("src"))
 sys.path.insert(0, os.path.abspath("src/agent_forge/evolution"))
 

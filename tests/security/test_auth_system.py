@@ -310,7 +310,7 @@ class TestAuthenticationManager:
         """Test user creation with weak password."""
         with pytest.raises(ValueError, match="Password validation failed"):  # pragma: allowlist secret
             self.auth_manager.create_user(
-                username="weakpass", email="weak@example.com", password="weak"  # pragma: allowlist secret
+                username="weakpass", email="weak@example.com", password="weak"  # nosec B106
             )
 
     def test_successful_authentication(self):
@@ -546,7 +546,7 @@ class TestAuthenticationManager:
 
         # Authentication without MFA should fail
         success, auth_user, response = self.auth_manager.authenticate(
-            username="mfaauth", password="test_auth_password_123!", ip_address="127.0.0.1"  # pragma: allowlist secret
+            username="mfaauth", password="test_auth_password_123!", ip_address="127.0.0.1"  # nosec B106
         )
 
         assert success is False
