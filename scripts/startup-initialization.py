@@ -36,7 +36,7 @@ class StartupInitializer:
     def __init__(self):
         self.project_root = PROJECT_ROOT
         self.claude_dir = self.project_root / '.claude'
-        self.hive_mind_dir = self.project_root / '.hive-mind'
+        self.hive_mind_dir = self.project_root / '.claude/hive-mind'
         self.claude_flow_dir = self.project_root / '.claude-flow'
         self.swarm_dir = self.project_root / '.swarm'
         
