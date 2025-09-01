@@ -25,7 +25,7 @@ def analyze_file_content(file_path, expected_patterns):
 def validate_file_structure():
     """Validate the file structure is complete."""
     project_root = Path(__file__).parent.parent.parent
-    cognate_pretrain_dir = project_root / "core" / "agent-forge" / "phases" / "cognate-pretrain"
+    cognate_pretrain_dir = project_root / "core" / "agent_forge" / "phases" / "cognate-pretrain"
 
     print("=" * 60)
     print("COGNATE 25M SYSTEM - STANDALONE VALIDATION")
@@ -67,7 +67,7 @@ def validate_file_structure():
 def validate_core_functionality():
     """Validate core functionality by analyzing code."""
     project_root = Path(__file__).parent.parent.parent
-    cognate_pretrain_dir = project_root / "core" / "agent-forge" / "phases" / "cognate-pretrain"
+    cognate_pretrain_dir = project_root / "core" / "agent_forge" / "phases" / "cognate-pretrain"
 
     print("\n2. CORE FUNCTIONALITY ANALYSIS")
     print("-" * 30)
@@ -132,7 +132,7 @@ def validate_integration_readiness():
     print("-" * 30)
 
     # Check redirect file
-    redirect_file = project_root / "core" / "agent-forge" / "phases" / "cognate.py"
+    redirect_file = project_root / "core" / "agent_forge" / "phases" / "cognate.py"
     if redirect_file.exists():
         success, results = analyze_file_content(
             redirect_file,
@@ -155,7 +155,7 @@ def validate_integration_readiness():
         print("✗ cognate.py redirect file not found")
 
     # Check deprecated files were moved
-    deprecated_dir = project_root / "core" / "agent-forge" / "phases" / "deprecated_duplicates"
+    deprecated_dir = project_root / "core" / "agent_forge" / "phases" / "deprecated_duplicates"
     if deprecated_dir.exists():
         deprecated_files = list(deprecated_dir.glob("*.py"))
         print(f"✓ deprecated_duplicates directory exists with {len(deprecated_files)} files")
@@ -171,7 +171,7 @@ def validate_specifications():
     print("-" * 30)
 
     project_root = Path(__file__).parent.parent.parent
-    cognate_pretrain_dir = project_root / "core" / "agent-forge" / "phases" / "cognate-pretrain"
+    cognate_pretrain_dir = project_root / "core" / "agent_forge" / "phases" / "cognate-pretrain"
 
     # Check for 25M parameter specification
     creator_file = cognate_pretrain_dir / "cognate_creator.py"
@@ -202,7 +202,7 @@ def generate_test_report():
     print("=" * 30)
 
     project_root = Path(__file__).parent.parent.parent
-    cognate_pretrain_dir = project_root / "core" / "agent-forge" / "phases" / "cognate-pretrain"
+    cognate_pretrain_dir = project_root / "core" / "agent_forge" / "phases" / "cognate-pretrain"
 
     # Count lines of code to validate substantial implementation
     total_lines = 0
@@ -216,6 +216,7 @@ def generate_test_report():
                 print(f"  {py_file.name}: {lines} lines")
         except Exception as e:
             import logging
+
             logging.exception("Error reading file for line count: %s", str(e))
 
     print(f"\nTotal implementation: {total_lines} lines of Python code")

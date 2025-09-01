@@ -29,7 +29,7 @@ from .unified_task_manager_facade import UnifiedTaskManagerFacade, UnifiedManage
 
 __all__ = [
     "TaskCreationService",
-    "TaskAssignmentService", 
+    "TaskAssignmentService",
     "TaskExecutionService",
     "TaskCompletionService",
     "ProjectManagementService",

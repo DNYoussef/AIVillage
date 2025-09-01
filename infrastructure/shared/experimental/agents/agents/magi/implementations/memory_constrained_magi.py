@@ -59,7 +59,7 @@ class MemoryConstrainedMagiRunner:
         logger.info("Initializing W&B tracking for historic Magi specialization...")
 
         success = init_wandb(
-            project="agent-forge-historic",
+            project="agent_forge-historic",
             name=f"first_magi_specialization_{self.start_time.strftime('%Y%m%d_%H%M%S')}",
             tags=[
                 "historic",

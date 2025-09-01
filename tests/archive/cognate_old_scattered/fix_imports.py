@@ -3,7 +3,6 @@
 Quick script to fix import paths in all test files
 """
 
-import os
 from pathlib import Path
 
 

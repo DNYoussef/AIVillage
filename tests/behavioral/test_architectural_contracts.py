@@ -144,6 +144,7 @@ class LayerBoundaryTest:
                     imports.add(node.module)
         except Exception as e:
             import logging
+
             logging.exception("Error extracting imports from file: %s", str(e))
 
         return imports

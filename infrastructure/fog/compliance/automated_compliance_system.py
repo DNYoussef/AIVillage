@@ -426,9 +426,9 @@ class AutomatedComplianceSystem:
                 detection_timestamp=datetime.fromisoformat(row["detection_timestamp"]),
                 status=row["status"],
                 resolution_notes=row["resolution_notes"],
-                resolved_timestamp=datetime.fromisoformat(row["resolved_timestamp"])
-                if row["resolved_timestamp"]
-                else None,
+                resolved_timestamp=(
+                    datetime.fromisoformat(row["resolved_timestamp"]) if row["resolved_timestamp"] else None
+                ),
                 resolved_by=row["resolved_by"],
                 financial_impact=row["financial_impact"],
                 reputation_impact=row["reputation_impact"],
@@ -1225,9 +1225,9 @@ class AutomatedComplianceSystem:
         compliance_score = max(0, 100 - (active_violations * 5) - (critical_violations * 20))
 
         return {
-            "overall_status": "compliant"
-            if active_violations == 0
-            else ("critical" if critical_violations > 0 else "warning"),
+            "overall_status": (
+                "compliant" if active_violations == 0 else ("critical" if critical_violations > 0 else "warning")
+            ),
             "compliance_score": compliance_score,
             "total_rules": total_rules,
             "active_violations": active_violations,

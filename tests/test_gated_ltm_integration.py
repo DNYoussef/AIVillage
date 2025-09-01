@@ -5,7 +5,6 @@ Validates that the memory system correctly interfaces with Agent 1's MemoryGate
 and provides the expected tensor shapes and behaviors.
 """
 
-
 import pytest
 import torch
 import torch.nn as nn

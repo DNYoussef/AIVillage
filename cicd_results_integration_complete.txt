@@ -1,0 +1,462 @@
+============================= test session starts =============================
+collecting ... collected 187 items / 36 errors / 4 skipped
+
+=================================== ERRORS ====================================
+__ ERROR collecting tests/integration/agent_forge/test_fog_burst_shutdown.py __
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\agent_forge\test_fog_burst_shutdown.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\agent_forge\test_fog_burst_shutdown.py:5: in <module>
+    from packages.agent_forge.integration.fog_burst import FogBurstOrchestrator
+E   ModuleNotFoundError: No module named 'packages.agent_forge.integration'
+_ ERROR collecting tests/integration/fog/test_marketplace_billing_integration.py _
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\fog\test_marketplace_billing_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\fog\test_marketplace_billing_integration.py:17: in <module>
+    from packages.fog.edge.beacon import CapabilityBeacon, DeviceType, PowerProfile
+E   ModuleNotFoundError: No module named 'packages.fog'
+_____ ERROR collecting tests/integration/fog/test_marketplace_matching.py _____
+..\..\AppData\Roaming\Python\Python312\site-packages\_pytest\python.py:498: in importtestmodule
+    mod = import_path(
+..\..\AppData\Roaming\Python\Python312\site-packages\_pytest\pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:935: in _load_unlocked
+    ???
+..\..\AppData\Roaming\Python\Python312\site-packages\_pytest\assertion\rewrite.py:177: in exec_module
+    source_stat, co = _rewrite_test(fn, self.config)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\AppData\Roaming\Python\Python312\site-packages\_pytest\assertion\rewrite.py:359: in _rewrite_test
+    co = compile(tree, strfn, "exec", dont_inherit=True)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E     File "C:\Users\17175\Desktop\AIVillage\tests\integration\fog\test_marketplace_matching.py", line 105
+E       return await _create_listings()
+E              ^^^^^^^^^^^^^^^^^^^^^^^^
+E   SyntaxError: 'await' outside async function
+_ ERROR collecting tests/integration/fog/test_namespace_quota_enforcement.py __
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\fog\test_namespace_quota_enforcement.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\fog\test_namespace_quota_enforcement.py:13: in <module>
+    from packages.core.security.rbac_system import RBACSystem, Role
+E   ModuleNotFoundError: No module named 'packages.core.security'
+_________ ERROR collecting tests/integration/fog/test_sla_classes.py __________
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\fog\test_sla_classes.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\fog\test_sla_classes.py:21: in <module>
+    from packages.fog.gateway.monitoring.metrics import FogMetricsCollector
+E   ModuleNotFoundError: No module named 'packages.fog'
+________ ERROR collecting tests/integration/test_agent_integration.py _________
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_agent_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_agent_integration.py:14: in <module>
+    from agents.unified_base_agent import (
+E   ModuleNotFoundError: No module named 'agents.unified_base_agent'
+_____ ERROR collecting tests/integration/test_agent_system_integration.py _____
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_agent_system_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_agent_system_integration.py:24: in <module>
+    from packages.agents.core.agent_interface import AgentCapability, AgentMetadata, MessageInterface, TaskInterface
+E   ModuleNotFoundError: No module named 'packages.agents.core.agent_interface'
+____ ERROR collecting tests/integration/test_architectural_integration.py _____
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_architectural_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_architectural_integration.py:28: in <module>
+    from packages.agent_forge.legacy_software.process_orchestrator import AgentForgeOrchestrator
+E   ModuleNotFoundError: No module named 'packages.agent_forge.legacy_software'
+______ ERROR collecting tests/integration/test_codex_rag_integration.py _______
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_codex_rag_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_codex_rag_integration.py:23: in <module>
+    from rag_system.core.codex_rag_integration import CODEXCompliantCache, CODEXRAGPipeline
+E   ModuleNotFoundError: No module named 'rag_system.core'; 'rag_system' is not a package
+___ ERROR collecting tests/integration/test_complete_federated_pipeline.py ____
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_complete_federated_pipeline.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_complete_federated_pipeline.py:18: in <module>
+    from infrastructure.p2p.communications.discovery import P2PDiscovery
+E   ModuleNotFoundError: No module named 'infrastructure.p2p.communications.discovery'
+_ ERROR collecting tests/integration/test_constitutional_betanet_transport.py _
+..\..\AppData\Roaming\Python\Python312\site-packages\transformers\utils\import_utils.py:1745: in _get_module
+    return importlib.import_module("." + module_name, self.__name__)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1387: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1360: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:935: in _load_unlocked
+    ???
+<frozen importlib._bootstrap_external>:995: in exec_module
+    ???
+<frozen importlib._bootstrap>:488: in _call_with_frames_removed
+    ???
+..\..\AppData\Roaming\Python\Python312\site-packages\transformers\pipelines\__init__.py:26: in <module>
+    from ..image_processing_utils import BaseImageProcessor
+..\..\AppData\Roaming\Python\Python312\site-packages\transformers\image_processing_utils.py:21: in <module>
+    from .image_transforms import center_crop, normalize, rescale
+..\..\AppData\Roaming\Python\Python312\site-packages\transformers\image_transforms.py:22: in <module>
+    from .image_utils import (
+..\..\AppData\Roaming\Python\Python312\site-packages\transformers\image_utils.py:58: in <module>
+    from torchvision.transforms import InterpolationMode
+E   ImportError: cannot import name 'InterpolationMode' from 'torchvision.transforms' (C:\Users\17175\AppData\Roaming\Python\Python312\site-packages\torchvision\transforms\__init__.py)
+
+The above exception was the direct cause of the following exception:
+tests\integration\test_constitutional_betanet_transport.py:33: in <module>
+    from infrastructure.p2p.betanet.constitutional_transport import (
+infrastructure\p2p\betanet\constitutional_transport.py:43: in <module>
+    from .constitutional_frames import (
+infrastructure\p2p\betanet\constitutional_frames.py:34: in <module>
+    from ...constitutional.moderation.pipeline import ConstitutionalModerationPipeline, ModerationResult
+infrastructure\constitutional\moderation\__init__.py:6: in <module>
+    from .pipeline import ConstitutionalModerationPipeline, ModerationDecision, ModerationResult
+infrastructure\constitutional\moderation\pipeline.py:15: in <module>
+    from infrastructure.ml.constitutional.harm_classifier import ConstitutionalHarmClassifier
+infrastructure\ml\constitutional\__init__.py:8: in <module>
+    from .harm_classifier import (
+infrastructure\ml\constitutional\harm_classifier.py:16: in <module>
+    from transformers import (
+<frozen importlib._bootstrap>:1412: in _handle_fromlist
+    ???
+..\..\AppData\Roaming\Python\Python312\site-packages\transformers\utils\import_utils.py:1735: in __getattr__
+    module = self._get_module(self._class_to_module[name])
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\AppData\Roaming\Python\Python312\site-packages\transformers\utils\import_utils.py:1747: in _get_module
+    raise RuntimeError(
+E   RuntimeError: Failed to import transformers.pipelines because of the following error (look up to see its traceback):
+E   cannot import name 'InterpolationMode' from 'torchvision.transforms' (C:\Users\17175\AppData\Roaming\Python\Python312\site-packages\torchvision\transforms\__init__.py)
+__ ERROR collecting tests/integration/test_contextual_tagging_integration.py __
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_contextual_tagging_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_contextual_tagging_integration.py:14: in <module>
+    from contextual_tagging import ContextualTagger
+E   ModuleNotFoundError: No module named 'contextual_tagging'
+___ ERROR collecting tests/integration/test_cross_component_integration.py ____
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_cross_component_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_cross_component_integration.py:23: in <module>
+    from ml.feature_extraction import FeatureExtractor, ModelComparator
+E   ModuleNotFoundError: No module named 'ml'
+_________ ERROR collecting tests/integration/test_digital_twin_api.py _________
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_digital_twin_api.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_digital_twin_api.py:5: in <module>
+    from experimental.services.services.twin.app import app
+E   ModuleNotFoundError: No module named 'experimental'
+____ ERROR collecting tests/integration/test_distributed_infrastructure.py ____
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_distributed_infrastructure.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_distributed_infrastructure.py:11: in <module>
+    from scripts.create_integration_tests import run_integration_tests
+E   ModuleNotFoundError: No module named 'scripts.create_integration_tests'
+________ ERROR collecting tests/integration/test_end_to_end_system.py _________
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_end_to_end_system.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_end_to_end_system.py:24: in <module>
+    from ml.feature_extraction import FeatureExtractor, ModelComparator
+E   ModuleNotFoundError: No module named 'ml'
+___ ERROR collecting tests/integration/test_enhanced_fog_infrastructure.py ____
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_enhanced_fog_infrastructure.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_enhanced_fog_infrastructure.py:23: in <module>
+    from infrastructure.fog.bridge import FogBridge
+E   ModuleNotFoundError: No module named 'infrastructure.fog.bridge'
+________ ERROR collecting tests/integration/test_evolution_manager.py _________
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_evolution_manager.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_evolution_manager.py:1: in <module>
+    from experimental.agents.agents.king.evolution_manager import EvolutionManager
+E   ModuleNotFoundError: No module named 'experimental'
+__ ERROR collecting tests/integration/test_evolution_metrics_integration.py ___
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_evolution_metrics_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_evolution_metrics_integration.py:24: in <module>
+    from packages.core.evolution_metrics_integrated import (
+E   ModuleNotFoundError: No module named 'packages.core.evolution_metrics_integrated'
+_ ERROR collecting tests/integration/test_federated_coordinator_production.py _
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_federated_coordinator_production.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_federated_coordinator_production.py:19: in <module>
+    from infrastructure.distributed_inference.unified_federated_coordinator import (
+E   ImportError: cannot import name 'SizeTier' from 'infrastructure.distributed_inference.unified_federated_coordinator' (C:\Users\17175\Desktop\AIVillage\infrastructure\distributed_inference\unified_federated_coordinator.py)
+__ ERROR collecting tests/integration/test_federated_training_end_to_end.py ___
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_federated_training_end_to_end.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_federated_training_end_to_end.py:23: in <module>
+    from infrastructure.p2p.communications.discovery import P2PDiscovery
+E   ModuleNotFoundError: No module named 'infrastructure.p2p.communications.discovery'
+___ ERROR collecting tests/integration/test_fog_marketplace_integration.py ____
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_fog_marketplace_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_fog_marketplace_integration.py:36: in <module>
+    from infrastructure.fog.market.p2p_integration import (
+E   ImportError: cannot import name 'P2PResourceInfo' from 'infrastructure.fog.market.p2p_integration' (C:\Users\17175\Desktop\AIVillage\infrastructure\fog\market\p2p_integration.py)
+________ ERROR collecting tests/integration/test_integration_simple.py ________
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_integration_simple.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_integration_simple.py:22: in <module>
+    from ml.feature_extraction import FeatureExtractor, ModelComparator
+E   ModuleNotFoundError: No module named 'ml.feature_extraction'
+__________ ERROR collecting tests/integration/test_libp2p_bridge.py ___________
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_libp2p_bridge.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_libp2p_bridge.py:5: in <module>
+    from packages.p2p.core.libp2p_mesh import LibP2PMeshNetwork, MeshMessage, MeshMessageType
+E   ModuleNotFoundError: No module named 'packages.p2p'
+_______ ERROR collecting tests/integration/test_mobile_participation.py _______
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_mobile_participation.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_mobile_participation.py:23: in <module>
+    from infrastructure.p2p.communications.discovery import P2PDiscovery
+E   ModuleNotFoundError: No module named 'infrastructure.p2p.communications.discovery'
+_______ ERROR collecting tests/integration/test_p2p_fog_integration.py ________
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_p2p_fog_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_p2p_fog_integration.py:22: in <module>
+    from infrastructure.p2p.communications.discovery import P2PDiscovery
+E   ModuleNotFoundError: No module named 'infrastructure.p2p.communications.discovery'
+__ ERROR collecting tests/integration/test_p2p_nat_traversal_integration.py ___
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_p2p_nat_traversal_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_p2p_nat_traversal_integration.py:4: in <module>
+    from packages.p2p.core.nat_traversal import NATInfo, NATTraversal, NATType
+E   ModuleNotFoundError: No module named 'packages.p2p'
+______ ERROR collecting tests/integration/test_p2p_network_validation.py ______
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_p2p_network_validation.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_p2p_network_validation.py:23: in <module>
+    from infrastructure.p2p.communications.discovery import P2PDiscovery
+E   ModuleNotFoundError: No module named 'infrastructure.p2p.communications.discovery'
+______ ERROR collecting tests/integration/test_packet_loss_resilience.py ______
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_packet_loss_resilience.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_packet_loss_resilience.py:13: in <module>
+    from implement_federated_learning import FederatedLearningClient, FederatedLearningServer
+E   ModuleNotFoundError: No module named 'implement_federated_learning'
+_____ ERROR collecting tests/integration/test_process_task_integration.py _____
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_process_task_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_process_task_integration.py:18: in <module>
+    from agents.utils.task import Task as LangroidTask
+E   ModuleNotFoundError: No module named 'agents.utils'
+___________ ERROR collecting tests/integration/test_rag_pipeline.py ___________
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_rag_pipeline.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_rag_pipeline.py:1: in <module>
+    from experimental.rag.storm.wikipedia_storm_pipeline import WikipediaSTORMPipeline
+E   ModuleNotFoundError: No module named 'experimental'
+_____ ERROR collecting tests/integration/test_retries_and_idempotency.py ______
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_retries_and_idempotency.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_retries_and_idempotency.py:14: in <module>
+    from packages.core.common import (
+E   ModuleNotFoundError: No module named 'packages.core.common'
+_____ ERROR collecting tests/integration/test_secure_training_workflow.py _____
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_secure_training_workflow.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_secure_training_workflow.py:23: in <module>
+    from infrastructure.shared.security.multi_tenant_system import MultiTenantSecuritySystem
+E   ImportError: cannot import name 'MultiTenantSecuritySystem' from 'infrastructure.shared.security.multi_tenant_system' (C:\Users\17175\Desktop\AIVillage\infrastructure\shared\security\multi_tenant_system.py)
+_ ERROR collecting tests/integration/test_security_integration_validation.py __
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_security_integration_validation.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_security_integration_validation.py:26: in <module>
+    from infrastructure.shared.security.multi_tenant_system import MultiTenantSecuritySystem
+E   ImportError: cannot import name 'MultiTenantSecuritySystem' from 'infrastructure.shared.security.multi_tenant_system' (C:\Users\17175\Desktop\AIVillage\infrastructure\shared\security\multi_tenant_system.py)
+__________ ERROR collecting tests/integration/test_token_economy.py ___________
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_token_economy.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_token_economy.py:1: in <module>
+    from contracts.VILLAGEToken import VILLAGEToken
+E   ModuleNotFoundError: No module named 'contracts'
+_______ ERROR collecting tests/integration/test_whatsapp_tutor_flow.py ________
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\integration\test_whatsapp_tutor_flow.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\integration\test_whatsapp_tutor_flow.py:9: in <module>
+    from app import app
+E   ModuleNotFoundError: No module named 'app'
+=========================== short test summary info ===========================
+ERROR tests/integration/agent_forge/test_fog_burst_shutdown.py
+ERROR tests/integration/fog/test_marketplace_billing_integration.py
+ERROR tests/integration/fog/test_marketplace_matching.py
+ERROR tests/integration/fog/test_namespace_quota_enforcement.py
+ERROR tests/integration/fog/test_sla_classes.py
+ERROR tests/integration/test_agent_integration.py
+ERROR tests/integration/test_agent_system_integration.py
+ERROR tests/integration/test_architectural_integration.py
+ERROR tests/integration/test_codex_rag_integration.py
+ERROR tests/integration/test_complete_federated_pipeline.py
+ERROR tests/integration/test_constitutional_betanet_transport.py - RuntimeErr...
+ERROR tests/integration/test_contextual_tagging_integration.py
+ERROR tests/integration/test_cross_component_integration.py
+ERROR tests/integration/test_digital_twin_api.py
+ERROR tests/integration/test_distributed_infrastructure.py
+ERROR tests/integration/test_end_to_end_system.py
+ERROR tests/integration/test_enhanced_fog_infrastructure.py
+ERROR tests/integration/test_evolution_manager.py
+ERROR tests/integration/test_evolution_metrics_integration.py
+ERROR tests/integration/test_federated_coordinator_production.py
+ERROR tests/integration/test_federated_training_end_to_end.py
+ERROR tests/integration/test_fog_marketplace_integration.py
+ERROR tests/integration/test_integration_simple.py
+ERROR tests/integration/test_libp2p_bridge.py
+ERROR tests/integration/test_mobile_participation.py
+ERROR tests/integration/test_p2p_fog_integration.py
+ERROR tests/integration/test_p2p_nat_traversal_integration.py
+ERROR tests/integration/test_p2p_network_validation.py
+ERROR tests/integration/test_packet_loss_resilience.py
+ERROR tests/integration/test_process_task_integration.py
+ERROR tests/integration/test_rag_pipeline.py
+ERROR tests/integration/test_retries_and_idempotency.py
+ERROR tests/integration/test_secure_training_workflow.py
+ERROR tests/integration/test_security_integration_validation.py
+ERROR tests/integration/test_token_economy.py
+ERROR tests/integration/test_whatsapp_tutor_flow.py
+!!!!!!!!!!!!!!!!!! Interrupted: 36 errors during collection !!!!!!!!!!!!!!!!!!!
+================== 4 skipped, 8 warnings, 36 errors in 7.02s ==================

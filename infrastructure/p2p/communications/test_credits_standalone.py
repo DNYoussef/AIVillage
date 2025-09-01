@@ -9,6 +9,8 @@ import tempfile
 # Add the current directory to the path so we can import our modules
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import contextlib
+
 from credits_ledger import CreditsConfig, CreditsLedger
 
 
@@ -128,10 +130,9 @@ def test_credits_ledger() -> bool | None:
 
     finally:
         # Cleanup
-        try:
+        with contextlib.suppress(OSError, PermissionError):
             os.unlink(db_file.name)
-        except (OSError, PermissionError):
-            pass  # Ignore cleanup errors
+  # Ignore cleanup errors
 
 
 def test_api_endpoints() -> bool | None:
@@ -232,10 +233,9 @@ def test_api_endpoints() -> bool | None:
         print("SUCCESS: All API tests passed!")
 
         # Cleanup
-        try:
+        with contextlib.suppress(OSError, PermissionError):
             os.unlink(db_file.name)
-        except (OSError, PermissionError):
-            pass  # Ignore cleanup errors
+  # Ignore cleanup errors
         return True
 
     except ImportError as e:

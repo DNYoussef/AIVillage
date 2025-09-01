@@ -168,7 +168,7 @@ def test_direct_imports():
         # Add paths
         current_dir = Path(__file__).parent
         core_dir = current_dir / "core"
-        cognate_pretrain_dir = core_dir / "agent-forge" / "phases" / "cognate_pretrain"
+        cognate_pretrain_dir = core_dir / "agent_forge" / "phases" / "cognate_pretrain"
 
         sys.path.insert(0, str(core_dir))
         sys.path.insert(0, str(cognate_pretrain_dir))

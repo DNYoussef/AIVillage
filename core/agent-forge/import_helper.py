@@ -22,13 +22,13 @@ def setup_agent_forge_paths():
     """
     # Get project root
     current_file = Path(__file__).resolve()
-    project_root = current_file.parent.parent.parent  # Go up from core/agent-forge/
+    project_root = current_file.parent.parent.parent  # Go up from core/agent_forge/
 
     # Add paths in correct order
     paths_to_add = [
         str(project_root),  # Root for general imports
         str(project_root / "core"),  # For agent_forge bridge
-        str(project_root / "core" / "agent-forge"),  # Direct access to agent-forge
+        str(project_root / "core" / "agent_forge"),  # Direct access to agent_forge
     ]
 
     for path in paths_to_add:

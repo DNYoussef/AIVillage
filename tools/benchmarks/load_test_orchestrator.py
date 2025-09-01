@@ -476,18 +476,18 @@ class LoadTestOrchestrator:
         return {
             "load_test_summary": {
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-                "total_duration_seconds": self.test_end_time - self.test_start_time
-                if self.test_start_time and self.test_end_time
-                else 0,
+                "total_duration_seconds": (
+                    self.test_end_time - self.test_start_time if self.test_start_time and self.test_end_time else 0
+                ),
                 "total_scenarios": total_scenarios,
                 "scenarios_passed": passed_scenarios,
                 "scenarios_failed": failed_scenarios,
                 "success_rate": passed_scenarios / total_scenarios if total_scenarios > 0 else 0,
-                "system_resilience": "HIGH"
-                if passed_scenarios >= total_scenarios * 0.8
-                else "MEDIUM"
-                if passed_scenarios >= total_scenarios * 0.6
-                else "LOW",
+                "system_resilience": (
+                    "HIGH"
+                    if passed_scenarios >= total_scenarios * 0.8
+                    else "MEDIUM" if passed_scenarios >= total_scenarios * 0.6 else "LOW"
+                ),
             },
             "component_resilience": {
                 component: {

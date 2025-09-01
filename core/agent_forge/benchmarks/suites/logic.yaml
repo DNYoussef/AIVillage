@@ -1,0 +1,4 @@
+objectives: [hellaswag_acc, winogrande_acc, arc_challenge_acc, boolq_acc]
+task_groups:
+  - name: reasoning_core
+    tasks: [hellaswag, winogrande, arc_challenge, boolq]

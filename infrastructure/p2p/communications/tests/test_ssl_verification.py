@@ -6,13 +6,12 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
+from packages.p2p.communications.protocol import CommunicationsProtocol
 import pytest
 import websockets
 
-from packages.p2p.communications.protocol import CommunicationsProtocol
 
-
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_invalid_certificate_raises(tmp_path) -> None:
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     subject = issuer = x509.Name(

@@ -54,24 +54,23 @@ class GatewayConfig:
         self.api_key = os.getenv("API_KEY")
         if not self.api_key:
             raise ValueError(
-                "API_KEY environment variable is required. "
-                "Please set API_KEY with a secure random value."
+                "API_KEY environment variable is required. " "Please set API_KEY with a secure random value."
             )
-        
+
         self.secret_key = os.getenv("SECRET_KEY")
         if not self.secret_key:
             raise ValueError(
                 "SECRET_KEY environment variable is required. "
                 "Please set SECRET_KEY with a secure random value (minimum 32 characters)."
             )
-        
+
         # Validate against insecure default values
         insecure_keys = [
-            "dev-gateway-key-12345", 
-            "dev-secret-key-change-in-production", 
-            "changeme", 
-            "default", 
-            "secret"
+            "dev-gateway-key-12345",
+            "dev-secret-key-change-in-production",
+            "changeme",
+            "default",
+            "secret",
         ]
         if self.api_key in insecure_keys or self.secret_key in insecure_keys:
             raise ValueError(

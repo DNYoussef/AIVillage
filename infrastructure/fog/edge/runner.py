@@ -366,6 +366,7 @@ class WASIRunner:
             disk_used_mb = sandbox_size / (1024 * 1024)
         except Exception as e:
             import logging
+
             logging.exception("Exception in sandbox disk usage calculation: %s", str(e))
 
         return {
@@ -694,6 +695,7 @@ class MicroVMRunner:
             disk_used_mb = sandbox_size / (1024 * 1024)
         except Exception as e:
             import logging
+
             logging.exception("Exception in WASI sandbox disk usage calculation: %s", str(e))
 
         return {

@@ -2,6 +2,7 @@
 Unified Task Manager Facade - Maintains backward compatibility.
 Provides the same interface as the original UnifiedManagement class.
 """
+
 import asyncio
 from collections import deque
 import logging
@@ -33,7 +34,7 @@ class UnifiedTaskManagerFacade:
     Facade that maintains backward compatibility with the original UnifiedManagement class.
     Delegates operations to the decomposed services while preserving the original API.
     """
-    
+
     def __init__(
         self,
         communication_protocol: StandardCommunicationProtocol,
@@ -45,33 +46,30 @@ class UnifiedTaskManagerFacade:
         # Create core dependencies
         self.communication_protocol = communication_protocol
         self.decision_maker = decision_maker
-        
+
         # Initialize supporting components
         incentive_model = IncentiveModel(num_agents, num_actions)
         unified_analytics = UnifiedAnalytics()
         subgoal_generator = SubGoalGenerator()
-        
+
         # Initialize services
         self._project_service = ProjectManagementService()
         self._incentive_service = IncentiveService(incentive_model, unified_analytics)
         self._analytics_service = AnalyticsService(unified_analytics)
         self._persistence_service = PersistenceService()
-        
+
         # Services with cross-dependencies
         self._assignment_service = TaskAssignmentService(
             communication_protocol, decision_maker, self._incentive_service
         )
-        self._creation_service = TaskCreationService(
-            subgoal_generator, self._assignment_service, self._project_service
-        )
+        self._creation_service = TaskCreationService(subgoal_generator, self._assignment_service, self._project_service)
         self._completion_service = TaskCompletionService(
-            self._assignment_service, self._incentive_service, 
-            self._analytics_service, self._project_service
+            self._assignment_service, self._incentive_service, self._analytics_service, self._project_service
         )
         self._execution_service = TaskExecutionService(
             communication_protocol, self._creation_service, self._completion_service
         )
-        
+
         # Maintain original interface properties
         self.pending_tasks = deque()
         self.ongoing_tasks = {}
@@ -94,9 +92,7 @@ class UnifiedTaskManagerFacade:
         project_id: str | None = None,
     ) -> Task:
         """Create a new task (delegates to TaskCreationService)."""
-        task = await self._creation_service.create_task(
-            description, agent, priority, deadline, project_id
-        )
+        task = await self._creation_service.create_task(description, agent, priority, deadline, project_id)
         self._sync_pending_tasks()
         return task
 
@@ -213,7 +209,7 @@ class UnifiedTaskManagerFacade:
     async def introspect(self) -> dict[str, Any]:
         """Generate introspection report."""
         performance_report = await self._analytics_service.generate_performance_report()
-        
+
         return {
             "pending_tasks": len(self.pending_tasks),
             "ongoing_tasks": len(self.ongoing_tasks),
@@ -241,9 +237,10 @@ class UnifiedTaskManagerFacade:
 
     def _sync_projects(self) -> None:
         """Sync projects from project service."""
+
         async def _sync():
             self.projects = await self._project_service.get_all_projects()
-        
+
         # Run synchronously in the current event loop if possible
         try:
             loop = asyncio.get_event_loop()

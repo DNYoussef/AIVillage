@@ -17,8 +17,8 @@ Features:
 Version: 2.0.0
 """
 
-from typing import TYPE_CHECKING
 import logging
+from typing import TYPE_CHECKING
 
 # Package information
 __version__ = "2.0.0"
@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 # Import components with graceful fallback
 try:
     from .mixnode_client import MixnodeClient
+
     logger.info("BetaNet mixnode client loaded")
 except ImportError as e:
     logger.warning(f"BetaNet mixnode client not available: {e}")
@@ -38,6 +39,7 @@ except ImportError as e:
 
 try:
     from .noise_protocol import NoiseProtocol, NoiseState
+
     logger.debug("BetaNet noise protocol loaded")
 except ImportError as e:
     logger.debug(f"Noise protocol not available: {e}")
@@ -46,7 +48,8 @@ except ImportError as e:
         NoiseState = None
 
 try:
-    from .htx_transport import HTXTransport, CovertChannel
+    from .htx_transport import CovertChannel, HTXTransport
+
     logger.debug("BetaNet HTX transport loaded")
 except ImportError as e:
     logger.debug(f"HTX transport not available: {e}")
@@ -55,7 +58,8 @@ except ImportError as e:
         CovertChannel = None
 
 try:
-    from .access_tickets import AccessTicketManager, AccessTicket
+    from .access_tickets import AccessTicket, AccessTicketManager
+
     logger.debug("BetaNet access tickets loaded")
 except ImportError as e:
     logger.debug(f"Access tickets not available: {e}")
@@ -66,15 +70,12 @@ except ImportError as e:
 __all__ = [
     # Core anonymous routing
     "MixnodeClient",
-    
     # Cryptographic protocols
     "NoiseProtocol",
     "NoiseState",
-    
     # Covert transport
-    "HTXTransport", 
+    "HTXTransport",
     "CovertChannel",
-    
     # Authentication
     "AccessTicketManager",
     "AccessTicket",

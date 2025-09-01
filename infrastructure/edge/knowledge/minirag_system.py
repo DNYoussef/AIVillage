@@ -614,9 +614,9 @@ class MiniRAGSystem:
             "by_privacy_level": {},
             "contributions_pending": len(self.pending_contributions),
             "contributed_to_global": sum(1 for k in self.knowledge_base.values() if k.contributed_to_global),
-            "average_usage_frequency": np.mean([k.usage_frequency for k in self.knowledge_base.values()])
-            if self.knowledge_base
-            else 0,
+            "average_usage_frequency": (
+                np.mean([k.usage_frequency for k in self.knowledge_base.values()]) if self.knowledge_base else 0
+            ),
         }
 
         # Count by categories

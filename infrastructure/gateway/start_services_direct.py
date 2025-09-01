@@ -77,11 +77,11 @@ def main():
             start_model_chat_service()
         elif service == "websocket":
             start_websocket_service()
-        elif service == "agent-forge":
+        elif service == "agent_forge":
             start_agent_forge_service()
         else:
             print(f"Unknown service: {service}")
-            print("Available services: chat, websocket, agent-forge")
+            print("Available services: chat, websocket, agent_forge")
         return
 
     # Start all services

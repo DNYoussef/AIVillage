@@ -388,6 +388,7 @@ class LibP2PMeshBridge:
         def run_server() -> None:
             # Security: Use environment variable for host binding
             import os
+
             host = os.getenv("LIBP2P_BRIDGE_HOST", "127.0.0.1")
             uvicorn.run(self.app, host=host, port=self.rest_port, log_level="info")
 

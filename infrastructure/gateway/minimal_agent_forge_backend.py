@@ -42,6 +42,7 @@ app = FastAPI(
 # CORS middleware
 # SECURITY: Secure CORS configuration - NO WILDCARDS
 import os
+
 cors_origins_env = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8080,http://127.0.0.1:3000")
 secure_origins = [origin.strip() for origin in cors_origins_env.split(",")]
 
@@ -188,10 +189,10 @@ async def simulate_cognate_training():
                     "focus": focus,
                     "architecture": {"layers": 24, "hidden_size": 1024, "attention_heads": 16, "vocab_size": 32000},
                     "artifacts": {
-                        "config_path": f"core/agent-forge/phases/cognate_pretrain/cognate_25m_models/cognate_foundation_{i}/config.json",
-                        "weights_path": f"core/agent-forge/phases/cognate_pretrain/cognate_25m_models/cognate_foundation_{i}/pytorch_model.bin",
-                        "tokenizer_path": f"core/agent-forge/phases/cognate_pretrain/cognate_25m_models/cognate_foundation_{i}/tokenizer.json",
-                        "metadata_path": f"core/agent-forge/phases/cognate_pretrain/cognate_25m_models/cognate_foundation_{i}/metadata.json",
+                        "config_path": f"core/agent_forge/phases/cognate_pretrain/cognate_25m_models/cognate_foundation_{i}/config.json",
+                        "weights_path": f"core/agent_forge/phases/cognate_pretrain/cognate_25m_models/cognate_foundation_{i}/pytorch_model.bin",
+                        "tokenizer_path": f"core/agent_forge/phases/cognate_pretrain/cognate_25m_models/cognate_foundation_{i}/tokenizer.json",
+                        "metadata_path": f"core/agent_forge/phases/cognate_pretrain/cognate_25m_models/cognate_foundation_{i}/metadata.json",
                     },
                     "performance_metrics": {
                         "training_loss": round(2.45 - (i * 0.12), 2),
@@ -209,7 +210,7 @@ async def simulate_cognate_training():
             active_phases[phase_name]["artifacts"] = {
                 "models_created": len(new_models),
                 "total_parameters": sum(m["parameter_count"] for m in new_models),
-                "output_directory": "core/agent-forge/phases/cognate_pretrain/cognate_25m_models",
+                "output_directory": "core/agent_forge/phases/cognate_pretrain/cognate_25m_models",
                 "ready_for_evomerge": True,
                 "model_ids": [m["model_id"] for m in new_models],
             }

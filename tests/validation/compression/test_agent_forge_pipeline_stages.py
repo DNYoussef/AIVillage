@@ -572,28 +572,28 @@ class AgentForgePipelineTester:
             ],
             "compression_breakdown": {
                 "bitnet_contribution": f"{self.stage_results[0].compression_ratio:.1f}x",
-                "seedlm_contribution": f"{self.stage_results[1].compression_ratio:.1f}x"
-                if len(self.stage_results) > 1
-                else "N/A",
-                "vptq_contribution": f"{self.stage_results[2].compression_ratio:.1f}x"
-                if len(self.stage_results) > 2
-                else "N/A",
-                "hypercompression_contribution": f"{self.stage_results[3].compression_ratio:.1f}x"
-                if len(self.stage_results) > 3
-                else "N/A",
+                "seedlm_contribution": (
+                    f"{self.stage_results[1].compression_ratio:.1f}x" if len(self.stage_results) > 1 else "N/A"
+                ),
+                "vptq_contribution": (
+                    f"{self.stage_results[2].compression_ratio:.1f}x" if len(self.stage_results) > 2 else "N/A"
+                ),
+                "hypercompression_contribution": (
+                    f"{self.stage_results[3].compression_ratio:.1f}x" if len(self.stage_results) > 3 else "N/A"
+                ),
             },
             "quality_analysis": {
                 "final_reconstruction_error": f"{final_result.reconstruction_error_mse:.6f}",
-                "error_accumulation": "Low"
-                if final_result.reconstruction_error_mse < 0.1
-                else "Moderate"
-                if final_result.reconstruction_error_mse < 1.0
-                else "High",
-                "quality_vs_compression_tradeoff": "Excellent"
-                if total_compression > 50 and final_result.reconstruction_error_mse < 0.1
-                else "Good"
-                if total_compression > 20
-                else "Poor",
+                "error_accumulation": (
+                    "Low"
+                    if final_result.reconstruction_error_mse < 0.1
+                    else "Moderate" if final_result.reconstruction_error_mse < 1.0 else "High"
+                ),
+                "quality_vs_compression_tradeoff": (
+                    "Excellent"
+                    if total_compression > 50 and final_result.reconstruction_error_mse < 0.1
+                    else "Good" if total_compression > 20 else "Poor"
+                ),
             },
             "pipeline_assessment": self._assess_pipeline_performance(
                 total_compression, target_compression, pipeline_successful

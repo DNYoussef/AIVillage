@@ -44,7 +44,9 @@ try:
 except ImportError:
     CRYPTO_AVAILABLE = False
 
-from ..core.message_types import MessagePriority, MessageType, UnifiedMessage
+import contextlib
+
+from infrastructure.p2p.core.message_types import MessagePriority, MessageType, UnifiedMessage
 
 logger = logging.getLogger(__name__)
 
@@ -302,10 +304,9 @@ class BitChatTransport:
         # Wait for tasks to complete
         for task in tasks:
             if task:
-                try:
+                with contextlib.suppress(asyncio.CancelledError):
                     await task
-                except asyncio.CancelledError:
-                    pass
+
 
         # Cleanup
         self.peers.clear()

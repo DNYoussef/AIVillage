@@ -103,7 +103,7 @@ class AIVillageTracing:
     def _get_component_type(self) -> str:
         """Determine component type based on service name"""
         component_map = {
-            "agent-forge": "ml-pipeline",
+            "agent_forge": "ml-pipeline",
             "hyperrag": "memory-system",
             "p2p-mesh": "networking",
             "api-gateway": "api-gateway",
@@ -194,7 +194,7 @@ class AIVillageTracing:
 
 
 # Service-specific tracing instances
-agent_forge_tracing = AIVillageTracing("agent-forge", "2.0.0")
+agent_forge_tracing = AIVillageTracing("agent_forge", "2.0.0")
 hyperrag_tracing = AIVillageTracing("hyperrag", "1.0.0")
 p2p_tracing = AIVillageTracing("p2p-mesh", "1.0.0")
 api_gateway_tracing = AIVillageTracing("api-gateway", "1.0.0")

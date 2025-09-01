@@ -9,10 +9,15 @@ import logging
 from pathlib import Path
 import sys
 
-# Ensure we're in the right directory
-if not Path("packages/core/global_south").exists():
-    print("Error: Run this script from the AIVillage root directory")
-    sys.exit(1)
+# Check if we're in the right directory - for pytest compatibility
+import pytest
+
+
+def check_project_structure():
+    """Check if we're in the correct directory with proper project structure."""
+    if not Path("packages/core/global_south").exists():
+        pytest.skip("Run this test from the AIVillage root directory with proper project structure")
+
 
 # Set up logging with proper encoding
 logging.basicConfig(
@@ -26,6 +31,9 @@ logger = logging.getLogger(__name__)
 
 async def test_import_and_basic_functionality():
     """Test that imports work and basic functionality is available."""
+
+    # Check project structure first
+    check_project_structure()
 
     print("=" * 60)
     print("Testing Global South P2P Integration - Basic Functionality")
@@ -111,6 +119,9 @@ async def test_import_and_basic_functionality():
 async def test_factory_function():
     """Test the factory function."""
 
+    # Check project structure first
+    check_project_structure()
+
     print("\n" + "=" * 60)
     print("Testing Factory Function")
     print("=" * 60)
@@ -142,6 +153,9 @@ async def test_factory_function():
 
 async def test_error_handling():
     """Test error handling and edge cases."""
+
+    # Check project structure first
+    check_project_structure()
 
     print("\n" + "=" * 60)
     print("Testing Error Handling")
@@ -179,6 +193,9 @@ async def test_error_handling():
 
 async def main():
     """Run all tests."""
+
+    # Check project structure first
+    check_project_structure()
 
     print("AIVillage Global South P2P Integration Test Suite")
     print("Running from:", Path.cwd())

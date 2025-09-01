@@ -102,7 +102,7 @@ class FogOnionCoordinator:
     def __init__(
         self,
         node_id: str,
-        fog_coordinator: 'FogCoordinator',
+        fog_coordinator: "FogCoordinator",
         enable_mixnet: bool = True,
         default_privacy_level: PrivacyLevel = PrivacyLevel.PRIVATE,
         max_circuits: int = 50,
@@ -235,7 +235,7 @@ class FogOnionCoordinator:
                 # Authenticate client with simple token
                 auth_token = f"auth_{task.client_id}_token"
                 self.circuit_service.authenticate_client(task.client_id, auth_token)
-                
+
                 circuit = await self.circuit_service.get_circuit(
                     privacy_level=circuit_privacy_level,
                     client_id=task.client_id,
@@ -243,7 +243,7 @@ class FogOnionCoordinator:
                 )
             else:
                 circuit = None
-                
+
             if not circuit:
                 logger.error(f"Failed to establish circuit for privacy level {task.privacy_level.value}")
                 return False
@@ -311,12 +311,12 @@ class FogOnionCoordinator:
                 # Authenticate service
                 auth_token = f"auth_{service_id}_token"
                 self.circuit_service.authenticate_client(service_id, auth_token)
-                
+
                 circuit = await self.circuit_service.get_circuit(
                     privacy_level=circuit_privacy_level,
                     client_id=service_id,
                 )
-                
+
                 if circuit:
                     service.circuit_id = circuit.circuit_id
                     self.service_circuits[service_id] = circuit
@@ -360,14 +360,14 @@ class FogOnionCoordinator:
                 if self.circuit_service:
                     circuit_privacy_level = self._convert_privacy_level(privacy_level)
                     # Use a system client ID for gossip
-                    auth_token = f"auth_system_gossip_token"
+                    auth_token = "auth_system_gossip_token"
                     self.circuit_service.authenticate_client("system_gossip", auth_token)
-                    
+
                     circuit = await self.circuit_service.get_circuit(
                         privacy_level=circuit_privacy_level,
                         client_id="system_gossip",
                     )
-                    
+
                     if circuit and self.onion_router:
                         return await self.onion_router.send_data(
                             circuit.circuit_id,
@@ -437,7 +437,6 @@ class FogOnionCoordinator:
 
         return True
 
-
     async def _route_task_privately(self, task: PrivacyAwareTask, circuit: OnionCircuit) -> bool:
         """Route task through privacy layers."""
         try:
@@ -460,7 +459,7 @@ class FogOnionCoordinator:
                     task_payload,
                     stream_id=f"task_{task.task_id}",
                 )
-                
+
                 # Update circuit usage statistics
                 if success and self.circuit_service:
                     await self.circuit_service.update_circuit_usage(
@@ -468,7 +467,7 @@ class FogOnionCoordinator:
                         bytes_sent=len(task_payload),
                         bytes_received=0,  # Will be updated when response is received
                     )
-                
+
                 return success
 
             else:
@@ -520,7 +519,6 @@ class FogOnionCoordinator:
         # For now, simulate success
         logger.debug(f"Sending direct gossip to {recipient_id}: {len(message)} bytes")
         return True
-
 
     async def _start_background_tasks(self):
         """Start background maintenance tasks."""

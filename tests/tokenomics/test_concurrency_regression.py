@@ -147,6 +147,7 @@ class TokenomicsConcurrencyTester:
                 system.add_earning_rule(EarningRule("CONCURRENT_TEST", 10, {}, {}))
             except Exception as e:
                 import logging
+
                 logging.exception("Failed to add earning rule CONCURRENT_TEST (might already exist): %s", str(e))
 
             for i in range(operations):
@@ -194,6 +195,7 @@ class TestTokenomicsConcurrencyRegression:
             os.unlink(db_path)
         except Exception as e:
             import logging
+
             logging.exception("Failed to cleanup temporary database file %s: %s", db_path, str(e))
 
     def test_concurrent_balance_race_condition_detection(self, temp_db_path):
@@ -570,6 +572,7 @@ def test_tokenomics_concurrency_smoke_test():
             os.unlink(db_path)
         except Exception as e:
             import logging
+
             logging.exception("Failed to cleanup temporary database file %s during smoke test: %s", db_path, str(e))
 
 

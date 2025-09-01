@@ -15,7 +15,7 @@ import time
 import json
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 import argparse
 
 # Add project root to path
@@ -23,95 +23,89 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from tests.guards.monitoring.test_continuous_guard_monitoring import (
-    GuardTestMonitor, GuardTestResult, GuardTestStatus, AlertLevel
+    GuardTestMonitor,
+    GuardTestResult,
+    GuardTestStatus,
 )
 
 
 class GuardTestRunner:
     """Comprehensive guard test runner with monitoring integration."""
-    
+
     def __init__(self, verbose: bool = False, monitor: bool = True):
         """Initialize guard test runner."""
         self.verbose = verbose
         self.monitor = monitor
         self.results: List[Dict[str, Any]] = []
         self.start_time = time.time()
-        
+
         if self.monitor:
             self.test_monitor = GuardTestMonitor()
             self.test_monitor.start_monitoring()
         else:
             self.test_monitor = None
-    
+
     def run_all_guard_tests(self) -> Dict[str, Any]:
         """Run all guard tests with comprehensive monitoring."""
         print("🛡️ AIVillage Guard Test Suite")
         print("=" * 50)
         print(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print()
-        
+
         # Define test categories and their respective test modules
         test_categories = {
             "Security": [
                 "tests/guards/security/test_cors_config_regression.py",
-                "tests/guards/security/test_websocket_security_regression.py"
+                "tests/guards/security/test_websocket_security_regression.py",
             ],
-            "Performance": [
-                "tests/guards/performance/test_caching_performance_regression.py"
-            ],
-            "Imports": [
-                "tests/guards/imports/test_grokfast_import_regression.py"
-            ],
+            "Performance": ["tests/guards/performance/test_caching_performance_regression.py"],
+            "Imports": ["tests/guards/imports/test_grokfast_import_regression.py"],
             "Integration": [
                 "tests/guards/integration/test_localhost_admin_security_integration.py",
                 "tests/guards/integration/test_core_blocker_fixes_integration.py",
-                "tests/guards/integration/test_configuration_integrity_guards.py"
+                "tests/guards/integration/test_configuration_integrity_guards.py",
             ],
-            "Monitoring": [
-                "tests/guards/monitoring/test_continuous_guard_monitoring.py"
-            ]
+            "Monitoring": ["tests/guards/monitoring/test_continuous_guard_monitoring.py"],
         }
-        
+
         total_categories = len(test_categories)
         total_tests = sum(len(tests) for tests in test_categories.values())
-        
+
         print(f"Executing {total_tests} guard tests across {total_categories} categories")
         print()
-        
+
         category_results = {}
         overall_success = True
-        
+
         for category_name, test_files in test_categories.items():
             print(f"🔄 Running {category_name} Tests...")
-            
+
             category_result = self._run_test_category(category_name, test_files)
             category_results[category_name] = category_result
-            
+
             if not category_result["success"]:
                 overall_success = False
-            
+
             # Print category summary
             status_icon = "✅" if category_result["success"] else "❌"
             print(f"{status_icon} {category_name}: {category_result['passed']}/{category_result['total']} passed")
-            
+
             if not category_result["success"] and self.verbose:
                 for failure in category_result.get("failures", []):
                     print(f"   ❌ {failure}")
-            
+
             print()
-        
+
         # Generate comprehensive report
         execution_time = time.time() - self.start_time
-        final_report = self._generate_final_report(
-            category_results, overall_success, execution_time
-        )
-        
+        final_report = self._generate_final_report(category_results, overall_success, execution_time)
+
         # Export monitoring data if enabled
         if self.monitor and self.test_monitor:
             monitor_export_path = PROJECT_ROOT / "docs" / "forensic" / "guard_monitoring_report.json"
             self.test_monitor.export_metrics(monitor_export_path)
             print(f"📊 Monitoring report exported to: {monitor_export_path}")
-        
+
         # Print final summary
         print("=" * 50)
         status_icon = "✅" if overall_success else "❌"
@@ -121,14 +115,14 @@ class GuardTestRunner:
         print(f"✅ Passed: {final_report['total_passed']}")
         print(f"❌ Failed: {final_report['total_failed']}")
         print(f"⚠️  Skipped: {final_report['total_skipped']}")
-        
+
         if not overall_success:
             print()
             print("🚨 CRITICAL: Guard test failures detected!")
             print("   Review failed tests to prevent regression of critical fixes.")
-        
+
         return final_report
-    
+
     def _run_test_category(self, category_name: str, test_files: List[str]) -> Dict[str, Any]:
         """Run tests for a specific category."""
         category_start = time.time()
@@ -140,17 +134,17 @@ class GuardTestRunner:
             "skipped": 0,
             "failures": [],
             "execution_time": 0,
-            "success": True
+            "success": True,
         }
-        
+
         for test_file in test_files:
             if self.verbose:
                 print(f"   🧪 {test_file}")
-            
+
             test_start = time.time()
             test_result = self._run_single_test(test_file)
             test_time = time.time() - test_start
-            
+
             # Record results
             if test_result["success"]:
                 category_results["passed"] += 1
@@ -163,71 +157,62 @@ class GuardTestRunner:
                 category_results["success"] = False
                 category_results["failures"].append(test_file)
                 status = GuardTestStatus.FAILED
-            
+
             # Record with monitor
             if self.monitor and self.test_monitor:
                 monitor_result = GuardTestResult(
-                    test_name=test_file,
-                    status=status,
-                    execution_time=test_time,
-                    error_message=test_result.get("error")
+                    test_name=test_file, status=status, execution_time=test_time, error_message=test_result.get("error")
                 )
                 self.test_monitor.record_test_result(monitor_result)
-        
+
         category_results["execution_time"] = time.time() - category_start
         return category_results
-    
+
     def _run_single_test(self, test_file: str) -> Dict[str, Any]:
         """Run a single test file using pytest."""
         try:
             # Build pytest command
             cmd = [
-                sys.executable, "-m", "pytest", 
+                sys.executable,
+                "-m",
+                "pytest",
                 test_file,
                 "-v" if self.verbose else "-q",
                 "--tb=short",
-                "--disable-warnings"
+                "--disable-warnings",
             ]
-            
+
             # Run test
             result = subprocess.run(
-                cmd,
-                cwd=PROJECT_ROOT,
-                capture_output=True,
-                text=True,
-                timeout=300  # 5 minute timeout per test file
+                cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=300  # 5 minute timeout per test file
             )
-            
+
             return {
                 "success": result.returncode == 0,
                 "skipped": "SKIPPED" in result.stdout,
                 "output": result.stdout,
-                "error": result.stderr if result.returncode != 0 else None
+                "error": result.stderr if result.returncode != 0 else None,
             }
-            
+
         except subprocess.TimeoutExpired:
             return {
                 "success": False,
                 "skipped": False,
                 "output": "",
-                "error": f"Test timeout after 300 seconds: {test_file}"
+                "error": f"Test timeout after 300 seconds: {test_file}",
             }
         except Exception as e:
-            return {
-                "success": False,
-                "skipped": False,
-                "output": "",
-                "error": f"Test execution error: {str(e)}"
-            }
-    
-    def _generate_final_report(self, category_results: Dict[str, Dict[str, Any]], 
-                              overall_success: bool, execution_time: float) -> Dict[str, Any]:
+            return {"success": False, "skipped": False, "output": "", "error": f"Test execution error: {str(e)}"}
+
+    def _generate_final_report(
+        self, category_results: Dict[str, Dict[str, Any]], overall_success: bool, execution_time: float
+    ) -> Dict[str, Any]:
         """Generate comprehensive final report."""
         total_tests = sum(r["total"] for r in category_results.values())
         total_passed = sum(r["passed"] for r in category_results.values())
         total_failed = sum(r["failed"] for r in category_results.values())
         total_skipped = sum(r["skipped"] for r in category_results.values())
-        
+
         report = {
             "timestamp": datetime.now().isoformat(),
             "overall_success": overall_success,
@@ -241,84 +226,78 @@ class GuardTestRunner:
             "critical_protections_validated": [
                 "CORS wildcard prevention",
                 "WebSocket RCE blocking",
-                "Admin localhost-only binding", 
+                "Admin localhost-only binding",
                 "GrokFast import resolution",
                 "Redis connection pooling",
                 "Core blocker workflow integrity",
-                "Configuration security validation"
+                "Configuration security validation",
             ],
             "monitoring_enabled": self.monitor,
             "performance_benchmarks": {
                 "average_test_time": execution_time / total_tests if total_tests > 0 else 0,
-                "longest_category": max(category_results.items(), 
-                                       key=lambda x: x[1]["execution_time"])[0] if category_results else None
-            }
+                "longest_category": (
+                    max(category_results.items(), key=lambda x: x[1]["execution_time"])[0] if category_results else None
+                ),
+            },
         }
-        
+
         # Export detailed report
         report_path = PROJECT_ROOT / "docs" / "forensic" / "guard_test_execution_report.json"
-        with open(report_path, 'w') as f:
+        with open(report_path, "w") as f:
             json.dump(report, f, indent=2)
-        
+
         print(f"📋 Detailed report exported to: {report_path}")
-        
+
         return report
-    
+
     def run_specific_category(self, category: str) -> Dict[str, Any]:
         """Run tests for a specific category only."""
         categories = {
             "security": [
                 "tests/guards/security/test_cors_config_regression.py",
-                "tests/guards/security/test_websocket_security_regression.py"
+                "tests/guards/security/test_websocket_security_regression.py",
             ],
-            "performance": [
-                "tests/guards/performance/test_caching_performance_regression.py"
-            ],
-            "imports": [
-                "tests/guards/imports/test_grokfast_import_regression.py"
-            ],
+            "performance": ["tests/guards/performance/test_caching_performance_regression.py"],
+            "imports": ["tests/guards/imports/test_grokfast_import_regression.py"],
             "integration": [
                 "tests/guards/integration/test_localhost_admin_security_integration.py",
                 "tests/guards/integration/test_core_blocker_fixes_integration.py",
-                "tests/guards/integration/test_configuration_integrity_guards.py"
+                "tests/guards/integration/test_configuration_integrity_guards.py",
             ],
-            "monitoring": [
-                "tests/guards/monitoring/test_continuous_guard_monitoring.py"
-            ]
+            "monitoring": ["tests/guards/monitoring/test_continuous_guard_monitoring.py"],
         }
-        
+
         if category.lower() not in categories:
             raise ValueError(f"Unknown category: {category}. Available: {list(categories.keys())}")
-        
+
         print(f"🛡️ Running {category.title()} Guard Tests")
         print("=" * 40)
-        
+
         result = self._run_test_category(category.title(), categories[category.lower()])
-        
+
         status_icon = "✅" if result["success"] else "❌"
         print(f"{status_icon} {category.title()}: {result['passed']}/{result['total']} passed")
         print(f"⏱️  Execution Time: {result['execution_time']:.2f} seconds")
-        
+
         return result
 
 
 def main():
     """Main entry point for guard test runner."""
     parser = argparse.ArgumentParser(description="AIVillage Guard Test Runner")
-    parser.add_argument("--verbose", "-v", action="store_true", 
-                       help="Enable verbose output")
-    parser.add_argument("--no-monitor", action="store_true",
-                       help="Disable monitoring integration")
-    parser.add_argument("--category", "-c", type=str,
-                       help="Run specific category only (security, performance, imports, integration, monitoring)")
-    
-    args = parser.parse_args()
-    
-    runner = GuardTestRunner(
-        verbose=args.verbose,
-        monitor=not args.no_monitor
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose output")
+    parser.add_argument("--no-monitor", action="store_true", help="Disable monitoring integration")
+    parser.add_argument(
+        "--category",
+        "-c",
+        type=str,
+        help="Run specific category only (security, performance, imports, integration, monitoring)",
     )
-    
+
+    args = parser.parse_args()
+
+    runner = GuardTestRunner(verbose=args.verbose, monitor=not args.no_monitor)
+
     try:
         if args.category:
             result = runner.run_specific_category(args.category)
@@ -326,10 +305,10 @@ def main():
         else:
             result = runner.run_all_guard_tests()
             success = result["overall_success"]
-        
+
         # Exit with appropriate code
         sys.exit(0 if success else 1)
-        
+
     except KeyboardInterrupt:
         print("\n🛑 Guard test execution interrupted")
         sys.exit(130)

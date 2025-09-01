@@ -2,6 +2,7 @@
 Architectural Fitness Functions for AIVillage
 Based on connascence principles and architectural best practices
 """
+
 import ast
 from collections import Counter, defaultdict
 import os
@@ -259,6 +260,7 @@ class TestConnascencePrinciples:
 
         except Exception as e:
             import logging
+
             logging.exception("File parsing error in connascence check: %s", str(e))
 
         return violations
@@ -341,6 +343,7 @@ class TestConnascencePrinciples:
 
         except Exception as e:
             import logging
+
             logging.exception("Type connascence check error: %s", str(e))
 
         return violations
@@ -511,6 +514,7 @@ class TestLayeringViolations:
                         imports.add(node.module)
         except Exception as e:
             import logging
+
             logging.exception("Import extraction error in fitness tests: %s", str(e))
 
         return imports
@@ -579,6 +583,7 @@ class TestGlobalState:
                                 violations.append(f"{file_path}:{node.lineno} Global mutable variable '{target.id}'")
         except Exception as e:
             import logging
+
             logging.exception("Global state check error: %s", str(e))
 
         return violations

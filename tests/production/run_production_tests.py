@@ -11,9 +11,8 @@ import asyncio
 import json
 import sys
 import time
-import subprocess
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, Any
 import argparse
 
 
@@ -307,14 +306,14 @@ class ProductionTestRunner:
     def print_final_summary(self, summary: Dict[str, Any]):
         """Print comprehensive final summary"""
 
-        print(f"\n🏁 PRODUCTION TEST SUITE COMPLETE")
+        print("\n🏁 PRODUCTION TEST SUITE COMPLETE")
         print("=" * 50)
         print(f"Total Execution Time: {summary['total_execution_time_seconds']:.2f}s")
         print(f"Components Tested: {summary['components_tested']}")
         print(f"Overall Success: {'✓' if summary['overall_success'] else '✗'}")
         print(f"Tests Passed: {summary['total_tests_passed']}/{summary['total_tests']}")
 
-        print(f"\n📊 PERFORMANCE TARGETS VALIDATION:")
+        print("\n📊 PERFORMANCE TARGETS VALIDATION:")
         for component, targets in summary["performance_targets_met"].items():
             print(f"  {component.upper()}:")
             for metric, met in targets.items():
@@ -322,7 +321,7 @@ class ProductionTestRunner:
                 actual = summary["component_results"][component]["performance_benchmarks"].get(metric, "N/A")
                 print(f"    {status} {metric}: {actual}")
 
-        print(f"\n🎯 COMPONENT BREAKDOWN:")
+        print("\n🎯 COMPONENT BREAKDOWN:")
         for component, results in summary["component_results"].items():
             status = "✓" if results["success"] else "✗"
             print(
@@ -330,10 +329,10 @@ class ProductionTestRunner:
             )
 
         if summary["overall_success"]:
-            print(f"\n🎉 SUCCESS: All production tests passed!")
-            print(f"📦 Ready for Agent 6 validation handoff")
+            print("\n🎉 SUCCESS: All production tests passed!")
+            print("📦 Ready for Agent 6 validation handoff")
         else:
-            print(f"\n⚠️  Some tests failed - review required")
+            print("\n⚠️  Some tests failed - review required")
 
 
 async def main():

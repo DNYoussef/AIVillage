@@ -98,7 +98,7 @@ class MagiConfig:
     seed: int = 42
 
     # W&B configuration
-    wandb_project: str = "agent-forge-magi"
+    wandb_project: str = "agent_forge-magi"
     wandb_entity: str | None = None
     wandb_tags: list[str] = field(default_factory=lambda: ["magi", "specialization", "self-aware"])
 

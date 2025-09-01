@@ -12,18 +12,18 @@ from .service_interfaces import (
     IRelationshipAnalyzerService,
     IConfidenceCalculatorService,
     IGraphAnalyticsService,
-    IKnowledgeValidatorService
+    IKnowledgeValidatorService,
 )
 
 __all__ = [
     "BaseService",
-    "ServiceConfig", 
+    "ServiceConfig",
     "AsyncServiceMixin",
     "CacheableMixin",
     "IGapDetectionService",
     "INodeProposalService",
-    "IRelationshipAnalyzerService", 
+    "IRelationshipAnalyzerService",
     "IConfidenceCalculatorService",
     "IGraphAnalyticsService",
-    "IKnowledgeValidatorService"
+    "IKnowledgeValidatorService",
 ]

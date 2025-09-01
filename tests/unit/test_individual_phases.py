@@ -132,7 +132,7 @@ async def test_evomerge_phase(results: TestResults):
             return
 
         # Validate behavioral aspects of EvoMerge
-        if not hasattr(result.model, 'config'):
+        if not hasattr(result.model, "config"):
             results.add_fail(test_name, "Result model missing config attribute")
             return
 
@@ -143,9 +143,9 @@ async def test_evomerge_phase(results: TestResults):
             return
 
         # Verify merge actually modified model structure
-        if result.metrics and 'merge_technique' in result.metrics:
-            used_technique = result.metrics['merge_technique']
-            if used_technique not in ['linear', 'slerp']:
+        if result.metrics and "merge_technique" in result.metrics:
+            used_technique = result.metrics["merge_technique"]
+            if used_technique not in ["linear", "slerp"]:
                 results.add_fail(test_name, f"Unexpected merge technique: {used_technique}")
                 return
 
@@ -191,7 +191,7 @@ async def test_quietstar_phase(results: TestResults):
         # Validate Quiet-STaR specific functionality
         original_param_count = sum(p.numel() for p in model.parameters())
         result_param_count = sum(p.numel() for p in result.model.parameters())
-        
+
         # QuietSTaR should add thought generation parameters
         if result_param_count <= original_param_count:
             results.add_fail(test_name, "QuietSTaR did not add thought parameters")
@@ -199,14 +199,17 @@ async def test_quietstar_phase(results: TestResults):
 
         # Check for thought-specific metrics
         if result.metrics:
-            if 'thought_generations' not in result.metrics:
+            if "thought_generations" not in result.metrics:
                 results.add_fail(test_name, "Missing thought generation metrics")
                 return
-            if result.metrics.get('thought_generations', 0) <= 0:
+            if result.metrics.get("thought_generations", 0) <= 0:
                 results.add_fail(test_name, "No thoughts were generated")
                 return
 
-        results.add_pass(test_name, f"Completed in {result.duration_seconds:.2f}s, added {result_param_count - original_param_count} parameters")
+        results.add_pass(
+            test_name,
+            f"Completed in {result.duration_seconds:.2f}s, added {result_param_count - original_param_count} parameters",
+        )
 
     except ImportError as e:
         results.add_skip(test_name, f"Import failed: {e}")
@@ -248,7 +251,7 @@ async def test_bitnet_phase(results: TestResults):
 
         # Validate BitNet compression behavior
         compressed_model_size = sum(p.numel() * p.element_size() for p in result.model.parameters())
-        
+
         # BitNet should achieve compression
         compression_ratio = original_model_size / compressed_model_size if compressed_model_size > 0 else 0
         if compression_ratio < 1.1:  # Should achieve some compression
@@ -257,13 +260,17 @@ async def test_bitnet_phase(results: TestResults):
 
         # Check compression metrics
         if result.metrics:
-            if 'compression_ratio' in result.metrics:
-                reported_ratio = result.metrics['compression_ratio']
+            if "compression_ratio" in result.metrics:
+                reported_ratio = result.metrics["compression_ratio"]
                 if abs(reported_ratio - compression_ratio) > 0.5:
-                    results.add_fail(test_name, f"Compression ratio mismatch: {reported_ratio:.2f} vs {compression_ratio:.2f}")
+                    results.add_fail(
+                        test_name, f"Compression ratio mismatch: {reported_ratio:.2f} vs {compression_ratio:.2f}"
+                    )
                     return
 
-        results.add_pass(test_name, f"Completed in {result.duration_seconds:.2f}s, compression ratio: {compression_ratio:.2f}x")
+        results.add_pass(
+            test_name, f"Completed in {result.duration_seconds:.2f}s, compression ratio: {compression_ratio:.2f}x"
+        )
 
     except ImportError as e:
         results.add_skip(test_name, f"Import failed: {e}")
@@ -509,15 +516,15 @@ async def test_phase_controller_interface(results: TestResults):
 async def test_phase_negative_cases(results: TestResults):
     """Test negative cases and error handling for phases."""
     test_name = "Phase Negative Cases"
-    
+
     try:
         from phases.quietstar import QuietSTaRConfig, QuietSTaRPhase
-        
+
         # Test with invalid configuration
         try:
             invalid_config = QuietSTaRConfig(
                 thought_length=-1,  # Invalid
-                num_thoughts=0,     # Invalid
+                num_thoughts=0,  # Invalid
                 training_steps=-5,  # Invalid
             )
             phase = QuietSTaRPhase(invalid_config)
@@ -526,7 +533,7 @@ async def test_phase_negative_cases(results: TestResults):
         except (ValueError, AssertionError):
             # Expected to fail
             pass
-            
+
         # Test with None model input
         try:
             config = QuietSTaRConfig(thought_length=4, num_thoughts=1, training_steps=1)
@@ -538,9 +545,9 @@ async def test_phase_negative_cases(results: TestResults):
         except (TypeError, AttributeError):
             # Expected to fail
             pass
-            
+
         results.add_pass(test_name, "Negative cases handled correctly")
-        
+
     except ImportError:
         results.add_skip(test_name, "Test phase not available")
     except Exception as e:
@@ -550,43 +557,43 @@ async def test_phase_negative_cases(results: TestResults):
 async def test_phase_performance_regression(results: TestResults):
     """Test for performance regressions in phase execution."""
     test_name = "Phase Performance Regression"
-    
+
     try:
         from phases.bitnet_compression import BitNetCompressionPhase, BitNetConfig
         import time
-        
+
         config = BitNetConfig(
             bits=1.58,
             group_size=32,
             calibration_samples=5,
             enable_fine_tuning=False,
         )
-        
+
         phase = BitNetCompressionPhase(config)
         model = create_test_model()
-        
+
         # Measure performance
         start_time = time.time()
         result = await phase.run(model)
         execution_time = time.time() - start_time
-        
+
         # Performance regression test - should complete in reasonable time
         max_acceptable_time = 30.0  # 30 seconds max for test
         if execution_time > max_acceptable_time:
             results.add_fail(test_name, f"Performance regression: {execution_time:.2f}s > {max_acceptable_time}s")
             return
-            
+
         # Memory usage regression test
-        if hasattr(result, 'metrics') and result.metrics:
-            if 'peak_memory_mb' in result.metrics:
-                peak_memory = result.metrics['peak_memory_mb']
+        if hasattr(result, "metrics") and result.metrics:
+            if "peak_memory_mb" in result.metrics:
+                peak_memory = result.metrics["peak_memory_mb"]
                 max_memory_mb = 1024  # 1GB max for test
                 if peak_memory > max_memory_mb:
                     results.add_fail(test_name, f"Memory regression: {peak_memory}MB > {max_memory_mb}MB")
                     return
-        
+
         results.add_pass(test_name, f"Performance within bounds: {execution_time:.2f}s")
-        
+
     except ImportError:
         results.add_skip(test_name, "BitNet compression not available")
     except Exception as e:
@@ -611,7 +618,7 @@ async def run_individual_phase_tests():
     await test_tool_persona_baking_phase(results)
     await test_adas_phase(results)
     await test_final_compression_phase(results)
-    
+
     # Test negative cases and edge conditions
     await test_phase_negative_cases(results)
     await test_phase_performance_regression(results)

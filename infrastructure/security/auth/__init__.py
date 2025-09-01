@@ -41,7 +41,7 @@ mfa_service = container.get_mfa_service()
 
 from .interfaces import (
     IAuthenticationService,
-    ISessionManager, 
+    ISessionManager,
     IMFAService,
     AuthCredentials,
     AuthResult,
@@ -50,20 +50,12 @@ from .interfaces import (
     DeviceInfo,
     MFASetupResult,
     MFAStatus,
-    MFAMethodType
+    MFAMethodType,
 )
 
-from .services import (
-    AuthenticationService,
-    SessionService,
-    MFAService
-)
+from .services import AuthenticationService, SessionService, MFAService
 
-from .handlers import (
-    AuthHandlers,
-    MFAHandlers,
-    SessionHandlers
-)
+from .handlers import AuthHandlers, MFAHandlers, SessionHandlers
 
 from .container import AuthContainer
 
@@ -75,22 +67,18 @@ __author__ = "AIVillage Security Team"
 __all__ = [
     # Main container
     "AuthContainer",
-    
     # Interfaces
     "IAuthenticationService",
     "ISessionManager",
     "IMFAService",
-    
     # Services
-    "AuthenticationService", 
+    "AuthenticationService",
     "SessionService",
     "MFAService",
-    
     # Handlers
     "AuthHandlers",
-    "MFAHandlers", 
+    "MFAHandlers",
     "SessionHandlers",
-    
     # Data classes and types
     "AuthCredentials",
     "AuthResult",
@@ -99,5 +87,5 @@ __all__ = [
     "DeviceInfo",
     "MFASetupResult",
     "MFAStatus",
-    "MFAMethodType"
+    "MFAMethodType",
 ]

@@ -1,0 +1,136 @@
+{
+  "creation_timestamp": "2025-08-26T09:37:00.022561",
+  "total_models": 3,
+  "target_parameters_per_model": 25000000,
+  "models": [
+    {
+      "name": "cognate_foundation_1",
+      "path": "core\\agent-forge\\phases\\cognate-pretrain\\models\\cognate_foundation_1",
+      "parameter_count": 22112817,
+      "focus": "reasoning",
+      "metadata": {
+        "model_name": "cognate_foundation_1",
+        "model_index": 0,
+        "focus": "reasoning",
+        "parameter_count": 22112817,
+        "target_parameters": 25000000,
+        "parameter_accuracy": 11.548732000000001,
+        "architecture": {
+          "d_model": 216,
+          "n_layers": 11,
+          "n_heads": 4,
+          "ffn_mult": 4,
+          "vocab_size": 32000
+        },
+        "cognate_features": {
+          "act_halting": true,
+          "act_threshold": 0.95,
+          "ltm_memory": true,
+          "memory_capacity": 4096,
+          "memory_cross_attn": true,
+          "surprise_weight": 0.7,
+          "novelty_weight": 0.3
+        },
+        "training_config": {
+          "train_max_steps": 8,
+          "infer_max_steps": 2
+        },
+        "created_at": "2025-08-26T09:36:59.355346",
+        "ready_for_evomerge": true
+      }
+    },
+    {
+      "name": "cognate_foundation_2",
+      "path": "core\\agent-forge\\phases\\cognate-pretrain\\models\\cognate_foundation_2",
+      "parameter_count": 22112817,
+      "focus": "memory_integration",
+      "metadata": {
+        "model_name": "cognate_foundation_2",
+        "model_index": 1,
+        "focus": "memory_integration",
+        "parameter_count": 22112817,
+        "target_parameters": 25000000,
+        "parameter_accuracy": 11.548732000000001,
+        "architecture": {
+          "d_model": 216,
+          "n_layers": 11,
+          "n_heads": 4,
+          "ffn_mult": 4,
+          "vocab_size": 32000
+        },
+        "cognate_features": {
+          "act_halting": true,
+          "act_threshold": 0.9,
+          "ltm_memory": true,
+          "memory_capacity": 8192,
+          "memory_cross_attn": true,
+          "surprise_weight": 0.5,
+          "novelty_weight": 0.5
+        },
+        "training_config": {
+          "train_max_steps": 8,
+          "infer_max_steps": 2
+        },
+        "created_at": "2025-08-26T09:36:59.667510",
+        "ready_for_evomerge": true
+      }
+    },
+    {
+      "name": "cognate_foundation_3",
+      "path": "core\\agent-forge\\phases\\cognate-pretrain\\models\\cognate_foundation_3",
+      "parameter_count": 22112817,
+      "focus": "adaptive_computation",
+      "metadata": {
+        "model_name": "cognate_foundation_3",
+        "model_index": 2,
+        "focus": "adaptive_computation",
+        "parameter_count": 22112817,
+        "target_parameters": 25000000,
+        "parameter_accuracy": 11.548732000000001,
+        "architecture": {
+          "d_model": 216,
+          "n_layers": 11,
+          "n_heads": 4,
+          "ffn_mult": 4,
+          "vocab_size": 32000
+        },
+        "cognate_features": {
+          "act_halting": true,
+          "act_threshold": 0.99,
+          "ltm_memory": true,
+          "memory_capacity": 2048,
+          "memory_cross_attn": true,
+          "surprise_weight": 0.3,
+          "novelty_weight": 0.7
+        },
+        "training_config": {
+          "train_max_steps": 8,
+          "infer_max_steps": 2
+        },
+        "created_at": "2025-08-26T09:37:00.018572",
+        "ready_for_evomerge": true
+      }
+    }
+  ],
+  "total_parameters": 66338451,
+  "average_parameters": 22112817.0,
+  "parameter_accuracy": {
+    "cognate_foundation_1": {
+      "count": 22112817,
+      "target": 25000000,
+      "accuracy_pct": 11.548732000000001
+    },
+    "cognate_foundation_2": {
+      "count": 22112817,
+      "target": 25000000,
+      "accuracy_pct": 11.548732000000001
+    },
+    "cognate_foundation_3": {
+      "count": 22112817,
+      "target": 25000000,
+      "accuracy_pct": 11.548732000000001
+    }
+  },
+  "next_phase": "evomerge",
+  "pipeline_status": "ready_for_evomerge"
+}

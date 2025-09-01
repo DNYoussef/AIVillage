@@ -4,6 +4,7 @@ Contribution Ledger for DAO Rewards
 Maintains comprehensive ledger of all fog computing contributions for DAO governance
 and reward distribution. Provides transparent, auditable record of participant value.
 """
+
 import asyncio
 from collections import defaultdict, deque
 from dataclasses import asdict, dataclass, field

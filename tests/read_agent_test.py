@@ -55,7 +55,7 @@ def read_agent_test_message():
 
         try:
             meta = json.loads(metadata)
-            print(f"Metadata:")
+            print("Metadata:")
             for k, v in meta.items():
                 print(f"  {k}: {v}")
         except BaseException:

@@ -22,7 +22,7 @@ def test_evomerge_exists():
     """Test that EvoMerge files exist."""
     print("Testing EvoMerge files...")
 
-    evomerge_file = PROJECT_ROOT / "core" / "agent-forge" / "phases" / "evomerge.py"
+    evomerge_file = PROJECT_ROOT / "core" / "agent_forge" / "phases" / "evomerge.py"
     if evomerge_file.exists():
         size = evomerge_file.stat().st_size
         print(f"  OK EvoMerge file exists: {size:,} bytes")
@@ -44,7 +44,7 @@ def test_evomerge_results():
     """Check for EvoMerge results."""
     print("Testing EvoMerge results...")
 
-    results_file = PROJECT_ROOT / "core" / "agent-forge" / "phases" / "evomerge_50gen_final_results.json"
+    results_file = PROJECT_ROOT / "core" / "agent_forge" / "phases" / "evomerge_50gen_final_results.json"
     if results_file.exists():
         try:
             with open(results_file) as f:

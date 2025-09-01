@@ -20,6 +20,7 @@ from ..scheduler.enhanced_sla_tiers import EnhancedSLATierManager
 @dataclass
 class DiversityAlert:
     """Diversity violation alert"""
+
     alert_id: str
     service_id: str
     tier: str
@@ -34,6 +35,7 @@ class DiversityAlert:
 @dataclass
 class DiversityMetrics:
     """Comprehensive diversity metrics"""
+
     timestamp: datetime
     total_devices: int
     unique_asns: int
@@ -50,6 +52,7 @@ class DiversityMetrics:
 @dataclass
 class ServiceHealthStatus:
     """Service health and diversity status"""
+
     service_id: str
     tier: str
     status: str  # 'healthy', 'degraded', 'critical'
@@ -64,10 +67,9 @@ class ServiceHealthStatus:
 class DiversityDashboard:
     """Real-time infrastructure diversity monitoring dashboard"""
 
-    def __init__(self,
-                 quorum_manager: QuorumManager,
-                 sla_tier_manager: EnhancedSLATierManager,
-                 history_size: int = 1000):
+    def __init__(
+        self, quorum_manager: QuorumManager, sla_tier_manager: EnhancedSLATierManager, history_size: int = 1000
+    ):
         self.quorum_manager = quorum_manager
         self.sla_tier_manager = sla_tier_manager
         self.logger = logging.getLogger(__name__)
@@ -88,24 +90,9 @@ class DiversityDashboard:
 
         # Thresholds
         self.alert_thresholds = {
-            'diversity_score': {
-                'critical': 0.2,
-                'high': 0.4,
-                'medium': 0.6,
-                'low': 0.8
-            },
-            'asn_diversity': {
-                'critical': 0.1,
-                'high': 0.3,
-                'medium': 0.5,
-                'low': 0.7
-            },
-            'tee_vendor_diversity': {
-                'critical': 0.2,
-                'high': 0.4,
-                'medium': 0.6,
-                'low': 0.8
-            }
+            "diversity_score": {"critical": 0.2, "high": 0.4, "medium": 0.6, "low": 0.8},
+            "asn_diversity": {"critical": 0.1, "high": 0.3, "medium": 0.5, "low": 0.7},
+            "tee_vendor_diversity": {"critical": 0.2, "high": 0.4, "medium": 0.6, "low": 0.8},
         }
 
     async def start_monitoring(self, interval_seconds: int = 60):
@@ -118,7 +105,7 @@ class DiversityDashboard:
             self._diversity_monitoring_task(interval_seconds),
             self._service_monitoring_task(interval_seconds * 2),
             self._alert_processing_task(30),
-            self._cleanup_task(3600)  # Cleanup every hour
+            self._cleanup_task(3600),  # Cleanup every hour
         ]
 
         await asyncio.gather(*tasks, return_exceptions=True)
@@ -146,15 +133,15 @@ class DiversityDashboard:
                     current_metrics = DiversityMetrics(
                         timestamp=datetime.utcnow(),
                         total_devices=len(all_profiles),
-                        unique_asns=diversity_metrics['unique_asns'],
-                        unique_tee_vendors=diversity_metrics['unique_tee_vendors'],
-                        unique_power_regions=diversity_metrics['unique_power_regions'],
-                        unique_countries=diversity_metrics['unique_countries'],
-                        diversity_score=diversity_metrics['total_diversity_score'],
+                        unique_asns=diversity_metrics["unique_asns"],
+                        unique_tee_vendors=diversity_metrics["unique_tee_vendors"],
+                        unique_power_regions=diversity_metrics["unique_power_regions"],
+                        unique_countries=diversity_metrics["unique_countries"],
+                        diversity_score=diversity_metrics["total_diversity_score"],
                         asn_distribution=self._get_asn_distribution(all_profiles),
                         tee_vendor_distribution=self._get_tee_distribution(all_profiles),
                         power_region_distribution=self._get_power_distribution(all_profiles),
-                        country_distribution=self._get_country_distribution(all_profiles)
+                        country_distribution=self._get_country_distribution(all_profiles),
                     )
 
                     self.current_metrics = current_metrics
@@ -176,21 +163,23 @@ class DiversityDashboard:
                 # Get all services from SLA tier manager
                 all_services = self.sla_tier_manager.get_all_services_status()
 
-                for tier_name, services in all_services.get('services_by_tier', {}).items():
+                for tier_name, services in all_services.get("services_by_tier", {}).items():
                     for service in services:
-                        service_id = service['service_id']
+                        service_id = service["service_id"]
 
                         # Create service health status
                         status = ServiceHealthStatus(
                             service_id=service_id,
-                            tier=service['tier'],
+                            tier=service["tier"],
                             status=self._determine_service_health(service),
-                            diversity_score=service.get('diversity_score', 0.0),
-                            device_count=service.get('device_count', 0),
-                            sla_compliance=service.get('validation_status') == 'valid',
-                            last_validation=datetime.fromisoformat(service.get('last_validation', datetime.utcnow().isoformat())),
+                            diversity_score=service.get("diversity_score", 0.0),
+                            device_count=service.get("device_count", 0),
+                            sla_compliance=service.get("validation_status") == "valid",
+                            last_validation=datetime.fromisoformat(
+                                service.get("last_validation", datetime.utcnow().isoformat())
+                            ),
                             violations=[],  # Would be populated from actual service data
-                            recommendations=[]  # Would be generated based on violations
+                            recommendations=[],  # Would be generated based on violations
                         )
 
                         self.service_statuses[service_id] = status
@@ -213,9 +202,7 @@ class DiversityDashboard:
                 cutoff_time = datetime.utcnow() - timedelta(hours=1)
 
                 for alert_id, alert in list(self.active_alerts.items()):
-                    if (alert.severity == 'low' and
-                        alert.timestamp < cutoff_time and
-                        not alert.acknowledged):
+                    if alert.severity == "low" and alert.timestamp < cutoff_time and not alert.acknowledged:
 
                         alert.acknowledged = True
                         self.logger.info(f"Auto-acknowledged low severity alert: {alert_id}")
@@ -224,8 +211,7 @@ class DiversityDashboard:
                 resolve_cutoff = datetime.utcnow() - timedelta(hours=24)
 
                 for alert_id, alert in list(self.active_alerts.items()):
-                    if (alert.acknowledged and
-                        alert.timestamp < resolve_cutoff):
+                    if alert.acknowledged and alert.timestamp < resolve_cutoff:
 
                         alert.resolved = True
                         del self.active_alerts[alert_id]
@@ -251,8 +237,7 @@ class DiversityDashboard:
 
                 # Clean up resolved alerts older than 30 days
                 alert_cutoff = datetime.utcnow() - timedelta(days=30)
-                while (self.alert_history and
-                       self.alert_history[0].timestamp < alert_cutoff):
+                while self.alert_history and self.alert_history[0].timestamp < alert_cutoff:
                     self.alert_history.popleft()
 
                 await asyncio.sleep(interval_seconds)
@@ -266,55 +251,61 @@ class DiversityDashboard:
         alerts_to_create = []
 
         # Overall diversity score alert
-        if metrics.diversity_score < self.alert_thresholds['diversity_score']['critical']:
-            alerts_to_create.append({
-                'type': 'diversity_score_critical',
-                'severity': 'critical',
-                'description': f'Critical diversity score: {metrics.diversity_score:.2f}'
-            })
-        elif metrics.diversity_score < self.alert_thresholds['diversity_score']['high']:
-            alerts_to_create.append({
-                'type': 'diversity_score_high',
-                'severity': 'high',
-                'description': f'Low diversity score: {metrics.diversity_score:.2f}'
-            })
+        if metrics.diversity_score < self.alert_thresholds["diversity_score"]["critical"]:
+            alerts_to_create.append(
+                {
+                    "type": "diversity_score_critical",
+                    "severity": "critical",
+                    "description": f"Critical diversity score: {metrics.diversity_score:.2f}",
+                }
+            )
+        elif metrics.diversity_score < self.alert_thresholds["diversity_score"]["high"]:
+            alerts_to_create.append(
+                {
+                    "type": "diversity_score_high",
+                    "severity": "high",
+                    "description": f"Low diversity score: {metrics.diversity_score:.2f}",
+                }
+            )
 
         # ASN diversity alert
         asn_diversity = metrics.unique_asns / max(metrics.total_devices, 1)
-        if asn_diversity < self.alert_thresholds['asn_diversity']['critical']:
-            alerts_to_create.append({
-                'type': 'asn_diversity_critical',
-                'severity': 'critical',
-                'description': f'Critical ASN diversity: {asn_diversity:.2f} ({metrics.unique_asns}/{metrics.total_devices})'
-            })
+        if asn_diversity < self.alert_thresholds["asn_diversity"]["critical"]:
+            alerts_to_create.append(
+                {
+                    "type": "asn_diversity_critical",
+                    "severity": "critical",
+                    "description": f"Critical ASN diversity: {asn_diversity:.2f} ({metrics.unique_asns}/{metrics.total_devices})",
+                }
+            )
 
         # TEE vendor diversity alert
         tee_diversity = metrics.unique_tee_vendors / max(metrics.total_devices, 1)
-        if tee_diversity < self.alert_thresholds['tee_vendor_diversity']['critical']:
-            alerts_to_create.append({
-                'type': 'tee_diversity_critical',
-                'severity': 'critical',
-                'description': f'Critical TEE vendor diversity: {tee_diversity:.2f} ({metrics.unique_tee_vendors}/{metrics.total_devices})'
-            })
+        if tee_diversity < self.alert_thresholds["tee_vendor_diversity"]["critical"]:
+            alerts_to_create.append(
+                {
+                    "type": "tee_diversity_critical",
+                    "severity": "critical",
+                    "description": f"Critical TEE vendor diversity: {tee_diversity:.2f} ({metrics.unique_tee_vendors}/{metrics.total_devices})",
+                }
+            )
 
         # Create alerts
         for alert_data in alerts_to_create:
             alert_id = f"{alert_data['type']}_{int(datetime.utcnow().timestamp())}"
             alert = DiversityAlert(
                 alert_id=alert_id,
-                service_id='global',
-                tier='system',
-                severity=alert_data['severity'],
-                violation_type=alert_data['type'],
-                description=alert_data['description'],
-                timestamp=datetime.utcnow()
+                service_id="global",
+                tier="system",
+                severity=alert_data["severity"],
+                violation_type=alert_data["type"],
+                description=alert_data["description"],
+                timestamp=datetime.utcnow(),
             )
 
             # Only create if similar alert doesn't exist
             similar_exists = any(
-                a.violation_type == alert.violation_type and
-                not a.acknowledged
-                for a in self.active_alerts.values()
+                a.violation_type == alert.violation_type and not a.acknowledged for a in self.active_alerts.values()
             )
 
             if not similar_exists:
@@ -323,16 +314,16 @@ class DiversityDashboard:
 
     async def _check_service_alerts(self, status: ServiceHealthStatus):
         """Check for service-specific alerts"""
-        if status.status == 'critical':
+        if status.status == "critical":
             alert_id = f"service_critical_{status.service_id}_{int(datetime.utcnow().timestamp())}"
             alert = DiversityAlert(
                 alert_id=alert_id,
                 service_id=status.service_id,
                 tier=status.tier,
-                severity='critical',
-                violation_type='service_critical',
-                description=f'Service {status.service_id} in critical state',
-                timestamp=datetime.utcnow()
+                severity="critical",
+                violation_type="service_critical",
+                description=f"Service {status.service_id} in critical state",
+                timestamp=datetime.utcnow(),
             )
 
             if alert_id not in self.active_alerts:
@@ -341,15 +332,15 @@ class DiversityDashboard:
 
     def _determine_service_health(self, service: dict) -> str:
         """Determine service health status"""
-        validation_status = service.get('validation_status', 'unknown')
-        diversity_score = service.get('diversity_score', 0.0)
+        validation_status = service.get("validation_status", "unknown")
+        diversity_score = service.get("diversity_score", 0.0)
 
-        if validation_status == 'invalid' or diversity_score < 0.3:
-            return 'critical'
-        elif validation_status == 'valid' and diversity_score > 0.7:
-            return 'healthy'
+        if validation_status == "invalid" or diversity_score < 0.3:
+            return "critical"
+        elif validation_status == "valid" and diversity_score > 0.7:
+            return "healthy"
         else:
-            return 'degraded'
+            return "degraded"
 
     def _get_asn_distribution(self, profiles: list[InfrastructureProfile]) -> dict[str, int]:
         """Get ASN distribution"""
@@ -385,38 +376,27 @@ class DiversityDashboard:
     def get_current_dashboard(self) -> dict[str, Any]:
         """Get current dashboard state"""
         return {
-            'timestamp': datetime.utcnow().isoformat(),
-            'monitoring_status': 'active' if self.is_monitoring else 'inactive',
-            'diversity_metrics': asdict(self.current_metrics) if self.current_metrics else None,
-            'active_alerts': {
-                alert_id: asdict(alert)
-                for alert_id, alert in self.active_alerts.items()
+            "timestamp": datetime.utcnow().isoformat(),
+            "monitoring_status": "active" if self.is_monitoring else "inactive",
+            "diversity_metrics": asdict(self.current_metrics) if self.current_metrics else None,
+            "active_alerts": {alert_id: asdict(alert) for alert_id, alert in self.active_alerts.items()},
+            "service_statuses": {service_id: asdict(status) for service_id, status in self.service_statuses.items()},
+            "alert_summary": {
+                "total_active": len(self.active_alerts),
+                "critical": len([a for a in self.active_alerts.values() if a.severity == "critical"]),
+                "high": len([a for a in self.active_alerts.values() if a.severity == "high"]),
+                "medium": len([a for a in self.active_alerts.values() if a.severity == "medium"]),
+                "low": len([a for a in self.active_alerts.values() if a.severity == "low"]),
             },
-            'service_statuses': {
-                service_id: asdict(status)
-                for service_id, status in self.service_statuses.items()
-            },
-            'alert_summary': {
-                'total_active': len(self.active_alerts),
-                'critical': len([a for a in self.active_alerts.values() if a.severity == 'critical']),
-                'high': len([a for a in self.active_alerts.values() if a.severity == 'high']),
-                'medium': len([a for a in self.active_alerts.values() if a.severity == 'medium']),
-                'low': len([a for a in self.active_alerts.values() if a.severity == 'low'])
-            },
-            'system_health': self._get_system_health_summary()
+            "system_health": self._get_system_health_summary(),
         }
 
-    def get_historical_metrics(self,
-                             hours_back: int = 24,
-                             metric_type: str = 'diversity') -> list[dict]:
+    def get_historical_metrics(self, hours_back: int = 24, metric_type: str = "diversity") -> list[dict]:
         """Get historical metrics"""
         cutoff_time = datetime.utcnow() - timedelta(hours=hours_back)
 
-        if metric_type == 'diversity':
-            return [
-                asdict(metric) for metric in self.diversity_history
-                if metric.timestamp > cutoff_time
-            ]
+        if metric_type == "diversity":
+            return [asdict(metric) for metric in self.diversity_history if metric.timestamp > cutoff_time]
 
         return []
 
@@ -427,12 +407,9 @@ class DiversityDashboard:
 
         cutoff_time = datetime.utcnow() - timedelta(hours=hours_back)
 
-        return [
-            asdict(status) for status in self.service_history[service_id]
-            if status.last_validation > cutoff_time
-        ]
+        return [asdict(status) for status in self.service_history[service_id] if status.last_validation > cutoff_time]
 
-    def acknowledge_alert(self, alert_id: str, user: str = 'system') -> bool:
+    def acknowledge_alert(self, alert_id: str, user: str = "system") -> bool:
         """Acknowledge an alert"""
         if alert_id in self.active_alerts:
             self.active_alerts[alert_id].acknowledged = True
@@ -440,7 +417,7 @@ class DiversityDashboard:
             return True
         return False
 
-    def resolve_alert(self, alert_id: str, user: str = 'system') -> bool:
+    def resolve_alert(self, alert_id: str, user: str = "system") -> bool:
         """Resolve an alert"""
         if alert_id in self.active_alerts:
             alert = self.active_alerts[alert_id]
@@ -454,28 +431,28 @@ class DiversityDashboard:
     def _get_system_health_summary(self) -> dict[str, Any]:
         """Get overall system health summary"""
         if not self.current_metrics:
-            return {'status': 'unknown', 'details': 'No metrics available'}
+            return {"status": "unknown", "details": "No metrics available"}
 
         # Determine overall health
-        critical_alerts = len([a for a in self.active_alerts.values() if a.severity == 'critical'])
-        high_alerts = len([a for a in self.active_alerts.values() if a.severity == 'high'])
+        critical_alerts = len([a for a in self.active_alerts.values() if a.severity == "critical"])
+        high_alerts = len([a for a in self.active_alerts.values() if a.severity == "high"])
 
         if critical_alerts > 0:
-            status = 'critical'
+            status = "critical"
         elif high_alerts > 0:
-            status = 'degraded'
+            status = "degraded"
         elif self.current_metrics.diversity_score > 0.8:
-            status = 'excellent'
+            status = "excellent"
         elif self.current_metrics.diversity_score > 0.6:
-            status = 'good'
+            status = "good"
         else:
-            status = 'fair'
+            status = "fair"
 
         return {
-            'status': status,
-            'diversity_score': self.current_metrics.diversity_score,
-            'total_devices': self.current_metrics.total_devices,
-            'critical_alerts': critical_alerts,
-            'high_alerts': high_alerts,
-            'last_update': self.current_metrics.timestamp.isoformat()
+            "status": status,
+            "diversity_score": self.current_metrics.diversity_score,
+            "total_devices": self.current_metrics.total_devices,
+            "critical_alerts": critical_alerts,
+            "high_alerts": high_alerts,
+            "last_update": self.current_metrics.timestamp.isoformat(),
         }

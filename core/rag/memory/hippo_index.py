@@ -457,7 +457,9 @@ class HippoIndex:
             import hashlib
 
             # Create deterministic pseudo-embedding from text hash
-            text_hash = hashlib.md5(text.encode(), usedforsecurity=False).hexdigest()  # Used for text content indexing, not security
+            text_hash = hashlib.md5(
+                text.encode(), usedforsecurity=False
+            ).hexdigest()  # Used for text content indexing, not security
             seed = int(text_hash[:8], 16)
             np.random.seed(seed)
 

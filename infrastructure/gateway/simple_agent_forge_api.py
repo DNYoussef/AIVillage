@@ -111,9 +111,9 @@ def simulate_cognate_phase():
                 "training_status": "completed",
                 "focus": focus,
                 "artifacts": {
-                    "config_path": f"core/agent-forge/phases/cognate_pretrain/models/cognate_foundation_{i}/config.json",
-                    "weights_path": f"core/agent-forge/phases/cognate_pretrain/models/cognate_foundation_{i}/pytorch_model.bin",
-                    "metadata_path": f"core/agent-forge/phases/cognate_pretrain/models/cognate_foundation_{i}/metadata.json",
+                    "config_path": f"core/agent_forge/phases/cognate_pretrain/models/cognate_foundation_{i}/config.json",
+                    "weights_path": f"core/agent_forge/phases/cognate_pretrain/models/cognate_foundation_{i}/pytorch_model.bin",
+                    "metadata_path": f"core/agent_forge/phases/cognate_pretrain/models/cognate_foundation_{i}/metadata.json",
                 },
             }
             created_models.append(model)

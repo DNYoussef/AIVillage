@@ -432,9 +432,9 @@ class DAOOperationalSystem:
                 phase=ProposalPhase(row["phase"]),
                 created_at=datetime.fromisoformat(row["created_at"]),
                 review_deadline=datetime.fromisoformat(row["review_deadline"]) if row["review_deadline"] else None,
-                discussion_deadline=datetime.fromisoformat(row["discussion_deadline"])
-                if row["discussion_deadline"]
-                else None,
+                discussion_deadline=(
+                    datetime.fromisoformat(row["discussion_deadline"]) if row["discussion_deadline"] else None
+                ),
                 voting_start=datetime.fromisoformat(row["voting_start"]) if row["voting_start"] else None,
                 voting_end=datetime.fromisoformat(row["voting_end"]) if row["voting_end"] else None,
                 quorum_required=row["quorum_required"],

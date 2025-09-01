@@ -369,9 +369,11 @@ class MarketOrchestrator:
             "timing": {
                 "created_at": request.created_at.isoformat(),
                 "updated_at": request.updated_at.isoformat(),
-                "allocation_time": (request.updated_at - request.created_at).total_seconds()
-                if request.status != AllocationStatus.REQUESTED
-                else None,
+                "allocation_time": (
+                    (request.updated_at - request.created_at).total_seconds()
+                    if request.status != AllocationStatus.REQUESTED
+                    else None
+                ),
             },
             "auction_details": auction_status,
             "metadata": request.allocation_metadata,
@@ -506,9 +508,9 @@ class MarketOrchestrator:
                     {
                         "allocation_method": result.allocation_method,
                         "auction_id": result.auction_id,
-                        "market_clearing_price": float(result.market_clearing_price)
-                        if result.market_clearing_price
-                        else None,
+                        "market_clearing_price": (
+                            float(result.market_clearing_price) if result.market_clearing_price else None
+                        ),
                         "quality_score": float(result.quality_score),
                         "allocation_time_seconds": float(result.allocation_time_seconds),
                     }

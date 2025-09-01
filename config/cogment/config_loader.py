@@ -424,9 +424,7 @@ class CogmentConfigLoader:
 
         return stage_names
 
-    def export_config_summary(
-        self, config: CogmentCompleteConfig, output_path: Path | None = None
-    ) -> dict[str, Any]:
+    def export_config_summary(self, config: CogmentCompleteConfig, output_path: Path | None = None) -> dict[str, Any]:
         """
         Export a summary of the complete configuration.
 

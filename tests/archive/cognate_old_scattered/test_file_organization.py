@@ -25,7 +25,7 @@ class TestFileOrganizationValidation:
 
     def test_new_structure_exists(self):
         """Test that new cognate-pretrain structure exists."""
-        base_path = project_root / "core" / "agent-forge" / "phases" / "cognate-pretrain"
+        base_path = project_root / "core" / "agent_forge" / "phases" / "cognate-pretrain"
 
         # Check main directory exists
         assert base_path.exists(), "cognate-pretrain directory should exist"
@@ -49,7 +49,7 @@ class TestFileOrganizationValidation:
 
     def test_deprecated_files_moved(self):
         """Test that deprecated files were moved to deprecated_duplicates."""
-        phases_path = project_root / "core" / "agent-forge" / "phases"
+        phases_path = project_root / "core" / "agent_forge" / "phases"
         deprecated_path = phases_path / "deprecated_duplicates"
 
         # Check deprecated directory exists
@@ -73,7 +73,7 @@ class TestFileOrganizationValidation:
 
     def test_cognate_redirect_file_updated(self):
         """Test that cognate.py was updated to redirect."""
-        cognate_file = project_root / "core" / "agent-forge" / "phases" / "cognate.py"
+        cognate_file = project_root / "core" / "agent_forge" / "phases" / "cognate.py"
 
         assert cognate_file.exists(), "cognate.py should still exist as redirect"
 
@@ -92,7 +92,7 @@ class TestFileOrganizationValidation:
 
     def test_no_duplicate_functionality_in_phases(self):
         """Test that no duplicate Cognate functionality remains in phases directory."""
-        phases_path = project_root / "core" / "agent-forge" / "phases"
+        phases_path = project_root / "core" / "agent_forge" / "phases"
 
         # Files to exclude from duplication check
         exclude_files = {
@@ -152,11 +152,13 @@ class TestFileOrganizationValidation:
                     except SyntaxError as e:
                         # Skip files with syntax errors
                         import logging
+
                         logging.warning("Syntax error in file %s: %s", py_file, str(e))
 
             except Exception as e:
                 # Skip files that can't be read
                 import logging
+
                 logging.exception("Error reading file %s: %s", py_file, str(e))
 
         print("✅ Duplicate functionality scan complete")
@@ -175,7 +177,7 @@ class TestFileOrganizationValidation:
 
     def test_package_structure_completeness(self):
         """Test that package structure is complete and well-organized."""
-        package_path = project_root / "core" / "agent-forge" / "phases" / "cognate-pretrain"
+        package_path = project_root / "core" / "agent_forge" / "phases" / "cognate-pretrain"
 
         # Check __init__.py exports
         init_file = package_path / "__init__.py"
@@ -200,7 +202,7 @@ class TestFileOrganizationValidation:
 
     def test_models_output_directory_structure(self):
         """Test that models output directory structure is properly set up."""
-        package_path = project_root / "core" / "agent-forge" / "phases" / "cognate-pretrain"
+        package_path = project_root / "core" / "agent_forge" / "phases" / "cognate-pretrain"
         package_path / "models"
 
         # Models directory might not exist yet (created on first run)
@@ -219,7 +221,7 @@ class TestFileOrganizationValidation:
 
     def test_documentation_files_presence(self):
         """Test that documentation files are present and complete."""
-        package_path = project_root / "core" / "agent-forge" / "phases" / "cognate-pretrain"
+        package_path = project_root / "core" / "agent_forge" / "phases" / "cognate-pretrain"
         readme_file = package_path / "README.md"
 
         if readme_file.exists():
@@ -238,7 +240,7 @@ class TestFileOrganizationValidation:
             print("⚠️  No README.md found in cognate-pretrain package")
 
         # Check for reorganization summary
-        phases_path = project_root / "core" / "agent-forge" / "phases"
+        phases_path = project_root / "core" / "agent_forge" / "phases"
         reorg_summary = phases_path / "REORGANIZATION_SUMMARY.md"
 
         if reorg_summary.exists():

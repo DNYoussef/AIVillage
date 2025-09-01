@@ -11,8 +11,8 @@ Innovation Score: 9.1/10 - Complete core standardization
 Version: 2.0.0
 """
 
-from typing import TYPE_CHECKING
 import logging
+from typing import TYPE_CHECKING
 
 # Package version
 __version__ = "2.0.0"
@@ -23,8 +23,9 @@ logger = logging.getLogger(__name__)
 
 # Import core components with graceful fallback
 try:
-    from .transport_manager import TransportManager, TransportPriority, TransportType
     from .message_types import MessageMetadata, MessagePriority, UnifiedMessage
+    from .transport_manager import TransportManager, TransportPriority, TransportType
+
     logger.info("Core P2P components loaded successfully")
 except ImportError as e:
     logger.warning(f"Some core components not available: {e}")
@@ -39,8 +40,9 @@ except ImportError as e:
 
 # Optional components
 try:
-    from .message_delivery import MessageDelivery
     from .libp2p_transport import LibP2PTransport
+    from .message_delivery import MessageDelivery
+
     logger.debug("Optional core components loaded")
 except ImportError as e:
     logger.debug(f"Optional components not available: {e}")
@@ -51,15 +53,13 @@ except ImportError as e:
 __all__ = [
     # Core transport management
     "TransportManager",
-    "TransportType", 
+    "TransportType",
     "TransportPriority",
-    
     # Message system
     "UnifiedMessage",
     "MessagePriority",
     "MessageMetadata",
-    
-    # Optional components  
+    # Optional components
     "MessageDelivery",
     "LibP2PTransport",
 ]

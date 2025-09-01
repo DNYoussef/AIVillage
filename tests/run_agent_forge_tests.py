@@ -11,9 +11,7 @@ import sys
 import time
 import json
 import logging
-import traceback
 from pathlib import Path
-from typing import Dict, List, Any
 
 # Fix Windows encoding issues
 if sys.platform.startswith("win"):
@@ -25,7 +23,7 @@ if sys.platform.startswith("win"):
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "core"))
-sys.path.insert(0, str(PROJECT_ROOT / "core" / "agent-forge"))
+sys.path.insert(0, str(PROJECT_ROOT / "core" / "agent_forge"))
 
 # Set up logging
 logging.basicConfig(
@@ -117,7 +115,7 @@ class AgentForgeTestRunner:
                 # Use importlib to test imports
                 import importlib
 
-                module = importlib.import_module(module_name)
+                importlib.import_module(module_name)
                 print(f"   ✅ {description}: {module_name}")
                 test_results["tests"].append(
                     {"name": module_name, "description": description, "status": "passed", "error": None}
@@ -368,7 +366,7 @@ class AgentForgeTestRunner:
         print(f"Duration: {duration:.2f} seconds")
 
         if self.results["test_suites"]:
-            print(f"\nTest Suite Results:")
+            print("\nTest Suite Results:")
             for suite_name, suite_data in self.results["test_suites"].items():
                 passed = suite_data["passed"]
                 failed = suite_data["failed"]

@@ -2,8 +2,8 @@
 Task Creation Service - Handles task creation and validation.
 Extracted from UnifiedManagement god class.
 """
+
 import logging
-import uuid
 from typing import Any
 
 from core.error_handling import AIVillageException
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class TaskCreationService:
     """Service responsible for task creation and validation."""
-    
+
     def __init__(
         self,
         subgoal_generator: SubGoalGenerator,
@@ -29,7 +29,7 @@ class TaskCreationService:
         self._assignment_service = assignment_service
         self._project_service = project_service
         self._pending_tasks: list[Task] = []
-        
+
     async def create_task(
         self,
         description: str,
@@ -65,12 +65,12 @@ class TaskCreationService:
         try:
             subgoals = await self._subgoal_generator.generate_subgoals(description, context)
             tasks = []
-            
+
             for subgoal in subgoals:
                 agent = await self._assignment_service.select_best_agent_for_task(subgoal)
                 task = await self.create_task(subgoal, agent)
                 tasks.append(task)
-                
+
             logger.info("Created %d tasks from complex description", len(tasks))
             return tasks
         except Exception as e:

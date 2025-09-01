@@ -6,25 +6,21 @@ Tests to verify that all database operations are secure against SQL injection at
 
 import asyncio
 import pytest
-import sqlite3
 import tempfile
 import os
 from pathlib import Path
 
 # Import the classes we're testing
 import sys
+
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from core.rag.mcp_servers.hyperag.secure_database import (
-    SecureDatabaseManager, 
-    SecureInputValidator
-)
+from core.rag.mcp_servers.hyperag.secure_database import SecureDatabaseManager
 from infrastructure.shared.security.multi_tenant_system import (
-    MultiTenantSystem, 
-    TenantType, 
-    IsolationLevel,
+    MultiTenantSystem,
+    TenantType,
     SQLSecurityManager,
-    SecureInputValidator as MTSecureInputValidator
+    SecureInputValidator as MTSecureInputValidator,
 )
 
 
@@ -78,16 +74,16 @@ class TestSQLInjectionPrevention:
         for injection_query in injection_attempts:
             # These should not cause SQL errors or return unauthorized data
             results = await secure_db.search_memories(injection_query)
-            
+
             # Results should be empty or contain only legitimate matches
             # The injection should be treated as literal text, not SQL
             assert isinstance(results, list)
-            
+
             # Verify the database is still intact
             stats = await secure_db.get_database_stats()
             assert stats["memory_count"] >= 2  # Our test data should still exist
 
-    @pytest.mark.asyncio  
+    @pytest.mark.asyncio
     async def test_tag_based_sql_injection_attempts(self, secure_db):
         """Test tag filtering against SQL injection."""
         # Store test data with tags
@@ -102,10 +98,10 @@ class TestSQLInjectionPrevention:
 
         # Test with malicious tags
         results = await secure_db.search_memories("Content", tags=malicious_tags)
-        
+
         # Should handle gracefully without SQL errors
         assert isinstance(results, list)
-        
+
         # Verify database integrity
         stats = await secure_db.get_database_stats()
         assert stats["memory_count"] >= 1
@@ -127,7 +123,7 @@ class TestSQLInjectionPrevention:
             # Should handle injection attempts safely
             results = await secure_db.query_knowledge_graph(subject=malicious_subject)
             assert isinstance(results, list)
-            
+
             # Verify the legitimate data is still there
             legitimate_results = await secure_db.query_knowledge_graph(subject="Python")
             assert len(legitimate_results) >= 1
@@ -149,11 +145,11 @@ class TestSQLInjectionPrevention:
                     display_name="Test Organization",
                     tenant_type=TenantType.TEAM,
                 )
-                
+
                 # If it succeeds, verify the data was sanitized
                 stats = multi_tenant_system.get_tenant_stats(org_id)
                 assert stats is not None
-                
+
             except Exception as e:
                 # If it fails, it should be a validation error, not SQL error
                 assert "sql" not in str(e).lower()
@@ -209,13 +205,11 @@ class TestSQLInjectionPrevention:
     def test_parameterized_query_builder(self):
         """Test secure parameterized query building."""
         base_query = "SELECT * FROM users"
-        
+
         # Test with safe conditions
         conditions = {"name": "John", "age": 30}
-        query, params = SQLSecurityManager.build_parameterized_query(
-            base_query, conditions
-        )
-        
+        query, params = SQLSecurityManager.build_parameterized_query(base_query, conditions)
+
         assert "?" in query  # Should have parameter placeholders
         assert len(params) == 2
         assert "John" in params
@@ -223,11 +217,9 @@ class TestSQLInjectionPrevention:
 
         # Test with malicious column names should raise error
         malicious_conditions = {"name'; DROP TABLE users; --": "value"}
-        
+
         with pytest.raises(ValueError):
-            SQLSecurityManager.build_parameterized_query(
-                base_query, malicious_conditions
-            )
+            SQLSecurityManager.build_parameterized_query(base_query, malicious_conditions)
 
     def test_query_structure_validation(self):
         """Test SQL query structure validation."""
@@ -258,9 +250,9 @@ class TestSQLInjectionPrevention:
         with pytest.raises(ValueError):
             MTSecureInputValidator.validate_tenant_id("org/malicious")
 
-        # Test SQL limit validation  
+        # Test SQL limit validation
         assert MTSecureInputValidator.validate_sql_limit(100) == 100
-        
+
         with pytest.raises(ValueError):
             MTSecureInputValidator.validate_sql_limit(-1)
 
@@ -301,13 +293,13 @@ class TestSQLInjectionPrevention:
     def test_connection_security(self, temp_db_path):
         """Test database connection security settings."""
         db = SecureDatabaseManager(temp_db_path)
-        
+
         # Verify secure connection settings are applied
         cursor = db.connection.execute("PRAGMA foreign_keys")
         foreign_keys_enabled = cursor.fetchone()[0]
         assert foreign_keys_enabled == 1
 
-        cursor = db.connection.execute("PRAGMA journal_mode")  
+        cursor = db.connection.execute("PRAGMA journal_mode")
         journal_mode = cursor.fetchone()[0]
         assert journal_mode == "wal"
 
@@ -319,16 +311,16 @@ if __name__ == "__main__":
     async def run_basic_tests():
         """Run basic injection tests."""
         print("Starting SQL injection prevention tests...")
-        
+
         # Create temporary database
         fd, db_path = tempfile.mkstemp(suffix=".db")
         os.close(fd)
-        
+
         try:
             # Test SecureDatabaseManager
             print("Testing SecureDatabaseManager...")
             db = SecureDatabaseManager(db_path)
-            
+
             # Test basic functionality with clean data
             hash1 = await db.store_memory("Test content", ["test"], 0.5)
             memory = await db.retrieve_memory(hash1)
@@ -350,7 +342,7 @@ if __name__ == "__main__":
             # Test MultiTenantSystem
             print("Testing MultiTenantSystem...")
             mt_system = MultiTenantSystem(db_path)
-            
+
             org_id = mt_system.create_organization(
                 name="test_org",
                 display_name="Test Organization",

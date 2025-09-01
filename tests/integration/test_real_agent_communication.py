@@ -51,6 +51,7 @@ class TestRealAgentCommunication:
                 await node2.stop()
             except Exception as e:
                 import logging
+
                 logging.exception("Agent node cleanup failed during communication test: %s", str(e))
 
     @pytest.mark.asyncio

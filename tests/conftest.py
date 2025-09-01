@@ -261,6 +261,7 @@ def cleanup_after_test():
             torch.cuda.empty_cache()
     except BaseException as e:
         import logging
+
         logging.exception("Error clearing CUDA cache: %s", str(e))
 
 

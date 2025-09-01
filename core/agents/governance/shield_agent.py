@@ -876,6 +876,7 @@ class ShieldAgent(AgentInterface):
 
         except Exception as e:
             import logging
+
             logging.exception("Exception in malware signature scanning: %s", str(e))
 
         return {"threats_found": threats_found, "signature_matches": signature_matches}

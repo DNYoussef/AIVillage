@@ -108,7 +108,7 @@ class CogmentMigrationManager:
 
     def _analyze_hrrm_dependencies(self) -> dict[str, Any]:
         """Analyze HRRM dependencies throughout the codebase"""
-        hrrm_path = self.project_root / "core" / "agent-forge" / "models" / "hrrm"
+        hrrm_path = self.project_root / "core" / "agent_forge" / "models" / "hrrm"
 
         analysis = {
             "hrrm_files_found": 0,
@@ -172,7 +172,7 @@ class CogmentMigrationManager:
 
     def _create_hrrm_backups(self) -> dict[str, Any]:
         """Create comprehensive backups of HRRM system"""
-        hrrm_path = self.project_root / "core" / "agent-forge" / "models" / "hrrm"
+        hrrm_path = self.project_root / "core" / "agent_forge" / "models" / "hrrm"
 
         backup_result = {
             "backup_created": False,
@@ -297,7 +297,7 @@ class CogmentMigrationManager:
             "dry_run": self.config["dry_run"],
         }
 
-        hrrm_path = self.project_root / "core" / "agent-forge" / "models" / "hrrm"
+        hrrm_path = self.project_root / "core" / "agent_forge" / "models" / "hrrm"
 
         if not hrrm_path.exists():
             logger.info("HRRM directory already removed or doesn't exist")
@@ -365,7 +365,7 @@ class CogmentMigrationManager:
 
         try:
             # Check HRRM removal
-            hrrm_path = self.project_root / "core" / "agent-forge" / "models" / "hrrm"
+            hrrm_path = self.project_root / "core" / "agent_forge" / "models" / "hrrm"
             verification_result["hrrm_removed"] = not hrrm_path.exists()
 
             # Check Cogment functionality
@@ -427,7 +427,7 @@ class CogmentMigrationManager:
 
             # Restore HRRM from backup
             hrrm_backup_path = self.backup_dir / "hrrm_models"
-            hrrm_restore_path = self.project_root / "core" / "agent-forge" / "models" / "hrrm"
+            hrrm_restore_path = self.project_root / "core" / "agent_forge" / "models" / "hrrm"
 
             if hrrm_backup_path.exists() and not self.config["dry_run"]:
                 shutil.copytree(hrrm_backup_path, hrrm_restore_path)

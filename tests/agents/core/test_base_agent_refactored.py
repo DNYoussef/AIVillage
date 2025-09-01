@@ -335,6 +335,7 @@ class TestCapabilityManagement:
             await test_agent.execute_mcp_tool("mock_tool", {"param": "value"})
         except Exception as e:
             import logging
+
             logging.exception("MCP tool execution error in test setup: %s", str(e))
 
         # Verify metrics were updated (error metrics in this case)

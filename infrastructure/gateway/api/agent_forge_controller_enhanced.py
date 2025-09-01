@@ -188,9 +188,9 @@ async def run_cognate_phase_real():
                 "training_status": "completed",
                 "focus": focus,
                 "artifacts": {
-                    "config_path": f"core/agent-forge/phases/cognate_pretrain/models/{model_name}/config.json",
-                    "weights_path": f"core/agent-forge/phases/cognate_pretrain/models/{model_name}/pytorch_model.bin",
-                    "metadata_path": f"core/agent-forge/phases/cognate_pretrain/models/{model_name}/metadata.json",
+                    "config_path": f"core/agent_forge/phases/cognate_pretrain/models/{model_name}/config.json",
+                    "weights_path": f"core/agent_forge/phases/cognate_pretrain/models/{model_name}/pytorch_model.bin",
+                    "metadata_path": f"core/agent_forge/phases/cognate_pretrain/models/{model_name}/metadata.json",
                 },
             }
             created_models.append(model_info)
@@ -209,7 +209,7 @@ async def run_cognate_phase_real():
             "models_created": created_models,
             "total_parameters": total_params,
             "parameter_accuracy": f"{actual_params/25083528*100:.2f}%",
-            "output_directory": "core/agent-forge/phases/cognate_pretrain/models",
+            "output_directory": "core/agent_forge/phases/cognate_pretrain/models",
             "ready_for_evomerge": True,
         }
 

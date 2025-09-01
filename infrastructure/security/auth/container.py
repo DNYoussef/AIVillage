@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class AuthContainer:
     """Dependency injection container for authentication services.
-    
+
     Manages the lifecycle and dependencies of authentication services
     following the Service Locator and Dependency Injection patterns.
     """
@@ -49,25 +49,15 @@ class AuthContainer:
 
             # Initialize authentication service (depends on session and MFA services)
             auth_service = AuthenticationService(
-                session_manager=session_service,
-                mfa_service=mfa_service,
-                rbac_system=rbac_system,
-                config=auth_config
+                session_manager=session_service, mfa_service=mfa_service, rbac_system=rbac_system, config=auth_config
             )
             self._services["auth_service"] = auth_service
 
             # Initialize handlers (depend on services)
-            auth_handlers = AuthHandlers(
-                auth_service=auth_service,
-                mfa_service=mfa_service,
-                rbac_system=rbac_system
-            )
+            auth_handlers = AuthHandlers(auth_service=auth_service, mfa_service=mfa_service, rbac_system=rbac_system)
             self._services["auth_handlers"] = auth_handlers
 
-            mfa_handlers = MFAHandlers(
-                mfa_service=mfa_service,
-                encryption_service=encryption_service
-            )
+            mfa_handlers = MFAHandlers(mfa_service=mfa_service, encryption_service=encryption_service)
             self._services["mfa_handlers"] = mfa_handlers
 
             session_handlers = SessionHandlers(session_manager=session_service)
@@ -149,10 +139,7 @@ class AuthContainer:
     async def health_check(self) -> Dict[str, Any]:
         """Get health status of all authentication services."""
         try:
-            health = {
-                "status": "healthy",
-                "services": {}
-            }
+            health = {"status": "healthy", "services": {}}
 
             if self._initialized:
                 # Session manager health
@@ -163,13 +150,13 @@ class AuthContainer:
                 # MFA service health
                 health["services"]["mfa_service"] = {
                     "status": "healthy",
-                    "totp_available": hasattr(self._services["mfa_service"], 'totp_window')
+                    "totp_available": hasattr(self._services["mfa_service"], "totp_window"),
                 }
 
                 # Auth service health
                 health["services"]["auth_service"] = {
                     "status": "healthy",
-                    "jwt_available": True  # Assuming JWT is available
+                    "jwt_available": True,  # Assuming JWT is available
                 }
 
             else:
@@ -180,10 +167,7 @@ class AuthContainer:
 
         except Exception as e:
             logger.error(f"Authentication health check failed: {e}")
-            return {
-                "status": "error",
-                "error": str(e)
-            }
+            return {"status": "error", "error": str(e)}
 
     def get_service(self, service_name: str) -> Optional[Any]:
         """Get service by name (generic accessor)."""

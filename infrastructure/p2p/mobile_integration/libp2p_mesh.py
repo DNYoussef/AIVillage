@@ -16,6 +16,7 @@ import asyncio
 import base64
 from collections import defaultdict
 from collections.abc import Callable
+import contextlib
 from dataclasses import dataclass, field
 from enum import Enum
 import json
@@ -187,10 +188,9 @@ class MDNSDiscovery:
         self.running = False
         if self._discovery_task:
             self._discovery_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._discovery_task
-            except asyncio.CancelledError:
-                pass
+
         logger.info("mDNS discovery stopped")
 
     async def _discovery_loop(self):
@@ -510,7 +510,7 @@ class LibP2PMeshNetwork:
 
         # Fallback: send to all connected peers
         success_count = 0
-        for peer_id in self.connected_peers.keys():
+        for peer_id in self.connected_peers:
             try:
                 # Simulate message delivery
                 await self._simulate_message_delivery(message, peer_id)

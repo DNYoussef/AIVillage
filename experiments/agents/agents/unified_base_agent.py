@@ -175,27 +175,26 @@ class UnifiedBaseAgent:
 
     async def _process_task(self, task: LangroidTask) -> dict[str, Any]:
         """Process the task and return the result or a handoff to another agent.
-        
+
         This is the core task processing method that handles different types of tasks
         with proper routing, validation, metrics, and error handling.
-        
+
         Args:
             task: LangroidTask containing the task content, type, and metadata
-            
+
         Returns:
             dict[str, Any]: Standardized result dictionary with processing outcome
-            
+
         Raises:
             AIVillageException: For validation, processing, or timeout errors
         """
         import asyncio
         import time
-        from typing import Optional, Union
-        
+
         # Start timing for performance metrics
         start_time = time.perf_counter()
-        task_id = getattr(task, 'id', f"{self.name}_{start_time}")
-        
+        task_id = getattr(task, "id", f"{self.name}_{start_time}")
+
         # Initialize progress tracking
         progress_tracker = {
             "task_id": task_id,
@@ -204,46 +203,44 @@ class UnifiedBaseAgent:
             "status": "processing",
             "progress": 0.0,
             "steps_completed": [],
-            "current_step": "validation"
+            "current_step": "validation",
         }
-        
+
         self.logger.info(
             "Starting task processing",
             extra={
                 "task_id": task_id,
-                "task_type": getattr(task, 'type', 'unknown'),
+                "task_type": getattr(task, "type", "unknown"),
                 "content_length": len(str(task.content)),
-                "agent_capabilities": self.capabilities
-            }
+                "agent_capabilities": self.capabilities,
+            },
         )
-        
+
         try:
             # Step 1: Task Validation and Input Sanitization (10% progress)
             await self._validate_and_sanitize_task(task, progress_tracker)
             progress_tracker["progress"] = 10.0
             progress_tracker["steps_completed"].append("validation")
             progress_tracker["current_step"] = "routing"
-            
-            # Step 2: Task Routing Based on Type and Content (20% progress) 
+
+            # Step 2: Task Routing Based on Type and Content (20% progress)
             task_handler = await self._route_task_to_handler(task, progress_tracker)
             progress_tracker["progress"] = 20.0
             progress_tracker["steps_completed"].append("routing")
             progress_tracker["current_step"] = "processing"
-            
+
             # Step 3: Execute Task with Timeout and Cancellation Support (80% progress)
             result = await self._execute_task_with_timeout(task, task_handler, progress_tracker)
             progress_tracker["progress"] = 80.0
             progress_tracker["steps_completed"].append("processing")
             progress_tracker["current_step"] = "formatting"
-            
+
             # Step 4: Format Result and Collect Metrics (100% progress)
-            formatted_result = await self._format_result_with_metrics(
-                task, result, progress_tracker, start_time
-            )
+            formatted_result = await self._format_result_with_metrics(task, result, progress_tracker, start_time)
             progress_tracker["progress"] = 100.0
             progress_tracker["steps_completed"].append("formatting")
             progress_tracker["status"] = "completed"
-            
+
             # Log successful completion
             processing_time = time.perf_counter() - start_time
             self.logger.info(
@@ -252,16 +249,15 @@ class UnifiedBaseAgent:
                     "task_id": task_id,
                     "processing_time_ms": processing_time * 1000,
                     "result_type": type(formatted_result).__name__,
-                    "steps_completed": progress_tracker["steps_completed"]
-                }
+                    "steps_completed": progress_tracker["steps_completed"],
+                },
             )
-            
+
             return formatted_result
-            
+
         except asyncio.CancelledError:
             self.logger.warning(
-                "Task processing was cancelled",
-                extra={"task_id": task_id, "progress": progress_tracker["progress"]}
+                "Task processing was cancelled", extra={"task_id": task_id, "progress": progress_tracker["progress"]}
             )
             raise AIVillageException(
                 message="Task processing was cancelled",
@@ -270,8 +266,8 @@ class UnifiedBaseAgent:
                 context={
                     "task_id": task_id,
                     "progress": progress_tracker,
-                    "cancellation_point": progress_tracker["current_step"]
-                }
+                    "cancellation_point": progress_tracker["current_step"],
+                },
             )
         except Exception as e:
             # Log error with context
@@ -283,14 +279,14 @@ class UnifiedBaseAgent:
                     "error": str(e),
                     "error_type": type(e).__name__,
                     "processing_time_ms": processing_time * 1000,
-                    "progress": progress_tracker
-                }
+                    "progress": progress_tracker,
+                },
             )
-            
+
             # Re-raise if already an AIVillageException
             if isinstance(e, AIVillageException):
                 raise
-                
+
             # Wrap other exceptions
             raise AIVillageException(
                 message=f"Task processing failed: {str(e)}",
@@ -300,24 +296,24 @@ class UnifiedBaseAgent:
                     "task_id": task_id,
                     "original_error": str(e),
                     "error_type": type(e).__name__,
-                    "progress": progress_tracker
-                }
+                    "progress": progress_tracker,
+                },
             )
-    
+
     async def _validate_and_sanitize_task(self, task: LangroidTask, progress_tracker: dict) -> None:
         """Validate task input and sanitize potentially dangerous content."""
         # Check task has required attributes
-        if not hasattr(task, 'content') or task.content is None:
+        if not hasattr(task, "content") or task.content is None:
             raise AIVillageException(
                 message="Task missing required content attribute",
                 category=ErrorCategory.VALIDATION,
                 severity=ErrorSeverity.ERROR,
-                context={"task": str(task)}
+                context={"task": str(task)},
             )
-        
+
         # Convert content to string if needed
         task.content = str(task.content)
-        
+
         # Check content length limits
         max_content_length = 50000  # 50KB limit
         if len(task.content) > max_content_length:
@@ -325,51 +321,43 @@ class UnifiedBaseAgent:
                 message=f"Task content exceeds maximum length of {max_content_length} characters",
                 category=ErrorCategory.VALIDATION,
                 severity=ErrorSeverity.ERROR,
-                context={"content_length": len(task.content), "max_allowed": max_content_length}
+                context={"content_length": len(task.content), "max_allowed": max_content_length},
             )
-        
+
         # Basic sanitization - remove potential injection attempts
-        dangerous_patterns = [
-            r'<script.*?>.*?</script>',
-            r'javascript:',
-            r'on\w+\s*=',
-            r'eval\s*\(',
-            r'exec\s*\('
-        ]
-        
+        dangerous_patterns = [r"<script.*?>.*?</script>", r"javascript:", r"on\w+\s*=", r"eval\s*\(", r"exec\s*\("]
+
         import re
+
         original_content = task.content
         for pattern in dangerous_patterns:
-            task.content = re.sub(pattern, '', task.content, flags=re.IGNORECASE | re.DOTALL)
-        
+            task.content = re.sub(pattern, "", task.content, flags=re.IGNORECASE | re.DOTALL)
+
         if original_content != task.content:
             self.logger.warning(
                 "Task content was sanitized",
-                extra={
-                    "task_id": progress_tracker.get("task_id"),
-                    "sanitization_applied": True
-                }
+                extra={"task_id": progress_tracker.get("task_id"), "sanitization_applied": True},
             )
-    
+
     async def _route_task_to_handler(self, task: LangroidTask, progress_tracker: dict) -> callable:
         """Route task to appropriate handler based on task type and agent capabilities."""
-        task_type = getattr(task, 'type', 'general')
-        
+        task_type = getattr(task, "type", "general")
+
         # Define task type to handler mapping
         task_handlers = {
-            'text_generation': self._handle_text_generation_task,
-            'question_answering': self._handle_question_answering_task,
-            'data_analysis': self._handle_data_analysis_task,
-            'code_generation': self._handle_code_generation_task,
-            'translation': self._handle_translation_task,
-            'summarization': self._handle_summarization_task,
-            'classification': self._handle_classification_task,
-            'rag_query': self._handle_rag_query_task,
-            'agent_communication': self._handle_agent_communication_task,
-            'general': self._handle_general_task,
-            'handoff': self._handle_handoff_task
+            "text_generation": self._handle_text_generation_task,
+            "question_answering": self._handle_question_answering_task,
+            "data_analysis": self._handle_data_analysis_task,
+            "code_generation": self._handle_code_generation_task,
+            "translation": self._handle_translation_task,
+            "summarization": self._handle_summarization_task,
+            "classification": self._handle_classification_task,
+            "rag_query": self._handle_rag_query_task,
+            "agent_communication": self._handle_agent_communication_task,
+            "general": self._handle_general_task,
+            "handoff": self._handle_handoff_task,
         }
-        
+
         # Check if we have a specific handler
         if task_type in task_handlers:
             handler = task_handlers[task_type]
@@ -380,10 +368,7 @@ class UnifiedBaseAgent:
                 # Use general handler but log the capability match
                 self.logger.info(
                     "Using general handler for task matching agent capabilities",
-                    extra={
-                        "task_type": task_type,
-                        "matching_capabilities": matching_capabilities
-                    }
+                    extra={"task_type": task_type, "matching_capabilities": matching_capabilities},
                 )
                 handler = self._handle_general_task
             else:
@@ -391,39 +376,34 @@ class UnifiedBaseAgent:
                 handoff_agent = await self._find_suitable_agent_for_handoff(task)
                 if handoff_agent:
                     return lambda t: self._handle_handoff_to_agent(t, handoff_agent)
-                
+
                 # Default to general handler
                 handler = self._handle_general_task
-        
+
         self.logger.debug(
             "Task routed to handler",
-            extra={
-                "task_type": task_type,
-                "handler": handler.__name__,
-                "agent_capabilities": self.capabilities
-            }
+            extra={"task_type": task_type, "handler": handler.__name__, "agent_capabilities": self.capabilities},
         )
-        
+
         return handler
-    
-    async def _execute_task_with_timeout(self, task: LangroidTask, handler: callable, progress_tracker: dict) -> dict[str, Any]:
+
+    async def _execute_task_with_timeout(
+        self, task: LangroidTask, handler: callable, progress_tracker: dict
+    ) -> dict[str, Any]:
         """Execute task handler with timeout and resource management."""
         # Default timeout: 30 seconds for most tasks
-        timeout_seconds = getattr(task, 'timeout', 30)
-        
+        timeout_seconds = getattr(task, "timeout", 30)
+
         # Adjust timeout based on task complexity
         content_length = len(str(task.content))
         if content_length > 10000:  # Large tasks get more time
             timeout_seconds *= 2
-        
+
         try:
             # Execute with timeout
-            result = await asyncio.wait_for(
-                handler(task),
-                timeout=timeout_seconds
-            )
+            result = await asyncio.wait_for(handler(task), timeout=timeout_seconds)
             return result
-            
+
         except asyncio.TimeoutError:
             raise AIVillageException(
                 message=f"Task execution timed out after {timeout_seconds} seconds",
@@ -432,14 +412,16 @@ class UnifiedBaseAgent:
                 context={
                     "timeout_seconds": timeout_seconds,
                     "task_id": progress_tracker.get("task_id"),
-                    "handler": handler.__name__
-                }
+                    "handler": handler.__name__,
+                },
             )
-    
-    async def _format_result_with_metrics(self, task: LangroidTask, result: Any, progress_tracker: dict, start_time: float) -> dict[str, Any]:
+
+    async def _format_result_with_metrics(
+        self, task: LangroidTask, result: Any, progress_tracker: dict, start_time: float
+    ) -> dict[str, Any]:
         """Format the result with standardized structure and collect metrics."""
         processing_time = time.perf_counter() - start_time
-        
+
         # Standardized result format
         formatted_result = {
             "success": True,
@@ -449,18 +431,18 @@ class UnifiedBaseAgent:
             "metadata": {
                 "processing_time_seconds": processing_time,
                 "processing_time_ms": processing_time * 1000,
-                "task_type": getattr(task, 'type', 'unknown'),
+                "task_type": getattr(task, "type", "unknown"),
                 "steps_completed": progress_tracker.get("steps_completed", []),
                 "timestamp": time.time(),
                 "agent_capabilities_used": self._get_capabilities_used(task),
                 "performance_metrics": {
                     "meets_100ms_target": processing_time < 0.1,
                     "memory_usage_mb": self._get_memory_usage(),
-                    "tokens_processed": self._estimate_tokens(task.content)
-                }
-            }
+                    "tokens_processed": self._estimate_tokens(task.content),
+                },
+            },
         }
-        
+
         # Log performance metrics
         self.logger.info(
             "Task metrics collected",
@@ -468,32 +450,28 @@ class UnifiedBaseAgent:
                 "task_id": progress_tracker.get("task_id"),
                 "processing_time_ms": processing_time * 1000,
                 "meets_performance_target": processing_time < 0.1,
-                "memory_usage_mb": formatted_result["metadata"]["performance_metrics"]["memory_usage_mb"]
-            }
+                "memory_usage_mb": formatted_result["metadata"]["performance_metrics"]["memory_usage_mb"],
+            },
         )
-        
+
         return formatted_result
-    
+
     # Task Handler Methods
-    
+
     async def _handle_text_generation_task(self, task: LangroidTask) -> dict[str, Any]:
         """Handle text generation tasks using the agent's LLM."""
         prompt = f"{self.instructions}\n\nUser Request: {task.content}"
         response = await self.generate(prompt)
         return {
             "generated_text": response,
-            "prompt_used": self.instructions[:100] + "..." if len(self.instructions) > 100 else self.instructions
+            "prompt_used": self.instructions[:100] + "..." if len(self.instructions) > 100 else self.instructions,
         }
-    
+
     async def _handle_question_answering_task(self, task: LangroidTask) -> dict[str, Any]:
         """Handle question answering using RAG pipeline."""
         rag_result = await self.query_rag(task.content)
-        return {
-            "answer": rag_result,
-            "source": "rag_pipeline",
-            "query": task.content
-        }
-    
+        return {"answer": rag_result, "source": "rag_pipeline", "query": task.content}
+
     async def _handle_data_analysis_task(self, task: LangroidTask) -> dict[str, Any]:
         """Handle data analysis tasks."""
         analysis_prompt = f"""
@@ -503,11 +481,8 @@ class UnifiedBaseAgent:
         Provide insights, patterns, and recommendations based on the data.
         """
         analysis = await self.generate(analysis_prompt)
-        return {
-            "analysis": analysis,
-            "type": "data_analysis"
-        }
-    
+        return {"analysis": analysis, "type": "data_analysis"}
+
     async def _handle_code_generation_task(self, task: LangroidTask) -> dict[str, Any]:
         """Handle code generation tasks."""
         code_prompt = f"""
@@ -517,12 +492,8 @@ class UnifiedBaseAgent:
         Provide clean, well-documented code with explanations.
         """
         code_response = await self.generate(code_prompt)
-        return {
-            "generated_code": code_response,
-            "language": "auto-detected",
-            "type": "code_generation"
-        }
-    
+        return {"generated_code": code_response, "language": "auto-detected", "type": "code_generation"}
+
     async def _handle_translation_task(self, task: LangroidTask) -> dict[str, Any]:
         """Handle translation tasks."""
         translation_prompt = f"""
@@ -532,11 +503,8 @@ class UnifiedBaseAgent:
         Provide accurate translation with context preservation.
         """
         translation = await self.generate(translation_prompt)
-        return {
-            "translation": translation,
-            "type": "translation"
-        }
-    
+        return {"translation": translation, "type": "translation"}
+
     async def _handle_summarization_task(self, task: LangroidTask) -> dict[str, Any]:
         """Handle text summarization tasks."""
         summary_prompt = f"""
@@ -546,12 +514,8 @@ class UnifiedBaseAgent:
         Provide a concise summary highlighting key points.
         """
         summary = await self.generate(summary_prompt)
-        return {
-            "summary": summary,
-            "original_length": len(task.content),
-            "type": "summarization"
-        }
-    
+        return {"summary": summary, "original_length": len(task.content), "type": "summarization"}
+
     async def _handle_classification_task(self, task: LangroidTask) -> dict[str, Any]:
         """Handle classification tasks."""
         classification_prompt = f"""
@@ -561,19 +525,16 @@ class UnifiedBaseAgent:
         Provide classification with confidence scores.
         """
         classification = await self.generate(classification_prompt)
-        return {
-            "classification": classification,
-            "type": "classification"
-        }
-    
+        return {"classification": classification, "type": "classification"}
+
     async def _handle_rag_query_task(self, task: LangroidTask) -> dict[str, Any]:
         """Handle RAG-specific query tasks."""
         return await self.query_rag(task.content)
-    
+
     async def _handle_agent_communication_task(self, task: LangroidTask) -> dict[str, Any]:
         """Handle inter-agent communication tasks."""
         # Extract recipient from task content or metadata
-        recipient = getattr(task, 'recipient', None)
+        recipient = getattr(task, "recipient", None)
         if not recipient:
             # Try to parse recipient from content
             if "to:" in task.content.lower():
@@ -581,22 +542,18 @@ class UnifiedBaseAgent:
                 if len(parts) > 1:
                     recipient_part = parts[1].split("\n")[0].strip()
                     recipient = recipient_part
-        
+
         if recipient:
             response = await self.communicate(task.content, recipient)
-            return {
-                "communication_result": response,
-                "recipient": recipient,
-                "type": "agent_communication"
-            }
+            return {"communication_result": response, "recipient": recipient, "type": "agent_communication"}
         else:
             raise AIVillageException(
                 message="No recipient specified for agent communication task",
                 category=ErrorCategory.VALIDATION,
                 severity=ErrorSeverity.ERROR,
-                context={"task_content": task.content}
+                context={"task_content": task.content},
             )
-    
+
     async def _handle_general_task(self, task: LangroidTask) -> dict[str, Any]:
         """Handle general tasks using the agent's capabilities."""
         enhanced_prompt = f"""
@@ -608,17 +565,13 @@ class UnifiedBaseAgent:
         
         Please provide a comprehensive response using your capabilities.
         """
-        
+
         response = await self.generate(enhanced_prompt)
-        return {
-            "response": response,
-            "capabilities_used": self.capabilities,
-            "type": "general"
-        }
-    
+        return {"response": response, "capabilities_used": self.capabilities, "type": "general"}
+
     async def _handle_handoff_task(self, task: LangroidTask) -> dict[str, Any]:
         """Handle handoff tasks to other agents."""
-        target_agent = getattr(task, 'target_agent', None)
+        target_agent = getattr(task, "target_agent", None)
         if target_agent and hasattr(self, f"transfer_to_{target_agent}"):
             handoff_tool = self.get_tool(f"transfer_to_{target_agent}")
             if handoff_tool:
@@ -627,51 +580,49 @@ class UnifiedBaseAgent:
                     "handoff_successful": True,
                     "target_agent": target_agent,
                     "transferred_to": transferred_agent.name,
-                    "type": "handoff"
+                    "type": "handoff",
                 }
-        
+
         return {
             "handoff_successful": False,
             "error": "Target agent not available or handoff tool not found",
-            "type": "handoff"
+            "type": "handoff",
         }
-    
+
     # Helper Methods
-    
+
     async def _find_suitable_agent_for_handoff(self, task: LangroidTask) -> Optional[str]:
         """Find a suitable agent for handoff based on task requirements."""
         # This would integrate with agent discovery/registry in a full implementation
         # For now, return None to use current agent
         return None
-    
+
     async def _handle_handoff_to_agent(self, task: LangroidTask, target_agent: str) -> dict[str, Any]:
         """Handle handoff to a specific agent."""
-        return await self.communicate(
-            f"Handing off task: {task.content}",
-            target_agent
-        )
-    
+        return await self.communicate(f"Handing off task: {task.content}", target_agent)
+
     def _get_capabilities_used(self, task: LangroidTask) -> list[str]:
         """Determine which capabilities were used for the task."""
         task_content_lower = task.content.lower()
         used_capabilities = []
-        
+
         for capability in self.capabilities:
             if capability.lower() in task_content_lower:
                 used_capabilities.append(capability)
-        
+
         return used_capabilities or ["general"]
-    
+
     def _get_memory_usage(self) -> float:
         """Get current memory usage in MB."""
         try:
             import psutil
             import os
+
             process = psutil.Process(os.getpid())
             return process.memory_info().rss / 1024 / 1024
         except ImportError:
             return 0.0
-    
+
     def _estimate_tokens(self, text: str) -> int:
         """Rough estimate of token count."""
         # Simple estimation: ~4 characters per token

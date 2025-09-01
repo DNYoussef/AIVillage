@@ -8,60 +8,63 @@ import json
 import os
 import sys
 from datetime import datetime
-from pathlib import Path
 from typing import Dict, List, Any
 import html
 
 
 def load_security_results() -> Dict[str, Any]:
     """Load aggregated security results."""
-    results_file = 'security/reports/aggregated-security-results.json'
+    results_file = "security/reports/aggregated-security-results.json"
     try:
-        with open(results_file, 'r') as f:
+        with open(results_file, "r") as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError) as e:
         print(f"Warning: Could not load security results: {e}")
-        return {'summary': {}, 'detailed_results': []}
+        return {"summary": {}, "detailed_results": []}
 
 
 def generate_severity_chart_data(severity_counts: Dict[str, int]) -> str:
     """Generate data for severity distribution chart."""
     labels = list(severity_counts.keys())
     values = list(severity_counts.values())
-    
+
     chart_data = {
-        'labels': labels,
-        'datasets': [{
-            'data': values,
-            'backgroundColor': [
-                '#ff4444',  # Critical - Red
-                '#ff8800',  # High - Orange
-                '#ffaa00',  # Medium - Yellow
-                '#00aa00'   # Low - Green
-            ],
-            'borderWidth': 1
-        }]
+        "labels": labels,
+        "datasets": [
+            {
+                "data": values,
+                "backgroundColor": [
+                    "#ff4444",  # Critical - Red
+                    "#ff8800",  # High - Orange
+                    "#ffaa00",  # Medium - Yellow
+                    "#00aa00",  # Low - Green
+                ],
+                "borderWidth": 1,
+            }
+        ],
     }
-    
+
     return json.dumps(chart_data)
 
 
 def generate_tools_comparison_data(tools_summary: Dict[str, Any]) -> str:
     """Generate data for tools comparison chart."""
     tool_names = list(tools_summary.keys())
-    issue_counts = [tools_summary[tool]['total_issues'] for tool in tool_names]
-    
+    issue_counts = [tools_summary[tool]["total_issues"] for tool in tool_names]
+
     chart_data = {
-        'labels': tool_names,
-        'datasets': [{
-            'label': 'Issues Found',
-            'data': issue_counts,
-            'backgroundColor': '#4CAF50',
-            'borderColor': '#45a049',
-            'borderWidth': 1
-        }]
+        "labels": tool_names,
+        "datasets": [
+            {
+                "label": "Issues Found",
+                "data": issue_counts,
+                "backgroundColor": "#4CAF50",
+                "borderColor": "#45a049",
+                "borderWidth": 1,
+            }
+        ],
     }
-    
+
     return json.dumps(chart_data)
 
 
@@ -69,42 +72,41 @@ def generate_timeline_data(detailed_results: List[Dict[str, Any]]) -> str:
     """Generate timeline data for security issues."""
     # For now, create a simple timeline based on current data
     # In a real implementation, this would track issues over time
-    timeline_data = {
-        'labels': [datetime.now().strftime('%Y-%m-%d')],
-        'datasets': []
-    }
-    
-    colors = {'critical': '#ff4444', 'high': '#ff8800', 'medium': '#ffaa00', 'low': '#00aa00'}
-    
-    for severity in ['critical', 'high', 'medium', 'low']:
+    timeline_data = {"labels": [datetime.now().strftime("%Y-%m-%d")], "datasets": []}
+
+    colors = {"critical": "#ff4444", "high": "#ff8800", "medium": "#ffaa00", "low": "#00aa00"}
+
+    for severity in ["critical", "high", "medium", "low"]:
         total_issues = 0
         for result in detailed_results:
-            severity_breakdown = result.get('severity_breakdown', {})
+            severity_breakdown = result.get("severity_breakdown", {})
             for key, count in severity_breakdown.items():
                 if key.lower() in [severity, severity.upper(), severity.capitalize()]:
                     total_issues += count
-        
-        timeline_data['datasets'].append({
-            'label': severity.capitalize(),
-            'data': [total_issues],
-            'borderColor': colors[severity],
-            'backgroundColor': colors[severity] + '30',  # Add transparency
-            'fill': False
-        })
-    
+
+        timeline_data["datasets"].append(
+            {
+                "label": severity.capitalize(),
+                "data": [total_issues],
+                "borderColor": colors[severity],
+                "backgroundColor": colors[severity] + "30",  # Add transparency
+                "fill": False,
+            }
+        )
+
     return json.dumps(timeline_data)
 
 
 def generate_dashboard_html(results: Dict[str, Any]) -> str:
     """Generate HTML dashboard."""
-    summary = results.get('summary', {})
-    detailed_results = results.get('detailed_results', [])
-    
-    severity_counts = summary.get('overall_severity_counts', {})
-    tools_summary = summary.get('tools_summary', {})
-    critical_issues = summary.get('critical_issues', [])
-    recommendations = summary.get('recommendations', [])
-    
+    summary = results.get("summary", {})
+    detailed_results = results.get("detailed_results", [])
+
+    severity_counts = summary.get("overall_severity_counts", {})
+    tools_summary = summary.get("tools_summary", {})
+    critical_issues = summary.get("critical_issues", [])
+    recommendations = summary.get("recommendations", [])
+
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -359,7 +361,7 @@ def generate_dashboard_html(results: Dict[str, Any]) -> str:
             </div>
         </div>
 """
-    
+
     # Add critical issues section if any exist
     if critical_issues:
         html_content += f"""
@@ -375,7 +377,7 @@ def generate_dashboard_html(results: Dict[str, Any]) -> str:
             {f'<p>... and {len(critical_issues) - 10} more critical/high severity issues</p>' if len(critical_issues) > 10 else ''}
         </div>
         """
-    
+
     # Add recommendations section
     if recommendations:
         html_content += f"""
@@ -384,7 +386,7 @@ def generate_dashboard_html(results: Dict[str, Any]) -> str:
             {"".join([f'<div class="recommendation-item">{html.escape(str(rec))}</div>' for rec in recommendations])}
         </div>
         """
-    
+
     html_content += f"""
         <div class="footer">
             Dashboard generated by AIVillage Security System
@@ -452,46 +454,48 @@ def generate_dashboard_html(results: Dict[str, Any]) -> str:
     </script>
 </body>
 </html>"""
-    
+
     return html_content
 
 
 def main():
     """Main dashboard generation function."""
     print("Generating security dashboard...")
-    
+
     # Load security results
     results = load_security_results()
-    
+
     # Create dashboard directory
-    os.makedirs('security/dashboard', exist_ok=True)
-    
+    os.makedirs("security/dashboard", exist_ok=True)
+
     # Generate HTML dashboard
     dashboard_html = generate_dashboard_html(results)
-    
+
     # Save dashboard
-    with open('security/dashboard/index.html', 'w', encoding='utf-8') as f:
+    with open("security/dashboard/index.html", "w", encoding="utf-8") as f:
         f.write(dashboard_html)
-    
+
     print("SUCCESS: Security dashboard generated: security/dashboard/index.html")
-    
+
     # Generate additional JSON report for programmatic access
     dashboard_data = {
-        'generated_at': datetime.utcnow().isoformat() + 'Z',
-        'summary': results.get('summary', {}),
-        'charts_data': {
-            'severity_distribution': generate_severity_chart_data(results.get('summary', {}).get('overall_severity_counts', {})),
-            'tools_comparison': generate_tools_comparison_data(results.get('summary', {}).get('tools_summary', {})),
-            'timeline': generate_timeline_data(results.get('detailed_results', []))
-        }
+        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "summary": results.get("summary", {}),
+        "charts_data": {
+            "severity_distribution": generate_severity_chart_data(
+                results.get("summary", {}).get("overall_severity_counts", {})
+            ),
+            "tools_comparison": generate_tools_comparison_data(results.get("summary", {}).get("tools_summary", {})),
+            "timeline": generate_timeline_data(results.get("detailed_results", [])),
+        },
     }
-    
-    with open('security/dashboard/dashboard-data.json', 'w') as f:
+
+    with open("security/dashboard/dashboard-data.json", "w") as f:
         json.dump(dashboard_data, f, indent=2)
-    
+
     print("SUCCESS: Dashboard data saved: security/dashboard/dashboard-data.json")
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

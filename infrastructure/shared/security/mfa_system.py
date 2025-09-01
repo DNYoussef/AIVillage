@@ -23,11 +23,13 @@ logger = logging.getLogger(__name__)
 
 class MFAError(Exception):
     """MFA-related errors."""
+
     pass
 
 
 class MFAMethodType:
     """MFA method types."""
+
     TOTP = "totp"
     SMS = "sms"
     EMAIL = "email"
@@ -56,13 +58,7 @@ class MFABackupCodes:
 
         # Use PBKDF2 with random salt
         salt = secrets.token_bytes(32)
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=salt,
-            iterations=100000,
-            backend=self.backend
-        )
+        kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=100000, backend=self.backend)
 
         key = kdf.derive(clean_code.encode())
 
@@ -80,13 +76,7 @@ class MFABackupCodes:
             expected_key = decoded[32:]
 
             # Derive key from provided code
-            kdf = PBKDF2HMAC(
-                algorithm=hashes.SHA256(),
-                length=32,
-                salt=salt,
-                iterations=100000,
-                backend=self.backend
-            )
+            kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=100000, backend=self.backend)
 
             derived_key = kdf.derive(clean_code.encode())
 
@@ -111,10 +101,7 @@ class TOTPManager:
         """Generate QR code for TOTP setup."""
         try:
             totp = pyotp.TOTP(secret)
-            provisioning_uri = totp.provisioning_uri(
-                name=user_email,
-                issuer_name=self.issuer_name
-            )
+            provisioning_uri = totp.provisioning_uri(name=user_email, issuer_name=self.issuer_name)
 
             # Generate QR code
             qr = qrcode.QRCode(
@@ -130,7 +117,7 @@ class TOTPManager:
 
             # Convert to bytes
             buffer = BytesIO()
-            img.save(buffer, format='PNG')
+            img.save(buffer, format="PNG")
             return buffer.getvalue()
 
         except Exception as e:
@@ -192,10 +179,10 @@ class MFASystem:
             qr_code = self.totp_manager.generate_qr_code(secret, user_email)
 
             return {
-                'secret': secret,
-                'qr_code': base64.b64encode(qr_code).decode(),
-                'backup_codes': self.generate_backup_codes(user_id),
-                'method': MFAMethodType.TOTP
+                "secret": secret,
+                "qr_code": base64.b64encode(qr_code).decode(),
+                "backup_codes": self.generate_backup_codes(user_id),
+                "method": MFAMethodType.TOTP,
             }
 
         except Exception as e:
@@ -286,11 +273,7 @@ class MFASystem:
         # Hash the code for storage
         code_hash = hashlib.sha256(code.encode()).hexdigest()
 
-        self.verification_codes[key] = {
-            'hash': code_hash,
-            'expires_at': expiration,
-            'attempts': 0
-        }
+        self.verification_codes[key] = {"hash": code_hash, "expires_at": expiration, "attempts": 0}
 
     def verify_stored_code(self, user_id: str, method: str, code: str) -> bool:
         """Verify stored verification code."""
@@ -302,21 +285,21 @@ class MFASystem:
         stored_data = self.verification_codes[key]
 
         # Check expiration
-        if datetime.utcnow() > stored_data['expires_at']:
+        if datetime.utcnow() > stored_data["expires_at"]:
             del self.verification_codes[key]
             return False
 
         # Check attempts limit
-        if stored_data['attempts'] >= 3:
+        if stored_data["attempts"] >= 3:
             del self.verification_codes[key]
             return False
 
         # Verify code
         code_hash = hashlib.sha256(code.encode()).hexdigest()
 
-        stored_data['attempts'] += 1
+        stored_data["attempts"] += 1
 
-        if hmac.compare_digest(code_hash, stored_data['hash']):
+        if hmac.compare_digest(code_hash, stored_data["hash"]):
             del self.verification_codes[key]
             return True
 
@@ -332,8 +315,7 @@ class MFASystem:
 
         # Clean old attempts
         self.rate_limits[key] = [
-            attempt_time for attempt_time in self.rate_limits[key]
-            if now - attempt_time < timedelta(hours=1)
+            attempt_time for attempt_time in self.rate_limits[key] if now - attempt_time < timedelta(hours=1)
         ]
 
         # Check limit (5 attempts per hour)
@@ -357,7 +339,7 @@ class MFASystem:
         """Unified MFA verification method."""
         try:
             if method == MFAMethodType.TOTP:
-                secret = kwargs.get('secret')
+                secret = kwargs.get("secret")
                 if not secret:
                     raise MFAError("TOTP secret required")
                 return self.verify_totp(user_id, token, secret)
@@ -382,16 +364,16 @@ class MFASystem:
         """Get MFA status for user."""
         # In production, retrieve from database
         return {
-            'totp_enabled': False,
-            'sms_enabled': False,
-            'email_enabled': False,
-            'backup_codes_count': 0,
-            'methods_available': [
+            "totp_enabled": False,
+            "sms_enabled": False,
+            "email_enabled": False,
+            "backup_codes_count": 0,
+            "methods_available": [
                 MFAMethodType.TOTP,
                 MFAMethodType.SMS,
                 MFAMethodType.EMAIL,
-                MFAMethodType.BACKUP_CODES
-            ]
+                MFAMethodType.BACKUP_CODES,
+            ],
         }
 
     def disable_mfa(self, user_id: str, method: str) -> bool:

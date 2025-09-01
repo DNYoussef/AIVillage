@@ -42,18 +42,18 @@ class TestBitChatBridge:
         bridge = create_bitchat_bridge("test_device_001")
         assert bridge is not None
         assert bridge.device_id == "test_device_001"
-        
+
         # Test bridge functionality, not just creation
-        assert hasattr(bridge, 'send_message'), "Bridge missing send_message method"
-        assert hasattr(bridge, 'receive_message'), "Bridge missing receive_message method"
-        assert hasattr(bridge, 'get_status'), "Bridge missing get_status method"
-        
+        assert hasattr(bridge, "send_message"), "Bridge missing send_message method"
+        assert hasattr(bridge, "receive_message"), "Bridge missing receive_message method"
+        assert hasattr(bridge, "get_status"), "Bridge missing get_status method"
+
         # Test bridge state initialization
         status = bridge.get_status()
         assert status is not None, "Bridge status should not be None"
         assert isinstance(status, dict), "Bridge status should be a dictionary"
         assert status.get("device_id") == "test_device_001", "Status should contain correct device_id"
-        
+
         logger.info("✅ BitChat bridge creation test passed")
 
     def test_bridge_availability(self):

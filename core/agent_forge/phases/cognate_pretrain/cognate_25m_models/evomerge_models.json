@@ -1,0 +1,12 @@
+{
+  "seed_models": [],
+  "model_type": "cognate-25m",
+  "total_models": 0,
+  "architecture_details": {
+    "d_model": 216,
+    "n_layers": 11,
+    "n_heads": 4,
+    "parameter_count": 0
+  },
+  "ready_for_evomerge": false
+}

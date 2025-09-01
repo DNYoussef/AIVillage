@@ -34,7 +34,9 @@ try:
 except ImportError:
     QUIC_AVAILABLE = False
 
-from ..core.message_types import MessageType, UnifiedMessage
+import contextlib
+
+from infrastructure.p2p.core.message_types import MessageType, UnifiedMessage
 
 logger = logging.getLogger(__name__)
 
@@ -267,17 +269,15 @@ class HtxClient:
         # Cancel background tasks
         if self._receive_task:
             self._receive_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._receive_task
-            except asyncio.CancelledError:
-                pass
+
 
         if self._keepalive_task:
             self._keepalive_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._keepalive_task
-            except asyncio.CancelledError:
-                pass
+
 
         # Close connection
         if self.writer:

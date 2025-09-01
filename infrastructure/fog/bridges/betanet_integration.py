@@ -75,8 +75,14 @@ class BetaNetFogTransport:
     - Zero-knowledge proof integration for privacy preservation
     """
 
-    def __init__(self, privacy_mode: str = "balanced", enable_covert: bool = True, mobile_optimization: bool = True, 
-                 constitutional_enabled: bool = False, constitutional_tier: str = "silver"):
+    def __init__(
+        self,
+        privacy_mode: str = "balanced",
+        enable_covert: bool = True,
+        mobile_optimization: bool = True,
+        constitutional_enabled: bool = False,
+        constitutional_tier: str = "silver",
+    ):
         """
         Initialize BetaNet transport adapter for fog computing
 
@@ -92,7 +98,7 @@ class BetaNetFogTransport:
         self.mobile_optimization = mobile_optimization
         self.constitutional_enabled = constitutional_enabled
         self.constitutional_tier = constitutional_tier
-        
+
         self.stats = {
             "messages_sent": 0,
             "messages_received": 0,
@@ -102,7 +108,7 @@ class BetaNetFogTransport:
             "constitutional_verifications": 0,
             "constitutional_compliant_messages": 0,
             "zk_proofs_generated": 0,
-            "privacy_preservation_rate": 0.0
+            "privacy_preservation_rate": 0.0,
         }
 
         # Constitutional transport integration
@@ -151,19 +157,22 @@ class BetaNetFogTransport:
         """Initialize constitutional BetaNet components"""
         try:
             # Import constitutional components
-            from ...p2p.betanet.constitutional_transport import ConstitutionalBetaNetService, ConstitutionalTransportConfig
+            from ...p2p.betanet.constitutional_transport import (
+                ConstitutionalBetaNetService,
+                ConstitutionalTransportConfig,
+            )
             from ...p2p.betanet.constitutional_frames import ConstitutionalTier
-            
+
             # Map tier string to enum
             tier_mapping = {
                 "bronze": ConstitutionalTier.BRONZE,
                 "silver": ConstitutionalTier.SILVER,
                 "gold": ConstitutionalTier.GOLD,
-                "platinum": ConstitutionalTier.PLATINUM
+                "platinum": ConstitutionalTier.PLATINUM,
             }
-            
+
             constitutional_tier_enum = tier_mapping.get(self.constitutional_tier.lower(), ConstitutionalTier.SILVER)
-            
+
             # Create constitutional transport configuration
             config = ConstitutionalTransportConfig(
                 default_tier=constitutional_tier_enum,
@@ -171,14 +180,14 @@ class BetaNetFogTransport:
                 enable_zero_knowledge_proofs=True,
                 enable_tee_integration=True,
                 enable_fog_integration=True,
-                privacy_priority=0.6 if self.privacy_mode == "strict" else 0.4
+                privacy_priority=0.6 if self.privacy_mode == "strict" else 0.4,
             )
-            
+
             # Initialize constitutional service
             self.constitutional_transport = ConstitutionalBetaNetService(config)
-            
+
             logger.info(f"Constitutional BetaNet features initialized ({self.constitutional_tier} tier)")
-            
+
         except ImportError as e:
             logger.warning(f"Constitutional features unavailable: {e}")
             self.constitutional_enabled = False
@@ -208,14 +217,12 @@ class BetaNetFogTransport:
         # Try constitutional transport first if enabled
         if self.constitutional_enabled and self.constitutional_transport:
             try:
-                constitutional_result = await self._send_via_constitutional_transport(
-                    job_data, destination, priority
-                )
-                
+                constitutional_result = await self._send_via_constitutional_transport(job_data, destination, priority)
+
                 if constitutional_result["success"]:
                     duration = time.time() - start_time
                     self._update_constitutional_stats(constitutional_result, len(job_data), duration)
-                    
+
                     return {
                         "success": True,
                         "transport": "constitutional_betanet",
@@ -225,11 +232,11 @@ class BetaNetFogTransport:
                         "constitutional_tier": self.constitutional_tier,
                         "privacy_level": constitutional_result.get("privacy_level", 0.5),
                         "zk_proof_generated": constitutional_result.get("zk_proof_generated", False),
-                        "details": constitutional_result
+                        "details": constitutional_result,
                     }
                 else:
                     logger.warning("Constitutional transport failed, falling back to standard BetaNet")
-                    
+
             except Exception as e:
                 logger.warning(f"Constitutional transport error, falling back: {e}")
 
@@ -240,7 +247,7 @@ class BetaNetFogTransport:
                 "transport": "fallback",
                 "duration": time.time() - start_time,
                 "bytes_sent": len(job_data),
-                "constitutional_compliance": False
+                "constitutional_compliance": False,
             }
 
         try:
@@ -403,59 +410,61 @@ class BetaNetFogTransport:
             logger.error(f"Device optimization failed: {e}")
             return {"optimizations": "error", "error": str(e)}
 
-    async def _send_via_constitutional_transport(self, job_data: bytes, destination: str, priority: str) -> dict[str, Any]:
+    async def _send_via_constitutional_transport(
+        self, job_data: bytes, destination: str, priority: str
+    ) -> dict[str, Any]:
         """Send job data via constitutional BetaNet transport"""
-        
+
         if not self.constitutional_transport:
             return {"success": False, "error": "Constitutional transport not initialized"}
-        
+
         try:
             # Start constitutional service if not running
-            if not getattr(self.constitutional_transport, 'running', False):
+            if not getattr(self.constitutional_transport, "running", False):
                 success = await self.constitutional_transport.start_service(mode="client")
                 if not success:
                     return {"success": False, "error": "Failed to start constitutional service"}
-            
+
             # Send message with constitutional verification
             result = await self.constitutional_transport.send_message(
                 content=job_data,
                 destination=destination,
                 privacy_tier=self.constitutional_tier,
                 priority=1 if priority == "low" else 2 if priority == "normal" else 3,
-                require_verification=True
+                require_verification=True,
             )
-            
+
             return result
-        
+
         except Exception as e:
             logger.error(f"Constitutional transport error: {e}")
             return {"success": False, "error": str(e)}
-    
+
     def _update_constitutional_stats(self, result: dict[str, Any], bytes_sent: int, duration: float):
         """Update constitutional transport statistics"""
-        
+
         self.stats["constitutional_verifications"] += 1
-        
+
         if result.get("success", False):
             self.stats["constitutional_compliant_messages"] += 1
-        
+
         # Check if ZK proof was generated (Gold/Platinum tiers)
         if result.get("zk_proof_generated", False) or self.constitutional_tier in ["gold", "platinum"]:
             self.stats["zk_proofs_generated"] += 1
-        
+
         # Update privacy preservation rate
         privacy_level = result.get("privacy_level", 0.0)
         current_rate = self.stats["privacy_preservation_rate"]
         total_verifications = self.stats["constitutional_verifications"]
-        
+
         if total_verifications > 0:
             self.stats["privacy_preservation_rate"] = (
-                (current_rate * (total_verifications - 1) + privacy_level) / total_verifications
-            )
-    
+                current_rate * (total_verifications - 1) + privacy_level
+            ) / total_verifications
+
     async def initialize_constitutional_features(self):
         """Initialize constitutional features after transport creation"""
-        
+
         if self.constitutional_enabled and self.constitutional_transport:
             try:
                 success = await self.constitutional_transport.start_service(mode="client")
@@ -470,7 +479,7 @@ class BetaNetFogTransport:
                 logger.error(f"Constitutional initialization error: {e}")
                 self.constitutional_enabled = False
                 return False
-        
+
         return not self.constitutional_enabled
 
 
@@ -568,8 +577,9 @@ class FogComputeBetaNetService:
 
 
 # Factory function for easy integration
-def create_betanet_transport(privacy_mode: str = "balanced", constitutional_enabled: bool = False, 
-                           constitutional_tier: str = "silver") -> BetaNetFogTransport:
+def create_betanet_transport(
+    privacy_mode: str = "balanced", constitutional_enabled: bool = False, constitutional_tier: str = "silver"
+) -> BetaNetFogTransport:
     """
     Factory function to create BetaNet transport for fog compute
 
@@ -582,9 +592,9 @@ def create_betanet_transport(privacy_mode: str = "balanced", constitutional_enab
         BetaNet transport instance with optional constitutional features
     """
     return BetaNetFogTransport(
-        privacy_mode=privacy_mode, 
+        privacy_mode=privacy_mode,
         constitutional_enabled=constitutional_enabled,
-        constitutional_tier=constitutional_tier
+        constitutional_tier=constitutional_tier,
     )
 
 
@@ -595,15 +605,15 @@ def is_betanet_available() -> bool:
 
 def get_betanet_capabilities() -> dict[str, bool]:
     """Get available BetaNet capabilities including constitutional features"""
-    
+
     # Check if constitutional features are available
     constitutional_available = False
     try:
-        from ...p2p.betanet.constitutional_transport import ConstitutionalBetaNetService
+
         constitutional_available = True
     except ImportError:
         pass
-    
+
     return {
         "bounty_available": BETANET_AVAILABLE,
         "covert_channels": BETANET_AVAILABLE,
@@ -614,5 +624,5 @@ def get_betanet_capabilities() -> dict[str, bool]:
         "privacy_preserving_oversight": constitutional_available,
         "zero_knowledge_proofs": constitutional_available,
         "tiered_constitutional_verification": constitutional_available,
-        "tee_integration": constitutional_available
+        "tee_integration": constitutional_available,
     }

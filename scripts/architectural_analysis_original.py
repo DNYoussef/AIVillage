@@ -1117,9 +1117,9 @@ class ArchitecturalAnalyzer:
             dependency_metrics={
                 "total_modules": summary["total_modules"],
                 "total_dependencies": summary["total_dependencies"],
-                "circular_dependencies": len(list(nx.simple_cycles(self.dependency_graph)))
-                if self.dependency_graph.nodes()
-                else 0,
+                "circular_dependencies": (
+                    len(list(nx.simple_cycles(self.dependency_graph))) if self.dependency_graph.nodes() else 0
+                ),
             },
             coupling_metrics=self.coupling_metrics,
             connascence_metrics=self.connascence_metrics,

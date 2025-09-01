@@ -1,0 +1,10 @@
+torch>=2.2
+transformers>=4.42
+datasets>=2.20
+huggingface_hub>=0.23
+accelerate>=0.33
+lm-eval[wandb,tasks,math]>=0.4.6
+bigcode-evaluation-harness>=0.1.13
+wandb>=0.17
+pyyaml>=6.0
+tabulate>=0.9

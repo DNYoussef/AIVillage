@@ -4,19 +4,22 @@ Centralized constants to reduce magic literals in fog computing services.
 """
 
 from enum import Enum
-from typing import Dict, Any
+
 
 # Privacy Levels
 class PrivacyLevel(Enum):
     """Privacy classification for fog computing operations."""
+
     PUBLIC = "public"
     PRIVATE = "private"
-    CONFIDENTIAL = "confidential" 
+    CONFIDENTIAL = "confidential"
     SECRET = "secret"  # nosec B105 - config key name
+
 
 # Service Types
 class ServiceType(Enum):
     """Types of fog computing services."""
+
     ORCHESTRATION = "orchestration"
     HARVESTING = "harvesting"
     MARKETPLACE = "marketplace"
@@ -24,13 +27,14 @@ class ServiceType(Enum):
     TOKENOMICS = "tokenomics"
     STATS = "stats"
 
+
 # Network and Communication Constants
 DEFAULT_FOG_PORT = 8080
 CIRCUIT_POOL_SIZES = {
     PrivacyLevel.PUBLIC: 2,
     PrivacyLevel.PRIVATE: 3,
     PrivacyLevel.CONFIDENTIAL: 2,
-    PrivacyLevel.SECRET: 2
+    PrivacyLevel.SECRET: 2,
 }
 
 # Timing Constants (in seconds)
@@ -54,18 +58,13 @@ DEFAULT_TOKEN_RATE_PER_HOUR = 10
 MAX_HARVEST_DEVICES = 50
 
 # Privacy Circuit Configuration
-PRIVACY_HOPS = {
-    PrivacyLevel.PUBLIC: 0,
-    PrivacyLevel.PRIVATE: 3,
-    PrivacyLevel.CONFIDENTIAL: 5,
-    PrivacyLevel.SECRET: 7
-}
+PRIVACY_HOPS = {PrivacyLevel.PUBLIC: 0, PrivacyLevel.PRIVATE: 3, PrivacyLevel.CONFIDENTIAL: 5, PrivacyLevel.SECRET: 7}
 
 MAX_LATENCY_MS = {
     PrivacyLevel.PUBLIC: 1000,
     PrivacyLevel.PRIVATE: 3000,
     PrivacyLevel.CONFIDENTIAL: 5000,
-    PrivacyLevel.SECRET: 10000
+    PrivacyLevel.SECRET: 10000,
 }
 
 # System Configuration Defaults
@@ -75,32 +74,32 @@ DEFAULT_CONFIG = {
         "enable_privacy": True,
         "enable_marketplace": True,
         "enable_tokenomics": True,
-        "enable_stats": True
+        "enable_stats": True,
     },
     "harvesting": {
         "min_battery_percent": MIN_BATTERY_PERCENT,
         "max_thermal_temp": MAX_THERMAL_TEMP,
         "require_charging": True,
         "require_wifi": True,
-        "token_rate_per_hour": DEFAULT_TOKEN_RATE_PER_HOUR
+        "token_rate_per_hour": DEFAULT_TOKEN_RATE_PER_HOUR,
     },
     "privacy": {
         "default_privacy_level": PrivacyLevel.PRIVATE.value,
         "circuit_pool_maintenance": True,
         "hidden_services_enabled": True,
-        "mixnet_integration": False
+        "mixnet_integration": False,
     },
     "marketplace": {
         "service_tiers": ["basic", "premium", "enterprise"],
         "payment_methods": ["tokens", "crypto"],
-        "sla_enforcement": True
+        "sla_enforcement": True,
     },
     "performance": {
         "max_concurrent_tasks": MAX_CONCURRENT_TASKS,
         "task_timeout_ms": DEFAULT_TASK_TIMEOUT,
         "health_check_interval": HEALTH_CHECK_INTERVAL,
-        "stats_update_interval": STATS_UPDATE_INTERVAL
-    }
+        "stats_update_interval": STATS_UPDATE_INTERVAL,
+    },
 }
 
 # Error Messages
@@ -112,12 +111,14 @@ ERROR_MESSAGES = {
     "INSUFFICIENT_RESOURCES": "Insufficient system resources",
     "SERVICE_UNAVAILABLE": "Service temporarily unavailable",
     "INVALID_PRIVACY_LEVEL": "Invalid privacy level specified",
-    "AUTHENTICATION_REQUIRED": "Authentication required for operation"
+    "AUTHENTICATION_REQUIRED": "Authentication required for operation",
 }
+
 
 # Status Codes
 class FogStatusCode(Enum):
     """Status codes for fog computing operations."""
+
     SUCCESS = "success"
     PENDING = "pending"
     FAILED = "failed"
@@ -126,13 +127,29 @@ class FogStatusCode(Enum):
     INSUFFICIENT_RESOURCES = "insufficient_resources"
     SERVICE_UNAVAILABLE = "service_unavailable"
 
+
 __all__ = [
-    'PrivacyLevel', 'ServiceType', 'FogStatusCode',
-    'DEFAULT_FOG_PORT', 'CIRCUIT_POOL_SIZES', 'PRIVACY_HOPS', 'MAX_LATENCY_MS',
-    'CIRCUIT_ROTATION_INTERVAL', 'CIRCUIT_LIFETIME', 'HEALTH_CHECK_INTERVAL',
-    'STATS_UPDATE_INTERVAL', 'TASK_CLEANUP_INTERVAL', 'SYSTEM_STARTUP_TIMEOUT',
-    'MAX_CONCURRENT_TASKS', 'DEFAULT_TASK_TIMEOUT', 'CIRCUIT_LOAD_THRESHOLD',
-    'DEVICE_REGISTRATION_TIMEOUT', 'MIN_BATTERY_PERCENT', 'MAX_THERMAL_TEMP',
-    'DEFAULT_TOKEN_RATE_PER_HOUR', 'MAX_HARVEST_DEVICES', 'DEFAULT_CONFIG',
-    'ERROR_MESSAGES'
+    "PrivacyLevel",
+    "ServiceType",
+    "FogStatusCode",
+    "DEFAULT_FOG_PORT",
+    "CIRCUIT_POOL_SIZES",
+    "PRIVACY_HOPS",
+    "MAX_LATENCY_MS",
+    "CIRCUIT_ROTATION_INTERVAL",
+    "CIRCUIT_LIFETIME",
+    "HEALTH_CHECK_INTERVAL",
+    "STATS_UPDATE_INTERVAL",
+    "TASK_CLEANUP_INTERVAL",
+    "SYSTEM_STARTUP_TIMEOUT",
+    "MAX_CONCURRENT_TASKS",
+    "DEFAULT_TASK_TIMEOUT",
+    "CIRCUIT_LOAD_THRESHOLD",
+    "DEVICE_REGISTRATION_TIMEOUT",
+    "MIN_BATTERY_PERCENT",
+    "MAX_THERMAL_TEMP",
+    "DEFAULT_TOKEN_RATE_PER_HOUR",
+    "MAX_HARVEST_DEVICES",
+    "DEFAULT_CONFIG",
+    "ERROR_MESSAGES",
 ]

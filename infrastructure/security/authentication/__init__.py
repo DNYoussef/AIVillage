@@ -14,10 +14,10 @@ from .token_manager import TokenManager
 from .mfa_service import MFAService
 
 __all__ = [
-    'TokenAuthenticationProvider',
-    'MFAAuthenticationProvider', 
-    'CertificateAuthenticationProvider',
-    'SessionManager',
-    'TokenManager',
-    'MFAService',
+    "TokenAuthenticationProvider",
+    "MFAAuthenticationProvider",
+    "CertificateAuthenticationProvider",
+    "SessionManager",
+    "TokenManager",
+    "MFAService",
 ]

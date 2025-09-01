@@ -4,7 +4,6 @@ Direct test runner that bypasses import path issues by loading modules directly
 """
 
 import sys
-import os
 import importlib.util
 from pathlib import Path
 
@@ -26,7 +25,7 @@ def main():
 
     # Get paths
     project_root = Path(__file__).parent.parent.parent
-    cognate_pretrain_dir = project_root / "core" / "agent-forge" / "phases" / "cognate-pretrain"
+    cognate_pretrain_dir = project_root / "core" / "agent_forge" / "phases" / "cognate-pretrain"
 
     print(f"Project root: {project_root}")
     print(f"Cognate pretrain dir: {cognate_pretrain_dir}")
@@ -130,20 +129,18 @@ def main():
         "README.md",
     ]
 
-    all_files_present = True
     for filename in required_files:
         file_path = cognate_pretrain_dir / filename
         if file_path.exists():
             print(f"SUCCESS: {filename} exists")
         else:
             print(f"ERROR: {filename} missing")
-            all_files_present = False
 
     # Test redirect file
     print("\n5. TESTING REDIRECT FILE")
     print("-" * 40)
 
-    redirect_file = project_root / "core" / "agent-forge" / "phases" / "cognate.py"
+    redirect_file = project_root / "core" / "agent_forge" / "phases" / "cognate.py"
     if redirect_file.exists():
         print("SUCCESS: cognate.py redirect file exists")
 

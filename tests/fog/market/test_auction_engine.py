@@ -43,8 +43,8 @@ class TestAuctionEngine:
             quality_requirements={
                 "min_trust_score": Decimal("0.8"),
                 "min_reputation": Decimal("0.7"),
-                "max_latency_ms": 50
-            }
+                "max_latency_ms": 50,
+            },
         )
 
     @pytest.fixture
@@ -61,8 +61,8 @@ class TestAuctionEngine:
                     "cpu_cores": Decimal("8"),
                     "memory_gb": Decimal("16"),
                     "storage_gb": Decimal("500"),
-                    "bandwidth_mbps": Decimal("2000")
-                }
+                    "bandwidth_mbps": Decimal("2000"),
+                },
             },
             {
                 "bidder_id": "provider_2",
@@ -74,8 +74,8 @@ class TestAuctionEngine:
                     "cpu_cores": Decimal("4"),
                     "memory_gb": Decimal("8"),
                     "storage_gb": Decimal("200"),
-                    "bandwidth_mbps": Decimal("1500")
-                }
+                    "bandwidth_mbps": Decimal("1500"),
+                },
             },
             {
                 "bidder_id": "provider_3",
@@ -87,9 +87,9 @@ class TestAuctionEngine:
                     "cpu_cores": Decimal("6"),
                     "memory_gb": Decimal("12"),
                     "storage_gb": Decimal("300"),
-                    "bandwidth_mbps": Decimal("1800")
-                }
-            }
+                    "bandwidth_mbps": Decimal("1800"),
+                },
+            },
         ]
 
     @pytest.mark.asyncio
@@ -105,7 +105,7 @@ class TestAuctionEngine:
             resource_requirement=sample_resource_requirement,
             reserve_price=reserve_price,
             auction_duration_minutes=duration_minutes,
-            deposit_amount=deposit_amount
+            deposit_amount=deposit_amount,
         )
 
         assert auction_id is not None
@@ -127,15 +127,12 @@ class TestAuctionEngine:
             resource_requirement=sample_resource_requirement,
             reserve_price=Decimal("0.15"),
             auction_duration_minutes=30,
-            deposit_amount=Decimal("10.0")
+            deposit_amount=Decimal("10.0"),
         )
 
         # Submit bid
         bid_data = sample_bids[0]
-        bid_id = await auction_engine.submit_bid(
-            auction_id=auction_id,
-            **bid_data
-        )
+        bid_id = await auction_engine.submit_bid(auction_id=auction_id, **bid_data)
 
         assert bid_id is not None
         auction = auction_engine.auctions[auction_id]
@@ -155,7 +152,7 @@ class TestAuctionEngine:
             resource_requirement=sample_resource_requirement,
             reserve_price=Decimal("0.15"),
             auction_duration_minutes=30,
-            deposit_amount=Decimal("10.0")
+            deposit_amount=Decimal("10.0"),
         )
 
         # Submit bid with insufficient resources
@@ -170,8 +167,8 @@ class TestAuctionEngine:
                 "cpu_cores": Decimal("2"),  # Insufficient (requires 4)
                 "memory_gb": Decimal("4"),  # Insufficient (requires 8)
                 "storage_gb": Decimal("50"),  # Insufficient (requires 100)
-                "bandwidth_mbps": Decimal("500")  # Insufficient (requires 1000)
-            }
+                "bandwidth_mbps": Decimal("500"),  # Insufficient (requires 1000)
+            },
         )
 
         assert bid_id is None
@@ -187,7 +184,7 @@ class TestAuctionEngine:
             resource_requirement=sample_resource_requirement,
             reserve_price=Decimal("0.15"),
             auction_duration_minutes=30,
-            deposit_amount=Decimal("10.0")
+            deposit_amount=Decimal("10.0"),
         )
 
         # Submit bid with low quality scores
@@ -202,8 +199,8 @@ class TestAuctionEngine:
                 "cpu_cores": Decimal("8"),
                 "memory_gb": Decimal("16"),
                 "storage_gb": Decimal("500"),
-                "bandwidth_mbps": Decimal("2000")
-            }
+                "bandwidth_mbps": Decimal("2000"),
+            },
         )
 
         assert bid_id is None
@@ -219,16 +216,13 @@ class TestAuctionEngine:
             resource_requirement=sample_resource_requirement,
             reserve_price=Decimal("0.15"),
             auction_duration_minutes=30,
-            deposit_amount=Decimal("10.0")
+            deposit_amount=Decimal("10.0"),
         )
 
         # Submit multiple bids
         bid_ids = []
         for bid_data in sample_bids:
-            bid_id = await auction_engine.submit_bid(
-                auction_id=auction_id,
-                **bid_data
-            )
+            bid_id = await auction_engine.submit_bid(auction_id=auction_id, **bid_data)
             if bid_id:
                 bid_ids.append(bid_id)
 
@@ -265,14 +259,14 @@ class TestAuctionEngine:
             resource_requirement=sample_resource_requirement,
             reserve_price=Decimal("0.15"),
             auction_duration_minutes=30,
-            deposit_amount=deposit_amount
+            deposit_amount=deposit_amount,
         )
 
         auction = auction_engine.auctions[auction_id]
         assert auction.deposit_amount == deposit_amount
 
         # Mock tokenomics integration for deposit validation
-        with patch.object(auction_engine, 'tokenomics_integration') as mock_tokenomics:
+        with patch.object(auction_engine, "tokenomics_integration") as mock_tokenomics:
             mock_tokenomics.validate_deposit = AsyncMock(return_value=True)
             mock_tokenomics.hold_deposit = AsyncMock(return_value=True)
 
@@ -288,9 +282,9 @@ class TestAuctionEngine:
                     "cpu_cores": Decimal("8"),
                     "memory_gb": Decimal("16"),
                     "storage_gb": Decimal("500"),
-                    "bandwidth_mbps": Decimal("2000")
+                    "bandwidth_mbps": Decimal("2000"),
                 },
-                deposit_tx_hash="mock_deposit_hash"
+                deposit_tx_hash="mock_deposit_hash",
             )
 
             assert bid_id is not None
@@ -306,7 +300,7 @@ class TestAuctionEngine:
             resource_requirement=sample_resource_requirement,
             reserve_price=Decimal("0.15"),
             auction_duration_minutes=1,  # 1 minute
-            deposit_amount=Decimal("10.0")
+            deposit_amount=Decimal("10.0"),
         )
 
         auction = auction_engine.auctions[auction_id]
@@ -331,7 +325,7 @@ class TestAuctionEngine:
             resource_requirement=sample_resource_requirement,
             reserve_price=Decimal("0.15"),
             auction_duration_minutes=30,
-            deposit_amount=Decimal("10.0")
+            deposit_amount=Decimal("10.0"),
         )
 
         # Submit bids with different quality scores
@@ -346,8 +340,8 @@ class TestAuctionEngine:
                 "cpu_cores": Decimal("8"),
                 "memory_gb": Decimal("16"),
                 "storage_gb": Decimal("500"),
-                "bandwidth_mbps": Decimal("2000")
-            }
+                "bandwidth_mbps": Decimal("2000"),
+            },
         )
 
         low_price_low_quality = await auction_engine.submit_bid(
@@ -361,8 +355,8 @@ class TestAuctionEngine:
                 "cpu_cores": Decimal("4"),
                 "memory_gb": Decimal("8"),
                 "storage_gb": Decimal("200"),
-                "bandwidth_mbps": Decimal("1200")
-            }
+                "bandwidth_mbps": Decimal("1200"),
+            },
         )
 
         assert high_price_high_quality is not None
@@ -389,7 +383,7 @@ class TestAuctionEngine:
             resource_requirement=sample_resource_requirement,
             reserve_price=Decimal("0.15"),
             auction_duration_minutes=30,
-            deposit_amount=Decimal("10.0")
+            deposit_amount=Decimal("10.0"),
         )
 
         # Submit multiple bids concurrently
@@ -399,9 +393,7 @@ class TestAuctionEngine:
             bid_data_copy["bidder_id"] = f"concurrent_provider_{i}"
             bid_data_copy["node_id"] = f"concurrent_node_{i}"
 
-            task = asyncio.create_task(
-                auction_engine.submit_bid(auction_id=auction_id, **bid_data_copy)
-            )
+            task = asyncio.create_task(auction_engine.submit_bid(auction_id=auction_id, **bid_data_copy))
             tasks.append(task)
 
         # Wait for all bids to complete
@@ -423,16 +415,15 @@ class TestAuctionEngine:
             resource_requirement=sample_resource_requirement,
             reserve_price=Decimal("0.15"),
             auction_duration_minutes=30,
-            deposit_amount=Decimal("10.0")
+            deposit_amount=Decimal("10.0"),
         )
 
         # Mock anti-griefing system
-        with patch.object(auction_engine, 'anti_griefing') as mock_anti_griefing:
+        with patch.object(auction_engine, "anti_griefing") as mock_anti_griefing:
             # Test case: Valid bidder passes validation
-            mock_anti_griefing.validate_bidder = AsyncMock(return_value={
-                "is_valid": True,
-                "confidence_score": Decimal("0.95")
-            })
+            mock_anti_griefing.validate_bidder = AsyncMock(
+                return_value={"is_valid": True, "confidence_score": Decimal("0.95")}
+            )
 
             valid_bid_id = await auction_engine.submit_bid(
                 auction_id=auction_id,
@@ -445,8 +436,8 @@ class TestAuctionEngine:
                     "cpu_cores": Decimal("8"),
                     "memory_gb": Decimal("16"),
                     "storage_gb": Decimal("500"),
-                    "bandwidth_mbps": Decimal("2000")
-                }
+                    "bandwidth_mbps": Decimal("2000"),
+                },
             )
 
             assert valid_bid_id is not None
@@ -456,7 +447,7 @@ class TestAuctionEngine:
             mock_anti_griefing.validate_bidder.return_value = {
                 "is_valid": False,
                 "confidence_score": Decimal("0.30"),
-                "flags": ["suspicious_pattern", "low_reputation_history"]
+                "flags": ["suspicious_pattern", "low_reputation_history"],
             }
 
             invalid_bid_id = await auction_engine.submit_bid(
@@ -470,8 +461,8 @@ class TestAuctionEngine:
                     "cpu_cores": Decimal("8"),
                     "memory_gb": Decimal("16"),
                     "storage_gb": Decimal("500"),
-                    "bandwidth_mbps": Decimal("2000")
-                }
+                    "bandwidth_mbps": Decimal("2000"),
+                },
             )
 
             assert invalid_bid_id is None
@@ -485,7 +476,7 @@ class TestAuctionEngine:
             resource_requirement=sample_resource_requirement,
             reserve_price=Decimal("0.15"),
             auction_duration_minutes=30,
-            deposit_amount=Decimal("10.0")
+            deposit_amount=Decimal("10.0"),
         )
 
         # Submit multiple bids

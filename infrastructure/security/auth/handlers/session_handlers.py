@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class SessionHandlers:
     """Session management request handlers.
-    
+
     Handles session-related endpoints for user session management.
     """
 
@@ -35,24 +35,23 @@ class SessionHandlers:
 
             session_list = []
             for session in sessions:
-                session_list.append({
-                    "session_id": session.session_id,
-                    "created_at": session.created_at.isoformat(),
-                    "last_activity": session.last_activity.isoformat(),
-                    "device_info": {
-                        "device_fingerprint": session.device_info.device_fingerprint,
-                        "ip_address": session.device_info.ip_address,
-                        "user_agent": session.device_info.user_agent[:100],  # Truncate for security
-                    },
-                    "is_current": session.session_id == user.get("session_id"),
-                    "is_active": session.is_active,
-                    "tenant_id": session.tenant_id
-                })
+                session_list.append(
+                    {
+                        "session_id": session.session_id,
+                        "created_at": session.created_at.isoformat(),
+                        "last_activity": session.last_activity.isoformat(),
+                        "device_info": {
+                            "device_fingerprint": session.device_info.device_fingerprint,
+                            "ip_address": session.device_info.ip_address,
+                            "user_agent": session.device_info.user_agent[:100],  # Truncate for security
+                        },
+                        "is_current": session.session_id == user.get("session_id"),
+                        "is_active": session.is_active,
+                        "tenant_id": session.tenant_id,
+                    }
+                )
 
-            return web.json_response({
-                "sessions": session_list,
-                "total_sessions": len(session_list)
-            })
+            return web.json_response({"sessions": session_list, "total_sessions": len(session_list)})
 
         except Exception as e:
             logger.error(f"Get user sessions failed: {e}")
@@ -76,25 +75,16 @@ class SessionHandlers:
             session_ids = [s.session_id for s in user_sessions]
 
             if session_id not in session_ids:
-                return web.json_response(
-                    {"error": "Session not found or not owned by user"}, 
-                    status=404
-                )
+                return web.json_response({"error": "Session not found or not owned by user"}, status=404)
 
             # Revoke the session
             revoked = await self.session_manager.revoke_session(session_id)
 
             if revoked:
                 logger.info(f"Session {session_id} revoked by user {user_id}")
-                return web.json_response({
-                    "message": "Session revoked successfully",
-                    "session_id": session_id
-                })
+                return web.json_response({"message": "Session revoked successfully", "session_id": session_id})
             else:
-                return web.json_response(
-                    {"error": "Failed to revoke session"}, 
-                    status=500
-                )
+                return web.json_response({"error": "Failed to revoke session"}, status=500)
 
         except Exception as e:
             logger.error(f"Revoke session failed: {e}")
@@ -112,7 +102,7 @@ class SessionHandlers:
 
             # Get all user sessions
             user_sessions = await self.session_manager.get_user_sessions(user_id)
-            
+
             revoked_count = 0
             for session in user_sessions:
                 # Skip current session unless explicitly requested
@@ -121,10 +111,9 @@ class SessionHandlers:
                         revoked_count += 1
 
             logger.info(f"Revoked {revoked_count} sessions for user {user_id}")
-            return web.json_response({
-                "message": f"Revoked {revoked_count} sessions",
-                "sessions_revoked": revoked_count
-            })
+            return web.json_response(
+                {"message": f"Revoked {revoked_count} sessions", "sessions_revoked": revoked_count}
+            )
 
         except Exception as e:
             logger.error(f"Revoke all sessions failed: {e}")
@@ -144,20 +133,22 @@ class SessionHandlers:
             if not session_data:
                 return web.json_response({"error": "Session not found"}, status=404)
 
-            return web.json_response({
-                "session_id": session_data.session_id,
-                "user_id": session_data.user_id,
-                "created_at": session_data.created_at.isoformat(),
-                "last_activity": session_data.last_activity.isoformat(),
-                "device_info": {
-                    "ip_address": session_data.device_info.ip_address,
-                    "user_agent": session_data.device_info.user_agent,
-                },
-                "roles": session_data.roles,
-                "permissions": session_data.permissions,
-                "tenant_id": session_data.tenant_id,
-                "is_active": session_data.is_active
-            })
+            return web.json_response(
+                {
+                    "session_id": session_data.session_id,
+                    "user_id": session_data.user_id,
+                    "created_at": session_data.created_at.isoformat(),
+                    "last_activity": session_data.last_activity.isoformat(),
+                    "device_info": {
+                        "ip_address": session_data.device_info.ip_address,
+                        "user_agent": session_data.device_info.user_agent,
+                    },
+                    "roles": session_data.roles,
+                    "permissions": session_data.permissions,
+                    "tenant_id": session_data.tenant_id,
+                    "is_active": session_data.is_active,
+                }
+            )
 
         except Exception as e:
             logger.error(f"Get session info failed: {e}")
@@ -178,10 +169,7 @@ class SessionHandlers:
             if updated:
                 return web.json_response({"message": "Session extended successfully"})
             else:
-                return web.json_response(
-                    {"error": "Failed to extend session"}, 
-                    status=500
-                )
+                return web.json_response({"error": "Failed to extend session"}, status=500)
 
         except Exception as e:
             logger.error(f"Extend session failed: {e}")

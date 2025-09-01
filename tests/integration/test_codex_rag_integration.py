@@ -280,6 +280,7 @@ class TestCODEXRAGIntegration:
             asyncio.run(pipeline.retrieve("", k=5))
         except Exception as e:
             import logging
+
             logging.exception("CODEX RAG pipeline retrieve with empty query failed: %s", str(e))
 
         # Test with invalid k value

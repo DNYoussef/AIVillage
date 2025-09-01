@@ -90,7 +90,7 @@ class ResourceRequirement:
     participants_needed: int = 1  # Number of nodes needed for federated task
     privacy_level: str = "medium"  # "low", "medium", "high", "critical"
     reliability_requirement: str = "standard"  # "best_effort", "standard", "high", "guaranteed"
-    
+
     # Performance requirements for federated workloads
     min_compute_power: Decimal = Decimal("1.0")  # GFLOPS or equivalent
     max_communication_latency: Decimal = Decimal("100")  # ms between nodes
@@ -142,7 +142,7 @@ class AuctionBid:
 
     # Bid price (total for entire resource requirement)
     bid_price: Decimal  # Total price willing to accept (reverse) or pay (forward)
-    
+
     # Deposit for anti-griefing
     deposit_amount: Decimal
 
@@ -150,7 +150,7 @@ class AuctionBid:
     trust_score: Decimal
     reputation_score: Decimal
     latency_ms: Decimal
-    
+
     # Optional fields with defaults
     per_hour_rate: Decimal = field(init=False)
     deposit_tx_hash: str = ""
@@ -584,13 +584,15 @@ class AuctionEngine:
             "current_best_price": float(current_best_bid.bid_price) if current_best_bid else None,
             "time_remaining": max(0, (auction.end_time - datetime.now(UTC)).total_seconds()),
             "deposits_held": float(auction.total_deposits_held),
-            "result": {
-                "winners": len(auction.result.winning_bids) if auction.result else 0,
-                "clearing_price": float(auction.result.clearing_price) if auction.result else None,
-                "total_cost": float(auction.result.total_cost) if auction.result else None,
-            }
-            if auction.result
-            else None,
+            "result": (
+                {
+                    "winners": len(auction.result.winning_bids) if auction.result else 0,
+                    "clearing_price": float(auction.result.clearing_price) if auction.result else None,
+                    "total_cost": float(auction.result.total_cost) if auction.result else None,
+                }
+                if auction.result
+                else None
+            ),
         }
 
     async def get_market_statistics(self) -> dict[str, Any]:
@@ -948,17 +950,17 @@ async def create_federated_inference_auction(
     **kwargs,
 ) -> str:
     """Create auction specifically for federated inference workload"""
-    
+
     # Calculate resource requirements based on model size
     resource_multipliers = {
         "small": {"cpu": 2.0, "memory": 4.0},
-        "medium": {"cpu": 4.0, "memory": 8.0}, 
+        "medium": {"cpu": 4.0, "memory": 8.0},
         "large": {"cpu": 8.0, "memory": 16.0},
         "xlarge": {"cpu": 16.0, "memory": 32.0},
     }
-    
+
     multiplier = resource_multipliers.get(model_size, {"cpu": 4.0, "memory": 8.0})
-    
+
     requirements = ResourceRequirement(
         cpu_cores=Decimal(str(multiplier["cpu"])),
         memory_gb=Decimal(str(multiplier["memory"])),
@@ -996,7 +998,7 @@ async def create_federated_training_auction(
     **kwargs,
 ) -> str:
     """Create auction specifically for federated training workload"""
-    
+
     # Training requires more resources than inference
     resource_multipliers = {
         "small": {"cpu": 4.0, "memory": 8.0},
@@ -1004,9 +1006,9 @@ async def create_federated_training_auction(
         "large": {"cpu": 16.0, "memory": 32.0},
         "xlarge": {"cpu": 32.0, "memory": 64.0},
     }
-    
+
     multiplier = resource_multipliers.get(model_size, {"cpu": 8.0, "memory": 16.0})
-    
+
     requirements = ResourceRequirement(
         cpu_cores=Decimal(str(multiplier["cpu"])),
         memory_gb=Decimal(str(multiplier["memory"])),
@@ -1041,16 +1043,16 @@ async def create_multi_criteria_auction(
     **kwargs,
 ) -> str:
     """Create multi-criteria auction balancing cost, latency, privacy, and reliability"""
-    
+
     # Default criteria weights
     if criteria_weights is None:
         criteria_weights = {
             "cost": 0.4,
-            "latency": 0.2, 
+            "latency": 0.2,
             "privacy": 0.2,
             "reliability": 0.2,
         }
-    
+
     resource_req = ResourceRequirement(
         cpu_cores=Decimal(str(requirements.get("cpu_cores", 4.0))),
         memory_gb=Decimal(str(requirements.get("memory_gb", 8.0))),
@@ -1064,7 +1066,7 @@ async def create_multi_criteria_auction(
         reliability_requirement=requirements.get("reliability_requirement", "standard"),
         **kwargs,
     )
-    
+
     engine = await get_auction_engine()
     auction_id = await engine.create_auction(
         requester_id=requester_id,
@@ -1075,5 +1077,5 @@ async def create_multi_criteria_auction(
         metadata={"criteria_weights": criteria_weights},
         **kwargs,
     )
-    
+
     return auction_id

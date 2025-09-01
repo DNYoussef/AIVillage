@@ -5,7 +5,7 @@ Simple test of GatedLTM memory system functionality.
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "core", "agent-forge", "models"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "core", "agent_forge", "models"))
 
 # Import components
 from cogment.core.config import CogmentConfig

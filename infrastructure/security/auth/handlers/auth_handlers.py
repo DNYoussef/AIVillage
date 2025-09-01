@@ -5,7 +5,6 @@ token refresh, and registration. Extracted from the EnhancedSecureAPIServer.
 """
 
 import logging
-from typing import Dict, Any
 from aiohttp import web, web_request
 
 from ..interfaces import IAuthenticationService, IMFAService, AuthCredentials, MFAMethodType
@@ -15,17 +14,12 @@ logger = logging.getLogger(__name__)
 
 class AuthHandlers:
     """Authentication request handlers.
-    
+
     Extracted from the EnhancedSecureAPIServer God class to handle
     authentication-related endpoints following SRP.
     """
 
-    def __init__(
-        self,
-        auth_service: IAuthenticationService,
-        mfa_service: IMFAService,
-        rbac_system=None
-    ):
+    def __init__(self, auth_service: IAuthenticationService, mfa_service: IMFAService, rbac_system=None):
         """Initialize auth handlers."""
         self.auth_service = auth_service
         self.mfa_service = mfa_service
@@ -41,22 +35,19 @@ class AuthHandlers:
             mfa_method = data.get("mfa_method")
 
             if not username or not password:
-                return web.json_response(
-                    {"error": "Username and password required"}, 
-                    status=400
-                )
+                return web.json_response({"error": "Username and password required"}, status=400)
 
             # Create credentials
             credentials = AuthCredentials(
                 username=username,
                 password=password,
                 mfa_token=mfa_token,
-                mfa_method=MFAMethodType(mfa_method) if mfa_method else None
+                mfa_method=MFAMethodType(mfa_method) if mfa_method else None,
             )
 
             # Authenticate user
             auth_result = await self.auth_service.authenticate_user(credentials)
-            
+
             if not auth_result.success:
                 # Check if MFA is required
                 if "MFA verification required" in auth_result.error_message:
@@ -68,24 +59,21 @@ class AuthHandlers:
                             {
                                 "error": "MFA verification required",
                                 "mfa_required": True,
-                                "available_methods": mfa_status.methods_available or []
+                                "available_methods": mfa_status.methods_available or [],
                             },
-                            status=403
+                            status=403,
                         )
-                
-                return web.json_response(
-                    {"error": auth_result.error_message}, 
-                    status=401
-                )
+
+                return web.json_response({"error": auth_result.error_message}, status=401)
 
             # Create session and tokens
             device_info = request.get("device_info")
             if not device_info:
                 # Fallback device info
                 from ..interfaces import DeviceInfo
+
                 device_info = DeviceInfo(
-                    user_agent=request.headers.get("User-Agent", "unknown"),
-                    ip_address=request.remote or "unknown"
+                    user_agent=request.headers.get("User-Agent", "unknown"), ip_address=request.remote or "unknown"
                 )
 
             tokens = await self.auth_service.create_session_tokens(
@@ -93,7 +81,7 @@ class AuthHandlers:
                 device_info=device_info,
                 roles=auth_result.roles,
                 permissions=auth_result.permissions,
-                mfa_verified=auth_result.mfa_verified
+                mfa_verified=auth_result.mfa_verified,
             )
 
             logger.info(f"User {auth_result.user_id} logged in successfully")
@@ -111,10 +99,7 @@ class AuthHandlers:
 
             if session_id:
                 revoked = await self.auth_service.revoke_session(session_id)
-                return web.json_response({
-                    "message": "Logged out successfully", 
-                    "session_revoked": revoked
-                })
+                return web.json_response({"message": "Logged out successfully", "session_revoked": revoked})
             else:
                 return web.json_response({"message": "No active session to logout"})
 
@@ -133,10 +118,9 @@ class AuthHandlers:
 
             revoked_count = await self.auth_service.logout_all_user_sessions(user_id)
 
-            return web.json_response({
-                "message": f"Logged out {revoked_count} sessions",
-                "sessions_revoked": revoked_count
-            })
+            return web.json_response(
+                {"message": f"Logged out {revoked_count} sessions", "sessions_revoked": revoked_count}
+            )
 
         except Exception as e:
             logger.error(f"Logout all sessions failed: {e}")
@@ -149,14 +133,11 @@ class AuthHandlers:
             refresh_token = data.get("refresh_token")
 
             if not refresh_token:
-                return web.json_response(
-                    {"error": "Refresh token required"}, 
-                    status=400
-                )
+                return web.json_response({"error": "Refresh token required"}, status=400)
 
             # Refresh token
             tokens = await self.auth_service.refresh_token(refresh_token)
-            
+
             return web.json_response(tokens)
 
         except Exception as e:
@@ -172,19 +153,13 @@ class AuthHandlers:
             email = data.get("email")
 
             if not username or not password or not email:
-                return web.json_response(
-                    {"error": "Username, password, and email required"}, 
-                    status=400
-                )
+                return web.json_response({"error": "Username, password, and email required"}, status=400)
 
             # In a real implementation, this would create the user in the database
             # For now, we'll return a success message
             logger.info(f"Registration attempted for user: {username}")
-            
-            return web.json_response({
-                "message": "Registration successful",
-                "username": username
-            })
+
+            return web.json_response({"message": "Registration successful", "username": username})
 
         except Exception as e:
             logger.error(f"Registration failed: {e}")
@@ -195,7 +170,7 @@ class AuthHandlers:
         try:
             user = request.get("user", {})
             user_id = user.get("user_id")
-            
+
             if not user_id:
                 return web.json_response({"error": "Authentication required"}, status=401)
 
@@ -204,15 +179,12 @@ class AuthHandlers:
             new_password = data.get("new_password")
 
             if not current_password or not new_password:
-                return web.json_response(
-                    {"error": "Current and new password required"}, 
-                    status=400
-                )
+                return web.json_response({"error": "Current and new password required"}, status=400)
 
             # In a real implementation, this would verify current password
             # and update the password in the database
             logger.info(f"Password change requested for user: {user_id}")
-            
+
             return web.json_response({"message": "Password changed successfully"})
 
         except Exception as e:

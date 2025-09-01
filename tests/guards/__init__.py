@@ -18,35 +18,26 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 # Guard test categories
 GUARD_CATEGORIES = {
-    "security": [
-        "test_cors_config_regression",
-        "test_websocket_security_regression"
-    ],
-    "performance": [
-        "test_caching_performance_regression"
-    ],
-    "imports": [
-        "test_grokfast_import_regression"
-    ],
+    "security": ["test_cors_config_regression", "test_websocket_security_regression"],
+    "performance": ["test_caching_performance_regression"],
+    "imports": ["test_grokfast_import_regression"],
     "integration": [
         "test_localhost_admin_security_integration",
-        "test_core_blocker_fixes_integration", 
-        "test_configuration_integrity_guards"
+        "test_core_blocker_fixes_integration",
+        "test_configuration_integrity_guards",
     ],
-    "monitoring": [
-        "test_continuous_guard_monitoring"
-    ]
+    "monitoring": ["test_continuous_guard_monitoring"],
 }
 
 # Critical protection areas
 CRITICAL_PROTECTIONS = [
     "CORS wildcard prevention",
-    "WebSocket RCE blocking", 
+    "WebSocket RCE blocking",
     "Admin localhost-only binding",
     "GrokFast import resolution",
     "Redis connection pooling",
     "Core blocker workflow integrity",
-    "Configuration security validation"
+    "Configuration security validation",
 ]
 
 __version__ = "1.0.0"

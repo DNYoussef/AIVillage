@@ -161,6 +161,7 @@ class ImportValidator:
 
         except Exception as e:
             import logging
+
             logging.exception("Import validation circular dependency check failed: %s", str(e))
 
         return False
@@ -180,6 +181,7 @@ class ImportValidator:
                 return ".".join(parts)
         except Exception as e:
             import logging
+
             logging.exception("File to module name conversion error: %s", str(e))
 
         return ""

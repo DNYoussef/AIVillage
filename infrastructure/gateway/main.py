@@ -9,13 +9,13 @@ Usage:
     python main.py --mode MODE --action ACTION [OPTIONS]
 
     Modes:
-        agent-forge: Agent creation and management
+        agent_forge: Agent creation and management
         king: KING agent system operations
         rag: Retrieval-augmented generation
         core: Core utilities and configuration
 
 Examples:
-    python main.py --mode agent-forge --action train --config config.yaml
+    python main.py --mode agent_forge --action train --config config.yaml
     python main.py --mode king --action run --task "analyze data"
     python main.py --mode rag --action query --question "What is AI?"
     python main.py --mode core --action status
@@ -44,9 +44,9 @@ def _configure(parser) -> None:
         "--agent-type",
         choices=["king", "sage", "magi", "base"],
         default="base",
-        help="Type of agent to create/train (for agent-forge mode)",
+        help="Type of agent to create/train (for agent_forge mode)",
     )
-    parser.add_argument("--name", help="Agent name (for agent-forge mode)")
+    parser.add_argument("--name", help="Agent name (for agent_forge mode)")
     parser.add_argument("--input", help="Input file or directory")
     parser.add_argument("--output", help="Output file or directory")
 
@@ -142,7 +142,7 @@ def run_core_mode(args):
 
 
 mode_handlers = {
-    "agent-forge": run_agent_forge_mode,
+    "agent_forge": run_agent_forge_mode,
     "king": run_king_mode,
     "rag": run_rag_mode,
     "core": run_core_mode,

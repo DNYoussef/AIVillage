@@ -7,7 +7,7 @@ Centralizes magic literals to improve code maintainability and reduce connascenc
 # Network constants
 DEFAULT_TIMEOUT_SECONDS = 30.0
 DEFAULT_RETRY_ATTEMPTS = 3
-DEFAULT_RETRY_DELAY = 1.0  
+DEFAULT_RETRY_DELAY = 1.0
 DEFAULT_BACKOFF_MULTIPLIER = 2.0
 
 # Port constants
@@ -41,9 +41,7 @@ MAX_PEER_ID_LENGTH = 32
 UUID_HEX_LENGTH = 8
 
 # Hash algorithms
-SUPPORTED_HASH_ALGORITHMS = {
-    "sha256", "sha1", "md5", "blake2b"
-}
+SUPPORTED_HASH_ALGORITHMS = {"sha256", "sha1", "md5", "blake2b"}
 
 # Localhost variants
 LOCALHOST_ADDRESSES = {"localhost", "127.0.0.1", "::1"}

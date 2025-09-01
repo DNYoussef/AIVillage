@@ -59,7 +59,7 @@ try:
     # Import real Cognate system components with simplified direct imports
 
     # Add cognate_pretrain directory to Python path
-    cognate_pretrain_dir = project_root / "core" / "agent-forge" / "phases" / "cognate_pretrain"
+    cognate_pretrain_dir = project_root / "core" / "agent_forge" / "phases" / "cognate_pretrain"
     if str(cognate_pretrain_dir) not in sys.path:
         sys.path.insert(0, str(cognate_pretrain_dir))
 
@@ -209,7 +209,7 @@ app.add_middleware(
 )
 
 # Initialize storage directories
-MODEL_STORAGE_DIR = Path("data/agent-forge-models")
+MODEL_STORAGE_DIR = Path("data/agent_forge-models")
 MODEL_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -572,8 +572,8 @@ async def execute_cognate_phase(task_id: str):
                 grokfast_lamb=2.0,
                 grokfast_warmup=500,
                 # Output configuration
-                output_dir="./data/agent-forge-models/cognate/real_trained",
-                dataset_path="./core/agent-forge/phases/cognate_pretrain/cognate_datasets/mixed_training_data.json",
+                output_dir="./data/agent_forge-models/cognate/real_trained",
+                dataset_path="./core/agent_forge/phases/cognate_pretrain/cognate_datasets/mixed_training_data.json",
                 # Architecture (exact 25M params)
                 d_model=216,
                 n_layers=11,
@@ -683,7 +683,7 @@ async def execute_cognate_phase(task_id: str):
                     {"progress": 0.1, "message": "Using enhanced fallback training with simulated GrokFast..."}
                 )
 
-                config = CognateCreatorConfig(output_dir="data/agent-forge-models/cognate", device="auto")
+                config = CognateCreatorConfig(output_dir="data/agent_forge-models/cognate", device="auto")
                 creator = CognateModelCreator(config)
 
                 # Create models using the fallback system
@@ -740,7 +740,7 @@ async def execute_cognate_phase(task_id: str):
                         "model_name": f"Enhanced25MCognate Model {i+1} (Basic)",
                         "phase_name": "Cognate",
                         "parameter_count": 25000000,
-                        "path": f"data/agent-forge-models/cognate/basic_model_{i+1}",
+                        "path": f"data/agent_forge-models/cognate/basic_model_{i+1}",
                         "created_at": datetime.now().isoformat(),
                         "artifacts": {
                             "basic_model": True,

@@ -17,8 +17,8 @@ Features:
 Version: 2.0.0
 """
 
-from typing import TYPE_CHECKING
 import logging
+from typing import TYPE_CHECKING
 
 # Package information
 __version__ = "2.0.0"
@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 # Import components with graceful fallback
 try:
     from .mesh_network import MeshNetwork, MeshNode
+
     logger.info("BitChat mesh network components loaded")
 except ImportError as e:
     logger.warning(f"BitChat mesh components not available: {e}")
@@ -39,6 +40,7 @@ except ImportError as e:
 
 try:
     from .ble_transport import BLETransport
+
     logger.debug("BitChat BLE transport loaded")
 except ImportError as e:
     logger.debug(f"BLE transport not available: {e}")
@@ -47,6 +49,7 @@ except ImportError as e:
 
 try:
     from .mobile_bridge import MobileBridge
+
     logger.debug("BitChat mobile bridge loaded")
 except ImportError as e:
     logger.debug(f"Mobile bridge not available: {e}")
@@ -57,10 +60,8 @@ __all__ = [
     # Core mesh networking
     "MeshNetwork",
     "MeshNode",
-    
     # Transport layers
     "BLETransport",
-    
     # Mobile integration
     "MobileBridge",
 ]

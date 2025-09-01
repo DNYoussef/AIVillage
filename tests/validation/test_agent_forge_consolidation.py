@@ -13,8 +13,8 @@ Tests the successful consolidation of Agent Forge components:
 from pathlib import Path
 import sys
 
-# Add the agent-forge path for testing
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "core" / "agent-forge"))
+# Add the agent_forge path for testing
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "core" / "agent_forge"))
 
 
 def test_phase_imports():
@@ -26,24 +26,17 @@ def test_phase_imports():
 
         print("  ✓ Cognate phase imported successfully")
 
-
         print("  ✓ EvoMerge phase imported successfully")
-
 
         print("  ✓ Quiet-STaR phase imported successfully")
 
-
         print("  ✓ BitNet compression phase imported successfully")
-
 
         print("  ✓ Forge training phase imported successfully")
 
-
         print("  ✓ Tool persona baking phase imported successfully")
 
-
         print("  ✓ ADAS phase imported successfully")
-
 
         print("  ✓ Final compression phase imported successfully")
 
@@ -160,9 +153,7 @@ def test_cognate_implementation():
 
         # Test validation methods
         test_model = None
-        (
-            cognate_phase._validate_model(test_model) if hasattr(cognate_phase, "_validate_model") else None
-        )
+        (cognate_phase._validate_model(test_model) if hasattr(cognate_phase, "_validate_model") else None)
         print("  ✓ CognatePhase validation methods accessible")
 
         return True
@@ -180,7 +171,7 @@ def test_legacy_archival():
     print("\nTesting legacy file archival...")
 
     try:
-        base_path = Path(__file__).parent.parent.parent / "core" / "agent-forge"
+        base_path = Path(__file__).parent.parent.parent / "core" / "agent_forge"
         archive_path = base_path / "archive" / "legacy"
 
         if archive_path.exists():
@@ -262,7 +253,7 @@ def main():
         print("- ✓ Legacy files properly archived")
         print("- ✓ Unified pipeline supports complete 8-phase workflow")
         print("- ✓ Import structure consolidated and working")
-        print("- ✓ Production base established at core/agent-forge/phases/")
+        print("- ✓ Production base established at core/agent_forge/phases/")
     else:
         print(f"\n⚠️  Consolidation partially successful: {passed}/{total} tests passed")
         print("Some issues remain to be resolved.")

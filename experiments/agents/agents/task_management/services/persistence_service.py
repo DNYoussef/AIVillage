@@ -2,6 +2,7 @@
 Persistence Service - Handles data serialization and storage.
 Extracted from UnifiedManagement god class.
 """
+
 import json
 import logging
 from typing import Any
@@ -14,35 +15,35 @@ logger = logging.getLogger(__name__)
 
 class PersistenceService:
     """Service responsible for state persistence operations."""
-    
+
     def __init__(self) -> None:
         """Initialize the persistence service."""
         self._backup_directory = Path("backups")
         self._backup_directory.mkdir(exist_ok=True)
-        
+
     async def save_state(self, filename: str, state_data: dict[str, Any]) -> None:
         """Save system state to file."""
         try:
             filepath = Path(filename)
-            
+
             # Ensure directory exists
             filepath.parent.mkdir(parents=True, exist_ok=True)
-            
+
             # Create backup if file exists
             if filepath.exists():
                 backup_path = self._backup_directory / f"{filepath.name}.backup"
                 filepath.rename(backup_path)
                 logger.info("Created backup at %s", backup_path)
-            
+
             # Prepare state for serialization
             serializable_state = self._prepare_state_for_serialization(state_data)
-            
+
             # Write to file
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(serializable_state, f, indent=2, default=str)
-                
+
             logger.info("Saved state to %s", filepath)
-            
+
         except Exception as e:
             logger.exception("Error saving state: %s", e)
             msg = f"Error saving state: {e!s}"
@@ -52,20 +53,20 @@ class PersistenceService:
         """Load system state from file."""
         try:
             filepath = Path(filename)
-            
+
             if not filepath.exists():
                 msg = f"State file {filepath} does not exist"
                 raise FileNotFoundError(msg)
-            
+
             with open(filepath, encoding="utf-8") as f:
                 state_data = json.load(f)
-                
+
             # Post-process the loaded state
             processed_state = self._process_loaded_state(state_data)
-            
+
             logger.info("Loaded state from %s", filepath)
             return processed_state
-            
+
         except Exception as e:
             logger.exception("Error loading state: %s", e)
             msg = f"Error loading state: {e!s}"
@@ -75,28 +76,26 @@ class PersistenceService:
         """Prepare state data for JSON serialization."""
         try:
             serializable_state = {}
-            
+
             for key, value in state_data.items():
-                if hasattr(value, '__dict__'):
+                if hasattr(value, "__dict__"):
                     # Convert objects to dictionaries
                     serializable_state[key] = self._object_to_dict(value)
                 elif isinstance(value, (list, tuple)):
                     # Handle collections
                     serializable_state[key] = [
-                        self._object_to_dict(item) if hasattr(item, '__dict__') else item
-                        for item in value
+                        self._object_to_dict(item) if hasattr(item, "__dict__") else item for item in value
                     ]
                 elif isinstance(value, dict):
                     # Handle dictionaries recursively
                     serializable_state[key] = {
-                        k: self._object_to_dict(v) if hasattr(v, '__dict__') else v
-                        for k, v in value.items()
+                        k: self._object_to_dict(v) if hasattr(v, "__dict__") else v for k, v in value.items()
                     }
                 else:
                     serializable_state[key] = value
-                    
+
             return serializable_state
-            
+
         except Exception as e:
             logger.exception("Error preparing state for serialization: %s", e)
             return state_data
@@ -104,11 +103,11 @@ class PersistenceService:
     def _object_to_dict(self, obj: Any) -> dict[str, Any]:
         """Convert an object to a dictionary."""
         try:
-            if hasattr(obj, '__dict__'):
+            if hasattr(obj, "__dict__"):
                 result = {}
                 for key, value in obj.__dict__.items():
-                    if not key.startswith('_'):  # Skip private attributes
-                        if hasattr(value, '__dict__'):
+                    if not key.startswith("_"):  # Skip private attributes
+                        if hasattr(value, "__dict__"):
                             result[key] = self._object_to_dict(value)
                         else:
                             result[key] = value
@@ -153,10 +152,7 @@ class PersistenceService:
     def list_checkpoints(self) -> list[str]:
         """List available checkpoints."""
         try:
-            checkpoints = [
-                f.stem.replace('.checkpoint', '') 
-                for f in self._backup_directory.glob("*.checkpoint.json")
-            ]
+            checkpoints = [f.stem.replace(".checkpoint", "") for f in self._backup_directory.glob("*.checkpoint.json")]
             return sorted(checkpoints)
         except Exception as e:
             logger.exception("Error listing checkpoints: %s", e)
@@ -168,7 +164,7 @@ class PersistenceService:
             filepath = Path(filename)
             if not filepath.exists():
                 return {"exists": False}
-                
+
             stat = filepath.stat()
             return {
                 "exists": True,

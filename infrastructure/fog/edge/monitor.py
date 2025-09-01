@@ -275,6 +275,7 @@ class ResourceMonitor:
                 snapshot.cpu_freq_mhz = cpu_freq.current
         except Exception as e:
             import logging
+
             logging.exception("Exception in CPU frequency collection: %s", str(e))
 
         # CPU temperature
@@ -286,6 +287,7 @@ class ResourceMonitor:
                 snapshot.cpu_temp_celsius = temps["cpu_thermal"][0].current
         except Exception as e:
             import logging
+
             logging.exception("Exception in CPU temperature collection: %s", str(e))
 
         # Memory metrics
@@ -322,6 +324,7 @@ class ResourceMonitor:
                 self._prev_disk_io = {"read_bytes": disk_io.read_bytes, "write_bytes": disk_io.write_bytes}
         except Exception as e:
             import logging
+
             logging.exception("Exception in disk I/O metrics collection: %s", str(e))
 
         # Network metrics
@@ -342,6 +345,7 @@ class ResourceMonitor:
             snapshot.network_connections = len(psutil.net_connections())
         except Exception as e:
             import logging
+
             logging.exception("Exception in network metrics collection: %s", str(e))
 
         # Battery metrics
@@ -355,6 +359,7 @@ class ResourceMonitor:
                 snapshot.power_plugged = battery.power_plugged
         except Exception as e:
             import logging
+
             logging.exception("Exception in battery metrics collection: %s", str(e))
 
         # Process metrics
@@ -362,6 +367,7 @@ class ResourceMonitor:
             snapshot.process_count = len(psutil.pids())
         except Exception as e:
             import logging
+
             logging.exception("Exception in process count collection: %s", str(e))
 
         # Load average (Unix/Linux only)
@@ -523,9 +529,9 @@ class ResourceMonitor:
             profiling_duration_s=60.0,  # Mock profiling duration
             # Estimate performance based on hardware
             cpu_single_core_score=snapshot.cpu_freq_mhz / 10.0 if snapshot.cpu_freq_mhz else 300.0,
-            cpu_multi_core_score=(snapshot.cpu_freq_mhz * snapshot.cpu_cores_logical / 10.0)
-            if snapshot.cpu_freq_mhz
-            else 800.0,
+            cpu_multi_core_score=(
+                (snapshot.cpu_freq_mhz * snapshot.cpu_cores_logical / 10.0) if snapshot.cpu_freq_mhz else 800.0
+            ),
             memory_bandwidth_mb_s=15000.0,  # Typical DDR4 bandwidth
             disk_seq_read_mb_s=500.0,  # Typical SSD performance
             disk_seq_write_mb_s=400.0,

@@ -165,7 +165,7 @@ class ServiceLoggers:
     @staticmethod
     def get_agent_forge_logger(trace_id: str | None = None) -> StructuredLogger:
         """Get Agent Forge pipeline logger"""
-        context = LogContext(service="agent-forge", component="ml-pipeline", version="2.0.0", trace_id=trace_id)
+        context = LogContext(service="agent_forge", component="ml-pipeline", version="2.0.0", trace_id=trace_id)
         return StructuredLogger(context)
 
     @staticmethod
@@ -436,7 +436,7 @@ def initialize_logging_system():
     import os
 
     log_dirs = [
-        "/var/log/aivillage/agent-forge",
+        "/var/log/aivillage/agent_forge",
         "/var/log/aivillage/hyperrag",
         "/var/log/aivillage/p2p",
         "/var/log/aivillage/gateway",

@@ -1,6 +1,5 @@
 """Quick validation tests for HRRM models."""
 
-
 import pytest
 import torch
 

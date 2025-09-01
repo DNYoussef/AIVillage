@@ -412,7 +412,7 @@ class RBACAPIServer:
             return result["data"]
 
         # Agent Forge endpoints
-        @self.app.post("/agent-forge/training")
+        @self.app.post("/agent_forge/training")
         async def start_agent_forge_training(params: dict[str, Any], current_user: dict = Depends(get_current_user)):
             result = await self.integration.secure_api_call(
                 system="agent_forge",
@@ -427,7 +427,7 @@ class RBACAPIServer:
 
             return result["data"]
 
-        @self.app.get("/agent-forge/training/{job_id}")
+        @self.app.get("/agent_forge/training/{job_id}")
         async def get_training_status(job_id: str, current_user: dict = Depends(get_current_user)):
             result = await self.integration.secure_api_call(
                 system="agent_forge",

@@ -112,9 +112,7 @@ class SimpleModelManager:
             logger.info("Running: %s", " ".join(cmd))
 
             # Run download command
-            process = subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-            )
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
             stdout, stderr = process.communicate()
 
@@ -130,9 +128,7 @@ class SimpleModelManager:
                     "purpose": model_spec.get("purpose"),
                 }
 
-                logger.info(
-                    "Successfully downloaded %s (%.1f GB)", model_id, size_gb
-                )
+                logger.info("Successfully downloaded %s (%.1f GB)", model_id, size_gb)
                 return True
             else:  # pragma: no cover - external command
                 logger.error("Download failed for %s", model_id)
@@ -163,14 +159,10 @@ class SimpleModelManager:
         if len(self.models) <= self.max_models:
             return
 
-        logger.info(
-            "Cleaning up models: %d > %d", len(self.models), self.max_models
-        )
+        logger.info("Cleaning up models: %d > %d", len(self.models), self.max_models)
 
         # Sort by size (remove largest first to save space quickly)
-        models_by_size = sorted(
-            self.models.items(), key=lambda x: x[1].get("size_gb", 0), reverse=True
-        )
+        models_by_size = sorted(self.models.items(), key=lambda x: x[1].get("size_gb", 0), reverse=True)
 
         to_remove = models_by_size[self.max_models :]
 

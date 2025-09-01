@@ -157,6 +157,7 @@ class TestModularComponentInterfaces:
         except Exception as e:
             # Expected with simplified crypto implementation
             import logging
+
             logging.exception("HTX transport message decryption failed (expected with simplified crypto): %s", str(e))
 
 

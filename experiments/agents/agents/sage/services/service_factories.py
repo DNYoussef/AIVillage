@@ -22,17 +22,15 @@ from .processing_factory import ProcessingChainFactory
 from .config import (
     CognitiveServiceConfig,
     ProcessingServiceConfig,
-    LearningServiceConfig,
     CollaborationServiceConfig,
-    ResearchServiceConfig
+    ResearchServiceConfig,
 )
 
 logger = logging.getLogger(__name__)
 
 
 async def create_cognitive_composite(
-    vector_store: VectorStore,
-    config: CognitiveServiceConfig
+    vector_store: VectorStore, config: CognitiveServiceConfig
 ) -> CognitiveLayerComposite:
     """Create and initialize cognitive layer composite."""
     try:
@@ -50,7 +48,7 @@ async def create_processing_chain(
     cognitive_nexus: CognitiveNexus,
     confidence_estimator: ConfidenceEstimator,
     sage_agent: Any,
-    config: ProcessingServiceConfig
+    config: ProcessingServiceConfig,
 ) -> ProcessingChainFactory:
     """Create and initialize processing chain factory."""
     try:
@@ -60,7 +58,7 @@ async def create_processing_chain(
             cognitive_nexus=cognitive_nexus,
             confidence_estimator=confidence_estimator,
             sage_agent=sage_agent,
-            config=config
+            config=config,
         )
         await factory.initialize()
         return factory
@@ -69,10 +67,7 @@ async def create_processing_chain(
         raise
 
 
-async def create_rag_system(
-    config: Any,
-    knowledge_tracker: UnifiedKnowledgeTracker
-) -> EnhancedRAGPipeline:
+async def create_rag_system(config: Any, knowledge_tracker: UnifiedKnowledgeTracker) -> EnhancedRAGPipeline:
     """Create RAG system."""
     try:
         return EnhancedRAGPipeline(config, knowledge_tracker)
@@ -117,10 +112,7 @@ async def create_confidence_estimator() -> ConfidenceEstimator:
         raise
 
 
-async def create_collaboration_manager(
-    sage_agent: Any,
-    config: CollaborationServiceConfig
-) -> CollaborationManager:
+async def create_collaboration_manager(sage_agent: Any, config: CollaborationServiceConfig) -> CollaborationManager:
     """Create collaboration manager."""
     try:
         return CollaborationManager(sage_agent)
@@ -129,10 +121,7 @@ async def create_collaboration_manager(
         raise
 
 
-async def create_research_capabilities(
-    sage_agent: Any,
-    config: ResearchServiceConfig
-) -> ResearchCapabilities:
+async def create_research_capabilities(sage_agent: Any, config: ResearchServiceConfig) -> ResearchCapabilities:
     """Create research capabilities manager."""
     try:
         return ResearchCapabilities(sage_agent)

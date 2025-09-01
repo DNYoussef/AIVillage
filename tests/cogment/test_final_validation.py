@@ -19,7 +19,7 @@ import pytest
 # Add project paths for imports
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(project_root / "core" / "agent-forge"))
+sys.path.insert(0, str(project_root / "core" / "agent_forge"))
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +30,8 @@ class TestCogmentFinalValidation:
     def setup_method(self):
         """Setup for each test method"""
         self.project_root = Path(__file__).parent.parent.parent
-        self.cogment_path = self.project_root / "core" / "agent-forge"
-        self.hrrm_path = self.project_root / "core" / "agent-forge" / "models" / "hrrm"
+        self.cogment_path = self.project_root / "core" / "agent_forge"
+        self.hrrm_path = self.project_root / "core" / "agent_forge" / "models" / "hrrm"
 
         # Initialize metrics storage
         self.validation_metrics = {
@@ -100,9 +100,9 @@ class TestCogmentFinalValidation:
         try:
             # Check all critical Cogment components exist (based on actual structure)
             required_components = [
-                "core/agent-forge/data/cogment/data_manager.py",
-                "core/agent-forge/integration/cogment/evomerge_adapter.py",
-                "core/agent-forge/integration/cogment/deployment_manager.py",
+                "core/agent_forge/data/cogment/data_manager.py",
+                "core/agent_forge/integration/cogment/evomerge_adapter.py",
+                "core/agent_forge/integration/cogment/deployment_manager.py",
                 "config/cogment/config_loader.py",
                 "config/cogment/config_validation.py",
                 "tests/cogment/test_final_validation.py",
@@ -422,7 +422,7 @@ class TestHRRMCleanupValidation:
     def test_cleanup_impact_analysis(self):
         """Analyze impact of HRRM removal"""
         project_root = Path(__file__).parent.parent.parent
-        hrrm_path = project_root / "core" / "agent-forge" / "models" / "hrrm"
+        hrrm_path = project_root / "core" / "agent_forge" / "models" / "hrrm"
 
         if not hrrm_path.exists():
             pytest.skip("HRRM directory not found")

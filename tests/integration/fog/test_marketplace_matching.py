@@ -29,7 +29,7 @@ class TestMarketplaceMatching:
         await engine.stop()
 
     @pytest.fixture
-    def sample_listings(self, marketplace):
+    async def sample_listings(self, marketplace):
         """Create sample resource listings"""
 
         async def _create_listings():

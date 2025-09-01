@@ -100,28 +100,28 @@ def test_model_forward_pass():
         assert "logits" in outputs
         assert "halt_logits" in outputs
         assert outputs["logits"].shape == (batch_size, seq_len, config.vocab_size)
-        
+
         # Test output quality - no NaN or Inf values (data corruption check)
         logits = outputs["logits"]
         assert not torch.isnan(logits).any(), "Model outputs contain NaN values"
         assert not torch.isinf(logits).any(), "Model outputs contain infinite values"
-        
+
         # Test output range is reasonable
         logits_std = torch.std(logits).item()
         assert 0.1 < logits_std < 100.0, f"Output std dev {logits_std:.4f} outside reasonable range"
-        
+
         # Test model consistency - same input should produce same output in eval mode
         with torch.no_grad():
             outputs2 = model(input_ids=input_ids, attention_mask=attention_mask)
-        
+
         assert torch.allclose(outputs["logits"], outputs2["logits"], atol=1e-6), "Model not deterministic in eval mode"
-        
+
         # Test gradient flow during training mode
         model.train()
         outputs_train = model(input_ids=input_ids, attention_mask=attention_mask)
         loss = outputs_train["logits"].sum()
         loss.backward()
-        
+
         # Check that gradients exist and are reasonable
         grad_norms = []
         for param in model.parameters():
@@ -129,7 +129,7 @@ def test_model_forward_pass():
                 grad_norm = param.grad.norm().item()
                 assert not torch.isnan(param.grad).any(), "Gradients contain NaN"
                 grad_norms.append(grad_norm)
-        
+
         assert len(grad_norms) > 0, "No gradients computed"
         avg_grad_norm = sum(grad_norms) / len(grad_norms)
         assert 0.001 < avg_grad_norm < 10.0, f"Average gradient norm {avg_grad_norm:.6f} outside reasonable range"
@@ -153,24 +153,25 @@ def test_model_factory():
         assert factory is not None
 
         # Test factory actually creates models - behavioral validation
-        if hasattr(factory, 'create_model'):
+        if hasattr(factory, "create_model"):
             model = factory.create_model()
             assert model is not None, "Factory should create a valid model"
-            
+
             # Verify the created model has expected functionality
-            if hasattr(model, 'parameters'):
+            if hasattr(model, "parameters"):
                 param_count = sum(p.numel() for p in model.parameters())
                 assert param_count > 0, "Created model should have parameters"
-            
+
             # Test model creation with custom config
-            if hasattr(factory, 'create_model_with_config'):
+            if hasattr(factory, "create_model_with_config"):
                 from core.agent_forge.phases.cognate_pretrain.refiner_core import CognateConfig
+
                 config = CognateConfig(d_model=128, n_layers=6)
                 custom_model = factory.create_model_with_config(config)
                 assert custom_model is not None, "Factory should create model with custom config"
-                
+
         # Test factory provides expected interface methods
-        expected_methods = ['create_model', 'get_supported_configs', 'validate_config']
+        expected_methods = ["create_model", "get_supported_configs", "validate_config"]
         for method in expected_methods:
             if hasattr(factory, method):
                 assert callable(getattr(factory, method)), f"Factory method {method} should be callable"

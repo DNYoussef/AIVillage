@@ -415,24 +415,22 @@ try:
 except ImportError:
     # Fallback secure configuration if import fails
     import os
+
     env = os.getenv("AIVILLAGE_ENV", "development")
     if env == "production":
         cors_origins = ["https://aivillage.app", "https://www.aivillage.app"]
     else:
         cors_origins = ["http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000"]
-    
+
     SECURE_CORS_CONFIG = {
         "allow_origins": cors_origins,
         "allow_credentials": True,
         "allow_methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Accept", "Content-Type", "Authorization", "X-Requested-With"]
+        "allow_headers": ["Accept", "Content-Type", "Authorization", "X-Requested-With"],
     }
 
 # Add secure CORS middleware - NO WILDCARDS
-app.add_middleware(
-    CORSMiddleware,
-    **SECURE_CORS_CONFIG
-)
+app.add_middleware(CORSMiddleware, **SECURE_CORS_CONFIG)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(ErrorHandlingMiddleware)
@@ -706,19 +704,21 @@ async def websocket_endpoint(websocket: WebSocket):
             try:
                 # SECURITY FIX: Use safe JSON parsing instead of eval()
                 message = json.loads(data)
-                
+
                 # SECURITY: Input validation - only allow specific message types
                 allowed_types = {"ping", "get_status", "subscribe", "unsubscribe"}
                 msg_type = message.get("type")
-                
+
                 if not msg_type or msg_type not in allowed_types:
-                    await websocket.send_json({
-                        "type": "error", 
-                        "message": "Invalid or unsupported message type",
-                        "allowed_types": list(allowed_types)
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "error",
+                            "message": "Invalid or unsupported message type",
+                            "allowed_types": list(allowed_types),
+                        }
+                    )
                     continue
-                
+
                 # SECURITY: Additional message validation
                 if not isinstance(message, dict):
                     await websocket.send_json({"type": "error", "message": "Message must be a JSON object"})
@@ -736,18 +736,14 @@ async def websocket_endpoint(websocket: WebSocket):
 
             except json.JSONDecodeError as e:
                 logger.warning(f"Invalid JSON received from WebSocket: {e}")
-                await websocket.send_json({
-                    "type": "error", 
-                    "message": "Invalid JSON format",
-                    "code": "JSON_DECODE_ERROR"
-                })
+                await websocket.send_json(
+                    {"type": "error", "message": "Invalid JSON format", "code": "JSON_DECODE_ERROR"}
+                )
             except Exception as e:
                 logger.error(f"WebSocket message processing error: {e}")
-                await websocket.send_json({
-                    "type": "error", 
-                    "message": "Message processing failed",
-                    "code": "PROCESSING_ERROR"
-                })
+                await websocket.send_json(
+                    {"type": "error", "message": "Message processing failed", "code": "PROCESSING_ERROR"}
+                )
 
     except WebSocketDisconnect:
         service_manager.websocket_manager.disconnect(websocket)

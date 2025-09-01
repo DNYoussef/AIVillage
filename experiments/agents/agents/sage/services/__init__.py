@@ -15,7 +15,7 @@ from .config import SageAgentConfig
 
 __all__ = [
     "ICognitiveService",
-    "IProcessingService", 
+    "IProcessingService",
     "IKnowledgeService",
     "ILearningService",
     "SageAgentServiceLocator",

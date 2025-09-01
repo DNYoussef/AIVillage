@@ -31,7 +31,7 @@ Key Consolidation Achievements:
 
 # Network Optimization (consolidated: network + message processing + security)
 from .network_optimizer import (
-    NetworkOptimizer, 
+    NetworkOptimizer,
     NetworkOptimizerConfig,
     NetworkProtocol,
     QualityOfService,
@@ -43,39 +43,15 @@ from .network_optimizer import (
     LatencyOptimizer,
     QosManager,
     # Security Enhancements - ECH + Noise Protocol
-    SecurityProtocol,
-    SecurityContext,
-    EnhancedSecurityManager,
-    SecurityEnhancedNetworkOptimizer,
     create_network_optimizer,
-    create_security_enhanced_optimizer,
     get_default_config as get_network_config,
     get_performance_config as get_network_performance_config,
     get_reliability_config as get_network_reliability_config,
-    get_security_config
 )
 
 # Dashboard Integration (builds on existing dashboard infrastructure)
-from .dashboard_integration import (
-    EnhancedOptimizationDashboard,
-    OptimizationDashboardMetrics,
-    create_enhanced_dashboard,
-    integrate_with_existing_dashboards
-)
 
 # Load Testing Infrastructure (comprehensive testing with regression detection)
-from .load_testing import (
-    LoadTestType,
-    LoadTestStatus,
-    LoadTestConfig,
-    LoadTestResult,
-    NetworkProtocolLoadTester,
-    SecurityProtocolLoadTester,
-    ComprehensiveLoadTester,
-    create_standard_load_test_suite,
-    create_stress_test_suite,
-    run_optimization_load_tests
-)
 
 # Resource Management (consolidated: memory + CPU + network resources)
 from .resource_manager import (
@@ -89,7 +65,7 @@ from .resource_manager import (
     CPUManager,
     NetworkResourceManager,
     ResourceLimiter,
-    create_resource_manager
+    create_resource_manager,
 )
 
 # Analytics & AI Optimization (consolidated: all optimization algorithms)
@@ -98,10 +74,10 @@ from .analytics import (
     AnalyticsConfig,
     ArchaeologicalOptimizer,
     TrendAnalyzer,
-    AnomalyDetector, 
+    AnomalyDetector,
     PredictiveOptimizer,
     SystemAnalyzer,
-    ComponentDiscovery
+    ComponentDiscovery,
 )
 
 # Performance Monitoring (consolidated: profiling + monitoring)
@@ -116,7 +92,7 @@ from .monitoring import (
     get_global_monitor,
     record_metric,
     profile_component,
-    profile_async_component
+    profile_async_component,
 )
 
 # Configuration Management (consolidated: all config classes)
@@ -137,15 +113,11 @@ from .config import (
     get_performance_config,
     get_reliability_config,
     get_global_config,
-    set_global_config
+    set_global_config,
 )
 
 # Production-Ready Connection Management (preserved)
-from .connection_pool import (
-    ConnectionPoolManager,
-    PoolConfig,
-    PoolMetrics
-)
+from .connection_pool import ConnectionPoolManager, PoolConfig, PoolMetrics
 
 # Version information
 __version__ = "2.1.0"
@@ -155,135 +127,129 @@ __author__ = "AI Village Team - Archaeological Performance Engineering"
 # Consolidated exports for production use
 __all__ = [
     # === CORE CONSOLIDATED COMPONENTS ===
-    
     # Network Optimization (consolidated: network + message processing)
-    'NetworkOptimizer',
-    'NetworkOptimizerConfig', 
-    'NetworkProtocol',
-    'QualityOfService',
-    'NetworkMetrics',
-    'MessageProcessor',
-    'MessageMetrics',
-    'ProtocolSelector',
-    'BandwidthManager', 
-    'LatencyOptimizer',
-    'QosManager',
-    'create_network_optimizer',
-    'get_network_config',
-    'get_network_performance_config', 
-    'get_network_reliability_config',
-    
+    "NetworkOptimizer",
+    "NetworkOptimizerConfig",
+    "NetworkProtocol",
+    "QualityOfService",
+    "NetworkMetrics",
+    "MessageProcessor",
+    "MessageMetrics",
+    "ProtocolSelector",
+    "BandwidthManager",
+    "LatencyOptimizer",
+    "QosManager",
+    "create_network_optimizer",
+    "get_network_config",
+    "get_network_performance_config",
+    "get_network_reliability_config",
     # Resource Management (consolidated: memory + CPU + network resources)
-    'ResourceManager',
-    'ResourceManagerConfig',
-    'ResourceType',
-    'ResourceState', 
-    'ResourceMetrics',
-    'ResourceAllocation',
-    'MemoryManager',
-    'CPUManager',
-    'NetworkResourceManager',
-    'ResourceLimiter',
-    'create_resource_manager',
-    
+    "ResourceManager",
+    "ResourceManagerConfig",
+    "ResourceType",
+    "ResourceState",
+    "ResourceMetrics",
+    "ResourceAllocation",
+    "MemoryManager",
+    "CPUManager",
+    "NetworkResourceManager",
+    "ResourceLimiter",
+    "create_resource_manager",
     # Analytics & AI Optimization (consolidated: all optimization algorithms)
-    'PerformanceAnalytics',
-    'AnalyticsConfig',
-    'ArchaeologicalOptimizer',
-    'TrendAnalyzer',
-    'AnomalyDetector', 
-    'PredictiveOptimizer',
-    'SystemAnalyzer',
-    'ComponentDiscovery',
-    
+    "PerformanceAnalytics",
+    "AnalyticsConfig",
+    "ArchaeologicalOptimizer",
+    "TrendAnalyzer",
+    "AnomalyDetector",
+    "PredictiveOptimizer",
+    "SystemAnalyzer",
+    "ComponentDiscovery",
     # Performance Monitoring (consolidated: profiling + monitoring)
-    'PerformanceMonitor',
-    'MonitoringConfig',
-    'PerformanceMetric',
-    'ComponentProfile',
-    'BottleneckAnalysis',
-    'MonitoringAlert',
-    'create_monitor',
-    'get_global_monitor',
-    'record_metric',
-    'profile_component',
-    'profile_async_component',
-    
+    "PerformanceMonitor",
+    "MonitoringConfig",
+    "PerformanceMetric",
+    "ComponentProfile",
+    "BottleneckAnalysis",
+    "MonitoringAlert",
+    "create_monitor",
+    "get_global_monitor",
+    "record_metric",
+    "profile_component",
+    "profile_async_component",
     # Configuration Management (consolidated: all config classes)
-    'OptimizationConfig',
-    'NetworkConfig',
-    'ResourceConfig', 
-    'BaseMonitoringConfig',
-    'BaseAnalyticsConfig',
-    'SecurityConfig',
-    'LoggingConfig',
-    'DeploymentMode',
-    'SerializationFormat',
-    'CompressionAlgorithm',
-    'EncryptionMode',
-    'get_development_config',
-    'get_production_config',
-    'get_performance_config', 
-    'get_reliability_config',
-    'get_global_config',
-    'set_global_config',
-    
+    "OptimizationConfig",
+    "NetworkConfig",
+    "ResourceConfig",
+    "BaseMonitoringConfig",
+    "BaseAnalyticsConfig",
+    "SecurityConfig",
+    "LoggingConfig",
+    "DeploymentMode",
+    "SerializationFormat",
+    "CompressionAlgorithm",
+    "EncryptionMode",
+    "get_development_config",
+    "get_production_config",
+    "get_performance_config",
+    "get_reliability_config",
+    "get_global_config",
+    "set_global_config",
     # === PRESERVED PRODUCTION COMPONENTS ===
-    
     # Connection Management (production-ready, preserved)
-    'ConnectionPoolManager',
-    'PoolConfig', 
-    'PoolMetrics',
+    "ConnectionPoolManager",
+    "PoolConfig",
+    "PoolMetrics",
 ]
 
 
 # === CONSOLIDATED SYSTEM FACTORY FUNCTIONS ===
 
+
 def create_optimization_system(config: OptimizationConfig = None) -> dict:
     """Create complete optimization system with all consolidated components.
-    
+
     Args:
         config: Optional unified configuration. If None, uses default development config.
-        
+
     Returns:
         Dictionary containing all initialized optimization components:
         - 'network_optimizer': NetworkOptimizer instance
         - 'resource_manager': ResourceManager instance
-        - 'performance_monitor': PerformanceMonitor instance  
+        - 'performance_monitor': PerformanceMonitor instance
         - 'analytics': PerformanceAnalytics instance
         - 'connection_pool': ConnectionPoolManager instance
         - 'config': The configuration used
     """
     if config is None:
         config = get_development_config()
-    
+
     return {
-        'network_optimizer': NetworkOptimizer(config.network),
-        'resource_manager': create_resource_manager(config.resources),
-        'performance_monitor': create_monitor(config.monitoring),
-        'analytics': PerformanceAnalytics(config.analytics),
-        'connection_pool': ConnectionPoolManager(PoolConfig()),
-        'config': config
+        "network_optimizer": NetworkOptimizer(config.network),
+        "resource_manager": create_resource_manager(config.resources),
+        "performance_monitor": create_monitor(config.monitoring),
+        "analytics": PerformanceAnalytics(config.analytics),
+        "connection_pool": ConnectionPoolManager(PoolConfig()),
+        "config": config,
     }
 
 
 async def initialize_optimization_system(config: OptimizationConfig = None) -> dict:
     """Initialize complete optimization system asynchronously.
-    
+
     Args:
         config: Optional unified configuration. If None, uses default development config.
-        
+
     Returns:
         Dictionary containing all initialized and ready-to-use optimization components.
     """
     system = create_optimization_system(config)
-    
+
     # Initialize all components
-    await system['network_optimizer'].initialize()
-    await system['resource_manager'].initialize()
-    await system['performance_monitor'].initialize() 
-    await system['analytics'].initialize()
-    
+    await system["network_optimizer"].initialize()
+    await system["resource_manager"].initialize()
+    await system["performance_monitor"].initialize()
+    await system["analytics"].initialize()
+
     return system
 
 
@@ -293,22 +259,22 @@ ARCHAEOLOGICAL_INSIGHTS = {
     "consolidated_from_branches": 81,
     "optimization_strategies_preserved": [
         "NAT traversal optimization from nat-optimization-v3",
-        "Protocol multiplexing with QoS from protocol-multiplexing-v3", 
+        "Protocol multiplexing with QoS from protocol-multiplexing-v3",
         "Tensor memory cleanup from cleanup-tensor-id-in-receive_tensor",
         "Emergency resource management from audit-critical-stub-implementations",
         "Distributed processing patterns from implement-distributed-inference-system",
         "Advanced analytics from multiple performance branches",
-        "Message processing optimization from serialization experiments"
+        "Message processing optimization from serialization experiments",
     ],
     "innovation_score": "9.6/10",
     "production_readiness": "COMPLETE",
     "consolidation_benefits": {
         "code_reduction": "6 files -> 4 production components (33% reduction)",
-        "duplicate_elimination": "4 emergency systems -> 1 unified system", 
+        "duplicate_elimination": "4 emergency systems -> 1 unified system",
         "config_unification": "6 config classes -> 1 unified config hierarchy",
         "monitoring_consolidation": "Multiple profilers -> 1 comprehensive monitor",
-        "performance_improvement": "Reduced import overhead and unified optimization"
-    }
+        "performance_improvement": "Reduced import overhead and unified optimization",
+    },
 }
 
 
@@ -316,14 +282,15 @@ ARCHAEOLOGICAL_INSIGHTS = {
 
 import warnings
 
+
 def _deprecated_import_warning(old_name: str, new_name: str):
     """Issue deprecation warning for old imports."""
     warnings.warn(
-        f"Import of '{old_name}' is deprecated. Use '{new_name}' instead. "
-        f"Old imports will be removed in v3.0.0.",
+        f"Import of '{old_name}' is deprecated. Use '{new_name}' instead. " f"Old imports will be removed in v3.0.0.",
         DeprecationWarning,
-        stacklevel=3
+        stacklevel=3,
     )
+
 
 # Provide backwards compatibility aliases with warnings
 class _DeprecatedAliases:
@@ -334,7 +301,7 @@ class _DeprecatedAliases:
         elif name == "ComponentAnalyzer":
             _deprecated_import_warning("ComponentAnalyzer", "SystemAnalyzer")
             return SystemAnalyzer
-        elif name == "MessageOptimizer": 
+        elif name == "MessageOptimizer":
             _deprecated_import_warning("MessageOptimizer", "MessageProcessor")
             return MessageProcessor
         elif name == "P2PProfiler":
@@ -343,9 +310,11 @@ class _DeprecatedAliases:
         else:
             raise AttributeError(f"'{__name__}' has no attribute '{name}'")
 
+
 # Enable deprecated aliases
 import sys
-sys.modules[__name__ + '._deprecated'] = _DeprecatedAliases()
+
+sys.modules[__name__ + "._deprecated"] = _DeprecatedAliases()
 
 
 # === CONSOLIDATED QUICK START ===

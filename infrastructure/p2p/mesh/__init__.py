@@ -6,7 +6,7 @@ Intelligent message routing with failover and mobile-aware protocols.
 
 # Import MeshNetwork from BitChat implementation
 try:
-    from ..bitchat.mesh_network import MeshNetwork
+    from infrastructure.p2p.bitchat.mesh_network import MeshNetwork
 except ImportError:
     # Fallback stub for testing
     class MeshNetwork:

@@ -37,11 +37,9 @@ from infrastructure.fog.edge.fog_compute.fog_coordinator import FogCoordinator
 from infrastructure.fog.edge.mobile.resource_manager import MobileResourceManager
 
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
 
 class EdgeComputingDemo:
     """Comprehensive edge computing deployment demonstration"""
@@ -61,17 +59,12 @@ class EdgeComputingDemo:
 
         # Initialize core components
         self.edge_deployer = EdgeDeployer(
-            coordinator_id="demo_deployer",
-            enable_fog_computing=True,
-            enable_cross_device_coordination=True
+            coordinator_id="demo_deployer", enable_fog_computing=True, enable_cross_device_coordination=True
         )
 
         self.fog_coordinator = FogCoordinator("demo_fog_coordinator")
         self.harvest_manager = FogHarvestManager("demo_harvest_manager", token_rate_per_hour=50)
-        self.mobile_resource_manager = MobileResourceManager(
-            harvest_enabled=True,
-            token_rewards_enabled=True
-        )
+        self.mobile_resource_manager = MobileResourceManager(harvest_enabled=True, token_rewards_enabled=True)
 
         logger.info("✅ Edge computing system initialized")
 
@@ -97,7 +90,7 @@ class EdgeComputingDemo:
                     is_charging=False,
                     network_quality=NetworkQuality.GOOD,
                     network_type="4g",
-                    supports_ml_frameworks=["tflite", "onnx"]
+                    supports_ml_frameworks=["tflite", "onnx"],
                 ),
                 DeviceCapabilities(
                     device_id="driver_phone_002",
@@ -111,7 +104,7 @@ class EdgeComputingDemo:
                     battery_percent=45,
                     is_charging=True,  # Charging in vehicle
                     network_quality=NetworkQuality.FAIR,
-                    network_type="4g"
+                    network_type="4g",
                 ),
                 # Vehicle tablets
                 DeviceCapabilities(
@@ -128,7 +121,7 @@ class EdgeComputingDemo:
                     is_charging=True,  # Always charging in vehicle
                     network_quality=NetworkQuality.EXCELLENT,
                     network_type="5g",
-                    supports_containers=True
+                    supports_containers=True,
                 ),
                 # Warehouse IoT devices
                 DeviceCapabilities(
@@ -143,8 +136,8 @@ class EdgeComputingDemo:
                     battery_percent=60,
                     is_charging=False,
                     network_quality=NetworkQuality.EXCELLENT,
-                    network_type="wifi"
-                )
+                    network_type="wifi",
+                ),
             ]
 
         elif self.scenario == "enterprise_edge":
@@ -166,7 +159,7 @@ class EdgeComputingDemo:
                     is_charging=False,
                     network_quality=NetworkQuality.EXCELLENT,
                     supports_containers=True,
-                    supports_ml_frameworks=["pytorch", "tensorflow", "onnx"]
+                    supports_ml_frameworks=["pytorch", "tensorflow", "onnx"],
                 ),
                 # Developer workstations
                 DeviceCapabilities(
@@ -183,7 +176,7 @@ class EdgeComputingDemo:
                     battery_powered=False,  # Always plugged in
                     network_quality=NetworkQuality.EXCELLENT,
                     supports_containers=True,
-                    supports_ml_frameworks=["pytorch", "tensorflow", "onnx", "cuda"]
+                    supports_ml_frameworks=["pytorch", "tensorflow", "onnx", "cuda"],
                 ),
                 # Edge servers
                 DeviceCapabilities(
@@ -200,8 +193,8 @@ class EdgeComputingDemo:
                     battery_powered=False,
                     network_quality=NetworkQuality.EXCELLENT,
                     supports_containers=True,
-                    supports_ml_frameworks=["pytorch", "tensorflow", "onnx", "tensorrt"]
-                )
+                    supports_ml_frameworks=["pytorch", "tensorflow", "onnx", "tensorrt"],
+                ),
             ]
 
         else:
@@ -219,7 +212,7 @@ class EdgeComputingDemo:
                     battery_powered=True,
                     battery_percent=80,
                     is_charging=True,
-                    network_quality=NetworkQuality.GOOD
+                    network_quality=NetworkQuality.GOOD,
                 ),
                 DeviceCapabilities(
                     device_id="laptop_demo",
@@ -234,7 +227,7 @@ class EdgeComputingDemo:
                     battery_percent=95,
                     is_charging=True,
                     network_quality=NetworkQuality.EXCELLENT,
-                    supports_containers=True
+                    supports_containers=True,
                 ),
                 DeviceCapabilities(
                     device_id="tablet_demo",
@@ -247,8 +240,8 @@ class EdgeComputingDemo:
                     battery_powered=True,
                     battery_percent=70,
                     is_charging=False,
-                    network_quality=NetworkQuality.GOOD
-                )
+                    network_quality=NetworkQuality.GOOD,
+                ),
             ]
 
         self.demo_devices = devices

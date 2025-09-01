@@ -4,7 +4,7 @@ from typing import Any
 import uuid
 
 # Import constants for magic literal elimination
-from infrastructure.constants import TaskConstants, get_config_manager
+from infrastructure.constants import get_config_manager
 
 
 class TaskStatus(Enum):

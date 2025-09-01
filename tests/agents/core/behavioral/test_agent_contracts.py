@@ -472,8 +472,8 @@ class TestAgentContracts:
                     "task_id": error_task.task_id,
                     "error": str(e),
                     "error_type": type(e).__name__,
-                    "expected_behavior": "agent_remains_stable_after_error"
-                }
+                    "expected_behavior": "agent_remains_stable_after_error",
+                },
             )
 
         # Agent should remain healthy after error

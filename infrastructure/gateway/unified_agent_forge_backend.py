@@ -30,7 +30,7 @@ import uuid
 # Import torch at the top level to ensure it's available everywhere
 try:
     import torch
-    import torch.nn as nn
+
     TORCH_AVAILABLE = True
     logging.info("✅ PyTorch imported successfully at module level")
 except ImportError as e:
@@ -178,9 +178,11 @@ websocket_connections = set()
 # MODEL HANDOFF INTEGRATION SYSTEM
 # =============================================================================
 
+
 def get_models_from_phase(phase_name: str) -> List[Dict[str, Any]]:
     """Get all models produced by a specific phase."""
     return [model for model in model_storage.values() if model.get("phase_name") == phase_name]
+
 
 def get_latest_model_from_phase(phase_name: str) -> Optional[Dict[str, Any]]:
     """Get the most recent model from a phase (winner model)."""
@@ -194,24 +196,28 @@ def get_latest_model_from_phase(phase_name: str) -> Optional[Dict[str, Any]]:
     # Otherwise return most recent
     return max(phase_models, key=lambda m: m.get("created_at", ""))
 
+
 def create_model_handoff(from_phase: str, to_phase: str, model_data: Dict[str, Any]) -> str:
     """Create a model handoff from one phase to another."""
     handoff_id = str(uuid.uuid4())
-    model_data.update({
-        "handoff_id": handoff_id,
-        "source_phase": from_phase,
-        "target_phase": to_phase,
-        "handoff_timestamp": datetime.now().isoformat(),
-        "status": "handed_off"
-    })
-    
+    model_data.update(
+        {
+            "handoff_id": handoff_id,
+            "source_phase": from_phase,
+            "target_phase": to_phase,
+            "handoff_timestamp": datetime.now().isoformat(),
+            "status": "handed_off",
+        }
+    )
+
     logger.info(f"🤝 Model handoff: {from_phase} → {to_phase} (Model: {model_data.get('model_name', 'Unknown')})")
     return handoff_id
+
 
 def validate_phase_prerequisites(phase_name: str) -> Tuple[bool, str, List[Dict[str, Any]]]:
     """Validate that required models are available from previous phases."""
     phase_requirements = {
-        "Cognate": (None, 0),  # No prerequisites  
+        "Cognate": (None, 0),  # No prerequisites
         "EvoMerge": ("Cognate", 3),  # Needs 3 Cognate models
         "Quiet-STaR": ("EvoMerge", 1),  # Needs 1 EvoMerge winner
         "BitNet": ("Quiet-STaR", 1),  # Needs 1 Quiet-STaR model
@@ -220,26 +226,31 @@ def validate_phase_prerequisites(phase_name: str) -> Tuple[bool, str, List[Dict[
         "ADAS": ("Tool-Persona", 1),  # Needs 1 Tool-Persona model
         "Final-Compression": ("ADAS", 1),  # Needs 1 ADAS model
     }
-    
+
     if phase_name not in phase_requirements:
         return False, f"Unknown phase: {phase_name}", []
-        
+
     required_phase, required_count = phase_requirements[phase_name]
-    
+
     if required_phase is None:
         return True, "No prerequisites required", []
-    
+
     # Check if required phase is completed
     if required_phase not in phase_status or phase_status[required_phase].get("status") != "completed":
         return False, f"{phase_name} requires {required_phase} phase to be completed first", []
-    
+
     # Get available models from required phase
     available_models = get_models_from_phase(required_phase)
-    
+
     if len(available_models) < required_count:
-        return False, f"{phase_name} needs {required_count} models from {required_phase}, but only {len(available_models)} available", []
-    
+        return (
+            False,
+            f"{phase_name} needs {required_count} models from {required_phase}, but only {len(available_models)} available",
+            [],
+        )
+
     return True, f"Prerequisites satisfied: {len(available_models)} models from {required_phase}", available_models
+
 
 # P2P/Fog computing global instances
 mobile_bridge = None
@@ -365,7 +376,8 @@ async def execute_real_cognate_training(task_id: str, parameters: dict[str, Any]
 
                     dataset_results[dataset_name] = success
                     await update_training_progress(
-                        0.05 + (0.05 * len(dataset_results)), f"📥 Downloaded {dataset_name}: {'✅' if success else '❌'}"
+                        0.05 + (0.05 * len(dataset_results)),
+                        f"📥 Downloaded {dataset_name}: {'✅' if success else '❌'}",
                     )
                     await asyncio.sleep(1)
 
@@ -552,29 +564,28 @@ async def simulate_real_training(trainer, model_name: str, model_index: int, tot
 async def execute_real_cognate_training(task_id: str, parameters: dict[str, Any]):
     """Execute REAL Cognate pretraining with actual datasets and models."""
     logger.info(f"Starting REAL Cognate pretraining with full ACT+LTM system (task: {task_id})")
-    
+
     try:
         # Import the complete pretraining system
         import sys
         from pathlib import Path
-        
+
         # Add cognate pretraining path
-        cognate_path = Path(__file__).parent.parent.parent / "core" / "agent-forge" / "phases" / "cognate_pretrain"
+        cognate_path = Path(__file__).parent.parent.parent / "core" / "agent_forge" / "phases" / "cognate_pretrain"
         sys.path.insert(0, str(cognate_path))
-        
+
         try:
             from full_pretraining_pipeline import FullCognateTrainer, FullPretrainingConfig
-            from download_datasets import CognateDatasetDownloader
-            real_training_available = True
+
             logger.info("Successfully imported real pretraining system")
         except ImportError as e:
             logger.warning(f"Real pretraining system not available: {e}")
             # Fallback to enhanced simulation
             return await execute_enhanced_simulation(task_id, parameters)
-        
+
         # Execute real pretraining
         logger.info("Starting real pretraining with 3 nearly identical 25M Cognate models")
-        
+
         # Set up configuration for identical models
         config = FullPretrainingConfig(
             # Model architecture - exactly 25M parameters (using spec from FullPretrainingConfig)
@@ -583,43 +594,38 @@ async def execute_real_cognate_training(task_id: str, parameters: dict[str, Any]
             n_heads=4,
             vocab_size=32000,
             max_seq_len=4096,
-            
             # ACT system configuration
             act_threshold=0.99,
             max_act_steps=16,
             act_epsilon=0.01,
-            
-            # LTM system configuration  
+            # LTM system configuration
             d_mem=216,
             mem_capacity=4096,
             mem_topk=4,
-            
             # Training configuration
             batch_size=8,
             learning_rate=2e-4,
             max_training_steps=10000,  # Reduced for realistic completion time
             gradient_accumulation_steps=4,
-            
             # GrokFast optimization
             grokfast_alpha=0.98,
             grokfast_lamb=2.0,
-            
             # Output configuration
             output_dir=str(cognate_path / "trained_models"),
             save_steps=1000,
             dataset_path=str(cognate_path / "cognate_datasets" / "mixed_training_data.json"),
         )
-        
+
         # Initialize trainer
         trainer = FullCognateTrainer(config)
-        
+
         # Execute real training for 3 models
         training_results = await asyncio.to_thread(trainer.train_three_models)
-        
+
         # Store the trained models in our model storage
         for i, model_result in enumerate(training_results):
             model_id = f"cognate_real_{i+1}_{uuid.uuid4().hex[:8]}"
-            
+
             cognate_model = {
                 "model_id": model_id,
                 "model_name": f"Cognate-25M-Real-{i+1}",
@@ -630,59 +636,58 @@ async def execute_real_cognate_training(task_id: str, parameters: dict[str, Any]
                 "training_mode": "real_pretraining_act_ltm",
                 "random_seed": 42 + i,
                 "ready_for_evomerge": True,
-                
                 # Real training results
                 "training_results": model_result,
                 "final_loss": model_result.get("final_loss", 0.0),
                 "training_steps": model_result.get("training_steps", 0),
                 "validation_accuracy": model_result.get("validation_accuracy", 0.0),
-                
                 # ACT and LTM metrics from real training
                 "act_metrics": model_result.get("act_metrics", {}),
                 "ltm_metrics": model_result.get("ltm_metrics", {}),
-                
                 # Model file path
                 "model_path": model_result.get("model_path", ""),
-                
                 "pretraining_features": [
                     "Real ACT adaptive computation with halting",
-                    "Real LTM cross-attention memory system", 
+                    "Real LTM cross-attention memory system",
                     "GrokFast 50x acceleration implementation",
                     "Surprise x novelty memory gating",
                     "Hebbian plasticity memory updates",
                     "Multi-dataset curriculum (GSM8K, SVAMP, Mini-MBPP)",
                     "Real PyTorch training loop",
-                    "Production-ready 25M parameters"
-                ]
+                    "Production-ready 25M parameters",
+                ],
             }
-            
+
             model_storage[model_id] = cognate_model
-        
-        logger.info(f"Successfully completed real pretraining of 3 Cognate models")
-        
+
+        logger.info("Successfully completed real pretraining of 3 Cognate models")
+
         # Update phase status
-        phase_status["Cognate"].update({
-            "status": "completed",
-            "progress": 1.0,
-            "message": "Real Cognate pretraining completed - 3 models trained",
-            "models_completed": len(training_results.get("models", [])),
-            "total_models": 3,
-            "training_mode": "real_pretraining",
-            "training_duration_hours": training_results.get("total_duration_hours", 0.0),
-        })
-        
+        phase_status["Cognate"].update(
+            {
+                "status": "completed",
+                "progress": 1.0,
+                "message": "Real Cognate pretraining completed - 3 models trained",
+                "models_completed": len(training_results.get("models", [])),
+                "total_models": 3,
+                "training_mode": "real_pretraining",
+                "training_duration_hours": training_results.get("total_duration_hours", 0.0),
+            }
+        )
+
         logger.info(f"Real Cognate training completed successfully for task: {task_id}")
-        
+
     except Exception as e:
         logger.error(f"Real Cognate training failed for task {task_id}: {e}")
         # Fall back to enhanced simulation
         logger.info("Falling back to enhanced simulation")
         return await execute_enhanced_simulation(task_id, parameters)
 
+
 async def execute_enhanced_simulation(task_id: str, parameters: dict[str, Any]):
     """Enhanced simulation fallback when real training is not available."""
     logger.info(f"Starting enhanced Cognate training simulation (task: {task_id})")
-    
+
     try:
         # Complex ACT+LTM pretraining simulation steps
         simulation_steps = [
@@ -691,7 +696,7 @@ async def execute_enhanced_simulation(task_id: str, parameters: dict[str, Any]):
             ("Setting up ACT halting mechanism (16 max steps)", 0.15),
             ("Initializing LTM memory banks (2048 size)", 0.2),
             ("Complex pretraining model 1/3: ACT+LTM+GrokFast", 0.45),
-            ("Complex pretraining model 2/3: ACT+LTM+GrokFast", 0.7), 
+            ("Complex pretraining model 2/3: ACT+LTM+GrokFast", 0.7),
             ("Complex pretraining model 3/3: ACT+LTM+GrokFast", 0.9),
             ("Consolidating LTM memory banks with Hebbian plasticity", 0.95),
             ("Saving 3 nearly identical models with ACT+LTM", 0.98),
@@ -706,15 +711,19 @@ async def execute_enhanced_simulation(task_id: str, parameters: dict[str, Any]):
                 # Each model takes 2+ hours due to ACT halting complexity and LTM memory consolidation
                 training_duration = 7200  # 2 hours per model minimum for ACT+LTM complexity
                 logger.info(f"Starting complex ACT+LTM pretraining: {training_duration/3600:.1f} hours for {step_name}")
-                logger.info(f"Training includes: ACT adaptive halting, LTM cross-attention, surprise x novelty gating")
-                
+                logger.info("Training includes: ACT adaptive halting, LTM cross-attention, surprise x novelty gating")
+
                 # Break training into smaller progress updates every 5 minutes
                 update_interval = 300  # 5 minutes
                 num_updates = training_duration // update_interval
-                
+
                 for update in range(num_updates):
                     # Calculate progress within the current step's range
-                    step_start = progress - 0.25 if "model 3/3" in step_name else progress - 0.25 if "model 2/3" in step_name else progress
+                    step_start = (
+                        progress - 0.25
+                        if "model 3/3" in step_name
+                        else progress - 0.25 if "model 2/3" in step_name else progress
+                    )
                     step_end = progress
                     partial_progress = step_start + (update / num_updates) * (step_end - step_start)
                     # Ensure progress never exceeds 1.0
@@ -722,9 +731,11 @@ async def execute_enhanced_simulation(task_id: str, parameters: dict[str, Any]):
                     # Add ACT+LTM specific progress indicators
                     act_detail = f"ACT halting rate: {73 + (update % 5)}%"
                     ltm_detail = f"LTM memory usage: {1800 + (update * 3)} tokens"
-                    await update_training_progress(partial_progress, f"{step_name} - {(update+1)*5}min | {act_detail} | {ltm_detail}")
+                    await update_training_progress(
+                        partial_progress, f"{step_name} - {(update+1)*5}min | {act_detail} | {ltm_detail}"
+                    )
                     await asyncio.sleep(update_interval)
-                    
+
             elif "Downloading datasets" in step_name:
                 await asyncio.sleep(300)  # 5 minutes for dataset download
             elif "Initializing" in step_name:
@@ -734,7 +745,7 @@ async def execute_enhanced_simulation(task_id: str, parameters: dict[str, Any]):
 
         # Create 3 nearly identical Cognate models with complex ACT+LTM pretraining
         cognate_models_created = []
-        
+
         # Base configuration shared by all 3 models (nearly identical)
         base_training_config = {
             "act_system": {
@@ -743,36 +754,31 @@ async def execute_enhanced_simulation(task_id: str, parameters: dict[str, Any]):
                 "max_computation_steps": 16,
                 "halting_penalty": 0.01,
                 "surprise_gating": True,
-                "novelty_detection": True
+                "novelty_detection": True,
             },
             "ltm_system": {
-                "enabled": True, 
+                "enabled": True,
                 "memory_bank_size": 2048,
                 "cross_attention_heads": 16,
                 "memory_update_rule": "surprise_x_novelty",
                 "retrieval_mechanism": "attention_weighted",
-                "memory_consolidation": "hebbian_plasticity"
+                "memory_consolidation": "hebbian_plasticity",
             },
-            "grokfast_config": {
-                "alpha": 0.98,
-                "lambda": 2.0,
-                "warmup_steps": 1000,
-                "acceleration_factor": 50.0
-            },
+            "grokfast_config": {"alpha": 0.98, "lambda": 2.0, "warmup_steps": 1000, "acceleration_factor": 50.0},
             "training_curriculum": {
                 "datasets": ["GSM8K", "SVAMP", "Mini-MBPP", "HotpotQA", "MuSiQue"],
                 "curriculum_order": "difficulty_progressive",
                 "multi_task_learning": True,
-                "thought_supervision": True
-            }
+                "thought_supervision": True,
+            },
         }
-        
+
         for i in range(3):
             model_id = f"cognate_identical_{i+1}_{uuid.uuid4().hex[:8]}"
-            
+
             # Nearly identical models with tiny random variations for diversity
             random_seed = 42 + i  # Controlled randomness for reproducibility
-            
+
             cognate_model = {
                 "model_id": model_id,
                 "model_name": f"Cognate-25M-Identical-{i+1}",
@@ -783,31 +789,25 @@ async def execute_enhanced_simulation(task_id: str, parameters: dict[str, Any]):
                 "training_mode": "enhanced_simulation_act_ltm",
                 "random_seed": random_seed,  # Only difference between models
                 "ready_for_evomerge": True,
-                
                 # Identical ACT system across all models
                 "act_system": base_training_config["act_system"].copy(),
-                
-                # Identical LTM system across all models  
+                # Identical LTM system across all models
                 "ltm_system": base_training_config["ltm_system"].copy(),
-                
                 # Identical GrokFast optimization
                 "grokfast_config": base_training_config["grokfast_config"].copy(),
-                
                 # Identical training curriculum
                 "training_curriculum": base_training_config["training_curriculum"].copy(),
-                
                 # Complex pretraining features (identical across models)
                 "pretraining_features": [
                     "ACT adaptive computation with halting mechanism",
-                    "LTM cross-attention memory consolidation", 
+                    "LTM cross-attention memory consolidation",
                     "GrokFast 50x acceleration (α=0.98, λ=2.0)",
                     "Surprise × novelty memory gating",
                     "Hebbian plasticity memory updates",
                     "Multi-dataset curriculum learning",
                     "Thought supervision training",
-                    "Train-many/infer-few paradigm (16→2 steps)"
+                    "Train-many/infer-few paradigm (16→2 steps)",
                 ],
-                
                 # Training artifacts (nearly identical with tiny variations)
                 "artifacts": {
                     "training_duration_hours": 2.05 + (i * 0.001),  # Nearly identical durations
@@ -816,16 +816,22 @@ async def execute_enhanced_simulation(task_id: str, parameters: dict[str, Any]):
                     "act_halting_rate": 0.73 + (i * 0.002),  # Slight ACT halting variations
                     "ltm_memory_usage": 1847 + (i * 5),  # Memory bank usage variations
                     "grokfast_acceleration_achieved": 49.2 + (i * 0.3),
-                    "note": "Complex ACT+LTM pretraining with nearly identical configuration"
-                }
+                    "note": "Complex ACT+LTM pretraining with nearly identical configuration",
+                },
             }
-            
+
             model_storage[model_id] = cognate_model
             cognate_models_created.append(cognate_model)
-            
-        logger.info(f"Created 3 nearly identical Cognate models with complex ACT+LTM pretraining: {[m['model_name'] for m in cognate_models_created]}")
-        logger.info(f"All models use identical ACT system: {base_training_config['act_system']['max_computation_steps']} max steps, {base_training_config['act_system']['halting_threshold']} threshold")
-        logger.info(f"All models use identical LTM system: {base_training_config['ltm_system']['memory_bank_size']} memory bank, {base_training_config['ltm_system']['cross_attention_heads']} heads")
+
+        logger.info(
+            f"Created 3 nearly identical Cognate models with complex ACT+LTM pretraining: {[m['model_name'] for m in cognate_models_created]}"
+        )
+        logger.info(
+            f"All models use identical ACT system: {base_training_config['act_system']['max_computation_steps']} max steps, {base_training_config['act_system']['halting_threshold']} threshold"
+        )
+        logger.info(
+            f"All models use identical LTM system: {base_training_config['ltm_system']['memory_bank_size']} memory bank, {base_training_config['ltm_system']['cross_attention_heads']} heads"
+        )
 
         # Complete the phase
         phase_status["Cognate"].update(
@@ -838,9 +844,9 @@ async def execute_enhanced_simulation(task_id: str, parameters: dict[str, Any]):
                 "training_mode": "enhanced_simulation",
             }
         )
-        
+
         logger.info(f"Enhanced simulation completed successfully for task: {task_id}")
-        
+
     except Exception as e:
         logger.error(f"Enhanced simulation failed for task {task_id}: {e}")
         # Mark phase as failed
@@ -863,9 +869,9 @@ async def update_training_progress(progress: float, message: str, phase_name: st
             "message": "Initializing...",
             "models_created": 0,
             "current_step": "setup",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
-    
+
     phase_status[phase_name].update(
         {"progress": progress, "message": message, "current_step": message, "timestamp": datetime.now().isoformat()}
     )
@@ -953,7 +959,7 @@ async def health():
 async def force_complete_cognate():
     """Force complete Cognate phase - recreate the 3 fallback models if needed."""
     cognate_models = get_models_from_phase("Cognate")
-    
+
     # If models don't exist (due to backend restart), recreate them as fallback models
     if len(cognate_models) < 3:
         logger.info("Recreating 3 fallback Cognate models from previous session")
@@ -971,36 +977,37 @@ async def force_complete_cognate():
                 "ready_for_evomerge": True,
                 "training_results": {
                     "status": "fallback_created",
-                    "note": "Recreated after backend restart - original real training failed"
+                    "note": "Recreated after backend restart - original real training failed",
                 },
                 "pretraining_features": [
                     "Fallback model after real training failure",
                     "25M parameters with ACT+LTM architecture",
                     "Ready for EvoMerge evolutionary optimization",
-                    "Created from previous session state"
-                ]
+                    "Created from previous session state",
+                ],
             }
             model_storage[model_id] = fallback_model
-        
+
         cognate_models = get_models_from_phase("Cognate")
         logger.info(f"Recreated {len(cognate_models)} fallback Cognate models")
-    
+
     # Mark phase as completed
     phase_status["Cognate"] = {
-        "status": "completed", 
+        "status": "completed",
         "progress": 1.0,
         "message": f"✅ Cognate phase completed - {len(cognate_models)} models ready for EvoMerge",
         "models_completed": len(cognate_models),
         "total_models": 3,
         "training_mode": "completed_with_fallback_models",
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
-    
+
     return {
-        "status": "success", 
+        "status": "success",
         "message": f"Cognate phase marked as completed with {len(cognate_models)} models",
-        "models": [m["model_name"] for m in cognate_models]
+        "models": [m["model_name"] for m in cognate_models],
     }
+
 
 @app.post("/phases/cognate/start")
 async def start_cognate_training(request: PhaseStartRequest, background_tasks: BackgroundTasks):
@@ -1043,10 +1050,11 @@ async def start_cognate_training(request: PhaseStartRequest, background_tasks: B
 # PHASE 2: EVOMERGE - EVOLUTIONARY MODEL MERGING
 # =============================================================================
 
+
 @app.post("/phases/evomerge/start")
 async def start_evomerge_phase(request: PhaseStartRequest, background_tasks: BackgroundTasks):
     """Start EvoMerge evolutionary model merging phase."""
-    
+
     # Validate prerequisites using new handoff system
     prerequisites_ok, message, available_models = validate_phase_prerequisites("EvoMerge")
     if not prerequisites_ok:
@@ -1055,13 +1063,13 @@ async def start_evomerge_phase(request: PhaseStartRequest, background_tasks: Bac
             "message": message,
             "required_phase": "Cognate",
             "available_models": len(available_models),
-            "required_models": 3
+            "required_models": 3,
         }
-    
+
     task_id = str(uuid.uuid4())
-    
+
     background_tasks.add_task(execute_evomerge_phase, task_id, request.parameters or {})
-    
+
     return {
         "status": "started",
         "task_id": task_id,
@@ -1074,56 +1082,57 @@ async def start_evomerge_phase(request: PhaseStartRequest, background_tasks: Bac
             "Population size: 8 candidates",
             "Multi-objective optimization",
             "Tournament selection",
-            "Real-time evolution tracking"
-        ]
+            "Real-time evolution tracking",
+        ],
     }
+
 
 async def execute_evomerge_phase(task_id: str, parameters: dict[str, Any]):
     """Execute REAL EvoMerge evolutionary model merging."""
     logger.info(f"🧬 Starting REAL EvoMerge evolution (task: {task_id})")
-    
+
     try:
         # Import the real EvoMerge implementation
         import sys
         from pathlib import Path
-        
-        # Add core agent-forge path
-        agent_forge_path = Path(__file__).parent.parent.parent / "core" / "agent-forge"
+
+        # Add core agent_forge path
+        agent_forge_path = Path(__file__).parent.parent.parent / "core" / "agent_forge"
         sys.path.insert(0, str(agent_forge_path))
-        
+
         try:
             # Check if torch is available
             if not TORCH_AVAILABLE:
                 raise ImportError("PyTorch not available")
-            
+
             # Import our existing EvoMerge system with correct path
-            agent_forge_dir = current_dir.parent.parent / "core" / "agent-forge"
+            agent_forge_dir = current_dir.parent.parent / "core" / "agent_forge"
             if str(agent_forge_dir) not in sys.path:
                 sys.path.insert(0, str(agent_forge_dir))
-            
+
             from phases.evomerge import EvoMergePhase, EvoMergeConfig
-            real_evomerge_available = True
+
             logger.info("✅ Successfully imported real EvoMerge system")
         except (ImportError, NameError) as e:
             logger.warning(f"❌ Real EvoMerge system not available: {e}")
             # Fall back to enhanced simulation
             return await execute_evomerge_simulation(task_id, parameters)
-        
+
         # Get the 3 Cognate models using handoff system
         cognate_models = get_models_from_phase("Cognate")
         logger.info(f"🤝 Received {len(cognate_models)} Cognate models for evolutionary merging")
-        
+
         # Extract model paths from our created PyTorch models
         model_paths = []
         cognate_models_dir = Path(__file__).parent.parent.parent / "cognate_models"
-        
+
         for model in cognate_models:
             model_path = model.get("model_path", "")
             if not model_path or not Path(model_path).exists():
                 # Use our actual PyTorch model directories (EvoMerge expects model dirs, not files)
-                model_name = model['model_name']
+                model_name = model["model_name"]
                 model_dir = cognate_models_dir / model_name
-                
+
                 if model_dir.exists() and (model_dir / "pytorch_model.bin").exists():
                     model_path = str(model_dir)
                     logger.info(f"🔍 Found real PyTorch model directory: {model_path}")
@@ -1133,17 +1142,17 @@ async def execute_evomerge_phase(task_id: str, parameters: dict[str, Any]):
                     model_path = f"./cognate_models/{model_name}"
                     logger.warning(f"⚠️  Using placeholder path: {model_path}")
             model_paths.append(model_path)
-        
+
         logger.info(f"📁 Model paths for EvoMerge: {model_paths}")
-        
+
         # Create handoff records for each input model
         for model in cognate_models:
             create_model_handoff("Cognate", "EvoMerge", model)
-        
+
         # Initialize phase status
         phase_status["EvoMerge"] = {
             "phase_name": "EvoMerge",
-            "status": "running", 
+            "status": "running",
             "progress": 0.0,
             "message": "🧬 Initializing REAL evolutionary optimization",
             "start_time": datetime.now().isoformat(),
@@ -1152,16 +1161,12 @@ async def execute_evomerge_phase(task_id: str, parameters: dict[str, Any]):
             "generation": 0,
             "population_size": 8,
             "techniques": ["linear", "slerp", "ties", "dare", "frankenmerge", "dfs"],
-            "mode": "real_evolution"
+            "mode": "real_evolution",
         }
-        
+
         # Broadcast initial status
-        await manager.broadcast({
-            "type": "phase_update",
-            "phase_name": "EvoMerge", 
-            "data": phase_status["EvoMerge"]
-        })
-        
+        await manager.broadcast({"type": "phase_update", "phase_name": "EvoMerge", "data": phase_status["EvoMerge"]})
+
         # Configure EvoMerge
         config = EvoMergeConfig(
             base_models=model_paths,
@@ -1169,38 +1174,38 @@ async def execute_evomerge_phase(task_id: str, parameters: dict[str, Any]):
             population_size=8,
             output_dir="./evomerge_output",
             device="cuda" if torch.cuda.is_available() else "cpu",
-            merge_techniques=["linear", "slerp", "ties", "dare", "frankenmerge", "dfs"]
+            merge_techniques=["linear", "slerp", "ties", "dare", "frankenmerge", "dfs"],
         )
-        
+
         # Initialize EvoMerge phase
         evomerge_phase = EvoMergePhase(config)
-        
+
         # Create progress callback for real-time updates
         async def progress_callback(generation: int, progress: float, message: str, best_fitness: float = None):
-            phase_status["EvoMerge"].update({
-                "progress": progress,
-                "message": f"🧬 Gen {generation+1}/50: {message}",
-                "generation": generation + 1,
-                "best_fitness": best_fitness or 0.0
-            })
-            
-            await manager.broadcast({
-                "type": "phase_update",
-                "phase_name": "EvoMerge", 
-                "data": phase_status["EvoMerge"]
-            })
-        
+            phase_status["EvoMerge"].update(
+                {
+                    "progress": progress,
+                    "message": f"🧬 Gen {generation+1}/50: {message}",
+                    "generation": generation + 1,
+                    "best_fitness": best_fitness or 0.0,
+                }
+            )
+
+            await manager.broadcast(
+                {"type": "phase_update", "phase_name": "EvoMerge", "data": phase_status["EvoMerge"]}
+            )
+
         # Execute REAL evolutionary optimization
         logger.info("🔥 Starting REAL 50-generation evolutionary optimization...")
         evolution_results = await asyncio.to_thread(evomerge_phase.run, model_paths)
-        
+
         # Extract winner model from results
         winner_candidate = evolution_results.get("winner_model")
         if winner_candidate:
             evolved_model_id = str(uuid.uuid4())
             winner_model = {
                 "model_id": evolved_model_id,
-                "model_name": f"EvoMerge-Gen50-Winner-Real",
+                "model_name": "EvoMerge-Gen50-Winner-Real",
                 "phase_name": "EvoMerge",
                 "parameter_count": 25_083_528,  # Maintained from Cognate models
                 "training_mode": "real_evolutionary_optimization",
@@ -1212,43 +1217,48 @@ async def execute_evomerge_phase(task_id: str, parameters: dict[str, Any]):
                 "evolutionary_techniques": ["linear", "slerp", "ties", "dare", "frankenmerge", "dfs"],
                 "selection_criteria": "highest_fitness_multi_objective",
                 "created_at": datetime.now().isoformat(),
-                "evolution_details": evolution_results.get("evolution_summary", {})
+                "evolution_details": evolution_results.get("evolution_summary", {}),
             }
-            
+
             model_storage[evolved_model_id] = winner_model
-            logger.info(f"🏆 Stored winner model: {winner_model['model_name']} (fitness: {winner_model['fitness_score']:.3f})")
-        
+            logger.info(
+                f"🏆 Stored winner model: {winner_model['model_name']} (fitness: {winner_model['fitness_score']:.3f})"
+            )
+
         # Complete the phase
-        phase_status["EvoMerge"].update({
-            "status": "completed",
-            "progress": 1.0,
-            "message": f"✅ REAL Evolution completed - Best fitness: {winner_candidate.get('aggregated_fitness', 0.0):.3f}",
-            "models_completed": 1,
-            "total_models": 1,
-            "final_generation": evolution_results.get("final_generation", 50),
-            "best_fitness": winner_candidate.get("aggregated_fitness", 0.0),
-            "evolution_mode": "real_evolutionary_optimization"
-        })
-        
+        phase_status["EvoMerge"].update(
+            {
+                "status": "completed",
+                "progress": 1.0,
+                "message": f"✅ REAL Evolution completed - Best fitness: {winner_candidate.get('aggregated_fitness', 0.0):.3f}",
+                "models_completed": 1,
+                "total_models": 1,
+                "final_generation": evolution_results.get("final_generation", 50),
+                "best_fitness": winner_candidate.get("aggregated_fitness", 0.0),
+                "evolution_mode": "real_evolutionary_optimization",
+            }
+        )
+
         logger.info(f"🧬 REAL EvoMerge evolution completed successfully for task: {task_id}")
-        
+
     except Exception as e:
         logger.error(f"REAL EvoMerge evolution failed for task {task_id}: {e}")
         # Fall back to enhanced simulation
         logger.info("Falling back to enhanced EvoMerge simulation")
         return await execute_evomerge_simulation(task_id, parameters)
 
+
 async def execute_evomerge_simulation(task_id: str, parameters: dict[str, Any]):
     """Enhanced EvoMerge simulation fallback when real evolution is not available."""
     logger.info(f"Starting enhanced EvoMerge simulation (task: {task_id})")
-    
+
     # Get the 3 Cognate models using handoff system
     cognate_models = get_models_from_phase("Cognate")
     logger.info(f"🤝 Received {len(cognate_models)} Cognate models for simulated evolutionary merging")
-    
+
     phase_status["EvoMerge"] = {
         "phase_name": "EvoMerge",
-        "status": "running", 
+        "status": "running",
         "progress": 0.0,
         "message": "🧬 Initializing evolutionary optimization simulation",
         "start_time": datetime.now().isoformat(),
@@ -1257,9 +1267,9 @@ async def execute_evomerge_simulation(task_id: str, parameters: dict[str, Any]):
         "generation": 0,
         "population_size": 8,
         "techniques": ["linear", "slerp", "ties", "dare", "frankenmerge", "dfs"],
-        "mode": "simulation"
+        "mode": "simulation",
     }
-    
+
     # Simulate evolution process with more realistic progress
     evolution_steps = [
         ("Creating initial population (8 candidates)", 0.05),
@@ -1270,33 +1280,25 @@ async def execute_evomerge_simulation(task_id: str, parameters: dict[str, Any]):
         ("Generation 31-40: DFS (Depth-First Search) merging", 0.70),
         ("Generation 41-50: Tournament selection refinement", 0.85),
         ("Final evaluation and winner selection", 0.95),
-        ("Saving optimal merged model", 1.0)
+        ("Saving optimal merged model", 1.0),
     ]
-    
+
     for step_name, progress in evolution_steps:
-        phase_status["EvoMerge"].update({
-            "progress": progress,
-            "message": f"🧬 {step_name}",
-            "current_step": step_name
-        })
-        
-        await manager.broadcast({
-            "type": "phase_update",
-            "phase_name": "EvoMerge", 
-            "data": phase_status["EvoMerge"]
-        })
-        
+        phase_status["EvoMerge"].update({"progress": progress, "message": f"🧬 {step_name}", "current_step": step_name})
+
+        await manager.broadcast({"type": "phase_update", "phase_name": "EvoMerge", "data": phase_status["EvoMerge"]})
+
         # Realistic timing for evolution steps
         if "Generation" in step_name:
             await asyncio.sleep(3)  # 3 seconds per generation block
         else:
             await asyncio.sleep(1)  # 1 second for setup/evaluation steps
-    
+
     # Create evolved winner model from simulation
     evolved_model_id = str(uuid.uuid4())
     winner_model = {
         "model_id": evolved_model_id,
-        "model_name": f"EvoMerge-Gen50-Winner-Sim",
+        "model_name": "EvoMerge-Gen50-Winner-Sim",
         "phase_name": "EvoMerge",
         "parameter_count": 25_083_528,  # Maintained from Cognate models
         "training_mode": "evolutionary_optimization_simulation",
@@ -1306,66 +1308,70 @@ async def execute_evomerge_simulation(task_id: str, parameters: dict[str, Any]):
         "base_models": [m["model_id"] for m in cognate_models],  # Track source models
         "evolutionary_techniques": ["linear", "slerp", "ties", "dare", "frankenmerge", "dfs"],
         "selection_criteria": "highest_fitness_multi_objective_simulation",
-        "created_at": datetime.now().isoformat()
+        "created_at": datetime.now().isoformat(),
     }
-    
+
     model_storage[evolved_model_id] = winner_model
-    
+
     # Complete the phase
-    phase_status["EvoMerge"].update({
-        "status": "completed",
-        "progress": 1.0,
-        "message": "✅ Evolution simulation completed - Best candidate selected",
-        "models_completed": 1,
-        "total_models": 1,
-        "final_generation": 50,
-        "best_fitness": 0.924,
-        "evolution_mode": "enhanced_simulation"
-    })
-    
+    phase_status["EvoMerge"].update(
+        {
+            "status": "completed",
+            "progress": 1.0,
+            "message": "✅ Evolution simulation completed - Best candidate selected",
+            "models_completed": 1,
+            "total_models": 1,
+            "final_generation": 50,
+            "best_fitness": 0.924,
+            "evolution_mode": "enhanced_simulation",
+        }
+    )
+
     logger.info(f"🧬 Enhanced EvoMerge simulation completed successfully for task: {task_id}")
-    
+
     # Create handoff record for the winner model
     create_model_handoff("EvoMerge", "Quiet-STaR", winner_model)
-    
-    logger.info(f"🏆 EvoMerge winner selected: {winner_model['model_name']} (fitness: {winner_model['fitness_score']:.3f})")
-    
-    phase_status["EvoMerge"].update({
-        "status": "completed",
-        "progress": 1.0,
-        "message": "✅ Evolution completed - Best candidate selected",
-        "evolved_model_id": evolved_model_id
-    })
-    
-    await manager.broadcast({
-        "type": "phase_complete",
-        "phase_name": "EvoMerge",
-        "data": phase_status["EvoMerge"]
-    })
+
+    logger.info(
+        f"🏆 EvoMerge winner selected: {winner_model['model_name']} (fitness: {winner_model['fitness_score']:.3f})"
+    )
+
+    phase_status["EvoMerge"].update(
+        {
+            "status": "completed",
+            "progress": 1.0,
+            "message": "✅ Evolution completed - Best candidate selected",
+            "evolved_model_id": evolved_model_id,
+        }
+    )
+
+    await manager.broadcast({"type": "phase_complete", "phase_name": "EvoMerge", "data": phase_status["EvoMerge"]})
+
 
 # =============================================================================
-# PHASE 3: QUIET-STAR - REASONING THOUGHT BAKING  
+# PHASE 3: QUIET-STAR - REASONING THOUGHT BAKING
 # =============================================================================
+
 
 @app.post("/phases/quietstar/start")
 async def start_quietstar_phase(request: PhaseStartRequest, background_tasks: BackgroundTasks):
     """Start Quiet-STaR reasoning thought baking phase."""
-    
+
     # Validate prerequisites using new handoff system
     prerequisites_ok, message, available_models = validate_phase_prerequisites("Quiet-STaR")
     if not prerequisites_ok:
         return {
             "status": "error",
             "message": message,
-            "required_phase": "EvoMerge", 
+            "required_phase": "EvoMerge",
             "available_models": len(available_models),
-            "required_models": 1
+            "required_models": 1,
         }
-    
+
     task_id = str(uuid.uuid4())
-    
+
     background_tasks.add_task(execute_quietstar_phase, task_id, request.parameters or {})
-    
+
     return {
         "status": "started",
         "task_id": task_id,
@@ -1373,32 +1379,33 @@ async def start_quietstar_phase(request: PhaseStartRequest, background_tasks: Ba
         "message": "Quiet-STaR thought baking initiated",
         "description": "Enhanced reasoning with baked thought processes",
         "features": [
-            "32-token thought sequences", 
+            "32-token thought sequences",
             "4 parallel thoughts per input",
             "1000 training steps with thought optimization",
             "Reasoning enhancement through thought baking",
             "Silent reasoning capability development",
-            "Thought-to-action pathway training"
-        ]
+            "Thought-to-action pathway training",
+        ],
     }
+
 
 async def execute_quietstar_phase(task_id: str, parameters: dict[str, Any]):
     """Execute Quiet-STaR reasoning enhancement."""
     logger.info(f"🤔 Starting Quiet-STaR thought baking (task: {task_id})")
-    
+
     phase_status["Quiet-STaR"] = {
         "phase_name": "Quiet-STaR",
         "status": "running",
-        "progress": 0.0, 
+        "progress": 0.0,
         "message": "🤔 Initializing thought baking process",
         "start_time": datetime.now().isoformat(),
         "task_id": task_id,
         "thought_length": 32,
         "num_thoughts": 4,
         "training_steps": 1000,
-        "current_step": 0
+        "current_step": 0,
     }
-    
+
     # Simulate thought baking process
     for step in range(1000):
         progress = step / 1000.0
@@ -1409,58 +1416,62 @@ async def execute_quietstar_phase(task_id: str, parameters: dict[str, Any]):
                 "progress": 0.0,
                 "message": "Starting Quiet-STaR...",
                 "task_id": task_id,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
-            
-        phase_status["Quiet-STaR"].update({
-            "progress": progress,
-            "message": f"🤔 Baking thoughts - Step {step+1}/1000",
-            "current_step": step + 1,
-            "thought_quality": min(0.9, 0.3 + (progress * 0.6))
-        })
-        
+
+        phase_status["Quiet-STaR"].update(
+            {
+                "progress": progress,
+                "message": f"🤔 Baking thoughts - Step {step+1}/1000",
+                "current_step": step + 1,
+                "thought_quality": min(0.9, 0.3 + (progress * 0.6)),
+            }
+        )
+
         if step % 50 == 0:  # Update every 50 steps
-            await manager.broadcast({
-                "type": "phase_update",
-                "phase_name": "Quiet-STaR",
-                "data": phase_status["Quiet-STaR"]
-            })
-        
+            await manager.broadcast(
+                {"type": "phase_update", "phase_name": "Quiet-STaR", "data": phase_status["Quiet-STaR"]}
+            )
+
         await asyncio.sleep(0.05)
-    
+
     # Create enhanced model
     enhanced_model_id = str(uuid.uuid4())
     model_storage[enhanced_model_id] = {
         "model_id": enhanced_model_id,
         "model_name": "Quiet-STaR-Enhanced",
-        "phase_name": "Quiet-STaR", 
+        "phase_name": "Quiet-STaR",
         "parameter_count": 25_000_000,
         "training_mode": "thought_baking",
         "reasoning_capability": "enhanced",
         "thought_quality": 0.89,
-        "created_at": datetime.now().isoformat()
+        "created_at": datetime.now().isoformat(),
     }
-    
-    phase_status["Quiet-STaR"].update({
-        "status": "completed",
-        "progress": 1.0,
-        "message": "✅ Thought baking completed - Reasoning enhanced",
-        "enhanced_model_id": enhanced_model_id
-    })
 
-# =============================================================================  
+    phase_status["Quiet-STaR"].update(
+        {
+            "status": "completed",
+            "progress": 1.0,
+            "message": "✅ Thought baking completed - Reasoning enhanced",
+            "enhanced_model_id": enhanced_model_id,
+        }
+    )
+
+
+# =============================================================================
 # PHASE 4: BITNET 1.58-BIT QUANTIZATION
 # =============================================================================
 
-@app.post("/phases/bitnet/start") 
+
+@app.post("/phases/bitnet/start")
 async def start_bitnet_phase(request: PhaseStartRequest, background_tasks: BackgroundTasks):
     """Start BitNet 1.58-bit quantization compression phase."""
     task_id = str(uuid.uuid4())
-    
+
     background_tasks.add_task(execute_bitnet_phase, task_id, request.parameters or {})
-    
+
     return {
-        "status": "started", 
+        "status": "started",
         "task_id": task_id,
         "phase_name": "BitNet",
         "message": "BitNet 1.58-bit quantization started",
@@ -1469,37 +1480,38 @@ async def start_bitnet_phase(request: PhaseStartRequest, background_tasks: Backg
             "1.58-bit ternary quantization {-1, 0, +1}",
             "8x memory compression",
             "Preserved critical layer precision",
-            "Group-wise quantization (128 groups)", 
+            "Group-wise quantization (128 groups)",
             "Calibration with 100 samples",
-            "Fine-tuning recovery training"
-        ]
+            "Fine-tuning recovery training",
+        ],
     }
+
 
 async def execute_bitnet_phase(task_id: str, parameters: dict[str, Any]):
     """Execute BitNet 1.58-bit quantization."""
     logger.info(f"🔢 Starting BitNet quantization (task: {task_id})")
-    
+
     phase_status["BitNet"] = {
         "phase_name": "BitNet",
         "status": "running",
         "progress": 0.0,
         "message": "🔢 Initializing 1.58-bit quantization",
-        "start_time": datetime.now().isoformat(), 
+        "start_time": datetime.now().isoformat(),
         "task_id": task_id,
         "target_bits": 1.58,
         "compression_ratio": "8x",
-        "quantization_levels": 3
+        "quantization_levels": 3,
     }
-    
+
     # Simulate quantization stages
     stages = [
         ("Analyzing weight distributions", 0.2),
         ("Applying ternary quantization", 0.5),
         ("Calibrating with samples", 0.7),
         ("Fine-tuning recovery", 0.9),
-        ("Validating compression", 1.0)
+        ("Validating compression", 1.0),
     ]
-    
+
     for stage_name, target_progress in stages:
         # Ensure phase status exists
         if "BitNet" not in phase_status:
@@ -1508,22 +1520,15 @@ async def execute_bitnet_phase(task_id: str, parameters: dict[str, Any]):
                 "progress": 0.0,
                 "message": "Starting BitNet...",
                 "task_id": task_id,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
-            
-        phase_status["BitNet"].update({
-            "progress": target_progress,
-            "message": f"🔢 {stage_name}..."
-        })
-        
-        await manager.broadcast({
-            "type": "phase_update", 
-            "phase_name": "BitNet",
-            "data": phase_status["BitNet"]
-        })
-        
+
+        phase_status["BitNet"].update({"progress": target_progress, "message": f"🔢 {stage_name}..."})
+
+        await manager.broadcast({"type": "phase_update", "phase_name": "BitNet", "data": phase_status["BitNet"]})
+
         await asyncio.sleep(2)
-    
+
     # Create compressed model
     compressed_model_id = str(uuid.uuid4())
     model_storage[compressed_model_id] = {
@@ -1532,30 +1537,34 @@ async def execute_bitnet_phase(task_id: str, parameters: dict[str, Any]):
         "phase_name": "BitNet",
         "parameter_count": 25_000_000,
         "compressed_size": "3.125MB",  # 8x compression
-        "training_mode": "bitnet_quantization", 
+        "training_mode": "bitnet_quantization",
         "bits": 1.58,
         "compression_ratio": 8,
-        "created_at": datetime.now().isoformat()
+        "created_at": datetime.now().isoformat(),
     }
-    
-    phase_status["BitNet"].update({
-        "status": "completed",
-        "progress": 1.0,
-        "message": "✅ 1.58-bit quantization completed - 8x compression achieved",
-        "compressed_model_id": compressed_model_id
-    })
+
+    phase_status["BitNet"].update(
+        {
+            "status": "completed",
+            "progress": 1.0,
+            "message": "✅ 1.58-bit quantization completed - 8x compression achieved",
+            "compressed_model_id": compressed_model_id,
+        }
+    )
+
 
 # =============================================================================
 # PHASE 5: FORGE TRAINING - GROKFAST + EDGE-OF-CHAOS + DREAMING
 # =============================================================================
 
+
 @app.post("/phases/forge-training/start")
 async def start_forge_training_phase(request: PhaseStartRequest, background_tasks: BackgroundTasks):
     """Start Forge Training with Grokfast, edge-of-chaos, and dreaming."""
     task_id = str(uuid.uuid4())
-    
+
     background_tasks.add_task(execute_forge_training_phase, task_id, request.parameters or {})
-    
+
     return {
         "status": "started",
         "task_id": task_id,
@@ -1568,14 +1577,15 @@ async def start_forge_training_phase(request: PhaseStartRequest, background_task
             "Self-modeling with TAP layers [4, 8, 12]",
             "Dream cycles every 1000 steps",
             "Adaptive computation time (ACT)",
-            "50x training acceleration"
-        ]
+            "50x training acceleration",
+        ],
     }
+
 
 async def execute_forge_training_phase(task_id: str, parameters: dict[str, Any]):
     """Execute Forge Training with advanced techniques."""
     logger.info(f"🔥 Starting Forge Training (task: {task_id})")
-    
+
     phase_status["Forge Training"] = {
         "phase_name": "Forge Training",
         "status": "running",
@@ -1587,18 +1597,18 @@ async def execute_forge_training_phase(task_id: str, parameters: dict[str, Any])
         "edge_success_rate": 0.65,
         "dream_cycles": 0,
         "total_steps": 100000,
-        "current_step": 0
+        "current_step": 0,
     }
-    
+
     # Simulate training with dream cycles
     for step in range(100000):
         progress = step / 100000.0
         grokfast_level = min(10, int(progress * 10) + 1)
-        
+
         # Simulate dream cycle every 1000 steps
         is_dreaming = (step % 1000) < 50
         dream_cycles = step // 1000
-        
+
         # Ensure phase status exists
         if "Forge Training" not in phase_status:
             phase_status["Forge Training"] = {
@@ -1609,27 +1619,27 @@ async def execute_forge_training_phase(task_id: str, parameters: dict[str, Any])
                 "timestamp": datetime.now().isoformat(),
                 "grokfast_level": 1,
                 "edge_success_rate": 0.65,
-                "dream_cycles": 0
+                "dream_cycles": 0,
             }
-            
-        phase_status["Forge Training"].update({
-            "progress": progress,
-            "current_step": step + 1,
-            "grokfast_level": grokfast_level,
-            "dream_cycles": dream_cycles,
-            "message": f"🔥 {'💭 Dreaming...' if is_dreaming else f'Training Step {step+1}/100000'} (Level {grokfast_level})",
-            "edge_success_rate": 0.55 + (0.2 * progress)  # Gradually improve
-        })
-        
+
+        phase_status["Forge Training"].update(
+            {
+                "progress": progress,
+                "current_step": step + 1,
+                "grokfast_level": grokfast_level,
+                "dream_cycles": dream_cycles,
+                "message": f"🔥 {'💭 Dreaming...' if is_dreaming else f'Training Step {step+1}/100000'} (Level {grokfast_level})",
+                "edge_success_rate": 0.55 + (0.2 * progress),  # Gradually improve
+            }
+        )
+
         if step % 5000 == 0:  # Update every 5000 steps
-            await manager.broadcast({
-                "type": "phase_update",
-                "phase_name": "Forge Training",
-                "data": phase_status["Forge Training"]
-            })
-        
+            await manager.broadcast(
+                {"type": "phase_update", "phase_name": "Forge Training", "data": phase_status["Forge Training"]}
+            )
+
         await asyncio.sleep(0.001)  # Very fast to simulate 50x acceleration
-    
+
     # Create forge-trained model
     trained_model_id = str(uuid.uuid4())
     model_storage[trained_model_id] = {
@@ -1641,27 +1651,31 @@ async def execute_forge_training_phase(task_id: str, parameters: dict[str, Any])
         "grokfast_level": 10,
         "dream_cycles": 100,
         "edge_optimized": True,
-        "created_at": datetime.now().isoformat()
+        "created_at": datetime.now().isoformat(),
     }
-    
-    phase_status["Forge Training"].update({
-        "status": "completed",
-        "progress": 1.0,
-        "message": "✅ Forge training completed - Model optimized with 10-level Grokfast",
-        "trained_model_id": trained_model_id
-    })
+
+    phase_status["Forge Training"].update(
+        {
+            "status": "completed",
+            "progress": 1.0,
+            "message": "✅ Forge training completed - Model optimized with 10-level Grokfast",
+            "trained_model_id": trained_model_id,
+        }
+    )
+
 
 # =============================================================================
 # PHASE 6: TOOL & PERSONA BAKING
 # =============================================================================
 
+
 @app.post("/phases/tool-persona/start")
 async def start_tool_persona_phase(request: PhaseStartRequest, background_tasks: BackgroundTasks):
     """Start Tool & Persona Baking phase."""
     task_id = str(uuid.uuid4())
-    
+
     background_tasks.add_task(execute_tool_persona_phase, task_id, request.parameters or {})
-    
+
     return {
         "status": "started",
         "task_id": task_id,
@@ -1674,14 +1688,15 @@ async def start_tool_persona_phase(request: PhaseStartRequest, background_tasks:
             "DSPy iterative optimization",
             "Half-baked tool use patterns",
             "Identity consolidation",
-            "Capability specialization"
-        ]
+            "Capability specialization",
+        ],
     }
+
 
 async def execute_tool_persona_phase(task_id: str, parameters: dict[str, Any]):
     """Execute Tool & Persona baking."""
     logger.info(f"🛠️ Starting Tool & Persona baking (task: {task_id})")
-    
+
     phase_status["Tool/Persona"] = {
         "phase_name": "Tool/Persona",
         "status": "running",
@@ -1692,9 +1707,9 @@ async def execute_tool_persona_phase(task_id: str, parameters: dict[str, Any]):
         "tools": ["rag_query", "code_execution", "web_search"],
         "persona_traits": {"helpfulness": 0.9, "creativity": 0.7, "precision": 0.8},
         "current_iteration": 0,
-        "dspy_optimizations": 0
+        "dspy_optimizations": 0,
     }
-    
+
     # Simulate tool baking and persona optimization
     stages = [
         ("Integrating RAG query capabilities", 0.15),
@@ -1702,9 +1717,9 @@ async def execute_tool_persona_phase(task_id: str, parameters: dict[str, Any]):
         ("Embedding web search functionality", 0.45),
         ("Optimizing persona traits", 0.6),
         ("DSPy iterative refinement", 0.8),
-        ("Consolidating identity patterns", 1.0)
+        ("Consolidating identity patterns", 1.0),
     ]
-    
+
     for stage_name, target_progress in stages:
         # Ensure phase status exists
         if "Tool/Persona" not in phase_status:
@@ -1713,24 +1728,24 @@ async def execute_tool_persona_phase(task_id: str, parameters: dict[str, Any]):
                 "progress": 0.0,
                 "message": "Starting Tool/Persona...",
                 "task_id": task_id,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
-            
-        phase_status["Tool/Persona"].update({
-            "progress": target_progress,
-            "message": f"🛠️ {stage_name}...",
-            "current_iteration": int(target_progress * 10),
-            "dspy_optimizations": int(target_progress * 5)
-        })
-        
-        await manager.broadcast({
-            "type": "phase_update",
-            "phase_name": "Tool/Persona",
-            "data": phase_status["Tool/Persona"]
-        })
-        
+
+        phase_status["Tool/Persona"].update(
+            {
+                "progress": target_progress,
+                "message": f"🛠️ {stage_name}...",
+                "current_iteration": int(target_progress * 10),
+                "dspy_optimizations": int(target_progress * 5),
+            }
+        )
+
+        await manager.broadcast(
+            {"type": "phase_update", "phase_name": "Tool/Persona", "data": phase_status["Tool/Persona"]}
+        )
+
         await asyncio.sleep(3)
-    
+
     # Create specialized model
     specialized_model_id = str(uuid.uuid4())
     model_storage[specialized_model_id] = {
@@ -1742,27 +1757,31 @@ async def execute_tool_persona_phase(task_id: str, parameters: dict[str, Any]):
         "tools_integrated": 3,
         "persona_optimized": True,
         "dspy_iterations": 5,
-        "created_at": datetime.now().isoformat()
+        "created_at": datetime.now().isoformat(),
     }
-    
-    phase_status["Tool/Persona"].update({
-        "status": "completed",
-        "progress": 1.0,
-        "message": "✅ Tool & Persona baking completed - Identity and capabilities specialized",
-        "specialized_model_id": specialized_model_id
-    })
+
+    phase_status["Tool/Persona"].update(
+        {
+            "status": "completed",
+            "progress": 1.0,
+            "message": "✅ Tool & Persona baking completed - Identity and capabilities specialized",
+            "specialized_model_id": specialized_model_id,
+        }
+    )
+
 
 # =============================================================================
 # PHASE 7: ADAS - TRANSFORMER² ARCHITECTURE SEARCH
 # =============================================================================
 
+
 @app.post("/phases/adas/start")
 async def start_adas_phase(request: PhaseStartRequest, background_tasks: BackgroundTasks):
     """Start ADAS Transformer² architecture discovery phase."""
     task_id = str(uuid.uuid4())
-    
+
     background_tasks.add_task(execute_adas_phase, task_id, request.parameters or {})
-    
+
     return {
         "status": "started",
         "task_id": task_id,
@@ -1775,14 +1794,15 @@ async def start_adas_phase(request: PhaseStartRequest, background_tasks: Backgro
             "Vector composition operators",
             "Population size: 20 architectures",
             "10 generations of evolution",
-            "Pareto front optimization"
-        ]
+            "Pareto front optimization",
+        ],
     }
+
 
 async def execute_adas_phase(task_id: str, parameters: dict[str, Any]):
     """Execute ADAS architecture search."""
     logger.info(f"🏗️ Starting ADAS architecture search (task: {task_id})")
-    
+
     phase_status["ADAS"] = {
         "phase_name": "ADAS",
         "status": "running",
@@ -1794,14 +1814,14 @@ async def execute_adas_phase(task_id: str, parameters: dict[str, Any]):
         "current_generation": 0,
         "total_generations": 10,
         "pareto_solutions": 0,
-        "transformer_squared": True
+        "transformer_squared": True,
     }
-    
+
     # Simulate architecture evolution
     for generation in range(10):
         progress = generation / 10.0
         pareto_solutions = min(8, generation + 1)
-        
+
         # Ensure phase status exists
         if "ADAS" not in phase_status:
             phase_status["ADAS"] = {
@@ -1809,24 +1829,22 @@ async def execute_adas_phase(task_id: str, parameters: dict[str, Any]):
                 "progress": 0.0,
                 "message": "Starting ADAS...",
                 "task_id": task_id,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
-            
-        phase_status["ADAS"].update({
-            "progress": progress,
-            "message": f"🏗️ Generation {generation+1}/10 - Evolving Transformer² architectures",
-            "current_generation": generation + 1,
-            "pareto_solutions": pareto_solutions
-        })
-        
-        await manager.broadcast({
-            "type": "phase_update",
-            "phase_name": "ADAS",
-            "data": phase_status["ADAS"]
-        })
-        
+
+        phase_status["ADAS"].update(
+            {
+                "progress": progress,
+                "message": f"🏗️ Generation {generation+1}/10 - Evolving Transformer² architectures",
+                "current_generation": generation + 1,
+                "pareto_solutions": pareto_solutions,
+            }
+        )
+
+        await manager.broadcast({"type": "phase_update", "phase_name": "ADAS", "data": phase_status["ADAS"]})
+
         await asyncio.sleep(4)
-    
+
     # Create optimized architecture
     adas_model_id = str(uuid.uuid4())
     model_storage[adas_model_id] = {
@@ -1838,27 +1856,31 @@ async def execute_adas_phase(task_id: str, parameters: dict[str, Any]):
         "architecture": "transformer_squared",
         "pareto_rank": 1,
         "composition_score": 0.94,
-        "created_at": datetime.now().isoformat()
+        "created_at": datetime.now().isoformat(),
     }
-    
-    phase_status["ADAS"].update({
-        "status": "completed",
-        "progress": 1.0,
-        "message": "✅ Architecture search completed - Transformer² optimized",
-        "adas_model_id": adas_model_id
-    })
+
+    phase_status["ADAS"].update(
+        {
+            "status": "completed",
+            "progress": 1.0,
+            "message": "✅ Architecture search completed - Transformer² optimized",
+            "adas_model_id": adas_model_id,
+        }
+    )
+
 
 # =============================================================================
 # PHASE 8: FINAL COMPRESSION - SEEDLM + VPTQ + HYPERCOMPRESSION
 # =============================================================================
 
+
 @app.post("/phases/final-compression/start")
 async def start_final_compression_phase(request: PhaseStartRequest, background_tasks: BackgroundTasks):
     """Start Final Compression with 3-part compression stack."""
     task_id = str(uuid.uuid4())
-    
+
     background_tasks.add_task(execute_final_compression_phase, task_id, request.parameters or {})
-    
+
     return {
         "status": "started",
         "task_id": task_id,
@@ -1871,14 +1893,15 @@ async def start_final_compression_phase(request: PhaseStartRequest, background_t
             "HyperCompression (50% ratio)",
             "Stacked compression pipeline",
             "Maximum model efficiency",
-            "Production deployment ready"
-        ]
+            "Production deployment ready",
+        ],
     }
+
 
 async def execute_final_compression_phase(task_id: str, parameters: dict[str, Any]):
     """Execute final 3-part compression."""
     logger.info(f"🗜️ Starting Final Compression stack (task: {task_id})")
-    
+
     phase_status["Final Compression"] = {
         "phase_name": "Final Compression",
         "status": "running",
@@ -1888,16 +1911,16 @@ async def execute_final_compression_phase(task_id: str, parameters: dict[str, An
         "task_id": task_id,
         "compression_stages": ["SeedLM", "VPTQ", "HyperCompression"],
         "current_stage": 0,
-        "total_compression_ratio": 1
+        "total_compression_ratio": 1,
     }
-    
+
     # Simulate 3-part compression
     compression_stages = [
         ("SeedLM compression (5% seeds)", 0.33, 2.5),
         ("VPTQ quantization (256 codebook)", 0.66, 4.2),
-        ("HyperCompression optimization", 1.0, 8.7)
+        ("HyperCompression optimization", 1.0, 8.7),
     ]
-    
+
     for stage_name, target_progress, compression_ratio in compression_stages:
         # Ensure phase status exists
         if "Final Compression" not in phase_status:
@@ -1906,24 +1929,24 @@ async def execute_final_compression_phase(task_id: str, parameters: dict[str, An
                 "progress": 0.0,
                 "message": "Starting Final Compression...",
                 "task_id": task_id,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
-            
-        phase_status["Final Compression"].update({
-            "progress": target_progress,
-            "message": f"🗜️ {stage_name}...",
-            "current_stage": int(target_progress * 3),
-            "total_compression_ratio": compression_ratio
-        })
-        
-        await manager.broadcast({
-            "type": "phase_update",
-            "phase_name": "Final Compression",
-            "data": phase_status["Final Compression"]
-        })
-        
+
+        phase_status["Final Compression"].update(
+            {
+                "progress": target_progress,
+                "message": f"🗜️ {stage_name}...",
+                "current_stage": int(target_progress * 3),
+                "total_compression_ratio": compression_ratio,
+            }
+        )
+
+        await manager.broadcast(
+            {"type": "phase_update", "phase_name": "Final Compression", "data": phase_status["Final Compression"]}
+        )
+
         await asyncio.sleep(5)
-    
+
     # Create final compressed model
     final_model_id = str(uuid.uuid4())
     model_storage[final_model_id] = {
@@ -1936,27 +1959,31 @@ async def execute_final_compression_phase(task_id: str, parameters: dict[str, An
         "compression_ratio": 8.7,
         "compression_stack": ["SeedLM", "VPTQ", "HyperCompression"],
         "deployment_ready": True,
-        "created_at": datetime.now().isoformat()
+        "created_at": datetime.now().isoformat(),
     }
-    
-    phase_status["Final Compression"].update({
-        "status": "completed",
-        "progress": 1.0,
-        "message": "✅ Final compression completed - Model deployment ready",
-        "final_model_id": final_model_id
-    })
+
+    phase_status["Final Compression"].update(
+        {
+            "status": "completed",
+            "progress": 1.0,
+            "message": "✅ Final compression completed - Model deployment ready",
+            "final_model_id": final_model_id,
+        }
+    )
+
 
 # =============================================================================
 # PIPELINE ORCHESTRATION ENDPOINT
 # =============================================================================
 
+
 @app.post("/pipeline/run-all")
 async def run_complete_pipeline(request: PhaseStartRequest, background_tasks: BackgroundTasks):
     """Run complete Agent Forge pipeline (all 8 phases sequentially)."""
     pipeline_task_id = str(uuid.uuid4())
-    
+
     background_tasks.add_task(execute_complete_pipeline, pipeline_task_id, request.parameters or {})
-    
+
     return {
         "status": "started",
         "pipeline_task_id": pipeline_task_id,
@@ -1970,14 +1997,15 @@ async def run_complete_pipeline(request: PhaseStartRequest, background_tasks: Ba
             "5. Forge Training (10-level Grokfast)",
             "6. Tool/Persona (DSPy optimization)",
             "7. ADAS (Transformer² search)",
-            "8. Final Compression (3-part stack)"
-        ]
+            "8. Final Compression (3-part stack)",
+        ],
     }
+
 
 async def execute_complete_pipeline(pipeline_task_id: str, parameters: dict[str, Any]):
     """Execute the complete Agent Forge pipeline sequentially."""
     logger.info(f"🚀 Starting complete Agent Forge pipeline (task: {pipeline_task_id})")
-    
+
     phase_sequence = [
         ("Cognate", execute_real_cognate_training),
         ("EvoMerge", execute_evomerge_phase),
@@ -1986,36 +2014,40 @@ async def execute_complete_pipeline(pipeline_task_id: str, parameters: dict[str,
         ("Forge Training", execute_forge_training_phase),
         ("Tool/Persona", execute_tool_persona_phase),
         ("ADAS", execute_adas_phase),
-        ("Final Compression", execute_final_compression_phase)
+        ("Final Compression", execute_final_compression_phase),
     ]
-    
+
     for i, (phase_name, phase_function) in enumerate(phase_sequence):
         pipeline_progress = (i + 1) / len(phase_sequence)
-        
-        await manager.broadcast({
-            "type": "pipeline_update",
-            "pipeline_task_id": pipeline_task_id,
-            "current_phase": phase_name,
-            "pipeline_progress": pipeline_progress,
-            "message": f"🚀 Pipeline: Starting {phase_name} ({i+1}/{len(phase_sequence)})"
-        })
-        
+
+        await manager.broadcast(
+            {
+                "type": "pipeline_update",
+                "pipeline_task_id": pipeline_task_id,
+                "current_phase": phase_name,
+                "pipeline_progress": pipeline_progress,
+                "message": f"🚀 Pipeline: Starting {phase_name} ({i+1}/{len(phase_sequence)})",
+            }
+        )
+
         # Execute phase
         phase_task_id = str(uuid.uuid4())
         await phase_function(phase_task_id, parameters)
-        
+
         # Wait for phase completion
-        while (phase_name in phase_status and 
-               phase_status[phase_name].get("status") == "running"):
+        while phase_name in phase_status and phase_status[phase_name].get("status") == "running":
             await asyncio.sleep(1)
-    
-    await manager.broadcast({
-        "type": "pipeline_complete",
-        "pipeline_task_id": pipeline_task_id,
-        "message": "🎉 Complete Agent Forge pipeline finished successfully!",
-        "total_phases": len(phase_sequence),
-        "models_created": len(model_storage)
-    })
+
+    await manager.broadcast(
+        {
+            "type": "pipeline_complete",
+            "pipeline_task_id": pipeline_task_id,
+            "message": "🎉 Complete Agent Forge pipeline finished successfully!",
+            "total_phases": len(phase_sequence),
+            "models_created": len(model_storage),
+        }
+    )
+
 
 @app.get("/pipeline/status")
 async def get_pipeline_status():
@@ -2023,7 +2055,7 @@ async def get_pipeline_status():
     total_phases = 8
     completed_phases = len([p for p in phase_status.values() if p.get("status") == "completed"])
     running_phases = len([p for p in phase_status.values() if p.get("status") == "running"])
-    
+
     if running_phases > 0:
         pipeline_status = "running"
     elif completed_phases == total_phases:
@@ -2032,7 +2064,7 @@ async def get_pipeline_status():
         pipeline_status = "partial"
     else:
         pipeline_status = "idle"
-    
+
     return {
         "status": "success",
         "data": {
@@ -2041,31 +2073,33 @@ async def get_pipeline_status():
             "phases_completed": completed_phases,
             "phases_running": running_phases,
             "total_phases": total_phases,
-            "current_phase": next((name for name, status in phase_status.items() if status.get("status") == "running"), None),
-            "timestamp": datetime.now().isoformat()
-        }
+            "current_phase": next(
+                (name for name, status in phase_status.items() if status.get("status") == "running"), None
+            ),
+            "timestamp": datetime.now().isoformat(),
+        },
     }
+
 
 @app.post("/pipeline/reset")
 async def reset_pipeline():
     """Reset the entire pipeline, stopping all phases and clearing progress."""
     global phase_status
-    
+
     # Clear all phase statuses
     phase_status.clear()
-    
+
     # Broadcast reset notification
-    await manager.broadcast({
-        "type": "pipeline_reset",
-        "message": "Pipeline has been reset. All phases stopped and progress cleared.",
-        "timestamp": datetime.now().isoformat()
-    })
-    
-    return {
-        "status": "success",
-        "message": "Pipeline reset successfully",
-        "timestamp": datetime.now().isoformat()
-    }
+    await manager.broadcast(
+        {
+            "type": "pipeline_reset",
+            "message": "Pipeline has been reset. All phases stopped and progress cleared.",
+            "timestamp": datetime.now().isoformat(),
+        }
+    )
+
+    return {"status": "success", "message": "Pipeline reset successfully", "timestamp": datetime.now().isoformat()}
+
 
 @app.get("/phases/{phase_id}/status")
 async def get_phase_status(phase_id: str):
@@ -2073,22 +2107,19 @@ async def get_phase_status(phase_id: str):
     # Convert phase_id to proper format
     phase_name_map = {
         "cognate": "Cognate",
-        "evomerge": "EvoMerge", 
+        "evomerge": "EvoMerge",
         "quietstar": "Quiet-STaR",
         "bitnet": "BitNet",
         "forge-training": "Forge Training",
         "tool-persona": "Tool/Persona",
         "adas": "ADAS",
-        "final-compression": "Final Compression"
+        "final-compression": "Final Compression",
     }
-    
+
     proper_phase_name = phase_name_map.get(phase_id, phase_id)
-    
+
     if proper_phase_name in phase_status:
-        return {
-            "status": "success",
-            "data": phase_status[proper_phase_name]
-        }
+        return {"status": "success", "data": phase_status[proper_phase_name]}
     else:
         return {
             "status": "success",
@@ -2097,31 +2128,26 @@ async def get_phase_status(phase_id: str):
                 "progress": 0,
                 "message": "Ready to start",
                 "phase_name": proper_phase_name,
-                "timestamp": datetime.now().isoformat()
-            }
+                "timestamp": datetime.now().isoformat(),
+            },
         }
+
 
 @app.post("/models/export")
 async def export_models():
     """Export trained models for download."""
     if not model_storage:
-        return {
-            "status": "error",
-            "message": "No models available for export"
-        }
-    
+        return {"status": "error", "message": "No models available for export"}
+
     export_info = {
         "total_models": len(model_storage),
         "export_path": "exports/agent_forge_models/",
         "models": [{"model_id": m.get("model_id"), "name": m.get("model_name")} for m in model_storage],
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
-    
-    return {
-        "status": "success",
-        "message": f"Export prepared for {len(model_storage)} models",
-        "data": export_info
-    }
+
+    return {"status": "success", "message": f"Export prepared for {len(model_storage)} models", "data": export_info}
+
 
 @app.get("/phases/status")
 async def get_phases_status():
@@ -2413,11 +2439,11 @@ async def get_p2p_peers():
                     "connection_type": "fog_mesh",
                     "latency_ms": 30 + (i * 5),
                     "uptime_hours": 168 - (i * 2),  # Up to 1 week
-                    "services": ["compute", "onion_relay"]
-                    if i % 3 == 0
-                    else ["storage", "bandwidth"]
-                    if i % 3 == 1
-                    else ["marketplace", "tokens"],
+                    "services": (
+                        ["compute", "onion_relay"]
+                        if i % 3 == 0
+                        else ["storage", "bandwidth"] if i % 3 == 1 else ["marketplace", "tokens"]
+                    ),
                 }
             )
 
@@ -2483,9 +2509,9 @@ async def get_p2p_messages():
                 "type": msg_type,
                 "content": content,
                 "source_peer": f"fog_node_{(i%8)+1}",
-                "destination": "broadcast"
-                if msg_type in ["peer_discovery", "heartbeat"]
-                else f"fog_node_{((i+3)%8)+1}",
+                "destination": (
+                    "broadcast" if msg_type in ["peer_discovery", "heartbeat"] else f"fog_node_{((i+3)%8)+1}"
+                ),
                 "timestamp": timestamp.isoformat(),
                 "priority": "high" if msg_type in ["consensus", "circuit_create"] else "normal",
                 "encrypted": msg_type not in ["peer_discovery", "heartbeat"],
@@ -2935,14 +2961,14 @@ async def load_existing_models_on_startup():
     try:
         cognate_models_dir = Path(__file__).parent.parent.parent / "cognate_models"
         models_summary_file = cognate_models_dir / "models_summary.json"
-        
+
         if models_summary_file.exists():
-            with open(models_summary_file, 'r') as f:
+            with open(models_summary_file, "r") as f:
                 models_data = json.load(f)
-            
-            models = models_data.get('models', [])
-            completed_models = [m for m in models if m.get('training_status') == 'completed']
-            
+
+            models = models_data.get("models", [])
+            completed_models = [m for m in models if m.get("training_status") == "completed"]
+
             if len(completed_models) >= 3:
                 # Mark Cognate phase as completed
                 phase_status["Cognate"] = {
@@ -2950,39 +2976,39 @@ async def load_existing_models_on_startup():
                     "status": "completed",
                     "progress": 100.0,
                     "message": f"✅ {len(completed_models)} Cognate models ready",
-                    "start_time": models_data.get('summary', {}).get('created_at', datetime.now().isoformat()),
-                    "end_time": models_data.get('summary', {}).get('created_at', datetime.now().isoformat()),
+                    "start_time": models_data.get("summary", {}).get("created_at", datetime.now().isoformat()),
+                    "end_time": models_data.get("summary", {}).get("created_at", datetime.now().isoformat()),
                     "models_created": len(completed_models),
-                    "total_parameters": models_data.get('summary', {}).get('total_parameters', 0),
-                    "real_models": True
+                    "total_parameters": models_data.get("summary", {}).get("total_parameters", 0),
+                    "real_models": True,
                 }
-                
+
                 # Also populate model_storage so get_models_from_phase works
                 for model in completed_models:
-                    model_id = model.get('model_id', model.get('model_name', ''))
+                    model_id = model.get("model_id", model.get("model_name", ""))
                     model_storage[model_id] = {
                         "model_id": model_id,
-                        "model_name": model.get('model_name'),
+                        "model_name": model.get("model_name"),
                         "phase_name": "Cognate",
                         "status": "completed",
-                        "parameter_count": model.get('parameter_count'),
-                        "model_path": model.get('model_path'),
-                        "config_path": model.get('config_path'),
-                        "architecture": model.get('architecture'),
-                        "random_seed": model.get('random_seed'),
-                        "created_at": model.get('created_at'),
-                        "training_status": model.get('training_status'),
-                        "ready_for_evomerge": model.get('ready_for_evomerge', True)
+                        "parameter_count": model.get("parameter_count"),
+                        "model_path": model.get("model_path"),
+                        "config_path": model.get("config_path"),
+                        "architecture": model.get("architecture"),
+                        "random_seed": model.get("random_seed"),
+                        "created_at": model.get("created_at"),
+                        "training_status": model.get("training_status"),
+                        "ready_for_evomerge": model.get("ready_for_evomerge", True),
                     }
-                
+
                 logger.info(f"✅ Loaded {len(completed_models)} existing Cognate models from disk")
                 logger.info(f"   📊 Total parameters: {models_data.get('summary', {}).get('total_parameters', 0):,}")
-                logger.info(f"   🔗 Models ready for EvoMerge evolutionary optimization")
+                logger.info("   🔗 Models ready for EvoMerge evolutionary optimization")
             else:
                 logger.info(f"⚠️  Found {len(completed_models)} models, need at least 3 for EvoMerge")
         else:
             logger.info("ℹ️  No existing models found, Cognate phase needs to be run")
-            
+
     except Exception as e:
         logger.error(f"❌ Failed to load existing models: {e}")
 

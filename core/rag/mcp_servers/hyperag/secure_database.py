@@ -176,7 +176,7 @@ class SecureDatabaseManager:
             # Validate and sanitize inputs
             query = SecureInputValidator.sanitize_string(query, max_length=500)
             limit = max(1, min(limit, 1000))  # Enforce reasonable limits
-            
+
             # Build secure query with parameterized placeholders
             base_query = """
                 SELECT content_hash, content, tags, created_at, importance_score
@@ -193,7 +193,7 @@ class SecureDatabaseManager:
                     sanitized_tag = SecureInputValidator.sanitize_string(tag, max_length=100)
                     if sanitized_tag:
                         sanitized_tags.append(sanitized_tag)
-                
+
                 if sanitized_tags:
                     tag_conditions = []
                     for tag in sanitized_tags:

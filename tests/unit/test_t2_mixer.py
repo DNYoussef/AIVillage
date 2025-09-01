@@ -502,6 +502,7 @@ class TestIntegration:
             # Should handle gracefully
         except Exception as e:
             import logging
+
             logging.exception("Unit test T2Mixer malformed expert spec test failed (expected): %s", str(e))
 
         # Test feature extraction with invalid inputs

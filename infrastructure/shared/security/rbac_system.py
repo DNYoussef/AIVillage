@@ -974,7 +974,7 @@ if __name__ == "__main__":
         developer = await rbac.create_user(
             username="developer1",
             email="dev@test.org",
-            password="dev_password",
+            password="dev_password",  # nosec B106 - test password for integration testing
             tenant_id=tenant.tenant_id,
             role=Role.DEVELOPER,
         )
@@ -984,7 +984,7 @@ if __name__ == "__main__":
         # Test authentication
         session = await rbac.authenticate(
             username="test_admin",
-            password="secure_password_123",
+            password="secure_password_123",  # nosec B106 - test password for integration testing
             tenant_id=tenant.tenant_id,
             ip_address="127.0.0.1",
             user_agent="TestClient/1.0",

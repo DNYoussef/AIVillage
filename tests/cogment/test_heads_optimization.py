@@ -9,7 +9,6 @@ Tests the output head components including:
 - Parameter efficiency through weight tying
 """
 
-
 import pytest
 import torch
 import torch.nn.functional as F

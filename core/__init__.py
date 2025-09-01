@@ -7,7 +7,7 @@ clean architecture principles and connascence-based coupling management.
 Architecture:
 - domain/: Core entities, value objects, and business rules
 - agents/: Domain-organized agent implementations
-- agent-forge/: Training and evolution business logic
+- agent_forge/: Training and evolution business logic
 - rag/: Knowledge retrieval and reasoning business logic
 
 Principles:

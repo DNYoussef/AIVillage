@@ -81,6 +81,7 @@ def get_recent_records(hours: int = 24, limit: int = 100) -> list:
                         records.append(record)
         except Exception as e:
             import logging
+
             logging.exception("Exception in audit record retrieval from fallback path: %s", str(e))
 
     # Sort by timestamp (newest first) and limit

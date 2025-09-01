@@ -290,6 +290,7 @@ async def agent_factory():
             await agent.shutdown()
         except Exception as e:
             import logging
+
             logging.exception("Agent shutdown error in tests: %s", str(e))
 
 
@@ -371,6 +372,7 @@ def test_isolation():
                     cleanup_func()
                 except Exception as e:
                     import logging
+
                     logging.exception("Cleanup error in tests: %s", str(e))
             self.cleanup_functions.clear()
 

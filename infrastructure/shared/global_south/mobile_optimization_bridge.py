@@ -577,15 +577,17 @@ class MobileOptimizationBridge:
                 "network_type": state.network_type.value,
                 "data_cost_per_mb": state.data_cost_per_mb,
             },
-            "optimization_policy": {
-                "max_cpu_usage_percent": self.current_policy.max_cpu_usage_percent,
-                "max_memory_usage_mb": self.current_policy.max_memory_usage_mb,
-                "max_sync_data_mb": self.current_policy.max_sync_data_mb,
-                "sync_frequency_minutes": self.current_policy.sync_frequency_minutes,
-                "compression_level": self.current_policy.compression_level,
-            }
-            if self.current_policy
-            else None,
+            "optimization_policy": (
+                {
+                    "max_cpu_usage_percent": self.current_policy.max_cpu_usage_percent,
+                    "max_memory_usage_mb": self.current_policy.max_memory_usage_mb,
+                    "max_sync_data_mb": self.current_policy.max_sync_data_mb,
+                    "sync_frequency_minutes": self.current_policy.sync_frequency_minutes,
+                    "compression_level": self.current_policy.compression_level,
+                }
+                if self.current_policy
+                else None
+            ),
             "timestamp": datetime.utcnow().isoformat(),
         }
 

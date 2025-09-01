@@ -100,7 +100,7 @@ class CleanArchitectureMigrator:
         if "agents" in source.lower():
             return "agents"
         elif "agent_forge" in source.lower() or "forge" in source.lower():
-            return "agent-forge"
+            return "agent_forge"
         elif "rag" in source.lower():
             return "rag"
         elif "tokenomics" in source.lower():

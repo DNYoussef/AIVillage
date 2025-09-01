@@ -151,10 +151,6 @@ OUTPUTS_DIR=./outputs
 
         # Check core imports
         try:
-            import fastapi
-            import numpy as np
-            import torch
-            import transformers
 
             logger.info("Core dependencies imported successfully")
         except ImportError as e:

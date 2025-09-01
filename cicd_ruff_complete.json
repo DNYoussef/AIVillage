@@ -1,0 +1,512 @@
+warning: The top-level linter settings are deprecated in favour of their counterparts in the `lint` section. Please update the following options in `infrastructure\p2p\pyproject.toml`:
+  - 'ignore' -> 'lint.ignore'
+  - 'select' -> 'lint.select'
+  - 'isort' -> 'lint.isort'
+  - 'mccabe' -> 'lint.mccabe'
+  - 'per-file-ignores' -> 'lint.per-file-ignores'
+[
+  {
+    "code": "F401",
+    "name": "unused-import",
+    "count": 1706,
+    "fixable": false
+  },
+  {
+    "code": "W293",
+    "name": "blank-line-with-whitespace",
+    "count": 1526,
+    "fixable": false
+  },
+  {
+    "code": "G004",
+    "name": "logging-f-string",
+    "count": 395,
+    "fixable": false
+  },
+  {
+    "code": "F841",
+    "name": "unused-variable",
+    "count": 310,
+    "fixable": false
+  },
+  {
+    "code": "F541",
+    "name": "f-string-missing-placeholders",
+    "count": 263,
+    "fixable": true
+  },
+  {
+    "code": "E501",
+    "name": "line-too-long",
+    "count": 196,
+    "fixable": false
+  },
+  {
+    "code": "F821",
+    "name": "undefined-name",
+    "count": 162,
+    "fixable": false
+  },
+  {
+    "code": "E402",
+    "name": "module-import-not-at-top-of-file",
+    "count": 143,
+    "fixable": false
+  },
+  {
+    "code": "W291",
+    "name": "trailing-whitespace",
+    "count": 128,
+    "fixable": false
+  },
+  {
+    "code": "F405",
+    "name": "undefined-local-with-import-star-usage",
+    "count": 99,
+    "fixable": false
+  },
+  {
+    "code": "PLR2004",
+    "name": "magic-value-comparison",
+    "count": 90,
+    "fixable": false
+  },
+  {
+    "code": "E722",
+    "name": "bare-except",
+    "count": 71,
+    "fixable": false
+  },
+  {
+    "code": "TID252",
+    "name": "relative-imports",
+    "count": 64,
+    "fixable": false
+  },
+  {
+    "code": "PIE790",
+    "name": "unnecessary-placeholder",
+    "count": 60,
+    "fixable": true
+  },
+  {
+    "code": "I001",
+    "name": "unsorted-imports",
+    "count": 59,
+    "fixable": true
+  },
+  {
+    "code": "F403",
+    "name": "undefined-local-with-import-star",
+    "count": 47,
+    "fixable": false
+  },
+  {
+    "code": "ARG002",
+    "name": "unused-method-argument",
+    "count": 45,
+    "fixable": false
+  },
+  {
+    "code": "PLC0415",
+    "name": "import-outside-top-level",
+    "count": 43,
+    "fixable": false
+  },
+  {
+    "code": "EM101",
+    "name": "raw-string-in-exception",
+    "count": 42,
+    "fixable": false
+  },
+  {
+    "code": "RET505",
+    "name": "superfluous-else-return",
+    "count": 36,
+    "fixable": true
+  },
+  {
+    "code": "E741",
+    "name": "ambiguous-variable-name",
+    "count": 31,
+    "fixable": false
+  },
+  {
+    "code": "W292",
+    "name": "missing-newline-at-end-of-file",
+    "count": 27,
+    "fixable": true
+  },
+  {
+    "code": "EM102",
+    "name": "f-string-in-exception",
+    "count": 26,
+    "fixable": false
+  },
+  {
+    "code": "RET504",
+    "name": "unnecessary-assign",
+    "count": 19,
+    "fixable": false
+  },
+  {
+    "code": "B904",
+    "name": "raise-without-from-inside-except",
+    "count": 18,
+    "fixable": false
+  },
+  {
+    "code": "DTZ005",
+    "name": "call-datetime-now-without-tzinfo",
+    "count": 14,
+    "fixable": false
+  },
+  {
+    "code": "F811",
+    "name": "redefined-while-unused",
+    "count": 14,
+    "fixable": false
+  },
+  {
+    "code": "RUF006",
+    "name": "asyncio-dangling-task",
+    "count": 14,
+    "fixable": false
+  },
+  {
+    "code": "F822",
+    "name": "undefined-export",
+    "count": 12,
+    "fixable": false
+  },
+  {
+    "code": "SIM105",
+    "name": "suppressible-exception",
+    "count": 11,
+    "fixable": false
+  },
+  {
+    "code": "RUF022",
+    "name": "unsorted-dunder-all",
+    "count": 10,
+    "fixable": false
+  },
+  {
+    "code": "E701",
+    "name": "multiple-statements-on-one-line-colon",
+    "count": 9,
+    "fixable": false
+  },
+  {
+    "code": "PTH123",
+    "name": "builtin-open",
+    "count": 9,
+    "fixable": false
+  },
+  {
+    "code": "SIM118",
+    "name": "in-dict-keys",
+    "count": 9,
+    "fixable": false
+  },
+  {
+    "code": "A002",
+    "name": "builtin-argument-shadowing",
+    "count": 8,
+    "fixable": false
+  },
+  {
+    "code": "ARG001",
+    "name": "unused-function-argument",
+    "count": 8,
+    "fixable": false
+  },
+  {
+    "code": "PLW0603",
+    "name": "global-statement",
+    "count": 8,
+    "fixable": false
+  },
+  {
+    "code": "SIM102",
+    "name": "collapsible-if",
+    "count": 8,
+    "fixable": false
+  },
+  {
+    "code": "PLR0911",
+    "name": "too-many-return-statements",
+    "count": 7,
+    "fixable": false
+  },
+  {
+    "code": "B008",
+    "name": "function-call-in-default-argument",
+    "count": 6,
+    "fixable": false
+  },
+  {
+    "code": "E712",
+    "name": "true-false-comparison",
+    "count": 6,
+    "fixable": false
+  },
+  {
+    "code": "E731",
+    "name": "lambda-assignment",
+    "count": 6,
+    "fixable": false
+  },
+  {
+    "code": "F402",
+    "name": "import-shadowed-by-loop-var",
+    "count": 6,
+    "fixable": false
+  },
+  {
+    "code": "PLR0915",
+    "name": "too-many-statements",
+    "count": 6,
+    "fixable": false
+  },
+  {
+    "code": "N806",
+    "name": "non-lowercase-variable-in-function",
+    "count": 5,
+    "fixable": false
+  },
+  {
+    "code": "RUF013",
+    "name": "implicit-optional",
+    "count": 5,
+    "fixable": false
+  },
+  {
+    "code": "A001",
+    "name": "builtin-variable-shadowing",
+    "count": 4,
+    "fixable": false
+  },
+  {
+    "code": "PT009",
+    "name": "pytest-unittest-assertion",
+    "count": 4,
+    "fixable": false
+  },
+  {
+    "code": "B007",
+    "name": "unused-loop-control-variable",
+    "count": 3,
+    "fixable": false
+  },
+  {
+    "code": "PLR0912",
+    "name": "too-many-branches",
+    "count": 3,
+    "fixable": false
+  },
+  {
+    "code": "PLW0602",
+    "name": "global-variable-not-assigned",
+    "count": 3,
+    "fixable": false
+  },
+  {
+    "code": "S311",
+    "name": "suspicious-non-cryptographic-random-usage",
+    "count": 3,
+    "fixable": false
+  },
+  {
+    "code": "SIM115",
+    "name": "open-file-with-context-handler",
+    "count": 3,
+    "fixable": false
+  },
+  {
+    "code": "DTZ003",
+    "name": "call-datetime-utcnow",
+    "count": 2,
+    "fixable": false
+  },
+  {
+    "code": "E721",
+    "name": "type-comparison",
+    "count": 2,
+    "fixable": false
+  },
+  {
+    "code": "F601",
+    "name": "multi-value-repeated-key-literal",
+    "count": 2,
+    "fixable": false
+  },
+  {
+    "code": "PLR5501",
+    "name": "collapsible-else-if",
+    "count": 2,
+    "fixable": true
+  },
+  {
+    "code": "PT017",
+    "name": "pytest-assert-in-except",
+    "count": 2,
+    "fixable": false
+  },
+  {
+    "code": "PT018",
+    "name": "pytest-composite-assertion",
+    "count": 2,
+    "fixable": false
+  },
+  {
+    "code": "PTH108",
+    "name": "os-unlink",
+    "count": 2,
+    "fixable": false
+  },
+  {
+    "code": "PTH110",
+    "name": "os-path-exists",
+    "count": 2,
+    "fixable": false
+  },
+  {
+    "code": "PTH120",
+    "name": "os-path-dirname",
+    "count": 2,
+    "fixable": false
+  },
+  {
+    "code": "RUF010",
+    "name": "explicit-f-string-type-conversion",
+    "count": 2,
+    "fixable": true
+  },
+  {
+    "code": "RUF012",
+    "name": "mutable-class-default",
+    "count": 2,
+    "fixable": false
+  },
+  {
+    "code": "S104",
+    "name": "hardcoded-bind-all-interfaces",
+    "count": 2,
+    "fixable": false
+  },
+  {
+    "code": "SIM222",
+    "name": "expr-or-true",
+    "count": 2,
+    "fixable": false
+  },
+  {
+    "code": "UP015",
+    "name": "redundant-open-modes",
+    "count": 2,
+    "fixable": true
+  },
+  {
+    "code": "B019",
+    "name": "cached-instance-method",
+    "count": 1,
+    "fixable": false
+  },
+  {
+    "code": "C901",
+    "name": "complex-structure",
+    "count": 1,
+    "fixable": false
+  },
+  {
+    "code": "DTZ006",
+    "name": "call-datetime-fromtimestamp",
+    "count": 1,
+    "fixable": false
+  },
+  {
+    "code": "E711",
+    "name": "none-comparison",
+    "count": 1,
+    "fixable": false
+  },
+  {
+    "code": "F524",
+    "name": "string-dot-format-missing-arguments",
+    "count": 1,
+    "fixable": false
+  },
+  {
+    "code": "F823",
+    "name": "undefined-local",
+    "count": 1,
+    "fixable": false
+  },
+  {
+    "code": "N818",
+    "name": "error-suffix-on-exception-name",
+    "count": 1,
+    "fixable": false
+  },
+  {
+    "code": "PLW3301",
+    "name": "nested-min-max",
+    "count": 1,
+    "fixable": false
+  },
+  {
+    "code": "PTH100",
+    "name": "os-path-abspath",
+    "count": 1,
+    "fixable": false
+  },
+  {
+    "code": "PTH118",
+    "name": "os-path-join",
+    "count": 1,
+    "fixable": false
+  },
+  {
+    "code": "RET503",
+    "name": "implicit-return",
+    "count": 1,
+    "fixable": false
+  },
+  {
+    "code": "RET506",
+    "name": "superfluous-else-raise",
+    "count": 1,
+    "fixable": true
+  },
+  {
+    "code": "S105",
+    "name": "hardcoded-password-string",
+    "count": 1,
+    "fixable": false
+  },
+  {
+    "code": "SIM103",
+    "name": "needless-bool",
+    "count": 1,
+    "fixable": false
+  },
+  {
+    "code": "SIM108",
+    "name": "if-else-block-instead-of-if-exp",
+    "count": 1,
+    "fixable": false
+  },
+  {
+    "code": "SIM110",
+    "name": "reimplemented-builtin",
+    "count": 1,
+    "fixable": false
+  },
+  {
+    "code": "SIM113",
+    "name": "enumerate-for-loop",
+    "count": 1,
+    "fixable": false
+  }
+]

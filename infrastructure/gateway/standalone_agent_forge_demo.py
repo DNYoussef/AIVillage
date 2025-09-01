@@ -34,7 +34,7 @@ class SimpleAgentForgeDemo:
         print("=" * 60)
 
         # Check if consolidated files exist
-        cognate_dir = project_root / "core" / "agent-forge" / "phases" / "cognate_pretrain"
+        cognate_dir = project_root / "core" / "agent_forge" / "phases" / "cognate_pretrain"
 
         if cognate_dir.exists():
             print(f"SUCCESS: Consolidated cognate package found at {cognate_dir}")
@@ -115,9 +115,9 @@ class SimpleAgentForgeDemo:
                 "training_status": "completed",
                 "focus": focus,
                 "artifacts": {
-                    "config_path": f"core/agent-forge/phases/cognate_pretrain/models/cognate_foundation_{i}/config.json",
-                    "weights_path": f"core/agent-forge/phases/cognate_pretrain/models/cognate_foundation_{i}/pytorch_model.bin",
-                    "metadata_path": f"core/agent-forge/phases/cognate_pretrain/models/cognate_foundation_{i}/metadata.json",
+                    "config_path": f"core/agent_forge/phases/cognate_pretrain/models/cognate_foundation_{i}/config.json",
+                    "weights_path": f"core/agent_forge/phases/cognate_pretrain/models/cognate_foundation_{i}/pytorch_model.bin",
+                    "metadata_path": f"core/agent_forge/phases/cognate_pretrain/models/cognate_foundation_{i}/metadata.json",
                 },
             }
             created_models.append(model_info)
@@ -127,7 +127,7 @@ class SimpleAgentForgeDemo:
             "models_created": created_models,
             "total_parameters": sum(m["parameter_count"] for m in created_models),
             "parameter_accuracy": "99.94%",
-            "output_directory": "core/agent-forge/phases/cognate_pretrain/models",
+            "output_directory": "core/agent_forge/phases/cognate_pretrain/models",
         }
 
         print("\nPHASE COMPLETE!")

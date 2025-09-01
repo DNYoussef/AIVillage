@@ -390,11 +390,9 @@ class ProductionValidator:
                 "passed_tests": passed_tests,
                 "failed_tests": failed_tests,
                 "success_rate": success_rate,
-                "verdict": "PRODUCTION READY"
-                if success_rate >= 80
-                else "NEEDS FIXES"
-                if success_rate >= 60
-                else "NOT READY",
+                "verdict": (
+                    "PRODUCTION READY" if success_rate >= 80 else "NEEDS FIXES" if success_rate >= 60 else "NOT READY"
+                ),
             },
         }
 

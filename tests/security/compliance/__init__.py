@@ -8,5 +8,5 @@ Focuses on policy enforcement, regulatory compliance, and governance framework v
 from .test_governance_framework import *
 
 __all__ = [
-    'GovernanceFrameworkTest',
+    "GovernanceFrameworkTest",
 ]

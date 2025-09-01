@@ -596,6 +596,7 @@ class EdgeDevice:
                     self.status.is_charging = battery.power_plugged
             except Exception as e:  # nosec B110
                 import logging
+
                 logging.exception("Exception in battery status collection: %s", str(e))
 
             # Update constraint level

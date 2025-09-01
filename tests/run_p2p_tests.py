@@ -4,11 +4,10 @@ Comprehensive P2P Network Test Runner
 Bypasses conftest issues and runs focused P2P system tests
 """
 
-import asyncio
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, Any
 import json
 import logging
 
@@ -352,7 +351,7 @@ class P2PTestRunner:
         print(f"Production Ready: {'YES' if system_ready else 'NO'}")
 
         if recommendations:
-            print(f"\nRecommendations:")
+            print("\nRecommendations:")
             for i, rec in enumerate(recommendations, 1):
                 print(f"  {i}. {rec}")
 

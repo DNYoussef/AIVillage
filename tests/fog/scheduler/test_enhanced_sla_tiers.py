@@ -32,23 +32,23 @@ def sample_devices():
     """Sample device candidates"""
     return [
         {
-            'id': 'device1',
-            'ip_address': '10.1.1.1',
-            'attestation_data': {'platform': 'amd', 'sev_snp': True},
-            'network_info': {'datacenter': True}
+            "id": "device1",
+            "ip_address": "10.1.1.1",
+            "attestation_data": {"platform": "amd", "sev_snp": True},
+            "network_info": {"datacenter": True},
         },
         {
-            'id': 'device2',
-            'ip_address': '10.2.2.2',
-            'attestation_data': {'platform': 'intel', 'tdx': True},
-            'network_info': {'public': True}
+            "id": "device2",
+            "ip_address": "10.2.2.2",
+            "attestation_data": {"platform": "intel", "tdx": True},
+            "network_info": {"public": True},
         },
         {
-            'id': 'device3',
-            'ip_address': '10.3.3.3',
-            'attestation_data': {'platform': 'amd', 'sev_snp': True},
-            'network_info': {'residential': True}
-        }
+            "id": "device3",
+            "ip_address": "10.3.3.3",
+            "attestation_data": {"platform": "amd", "sev_snp": True},
+            "network_info": {"residential": True},
+        },
     ]
 
 
@@ -69,7 +69,7 @@ def sample_profiles():
             network_topology="datacenter",
             attestation_hash="abc123",
             classification_time=datetime.utcnow(),
-            confidence_score=0.9
+            confidence_score=0.9,
         ),
         InfrastructureProfile(
             device_id="device2",
@@ -84,7 +84,7 @@ def sample_profiles():
             network_topology="public",
             attestation_hash="def456",
             classification_time=datetime.utcnow(),
-            confidence_score=0.95
+            confidence_score=0.95,
         ),
         InfrastructureProfile(
             device_id="device3",
@@ -99,8 +99,8 @@ def sample_profiles():
             network_topology="residential",
             attestation_hash="ghi789",
             classification_time=datetime.utcnow(),
-            confidence_score=0.8
-        )
+            confidence_score=0.8,
+        ),
     ]
 
 
@@ -145,7 +145,9 @@ class TestServiceProvisioning:
     """Test service provisioning with different SLA tiers"""
 
     @pytest.mark.asyncio
-    async def test_provision_bronze_service(self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles):
+    async def test_provision_bronze_service(
+        self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles
+    ):
         """Test Bronze tier service provisioning"""
         # Setup mock for successful quorum validation
         mock_quorum_result = QuorumValidationResult(
@@ -155,30 +157,30 @@ class TestServiceProvisioning:
             recommendations=[],
             profiles_used=sample_profiles[:1],  # Bronze only needs 1 device
             metadata={
-                'diversity_metrics': {
-                    'unique_asns': 1,
-                    'unique_tee_vendors': 1,
-                    'unique_power_regions': 1,
-                    'unique_countries': 1
+                "diversity_metrics": {
+                    "unique_asns": 1,
+                    "unique_tee_vendors": 1,
+                    "unique_power_regions": 1,
+                    "unique_countries": 1,
                 }
-            }
+            },
         )
         mock_quorum_manager.validate_quorum.return_value = mock_quorum_result
 
         result = await sla_tier_manager.provision_service(
-            service_id="test-service-bronze",
-            tier=SLATier.BRONZE,
-            available_devices=sample_devices
+            service_id="test-service-bronze", tier=SLATier.BRONZE, available_devices=sample_devices
         )
 
-        assert result['success'] is True
-        assert result['tier'] == 'bronze'
-        assert result['pricing_multiplier'] == 1.0
-        assert len(result['allocated_devices']) == 1
-        assert 'sla_guarantees' in result
+        assert result["success"] is True
+        assert result["tier"] == "bronze"
+        assert result["pricing_multiplier"] == 1.0
+        assert len(result["allocated_devices"]) == 1
+        assert "sla_guarantees" in result
 
     @pytest.mark.asyncio
-    async def test_provision_gold_service_success(self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles):
+    async def test_provision_gold_service_success(
+        self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles
+    ):
         """Test successful Gold tier service provisioning"""
         # Setup mock for successful Gold tier quorum validation
         mock_quorum_result = QuorumValidationResult(
@@ -188,28 +190,26 @@ class TestServiceProvisioning:
             recommendations=[],
             profiles_used=sample_profiles,  # All 3 devices
             metadata={
-                'diversity_metrics': {
-                    'unique_asns': 3,
-                    'unique_tee_vendors': 2,
-                    'unique_power_regions': 3,
-                    'unique_countries': 1
+                "diversity_metrics": {
+                    "unique_asns": 3,
+                    "unique_tee_vendors": 2,
+                    "unique_power_regions": 3,
+                    "unique_countries": 1,
                 }
-            }
+            },
         )
         mock_quorum_manager.validate_quorum.return_value = mock_quorum_result
 
         result = await sla_tier_manager.provision_service(
-            service_id="test-service-gold",
-            tier=SLATier.GOLD,
-            available_devices=sample_devices
+            service_id="test-service-gold", tier=SLATier.GOLD, available_devices=sample_devices
         )
 
-        assert result['success'] is True
-        assert result['tier'] == 'gold'
-        assert result['pricing_multiplier'] == 5.0
-        assert len(result['allocated_devices']) == 3
-        assert result['diversity_score'] == 0.9
-        assert 'infrastructure_diversity' in result
+        assert result["success"] is True
+        assert result["tier"] == "gold"
+        assert result["pricing_multiplier"] == 5.0
+        assert len(result["allocated_devices"]) == 3
+        assert result["diversity_score"] == 0.9
+        assert "infrastructure_diversity" in result
 
     @pytest.mark.asyncio
     async def test_provision_gold_service_failure(self, sla_tier_manager, mock_quorum_manager, sample_devices):
@@ -218,32 +218,26 @@ class TestServiceProvisioning:
         mock_quorum_result = QuorumValidationResult(
             is_valid=False,
             diversity_score=0.3,  # Low diversity
-            violations=[
-                'Insufficient ASN diversity: 1 < 3',
-                'Insufficient TEE vendor diversity: 1 < 2'
-            ],
-            recommendations=[
-                'Add 2 more devices from different ASNs',
-                'Add Intel TDX capable device'
-            ],
+            violations=["Insufficient ASN diversity: 1 < 3", "Insufficient TEE vendor diversity: 1 < 2"],
+            recommendations=["Add 2 more devices from different ASNs", "Add Intel TDX capable device"],
             profiles_used=[],
-            metadata={}
+            metadata={},
         )
         mock_quorum_manager.validate_quorum.return_value = mock_quorum_result
 
         result = await sla_tier_manager.provision_service(
-            service_id="test-service-gold-fail",
-            tier=SLATier.GOLD,
-            available_devices=sample_devices
+            service_id="test-service-gold-fail", tier=SLATier.GOLD, available_devices=sample_devices
         )
 
-        assert result['success'] is False
-        assert result['error'] == 'Failed to meet infrastructure diversity requirements'
-        assert len(result['violations']) == 2
-        assert len(result['recommendations']) == 2
+        assert result["success"] is False
+        assert result["error"] == "Failed to meet infrastructure diversity requirements"
+        assert len(result["violations"]) == 2
+        assert len(result["recommendations"]) == 2
 
     @pytest.mark.asyncio
-    async def test_provision_service_with_config(self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles):
+    async def test_provision_service_with_config(
+        self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles
+    ):
         """Test service provisioning with custom configuration"""
         # Setup mock
         mock_quorum_result = QuorumValidationResult(
@@ -252,25 +246,20 @@ class TestServiceProvisioning:
             violations=[],
             recommendations=[],
             profiles_used=sample_profiles[:2],
-            metadata={'diversity_metrics': {}}
+            metadata={"diversity_metrics": {}},
         )
         mock_quorum_manager.validate_quorum.return_value = mock_quorum_result
 
-        service_config = {
-            'cpu_cores': 4,
-            'memory_gb': 8,
-            'storage_gb': 100,
-            'network_bandwidth_mbps': 1000
-        }
+        service_config = {"cpu_cores": 4, "memory_gb": 8, "storage_gb": 100, "network_bandwidth_mbps": 1000}
 
         result = await sla_tier_manager.provision_service(
             service_id="test-service-config",
             tier=SLATier.SILVER,
             available_devices=sample_devices,
-            service_config=service_config
+            service_config=service_config,
         )
 
-        assert result['success'] is True
+        assert result["success"] is True
         assert service_config in sla_tier_manager.service_instances["test-service-config"].metadata.values()
 
 
@@ -278,19 +267,23 @@ class TestSLACompliance:
     """Test SLA compliance validation"""
 
     @pytest.mark.asyncio
-    async def test_validate_sla_compliance_success(self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles):
+    async def test_validate_sla_compliance_success(
+        self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles
+    ):
         """Test successful SLA compliance validation"""
         # First provision a service
         mock_quorum_result = QuorumValidationResult(
-            is_valid=True, diversity_score=0.8, violations=[], recommendations=[],
-            profiles_used=sample_profiles[:2], metadata={'diversity_metrics': {}}
+            is_valid=True,
+            diversity_score=0.8,
+            violations=[],
+            recommendations=[],
+            profiles_used=sample_profiles[:2],
+            metadata={"diversity_metrics": {}},
         )
         mock_quorum_manager.validate_quorum.return_value = mock_quorum_result
 
         await sla_tier_manager.provision_service(
-            service_id="compliance-test",
-            tier=SLATier.SILVER,
-            available_devices=sample_devices
+            service_id="compliance-test", tier=SLATier.SILVER, available_devices=sample_devices
         )
 
         # Test compliance with good metrics
@@ -298,30 +291,34 @@ class TestSLACompliance:
             p95_latency_ms=800.0,  # Under Silver limit of 1200ms
             uptime_percentage=99.5,  # Over Silver requirement of 99%
             error_rate_percentage=0.5,  # Under Silver limit of 1%
-            throughput_ops_per_second=1000.0
+            throughput_ops_per_second=1000.0,
         )
 
         result = await sla_tier_manager.validate_sla_compliance("compliance-test", good_metrics)
 
-        assert result['compliant'] is True
-        assert result['service_id'] == "compliance-test"
-        assert result['tier'] == 'silver'
-        assert len(result['violations']) == 0
+        assert result["compliant"] is True
+        assert result["service_id"] == "compliance-test"
+        assert result["tier"] == "silver"
+        assert len(result["violations"]) == 0
 
     @pytest.mark.asyncio
-    async def test_validate_sla_compliance_violations(self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles):
+    async def test_validate_sla_compliance_violations(
+        self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles
+    ):
         """Test SLA compliance validation with violations"""
         # First provision a service
         mock_quorum_result = QuorumValidationResult(
-            is_valid=True, diversity_score=0.8, violations=[], recommendations=[],
-            profiles_used=sample_profiles[:2], metadata={'diversity_metrics': {}}
+            is_valid=True,
+            diversity_score=0.8,
+            violations=[],
+            recommendations=[],
+            profiles_used=sample_profiles[:2],
+            metadata={"diversity_metrics": {}},
         )
         mock_quorum_manager.validate_quorum.return_value = mock_quorum_result
 
         await sla_tier_manager.provision_service(
-            service_id="violation-test",
-            tier=SLATier.SILVER,
-            available_devices=sample_devices
+            service_id="violation-test", tier=SLATier.SILVER, available_devices=sample_devices
         )
 
         # Test compliance with bad metrics
@@ -329,34 +326,38 @@ class TestSLACompliance:
             p95_latency_ms=2000.0,  # Over Silver limit of 1200ms
             uptime_percentage=98.0,  # Under Silver requirement of 99%
             error_rate_percentage=2.0,  # Over Silver limit of 1%
-            throughput_ops_per_second=500.0
+            throughput_ops_per_second=500.0,
         )
 
         result = await sla_tier_manager.validate_sla_compliance("violation-test", bad_metrics)
 
-        assert result['compliant'] is False
-        assert len(result['violations']) == 3  # Latency, uptime, error rate
+        assert result["compliant"] is False
+        assert len(result["violations"]) == 3  # Latency, uptime, error rate
 
         # Check violation details
-        violation_metrics = [v['metric'] for v in result['violations']]
-        assert 'p95_latency_ms' in violation_metrics
-        assert 'uptime_percentage' in violation_metrics
-        assert 'error_rate_percentage' in violation_metrics
+        violation_metrics = [v["metric"] for v in result["violations"]]
+        assert "p95_latency_ms" in violation_metrics
+        assert "uptime_percentage" in violation_metrics
+        assert "error_rate_percentage" in violation_metrics
 
     @pytest.mark.asyncio
-    async def test_validate_gold_tier_diversity_revalidation(self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles):
+    async def test_validate_gold_tier_diversity_revalidation(
+        self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles
+    ):
         """Test Gold tier diversity revalidation"""
         # Provision Gold tier service
         mock_quorum_result = QuorumValidationResult(
-            is_valid=True, diversity_score=0.9, violations=[], recommendations=[],
-            profiles_used=sample_profiles, metadata={'diversity_metrics': {}}
+            is_valid=True,
+            diversity_score=0.9,
+            violations=[],
+            recommendations=[],
+            profiles_used=sample_profiles,
+            metadata={"diversity_metrics": {}},
         )
         mock_quorum_manager.validate_quorum.return_value = mock_quorum_result
 
         await sla_tier_manager.provision_service(
-            service_id="gold-diversity-test",
-            tier=SLATier.GOLD,
-            available_devices=sample_devices
+            service_id="gold-diversity-test", tier=SLATier.GOLD, available_devices=sample_devices
         )
 
         # Set last validation to over 1 hour ago to trigger revalidation
@@ -367,124 +368,135 @@ class TestSLACompliance:
         mock_quorum_manager.validate_quorum.return_value = QuorumValidationResult(
             is_valid=False,
             diversity_score=0.3,
-            violations=['Infrastructure diversity compromised'],
+            violations=["Infrastructure diversity compromised"],
             recommendations=[],
             profiles_used=[],
-            metadata={}
+            metadata={},
         )
 
         # Test compliance - should fail due to diversity
         good_metrics = SLAMetrics(
-            p95_latency_ms=300.0, uptime_percentage=99.95,
-            error_rate_percentage=0.05, throughput_ops_per_second=2000.0
+            p95_latency_ms=300.0, uptime_percentage=99.95, error_rate_percentage=0.05, throughput_ops_per_second=2000.0
         )
 
         result = await sla_tier_manager.validate_sla_compliance("gold-diversity-test", good_metrics)
 
-        assert result['compliant'] is False
-        assert result['diversity_valid'] is False
-        assert any(v['metric'] == 'infrastructure_diversity' for v in result['violations'])
+        assert result["compliant"] is False
+        assert result["diversity_valid"] is False
+        assert any(v["metric"] == "infrastructure_diversity" for v in result["violations"])
 
 
 class TestServiceRebalancing:
     """Test service rebalancing functionality"""
 
     @pytest.mark.asyncio
-    async def test_rebalance_service_success(self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles):
+    async def test_rebalance_service_success(
+        self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles
+    ):
         """Test successful service rebalancing"""
         # First provision a service
         mock_quorum_result = QuorumValidationResult(
-            is_valid=True, diversity_score=0.7, violations=[], recommendations=[],
-            profiles_used=sample_profiles[:2], metadata={'diversity_metrics': {}}
+            is_valid=True,
+            diversity_score=0.7,
+            violations=[],
+            recommendations=[],
+            profiles_used=sample_profiles[:2],
+            metadata={"diversity_metrics": {}},
         )
         mock_quorum_manager.validate_quorum.return_value = mock_quorum_result
 
         await sla_tier_manager.provision_service(
-            service_id="rebalance-test",
-            tier=SLATier.SILVER,
-            available_devices=sample_devices
+            service_id="rebalance-test", tier=SLATier.SILVER, available_devices=sample_devices
         )
 
         # Mark service as invalid to trigger rebalancing
         service = sla_tier_manager.service_instances["rebalance-test"]
-        service.validation_status = 'invalid'
+        service.validation_status = "invalid"
 
         # Mock better allocation for rebalancing
         better_quorum_result = QuorumValidationResult(
-            is_valid=True, diversity_score=0.9, violations=[], recommendations=[],
-            profiles_used=sample_profiles, metadata={'diversity_metrics': {}}
+            is_valid=True,
+            diversity_score=0.9,
+            violations=[],
+            recommendations=[],
+            profiles_used=sample_profiles,
+            metadata={"diversity_metrics": {}},
         )
         mock_quorum_manager.validate_quorum.return_value = better_quorum_result
 
-        result = await sla_tier_manager.rebalance_service(
-            service_id="rebalance-test",
-            available_devices=sample_devices
-        )
+        result = await sla_tier_manager.rebalance_service(service_id="rebalance-test", available_devices=sample_devices)
 
-        assert result['success'] is True
-        assert result['action'] == 'rebalanced'
-        assert result['diversity_score'] == 0.9
-        assert len(result['new_allocation']) == 3
-        assert result['diversity_improvement'] > 0
+        assert result["success"] is True
+        assert result["action"] == "rebalanced"
+        assert result["diversity_score"] == 0.9
+        assert len(result["new_allocation"]) == 3
+        assert result["diversity_improvement"] > 0
 
     @pytest.mark.asyncio
-    async def test_rebalance_service_no_rebalance_needed(self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles):
+    async def test_rebalance_service_no_rebalance_needed(
+        self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles
+    ):
         """Test rebalancing when no rebalance is needed"""
         # Provision a service
         mock_quorum_result = QuorumValidationResult(
-            is_valid=True, diversity_score=0.8, violations=[], recommendations=[],
-            profiles_used=sample_profiles[:2], metadata={'diversity_metrics': {}}
+            is_valid=True,
+            diversity_score=0.8,
+            violations=[],
+            recommendations=[],
+            profiles_used=sample_profiles[:2],
+            metadata={"diversity_metrics": {}},
         )
         mock_quorum_manager.validate_quorum.return_value = mock_quorum_result
 
         await sla_tier_manager.provision_service(
-            service_id="no-rebalance-test",
-            tier=SLATier.SILVER,
-            available_devices=sample_devices
+            service_id="no-rebalance-test", tier=SLATier.SILVER, available_devices=sample_devices
         )
 
         # Service is valid, no rebalancing needed
         result = await sla_tier_manager.rebalance_service(
-            service_id="no-rebalance-test",
-            available_devices=sample_devices
+            service_id="no-rebalance-test", available_devices=sample_devices
         )
 
-        assert result['success'] is True
-        assert result['action'] == 'no_rebalance_needed'
+        assert result["success"] is True
+        assert result["action"] == "no_rebalance_needed"
 
     @pytest.mark.asyncio
-    async def test_rebalance_service_failure(self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles):
+    async def test_rebalance_service_failure(
+        self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles
+    ):
         """Test failed service rebalancing"""
         # Provision a service
         mock_quorum_result = QuorumValidationResult(
-            is_valid=True, diversity_score=0.7, violations=[], recommendations=[],
-            profiles_used=sample_profiles[:2], metadata={'diversity_metrics': {}}
+            is_valid=True,
+            diversity_score=0.7,
+            violations=[],
+            recommendations=[],
+            profiles_used=sample_profiles[:2],
+            metadata={"diversity_metrics": {}},
         )
         mock_quorum_manager.validate_quorum.return_value = mock_quorum_result
 
         await sla_tier_manager.provision_service(
-            service_id="rebalance-fail-test",
-            tier=SLATier.GOLD,
-            available_devices=sample_devices,
-            force_rebalance=True
+            service_id="rebalance-fail-test", tier=SLATier.GOLD, available_devices=sample_devices, force_rebalance=True
         )
 
         # Mock failed rebalancing attempt
         failed_quorum_result = QuorumValidationResult(
-            is_valid=False, diversity_score=0.3,
-            violations=['Cannot find valid allocation'], recommendations=[],
-            profiles_used=[], metadata={}
+            is_valid=False,
+            diversity_score=0.3,
+            violations=["Cannot find valid allocation"],
+            recommendations=[],
+            profiles_used=[],
+            metadata={},
         )
         mock_quorum_manager.validate_quorum.return_value = failed_quorum_result
 
         result = await sla_tier_manager.rebalance_service(
-            service_id="rebalance-fail-test",
-            available_devices=sample_devices,
-            force_rebalance=True
+            service_id="rebalance-fail-test", available_devices=sample_devices, force_rebalance=True
         )
 
-        assert result['success'] is False
-        assert 'Failed to find valid rebalancing allocation' in result['error']
+        assert result["success"] is False
+        assert "Failed to find valid rebalancing allocation" in result["error"]
 
 
 class TestServiceManagement:
@@ -501,28 +513,30 @@ class TestServiceManagement:
         """Test getting service status"""
         # Provision a service first
         mock_quorum_result = QuorumValidationResult(
-            is_valid=True, diversity_score=0.8, violations=[], recommendations=[],
-            profiles_used=sample_profiles[:2], metadata={'diversity_metrics': {}}
+            is_valid=True,
+            diversity_score=0.8,
+            violations=[],
+            recommendations=[],
+            profiles_used=sample_profiles[:2],
+            metadata={"diversity_metrics": {}},
         )
         mock_quorum_manager.validate_quorum.return_value = mock_quorum_result
-        mock_quorum_manager.get_quorum_status_summary.return_value = {'status': 'active'}
+        mock_quorum_manager.get_quorum_status_summary.return_value = {"status": "active"}
 
         await sla_tier_manager.provision_service(
-            service_id="status-test",
-            tier=SLATier.SILVER,
-            available_devices=sample_devices
+            service_id="status-test", tier=SLATier.SILVER, available_devices=sample_devices
         )
 
         status = sla_tier_manager.get_service_status("status-test")
 
         assert status is not None
-        assert status['service_id'] == "status-test"
-        assert status['tier'] == 'silver'
-        assert status['status'] == 'active'
-        assert status['device_count'] == 2
-        assert status['diversity_score'] == 0.8
-        assert 'sla_requirements' in status
-        assert 'quorum_status' in status
+        assert status["service_id"] == "status-test"
+        assert status["tier"] == "silver"
+        assert status["status"] == "active"
+        assert status["device_count"] == 2
+        assert status["diversity_score"] == 0.8
+        assert "sla_requirements" in status
+        assert "quorum_status" in status
 
     def test_get_service_status_nonexistent(self, sla_tier_manager):
         """Test getting status of nonexistent service"""
@@ -530,15 +544,21 @@ class TestServiceManagement:
         assert status is None
 
     @pytest.mark.asyncio
-    async def test_get_all_services_status(self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles):
+    async def test_get_all_services_status(
+        self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles
+    ):
         """Test getting status of all services"""
         # Provision services in different tiers
         mock_quorum_result = QuorumValidationResult(
-            is_valid=True, diversity_score=0.8, violations=[], recommendations=[],
-            profiles_used=sample_profiles, metadata={'diversity_metrics': {}}
+            is_valid=True,
+            diversity_score=0.8,
+            violations=[],
+            recommendations=[],
+            profiles_used=sample_profiles,
+            metadata={"diversity_metrics": {}},
         )
         mock_quorum_manager.validate_quorum.return_value = mock_quorum_result
-        mock_quorum_manager.get_quorum_status_summary.return_value = {'status': 'active'}
+        mock_quorum_manager.get_quorum_status_summary.return_value = {"status": "active"}
 
         await sla_tier_manager.provision_service(
             service_id="bronze-service", tier=SLATier.BRONZE, available_devices=sample_devices
@@ -549,26 +569,30 @@ class TestServiceManagement:
 
         all_status = sla_tier_manager.get_all_services_status()
 
-        assert all_status['total_services'] == 2
-        assert all_status['tier_distribution']['bronze'] == 1
-        assert all_status['tier_distribution']['gold'] == 1
-        assert 'services_by_tier' in all_status
-        assert 'sla_requirements' in all_status
+        assert all_status["total_services"] == 2
+        assert all_status["tier_distribution"]["bronze"] == 1
+        assert all_status["tier_distribution"]["gold"] == 1
+        assert "services_by_tier" in all_status
+        assert "sla_requirements" in all_status
 
     @pytest.mark.asyncio
-    async def test_cleanup_expired_services(self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles):
+    async def test_cleanup_expired_services(
+        self, sla_tier_manager, mock_quorum_manager, sample_devices, sample_profiles
+    ):
         """Test cleanup of expired services"""
         # Provision a service
         mock_quorum_result = QuorumValidationResult(
-            is_valid=True, diversity_score=0.8, violations=[], recommendations=[],
-            profiles_used=sample_profiles[:1], metadata={'diversity_metrics': {}}
+            is_valid=True,
+            diversity_score=0.8,
+            violations=[],
+            recommendations=[],
+            profiles_used=sample_profiles[:1],
+            metadata={"diversity_metrics": {}},
         )
         mock_quorum_manager.validate_quorum.return_value = mock_quorum_result
 
         await sla_tier_manager.provision_service(
-            service_id="cleanup-test",
-            tier=SLATier.BRONZE,
-            available_devices=sample_devices
+            service_id="cleanup-test", tier=SLATier.BRONZE, available_devices=sample_devices
         )
 
         # Make service old
@@ -577,8 +601,8 @@ class TestServiceManagement:
 
         cleanup_result = await sla_tier_manager.cleanup_expired_services(max_age_hours=24)
 
-        assert cleanup_result['cleaned_up'] == 1
-        assert "cleanup-test" in cleanup_result['expired_services']
+        assert cleanup_result["cleaned_up"] == 1
+        assert "cleanup-test" in cleanup_result["expired_services"]
         assert len(sla_tier_manager.service_instances) == 0
 
 

@@ -500,6 +500,7 @@ class TestComponentInteraction:
             config.set_configuration("invalid", None, "invalid_level")  # This should fail
         except Exception as e:
             import logging
+
             logging.exception("Configuration error in component isolation test: %s", str(e))
 
         # Other component should still work

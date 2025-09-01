@@ -10,35 +10,38 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 import logging
-from typing import Optional, List, Dict
+from typing import Optional
 
 from .infrastructure_classifier import InfrastructureClassifier, InfrastructureProfile, PowerRegion, TEEVendor
 
 
 class QuorumRequirement(Enum):
     """Quorum requirement levels"""
-    NONE = "none"              # No diversity requirements
-    BASIC = "basic"            # Basic geographic diversity
-    ENHANCED = "enhanced"      # ASN + geographic diversity
-    GOLD = "gold"              # Full disjoint infrastructure
+
+    NONE = "none"  # No diversity requirements
+    BASIC = "basic"  # Basic geographic diversity
+    ENHANCED = "enhanced"  # ASN + geographic diversity
+    GOLD = "gold"  # Full disjoint infrastructure
 
 
 @dataclass
 class DiversityConstraints:
     """Infrastructure diversity constraints"""
-    min_asn_diversity: int = 1          # Minimum unique ASNs
-    min_tee_vendor_diversity: int = 1   # Minimum unique TEE vendors
+
+    min_asn_diversity: int = 1  # Minimum unique ASNs
+    min_tee_vendor_diversity: int = 1  # Minimum unique TEE vendors
     min_power_region_diversity: int = 1  # Minimum unique power regions
-    min_geographic_diversity: int = 1    # Minimum unique countries
-    max_devices_per_asn: int = 999      # Maximum devices per ASN
+    min_geographic_diversity: int = 1  # Minimum unique countries
+    max_devices_per_asn: int = 999  # Maximum devices per ASN
     max_devices_per_power_region: int = 999  # Max devices per power region
     require_tee_diversity: bool = False  # Require multiple TEE vendors
-    min_confidence_score: float = 0.5   # Minimum classification confidence
+    min_confidence_score: float = 0.5  # Minimum classification confidence
 
 
 @dataclass
 class QuorumValidationResult:
     """Result of quorum validation"""
+
     is_valid: bool
     diversity_score: float
     violations: list[str]
@@ -57,19 +60,10 @@ class QuorumManager:
         # Predefined constraint templates
         self.constraint_templates = {
             QuorumRequirement.NONE: DiversityConstraints(),
-
-            QuorumRequirement.BASIC: DiversityConstraints(
-                min_geographic_diversity=2,
-                min_confidence_score=0.6
-            ),
-
+            QuorumRequirement.BASIC: DiversityConstraints(min_geographic_diversity=2, min_confidence_score=0.6),
             QuorumRequirement.ENHANCED: DiversityConstraints(
-                min_asn_diversity=2,
-                min_geographic_diversity=2,
-                max_devices_per_asn=2,
-                min_confidence_score=0.7
+                min_asn_diversity=2, min_geographic_diversity=2, max_devices_per_asn=2, min_confidence_score=0.7
             ),
-
             QuorumRequirement.GOLD: DiversityConstraints(
                 min_asn_diversity=3,
                 min_tee_vendor_diversity=2,
@@ -78,16 +72,17 @@ class QuorumManager:
                 max_devices_per_asn=1,
                 max_devices_per_power_region=1,
                 require_tee_diversity=True,
-                min_confidence_score=0.8
-            )
+                min_confidence_score=0.8,
+            ),
         }
 
-    async def validate_quorum(self,
-                            device_candidates: list[dict],
-                            requirement: QuorumRequirement,
-                            target_size: int = 3,
-                            custom_constraints: DiversityConstraints | None = None
-                            ) -> QuorumValidationResult:
+    async def validate_quorum(
+        self,
+        device_candidates: list[dict],
+        requirement: QuorumRequirement,
+        target_size: int = 3,
+        custom_constraints: DiversityConstraints | None = None,
+    ) -> QuorumValidationResult:
         """
         Validate and select optimal quorum based on diversity constraints
 
@@ -106,10 +101,7 @@ class QuorumManager:
         profiles = await self._classify_devices(device_candidates)
 
         # Filter by confidence score
-        qualified_profiles = [
-            p for p in profiles
-            if p.confidence_score >= constraints.min_confidence_score
-        ]
+        qualified_profiles = [p for p in profiles if p.confidence_score >= constraints.min_confidence_score]
 
         if len(qualified_profiles) < target_size:
             return QuorumValidationResult(
@@ -118,7 +110,7 @@ class QuorumManager:
                 violations=[f"Insufficient qualified devices: {len(qualified_profiles)} < {target_size}"],
                 recommendations=["Add more devices with better classification confidence"],
                 profiles_used=[],
-                metadata={"total_candidates": len(device_candidates)}
+                metadata={"total_candidates": len(device_candidates)},
             )
 
         # Select optimal quorum
@@ -131,23 +123,21 @@ class QuorumManager:
         diversity_metrics = self.classifier.get_diversity_metrics(selected_profiles)
 
         # Generate recommendations
-        recommendations = self._generate_recommendations(
-            selected_profiles, constraints, violations, diversity_metrics
-        )
+        recommendations = self._generate_recommendations(selected_profiles, constraints, violations, diversity_metrics)
 
         return QuorumValidationResult(
             is_valid=len(violations) == 0,
-            diversity_score=diversity_metrics['total_diversity_score'],
+            diversity_score=diversity_metrics["total_diversity_score"],
             violations=violations,
             recommendations=recommendations,
             profiles_used=selected_profiles,
             metadata={
-                'selection_score': selection_score,
-                'diversity_metrics': diversity_metrics,
-                'constraint_level': requirement.value,
-                'total_candidates': len(device_candidates),
-                'qualified_candidates': len(qualified_profiles)
-            }
+                "selection_score": selection_score,
+                "diversity_metrics": diversity_metrics,
+                "constraint_level": requirement.value,
+                "total_candidates": len(device_candidates),
+                "qualified_candidates": len(qualified_profiles),
+            },
         )
 
     async def _classify_devices(self, device_candidates: list[dict]) -> list[InfrastructureProfile]:
@@ -156,10 +146,10 @@ class QuorumManager:
 
         for device in device_candidates:
             task = self.classifier.classify_device(
-                device_id=device['id'],
-                ip_address=device['ip_address'],
-                attestation_data=device.get('attestation_data'),
-                network_info=device.get('network_info')
+                device_id=device["id"],
+                ip_address=device["ip_address"],
+                attestation_data=device.get("attestation_data"),
+                network_info=device.get("network_info"),
             )
             tasks.append(task)
 
@@ -175,10 +165,9 @@ class QuorumManager:
 
         return valid_profiles
 
-    async def _select_optimal_quorum(self,
-                                   profiles: list[InfrastructureProfile],
-                                   constraints: DiversityConstraints,
-                                   target_size: int) -> tuple[list[InfrastructureProfile], float]:
+    async def _select_optimal_quorum(
+        self, profiles: list[InfrastructureProfile], constraints: DiversityConstraints, target_size: int
+    ) -> tuple[list[InfrastructureProfile], float]:
         """
         Select optimal quorum using diversity-aware algorithm
         """
@@ -217,9 +206,9 @@ class QuorumManager:
         final_score = self._calculate_selection_score(selected, constraints)
         return selected, final_score
 
-    def _calculate_selection_score(self,
-                                 profiles: list[InfrastructureProfile],
-                                 constraints: DiversityConstraints) -> float:
+    def _calculate_selection_score(
+        self, profiles: list[InfrastructureProfile], constraints: DiversityConstraints
+    ) -> float:
         """Calculate selection quality score"""
         if not profiles:
             return 0.0
@@ -227,7 +216,7 @@ class QuorumManager:
         metrics = self.classifier.get_diversity_metrics(profiles)
 
         # Base diversity score (0-1)
-        diversity_score = metrics['total_diversity_score']
+        diversity_score = metrics["total_diversity_score"]
 
         # Confidence bonus
         avg_confidence = sum(p.confidence_score for p in profiles) / len(profiles)
@@ -240,15 +229,15 @@ class QuorumManager:
 
         # TEE diversity bonus for Gold tier
         tee_bonus = 0
-        if constraints.require_tee_diversity and metrics['unique_tee_vendors'] >= 2:
+        if constraints.require_tee_diversity and metrics["unique_tee_vendors"] >= 2:
             tee_bonus = 0.1
 
         total_score = diversity_score + confidence_bonus + tee_bonus - size_penalty
         return max(0.0, min(1.0, total_score))
 
-    def _validate_constraints(self,
-                            profiles: list[InfrastructureProfile],
-                            constraints: DiversityConstraints) -> list[str]:
+    def _validate_constraints(
+        self, profiles: list[InfrastructureProfile], constraints: DiversityConstraints
+    ) -> list[str]:
         """Validate diversity constraints"""
         violations = []
 
@@ -258,25 +247,23 @@ class QuorumManager:
         metrics = self.classifier.get_diversity_metrics(profiles)
 
         # ASN diversity
-        if metrics['unique_asns'] < constraints.min_asn_diversity:
-            violations.append(
-                f"Insufficient ASN diversity: {metrics['unique_asns']} < {constraints.min_asn_diversity}"
-            )
+        if metrics["unique_asns"] < constraints.min_asn_diversity:
+            violations.append(f"Insufficient ASN diversity: {metrics['unique_asns']} < {constraints.min_asn_diversity}")
 
         # TEE vendor diversity
-        if metrics['unique_tee_vendors'] < constraints.min_tee_vendor_diversity:
+        if metrics["unique_tee_vendors"] < constraints.min_tee_vendor_diversity:
             violations.append(
                 f"Insufficient TEE vendor diversity: {metrics['unique_tee_vendors']} < {constraints.min_tee_vendor_diversity}"
             )
 
         # Power region diversity
-        if metrics['unique_power_regions'] < constraints.min_power_region_diversity:
+        if metrics["unique_power_regions"] < constraints.min_power_region_diversity:
             violations.append(
                 f"Insufficient power region diversity: {metrics['unique_power_regions']} < {constraints.min_power_region_diversity}"
             )
 
         # Geographic diversity
-        if metrics['unique_countries'] < constraints.min_geographic_diversity:
+        if metrics["unique_countries"] < constraints.min_geographic_diversity:
             violations.append(
                 f"Insufficient geographic diversity: {metrics['unique_countries']} < {constraints.min_geographic_diversity}"
             )
@@ -289,9 +276,7 @@ class QuorumManager:
 
         for asn, count in asn_counts.items():
             if count > constraints.max_devices_per_asn:
-                violations.append(
-                    f"Too many devices in ASN {asn}: {count} > {constraints.max_devices_per_asn}"
-                )
+                violations.append(f"Too many devices in ASN {asn}: {count} > {constraints.max_devices_per_asn}")
 
         # Devices per power region limit
         power_counts = {}
@@ -319,11 +304,13 @@ class QuorumManager:
 
         return violations
 
-    def _generate_recommendations(self,
-                                profiles: list[InfrastructureProfile],
-                                constraints: DiversityConstraints,
-                                violations: list[str],
-                                metrics: dict) -> list[str]:
+    def _generate_recommendations(
+        self,
+        profiles: list[InfrastructureProfile],
+        constraints: DiversityConstraints,
+        violations: list[str],
+        metrics: dict,
+    ) -> list[str]:
         """Generate recommendations for improving quorum"""
         recommendations = []
 
@@ -332,12 +319,12 @@ class QuorumManager:
             return recommendations
 
         # ASN diversity recommendations
-        if metrics['unique_asns'] < constraints.min_asn_diversity:
-            needed = constraints.min_asn_diversity - metrics['unique_asns']
+        if metrics["unique_asns"] < constraints.min_asn_diversity:
+            needed = constraints.min_asn_diversity - metrics["unique_asns"]
             recommendations.append(f"Add {needed} more devices from different ASNs")
 
         # TEE vendor diversity
-        if metrics['unique_tee_vendors'] < constraints.min_tee_vendor_diversity:
+        if metrics["unique_tee_vendors"] < constraints.min_tee_vendor_diversity:
             tee_vendors = set(p.tee_vendor for p in profiles)
             if TEEVendor.AMD_SEV_SNP not in tee_vendors:
                 recommendations.append("Add AMD SEV-SNP capable device")
@@ -345,7 +332,7 @@ class QuorumManager:
                 recommendations.append("Add Intel TDX capable device")
 
         # Power region diversity
-        if metrics['unique_power_regions'] < constraints.min_power_region_diversity:
+        if metrics["unique_power_regions"] < constraints.min_power_region_diversity:
             current_regions = set(p.power_region for p in profiles)
             missing_regions = set(PowerRegion) - current_regions - {PowerRegion.UNKNOWN}
             if missing_regions:
@@ -354,15 +341,13 @@ class QuorumManager:
                 )
 
         # Geographic diversity
-        if metrics['unique_countries'] < constraints.min_geographic_diversity:
+        if metrics["unique_countries"] < constraints.min_geographic_diversity:
             recommendations.append("Add devices from different countries")
 
         # Confidence improvements
         low_confidence = [p for p in profiles if p.confidence_score < constraints.min_confidence_score]
         if low_confidence:
-            recommendations.append(
-                "Improve device attestation data quality for better classification confidence"
-            )
+            recommendations.append("Improve device attestation data quality for better classification confidence")
 
         return recommendations
 
@@ -403,27 +388,29 @@ class QuorumManager:
             "status": "active",
             "devices": len(profiles),
             "highest_sla_level": highest_level.value,
-            "diversity_score": metrics['total_diversity_score'],
+            "diversity_score": metrics["total_diversity_score"],
             "diversity_breakdown": {
-                "asn": metrics['asn_diversity'],
-                "tee_vendor": metrics['tee_vendor_diversity'],
-                "power_region": metrics['power_region_diversity'],
-                "geographic": metrics['geographic_diversity']
+                "asn": metrics["asn_diversity"],
+                "tee_vendor": metrics["tee_vendor_diversity"],
+                "power_region": metrics["power_region_diversity"],
+                "geographic": metrics["geographic_diversity"],
             },
             "distributions": {
                 "asn": asn_distribution,
                 "tee_vendor": tee_distribution,
-                "power_region": power_distribution
+                "power_region": power_distribution,
             },
             "avg_confidence": sum(p.confidence_score for p in profiles) / len(profiles),
-            "classification_time": datetime.utcnow().isoformat()
+            "classification_time": datetime.utcnow().isoformat(),
         }
 
-    async def continuously_monitor_quorum(self,
-                                        device_candidates: list[dict],
-                                        requirement: QuorumRequirement,
-                                        callback: Optional[callable] = None,
-                                        interval_seconds: int = 300) -> None:
+    async def continuously_monitor_quorum(
+        self,
+        device_candidates: list[dict],
+        requirement: QuorumRequirement,
+        callback: Optional[callable] = None,
+        interval_seconds: int = 300,
+    ) -> None:
         """Continuously monitor quorum diversity and alert on violations"""
         self.logger.info(f"Starting continuous quorum monitoring (interval: {interval_seconds}s)")
 

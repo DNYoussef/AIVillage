@@ -1,0 +1,563 @@
+{
+  "cycle_type": "50_generation_breeding_evaluation",
+  "total_generations": 50,
+  "final_population_size": 8,
+  "champion_model": {
+    "name": "gen50_child_2",
+    "fitness": 0.013071631492291864,
+    "scores": {
+      "code": 0.013639862819979648,
+      "math": 0.012994271092223843,
+      "reasoning": 0.01292754294587636,
+      "language": 0.0127248491110876
+    },
+    "generation": 50,
+    "parents": [
+      "gen49_mutant_1",
+      "gen49_child_2"
+    ],
+    "technique": "linear"
+  },
+  "top_5_models": [
+    {
+      "rank": 1,
+      "name": "gen50_child_2",
+      "fitness": 0.013071631492291864,
+      "scores": {
+        "code": 0.013639862819979648,
+        "math": 0.012994271092223843,
+        "reasoning": 0.01292754294587636,
+        "language": 0.0127248491110876
+      },
+      "generation": 50
+    },
+    {
+      "rank": 2,
+      "name": "gen50_child_4",
+      "fitness": 0.012949575743806008,
+      "scores": {
+        "code": 0.01348666624913884,
+        "math": 0.012929591093617477,
+        "reasoning": 0.012897460809732744,
+        "language": 0.01248458482273497
+      },
+      "generation": 50
+    },
+    {
+      "rank": 3,
+      "name": "gen49_child_2",
+      "fitness": 0.012816221200847423,
+      "scores": {
+        "code": 0.013490012544874957,
+        "math": 0.01254971968506135,
+        "reasoning": 0.012779871023895483,
+        "language": 0.012445281549557903
+      },
+      "generation": 49
+    },
+    {
+      "rank": 4,
+      "name": "gen49_mutant_1",
+      "fitness": 0.012787797766010934,
+      "scores": {
+        "code": 0.013588250353688783,
+        "math": 0.01293518528325273,
+        "reasoning": 0.0122473922347166,
+        "language": 0.01238036319238562
+      },
+      "generation": 49
+    },
+    {
+      "rank": 5,
+      "name": "gen49_child_3",
+      "fitness": 0.012785130586175992,
+      "scores": {
+        "code": 0.013032359762294271,
+        "math": 0.0131660571111211,
+        "reasoning": 0.012824222885660822,
+        "language": 0.01211788258562777
+      },
+      "generation": 49
+    }
+  ],
+  "fitness_progression": {
+    "generation_1": 0.004769808185907702,
+    "generation_10": 0.006359082025282913,
+    "generation_25": 0.008698803616761147,
+    "generation_50": 0.012816221200847423,
+    "total_improvement": 0.008046413014939722,
+    "improvement_percentage": 168.69468752879163
+  },
+  "generation_history": [
+    {
+      "generation": 1,
+      "population_size": 8,
+      "best_fitness": 0.004769808185907702,
+      "average_fitness": 0.0047223803430099884,
+      "diversity": 9.517681118584756e-05
+    },
+    {
+      "generation": 2,
+      "population_size": 8,
+      "best_fitness": 0.004915307207564066,
+      "average_fitness": 0.004814560308553936,
+      "diversity": 8.89682141645483e-05
+    },
+    {
+      "generation": 3,
+      "population_size": 8,
+      "best_fitness": 0.004915307207564066,
+      "average_fitness": 0.004994014111419358,
+      "diversity": 0.00010423159364952012
+    },
+    {
+      "generation": 4,
+      "population_size": 8,
+      "best_fitness": 0.00515317962668395,
+      "average_fitness": 0.005183140482654926,
+      "diversity": 0.00011903600112166854
+    },
+    {
+      "generation": 5,
+      "population_size": 8,
+      "best_fitness": 0.005390038772127515,
+      "average_fitness": 0.005385859576504726,
+      "diversity": 0.000153074735634981
+    },
+    {
+      "generation": 6,
+      "population_size": 8,
+      "best_fitness": 0.005647733897866042,
+      "average_fitness": 0.005611968768115421,
+      "diversity": 0.00015025110439907698
+    },
+    {
+      "generation": 7,
+      "population_size": 8,
+      "best_fitness": 0.005848595907726781,
+      "average_fitness": 0.005789176425536056,
+      "diversity": 0.0001321748452339304
+    },
+    {
+      "generation": 8,
+      "population_size": 8,
+      "best_fitness": 0.006012198705411488,
+      "average_fitness": 0.0060021011205741905,
+      "diversity": 0.0001458647213928855
+    },
+    {
+      "generation": 9,
+      "population_size": 8,
+      "best_fitness": 0.006216483380754131,
+      "average_fitness": 0.006208107559264865,
+      "diversity": 0.00011344435999631219
+    },
+    {
+      "generation": 10,
+      "population_size": 8,
+      "best_fitness": 0.006359082025282913,
+      "average_fitness": 0.006387062469284166,
+      "diversity": 9.829083971306857e-05
+    },
+    {
+      "generation": 11,
+      "population_size": 8,
+      "best_fitness": 0.006521872520938456,
+      "average_fitness": 0.006538443459227775,
+      "diversity": 0.00011178819508566851
+    },
+    {
+      "generation": 12,
+      "population_size": 8,
+      "best_fitness": 0.006814548123618893,
+      "average_fitness": 0.00667195742946982,
+      "diversity": 0.00015580283712308306
+    },
+    {
+      "generation": 13,
+      "population_size": 8,
+      "best_fitness": 0.006929665712910068,
+      "average_fitness": 0.00688843676039895,
+      "diversity": 0.00013367157338372044
+    },
+    {
+      "generation": 14,
+      "population_size": 8,
+      "best_fitness": 0.007111040088429895,
+      "average_fitness": 0.0070511811852259475,
+      "diversity": 0.00013446453390282705
+    },
+    {
+      "generation": 15,
+      "population_size": 8,
+      "best_fitness": 0.007270216102083805,
+      "average_fitness": 0.007215768511550258,
+      "diversity": 9.928398060497946e-05
+    },
+    {
+      "generation": 16,
+      "population_size": 8,
+      "best_fitness": 0.007393288067708681,
+      "average_fitness": 0.007340254901840816,
+      "diversity": 7.639050657941579e-05
+    },
+    {
+      "generation": 17,
+      "population_size": 8,
+      "best_fitness": 0.007477477044689726,
+      "average_fitness": 0.007440547106646525,
+      "diversity": 0.00011363383253594599
+    },
+    {
+      "generation": 18,
+      "population_size": 8,
+      "best_fitness": 0.007609198387585144,
+      "average_fitness": 0.007606798072825318,
+      "diversity": 9.267036827851985e-05
+    },
+    {
+      "generation": 19,
+      "population_size": 8,
+      "best_fitness": 0.007739503841474215,
+      "average_fitness": 0.007775804946017121,
+      "diversity": 9.957948226594552e-05
+    },
+    {
+      "generation": 20,
+      "population_size": 8,
+      "best_fitness": 0.0079030974398408,
+      "average_fitness": 0.007917224862905223,
+      "diversity": 7.95746546521221e-05
+    },
+    {
+      "generation": 21,
+      "population_size": 8,
+      "best_fitness": 0.00804324646374814,
+      "average_fitness": 0.008042302267941547,
+      "diversity": 8.281893332263737e-05
+    },
+    {
+      "generation": 22,
+      "population_size": 8,
+      "best_fitness": 0.008181239938011398,
+      "average_fitness": 0.008199626859772269,
+      "diversity": 0.00012973480073262092
+    },
+    {
+      "generation": 23,
+      "population_size": 8,
+      "best_fitness": 0.00846303195762051,
+      "average_fitness": 0.008355126874045238,
+      "diversity": 9.996572885913918e-05
+    },
+    {
+      "generation": 24,
+      "population_size": 8,
+      "best_fitness": 0.00846303195762051,
+      "average_fitness": 0.008497084799067533,
+      "diversity": 8.740482866288925e-05
+    },
+    {
+      "generation": 25,
+      "population_size": 8,
+      "best_fitness": 0.008698803616761147,
+      "average_fitness": 0.00869779968869434,
+      "diversity": 0.00016405417110136635
+    },
+    {
+      "generation": 26,
+      "population_size": 8,
+      "best_fitness": 0.008970787947240762,
+      "average_fitness": 0.008943455541157087,
+      "diversity": 0.00016179449350097678
+    },
+    {
+      "generation": 27,
+      "population_size": 8,
+      "best_fitness": 0.00925185096846651,
+      "average_fitness": 0.009147411532212369,
+      "diversity": 0.00011168662910983519
+    },
+    {
+      "generation": 28,
+      "population_size": 8,
+      "best_fitness": 0.009271165917588007,
+      "average_fitness": 0.009321277319568402,
+      "diversity": 9.24135888127401e-05
+    },
+    {
+      "generation": 29,
+      "population_size": 8,
+      "best_fitness": 0.00945304358202259,
+      "average_fitness": 0.009509504990941886,
+      "diversity": 0.00015024037630863827
+    },
+    {
+      "generation": 30,
+      "population_size": 8,
+      "best_fitness": 0.009828031120193327,
+      "average_fitness": 0.009664712916254769,
+      "diversity": 0.00014519319235226452
+    },
+    {
+      "generation": 31,
+      "population_size": 8,
+      "best_fitness": 0.00989816416616611,
+      "average_fitness": 0.009853663933536736,
+      "diversity": 0.00011863676752077891
+    },
+    {
+      "generation": 32,
+      "population_size": 8,
+      "best_fitness": 0.010012396347871733,
+      "average_fitness": 0.00995779459455588,
+      "diversity": 0.00011708237344664596
+    },
+    {
+      "generation": 33,
+      "population_size": 8,
+      "best_fitness": 0.010170724314946523,
+      "average_fitness": 0.010201482734356985,
+      "diversity": 0.0001649992875458831
+    },
+    {
+      "generation": 34,
+      "population_size": 8,
+      "best_fitness": 0.010436557549723372,
+      "average_fitness": 0.010429487678506327,
+      "diversity": 9.302475617812952e-05
+    },
+    {
+      "generation": 35,
+      "population_size": 8,
+      "best_fitness": 0.010570044606397714,
+      "average_fitness": 0.010544592235860135,
+      "diversity": 8.348816032685648e-05
+    },
+    {
+      "generation": 36,
+      "population_size": 8,
+      "best_fitness": 0.010652566596160309,
+      "average_fitness": 0.010700775914883925,
+      "diversity": 0.00010764223690927277
+    },
+    {
+      "generation": 37,
+      "population_size": 8,
+      "best_fitness": 0.01090686404827535,
+      "average_fitness": 0.010817351737421804,
+      "diversity": 0.00014120164232940487
+    },
+    {
+      "generation": 38,
+      "population_size": 8,
+      "best_fitness": 0.011052415231771645,
+      "average_fitness": 0.010991130367319737,
+      "diversity": 9.569122238766529e-05
+    },
+    {
+      "generation": 39,
+      "population_size": 8,
+      "best_fitness": 0.011130775235372538,
+      "average_fitness": 0.011099128930241502,
+      "diversity": 6.910047061294115e-05
+    },
+    {
+      "generation": 40,
+      "population_size": 8,
+      "best_fitness": 0.011256584336229914,
+      "average_fitness": 0.011203901928699108,
+      "diversity": 9.551584825709516e-05
+    },
+    {
+      "generation": 41,
+      "population_size": 8,
+      "best_fitness": 0.011353870931851168,
+      "average_fitness": 0.011379044853649017,
+      "diversity": 0.00010491524255239842
+    },
+    {
+      "generation": 42,
+      "population_size": 8,
+      "best_fitness": 0.011584117983593607,
+      "average_fitness": 0.011529552089224916,
+      "diversity": 0.00010747796621336445
+    },
+    {
+      "generation": 43,
+      "population_size": 8,
+      "best_fitness": 0.011703019746641887,
+      "average_fitness": 0.01172878418986487,
+      "diversity": 0.00013343640788407383
+    },
+    {
+      "generation": 44,
+      "population_size": 8,
+      "best_fitness": 0.011903887892788732,
+      "average_fitness": 0.011905955377087243,
+      "diversity": 8.506098578862255e-05
+    },
+    {
+      "generation": 45,
+      "population_size": 8,
+      "best_fitness": 0.012010635435276265,
+      "average_fitness": 0.01210517613026195,
+      "diversity": 0.00014067708236751897
+    },
+    {
+      "generation": 46,
+      "population_size": 8,
+      "best_fitness": 0.012305163411352111,
+      "average_fitness": 0.012343863309567668,
+      "diversity": 0.00012067793636656043
+    },
+    {
+      "generation": 47,
+      "population_size": 8,
+      "best_fitness": 0.012550207443199273,
+      "average_fitness": 0.012539351585247965,
+      "diversity": 0.00012999779067796074
+    },
+    {
+      "generation": 48,
+      "population_size": 8,
+      "best_fitness": 0.012736263539235858,
+      "average_fitness": 0.01269914417405779,
+      "diversity": 7.128815221155396e-05
+    },
+    {
+      "generation": 49,
+      "population_size": 8,
+      "best_fitness": 0.012773706290979993,
+      "average_fitness": 0.012769441782557997,
+      "diversity": 2.6725341051449224e-05
+    },
+    {
+      "generation": 50,
+      "population_size": 8,
+      "best_fitness": 0.012816221200847423,
+      "average_fitness": 0.012829493328294288,
+      "diversity": 0.00011426363893976449
+    }
+  ],
+  "elite_models_tracked": [
+    {
+      "generation": 10,
+      "name": "gen9_child_2",
+      "fitness": 0.006359082025282913,
+      "scores": {
+        "code": 0.00639932333968051,
+        "math": 0.0070394616448024,
+        "reasoning": 0.005946475176592828,
+        "language": 0.0060510679400559144
+      }
+    },
+    {
+      "generation": 10,
+      "name": "gen9_mutant_1",
+      "fitness": 0.006328024120375389,
+      "scores": {
+        "code": 0.006216480032524285,
+        "math": 0.007245294967881816,
+        "reasoning": 0.00650519392495668,
+        "language": 0.005345127556138776
+      }
+    },
+    {
+      "generation": 20,
+      "name": "gen19_child_2",
+      "fitness": 0.0079030974398408,
+      "scores": {
+        "code": 0.007762095976626781,
+        "math": 0.008344001793119435,
+        "reasoning": 0.008225096119335248,
+        "language": 0.00728119587028174
+      }
+    },
+    {
+      "generation": 20,
+      "name": "gen19_child_4",
+      "fitness": 0.00787787015353064,
+      "scores": {
+        "code": 0.007992410949220497,
+        "math": 0.008441629823262516,
+        "reasoning": 0.00824678258065937,
+        "language": 0.006830657260980175
+      }
+    },
+    {
+      "generation": 30,
+      "name": "gen29_child_3",
+      "fitness": 0.009828031120193327,
+      "scores": {
+        "code": 0.010152496395089703,
+        "math": 0.009194206631515378,
+        "reasoning": 0.010257766731032618,
+        "language": 0.009707654723135608
+      }
+    },
+    {
+      "generation": 30,
+      "name": "gen29_mutant_2",
+      "fitness": 0.009580631043131591,
+      "scores": {
+        "code": 0.009794712935423252,
+        "math": 0.009503241623580502,
+        "reasoning": 0.009858990325195615,
+        "language": 0.009165579288326996
+      }
+    },
+    {
+      "generation": 40,
+      "name": "gen39_child_4",
+      "fitness": 0.011256584336229914,
+      "scores": {
+        "code": 0.011569252271719782,
+        "math": 0.011316120074016101,
+        "reasoning": 0.011465489999894201,
+        "language": 0.010675474999289572
+      }
+    },
+    {
+      "generation": 40,
+      "name": "gen39_child_2",
+      "fitness": 0.011138742181847261,
+      "scores": {
+        "code": 0.011225177336259391,
+        "math": 0.011086139350511634,
+        "reasoning": 0.011557498092010015,
+        "language": 0.010686153948608005
+      }
+    },
+    {
+      "generation": 50,
+      "name": "gen49_child_2",
+      "fitness": 0.012816221200847423,
+      "scores": {
+        "code": 0.013490012544874957,
+        "math": 0.01254971968506135,
+        "reasoning": 0.012779871023895483,
+        "language": 0.012445281549557903
+      }
+    },
+    {
+      "generation": 50,
+      "name": "gen49_mutant_1",
+      "fitness": 0.012787797766010934,
+      "scores": {
+        "code": 0.013588250353688783,
+        "math": 0.01293518528325273,
+        "reasoning": 0.0122473922347166,
+        "language": 0.01238036319238562
+      }
+    }
+  ],
+  "breeding_statistics": {
+    "crossover_operations": 50,
+    "mutation_operations": 25,
+    "selection_pressure": "top_4_elitism",
+    "population_stability": 0.00011287166486470231
+  },
+  "benchmarking_complete": true,
+  "ready_for_next_phase": "quiet_star_integration"
+}

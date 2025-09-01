@@ -51,7 +51,7 @@ from .federated_auth_system import (
     AuthenticationStatus,
     NodeIdentity,
     AuthenticationChallenge,
-    AuthenticationSession
+    AuthenticationSession,
 )
 
 from .secure_aggregation import (
@@ -61,7 +61,7 @@ from .secure_aggregation import (
     SecureGradient,
     AggregationShare,
     HomomorphicKey,
-    PrivacyBudget
+    PrivacyBudget,
 )
 
 from .betanet_security_manager import (
@@ -71,19 +71,17 @@ from .betanet_security_manager import (
     ChannelType,
     SecurityCredential,
     SecureChannel,
-    ThreatEvent as BetaNetThreatEvent,
-    SecurityPolicy
+    SecurityPolicy,
 )
 
 from .consensus_security_manager import (
     ConsensusSecurityManager,
     ConsensusProtocol,
     AttackType,
-    NodeRole as ConsensusNodeRole,
     ThresholdKey,
     ConsensusMessage,
     AttackEvidence,
-    ConsensusRound
+    ConsensusRound,
 )
 
 from .threat_detection_system import (
@@ -94,7 +92,7 @@ from .threat_detection_system import (
     ThreatIndicator,
     ThreatEvent,
     BehaviorProfile,
-    MitigationStrategy
+    MitigationStrategy,
 )
 
 from .reputation_trust_system import (
@@ -105,78 +103,72 @@ from .reputation_trust_system import (
     ReputationScore,
     TrustProfile,
     TrustTransaction,
-    RecommendationCredential
+    RecommendationCredential,
 )
 
 from .security_integration_manager import (
     SecurityIntegrationManager,
     SecurityEvent,
     SecurityConfiguration,
-    SecurityMetrics
+    SecurityMetrics,
 )
 
 __all__ = [
     # Authentication
-    'FederatedAuthenticationSystem',
-    'NodeRole',
-    'AuthenticationMethod',
-    'AuthenticationStatus',
-    'NodeIdentity',
-    'AuthenticationChallenge',
-    'AuthenticationSession',
-    
+    "FederatedAuthenticationSystem",
+    "NodeRole",
+    "AuthenticationMethod",
+    "AuthenticationStatus",
+    "NodeIdentity",
+    "AuthenticationChallenge",
+    "AuthenticationSession",
     # Secure Aggregation
-    'SecureAggregationProtocol',
-    'AggregationMethod',
-    'PrivacyLevel',
-    'SecureGradient',
-    'AggregationShare',
-    'HomomorphicKey',
-    'PrivacyBudget',
-    
+    "SecureAggregationProtocol",
+    "AggregationMethod",
+    "PrivacyLevel",
+    "SecureGradient",
+    "AggregationShare",
+    "HomomorphicKey",
+    "PrivacyBudget",
     # Transport Security
-    'BetaNetSecurityManager',
-    'SecurityLevel',
-    'ThreatType',
-    'ChannelType',
-    'SecurityCredential',
-    'SecureChannel',
-    'SecurityPolicy',
-    
+    "BetaNetSecurityManager",
+    "SecurityLevel",
+    "ThreatType",
+    "ChannelType",
+    "SecurityCredential",
+    "SecureChannel",
+    "SecurityPolicy",
     # Consensus Security
-    'ConsensusSecurityManager',
-    'ConsensusProtocol',
-    'AttackType',
-    'ThresholdKey',
-    'ConsensusMessage',
-    'AttackEvidence',
-    'ConsensusRound',
-    
+    "ConsensusSecurityManager",
+    "ConsensusProtocol",
+    "AttackType",
+    "ThresholdKey",
+    "ConsensusMessage",
+    "AttackEvidence",
+    "ConsensusRound",
     # Threat Detection
-    'ThreatDetectionSystem',
-    'ThreatLevel',
-    'ThreatCategory',
-    'AttackVector',
-    'ThreatIndicator',
-    'ThreatEvent',
-    'BehaviorProfile',
-    'MitigationStrategy',
-    
+    "ThreatDetectionSystem",
+    "ThreatLevel",
+    "ThreatCategory",
+    "AttackVector",
+    "ThreatIndicator",
+    "ThreatEvent",
+    "BehaviorProfile",
+    "MitigationStrategy",
     # Trust Management
-    'ReputationTrustSystem',
-    'TrustMetric',
-    'ReputationEvent',
-    'TrustLevel',
-    'ReputationScore',
-    'TrustProfile',
-    'TrustTransaction',
-    'RecommendationCredential',
-    
+    "ReputationTrustSystem",
+    "TrustMetric",
+    "ReputationEvent",
+    "TrustLevel",
+    "ReputationScore",
+    "TrustProfile",
+    "TrustTransaction",
+    "RecommendationCredential",
     # Integration
-    'SecurityIntegrationManager',
-    'SecurityEvent',
-    'SecurityConfiguration',
-    'SecurityMetrics'
+    "SecurityIntegrationManager",
+    "SecurityEvent",
+    "SecurityConfiguration",
+    "SecurityMetrics",
 ]
 
 # Version information
@@ -203,21 +195,19 @@ DEFAULT_SECURITY_CONFIG = SecurityConfiguration(
     detection_sensitivity=0.7,
     initial_trust_score=0.5,
     trust_decay_enabled=True,
-    min_trust_for_participation=0.4
+    min_trust_for_participation=0.4,
 )
+
 
 def create_security_manager(node_id: str, config=None):
     """
     Factory function to create a configured SecurityIntegrationManager.
-    
+
     Args:
         node_id: Unique identifier for this node
         config: Optional SecurityConfiguration (uses defaults if None)
-        
+
     Returns:
         SecurityIntegrationManager instance
     """
-    return SecurityIntegrationManager(
-        node_id=node_id,
-        config=config or DEFAULT_SECURITY_CONFIG
-    )
+    return SecurityIntegrationManager(node_id=node_id, config=config or DEFAULT_SECURITY_CONFIG)

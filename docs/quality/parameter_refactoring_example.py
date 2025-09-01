@@ -272,7 +272,7 @@ class MigrationStrategies:
 class ActualRefactoringExamples:
     """Examples based on actual violations found in analysis."""
 
-    # From: core/agent-forge/training/utils/model_persistence.py:33
+    # From: core/agent_forge/training/utils/model_persistence.py:33
     # BEFORE: def save_model_and_config(self, model: ModelProtocol, config: Any,
     #                                   model_name: str, checkpoint_dir: Path) -> bool:
     def save_model_and_config(self, model, config, *, save_options: ModelSaveConfig) -> bool:

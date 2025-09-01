@@ -21,7 +21,10 @@ app = FastAPI(title="Agent Forge WebSocket Server")
 
 # SECURITY: Secure WebSocket CORS configuration - NO WILDCARDS
 import os
-ws_cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8080,http://127.0.0.1:3000").split(",")
+
+ws_cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8080,http://127.0.0.1:3000").split(
+    ","
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[origin.strip() for origin in ws_cors_origins],  # SECURITY: No wildcards

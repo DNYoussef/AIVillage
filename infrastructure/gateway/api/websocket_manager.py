@@ -147,17 +147,19 @@ app = FastAPI(title="WebSocket Manager")
 # SECURITY: Add secure WebSocket CORS middleware - NO WILDCARDS
 try:
     from src.security.cors_config import WEBSOCKET_CORS_CONFIG
+
     app.add_middleware(CORSMiddleware, **WEBSOCKET_CORS_CONFIG)
 except ImportError:
     # Fallback secure WebSocket configuration
     import os
+
     env = os.getenv("AIVILLAGE_ENV", "development")
-    cors_origins = ["http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000"] if env != "production" else ["https://aivillage.app"]
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=cors_origins,
-        allow_credentials=True
+    cors_origins = (
+        ["http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000"]
+        if env != "production"
+        else ["https://aivillage.app"]
     )
+    app.add_middleware(CORSMiddleware, allow_origins=cors_origins, allow_credentials=True)
 
 
 @app.websocket("/ws")

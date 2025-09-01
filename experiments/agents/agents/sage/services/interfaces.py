@@ -117,6 +117,7 @@ class IResearchService(Protocol):
 
 # Abstract base classes for concrete implementations
 
+
 class AbstractServiceBase(ABC):
     """Base class for all services with common functionality."""
 

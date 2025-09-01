@@ -19,51 +19,24 @@ Target Performance:
 - Escalation Rate: <15%
 """
 
-from .breach_classifier import (
-    BreachClassifier,
-    BreachClassification, 
-    BreachSeverity,
-    FailureCategory
-)
+from .breach_classifier import BreachClassifier, BreachClassification, BreachSeverity, FailureCategory
 
-from .strategy_selector import (
-    StrategySelector,
-    StrategySelection,
-    RecoveryStrategy,
-    AgentType
-)
+from .strategy_selector import StrategySelector, StrategySelection, RecoveryStrategy, AgentType
 
-from .parallel_coordinator import (
-    ParallelCoordinator,
-    CoordinationPlan,
-    AgentExecution,
-    CoordinationStatus
-)
+from .parallel_coordinator import ParallelCoordinator, CoordinationPlan, AgentExecution, CoordinationStatus
 
-from .escalation_manager import (
-    EscalationManager,
-    EscalationEvent,
-    EscalationLevel,
-    EscalationTrigger
-)
+from .escalation_manager import EscalationManager, EscalationEvent, EscalationLevel, EscalationTrigger
 
-from .slo_recovery_router import (
-    SLORecoveryRouter,
-    RoutingDecision
-)
+from .slo_recovery_router import SLORecoveryRouter, RoutingDecision
 
 from .integration_adapter import (
     IntegrationCoordinator,
     FlakeDetectorAdapter,
     GitHubOrchestratorAdapter,
-    create_integration_coordinator
+    create_integration_coordinator,
 )
 
-from .validation_optimizer import (
-    ValidationOptimizer,
-    ValidationMetrics,
-    OptimizationResult
-)
+from .validation_optimizer import ValidationOptimizer, ValidationMetrics, OptimizationResult
 
 __version__ = "1.0.0"
 
@@ -71,41 +44,35 @@ __all__ = [
     # Core routing components
     "SLORecoveryRouter",
     "RoutingDecision",
-    
     # Breach classification
-    "BreachClassifier", 
+    "BreachClassifier",
     "BreachClassification",
     "BreachSeverity",
     "FailureCategory",
-    
     # Strategy selection
     "StrategySelector",
-    "StrategySelection", 
+    "StrategySelection",
     "RecoveryStrategy",
     "AgentType",
-    
     # Parallel coordination
     "ParallelCoordinator",
     "CoordinationPlan",
-    "AgentExecution", 
+    "AgentExecution",
     "CoordinationStatus",
-    
     # Escalation management
     "EscalationManager",
     "EscalationEvent",
     "EscalationLevel",
     "EscalationTrigger",
-    
     # Integration adapters
     "IntegrationCoordinator",
     "FlakeDetectorAdapter",
-    "GitHubOrchestratorAdapter", 
+    "GitHubOrchestratorAdapter",
     "create_integration_coordinator",
-    
     # Validation and optimization
     "ValidationOptimizer",
     "ValidationMetrics",
-    "OptimizationResult"
+    "OptimizationResult",
 ]
 
 # Configuration defaults
@@ -115,37 +82,32 @@ DEFAULT_CONFIG = {
     "confidence_threshold": 0.75,
     "escalation_rate_threshold": 0.15,
     "polling_interval_seconds": 30,
-    "optimization_window_days": 7
+    "optimization_window_days": 7,
 }
 
+
 def create_slo_recovery_system(
-    flake_detector_config=None,
-    github_orchestrator_config=None, 
-    database_path="slo_routing_metrics.db"
+    flake_detector_config=None, github_orchestrator_config=None, database_path="slo_routing_metrics.db"
 ):
     """
     Factory function to create complete SLO Recovery Router system
-    
+
     Args:
         flake_detector_config: Configuration for Flake Detector integration
         github_orchestrator_config: Configuration for GitHub Orchestrator integration
         database_path: Path for metrics database
-        
+
     Returns:
         Tuple of (router, coordinator, optimizer) components
     """
-    
+
     # Create core router
     router = SLORecoveryRouter()
-    
+
     # Create integration coordinator
-    coordinator = create_integration_coordinator(
-        router,
-        flake_detector_config,
-        github_orchestrator_config
-    )
-    
+    coordinator = create_integration_coordinator(router, flake_detector_config, github_orchestrator_config)
+
     # Create validation optimizer
     optimizer = ValidationOptimizer(database_path)
-    
+
     return router, coordinator, optimizer

@@ -62,7 +62,7 @@ class ComprehensiveIntegrationTest:
             node = P2PNode(node_id="integration_test_node")
 
             # Test capabilities
-            capabilities = PeerCapabilities(
+            PeerCapabilities(
                 device_id="integration_device",
                 cpu_cores=psutil.cpu_count(),
                 ram_mb=int(psutil.virtual_memory().total / (1024 * 1024)),
@@ -71,7 +71,7 @@ class ComprehensiveIntegrationTest:
             )
 
             # Test peer discovery
-            discovery = PeerDiscovery(node)
+            PeerDiscovery(node)
 
             duration = time.time() - start_time
             self.log_test_result(
@@ -100,12 +100,12 @@ class ComprehensiveIntegrationTest:
 
             # Initialize components
             profiler = DeviceProfiler()
-            monitor = ResourceMonitor(profiler)
+            ResourceMonitor(profiler)
             constraint_manager = ConstraintManager(profiler)
-            adaptive_loader = AdaptiveLoader(profiler, constraint_manager)
+            AdaptiveLoader(profiler, constraint_manager)
 
             # Test resource flow
-            snapshot = profiler.take_snapshot()
+            profiler.take_snapshot()
             allocation = profiler.get_evolution_resource_allocation()
             suitable = profiler.is_suitable_for_evolution("nightly")
 
@@ -149,10 +149,10 @@ class ComprehensiveIntegrationTest:
             )
 
             evolution_system = InfrastructureAwareEvolution(infra_config)
-            status = evolution_system.get_infrastructure_status()
+            evolution_system.get_infrastructure_status()
 
             # Test resource-constrained evolution
-            resource_config = ResourceConstrainedConfig(
+            ResourceConstrainedConfig(
                 memory_limit_multiplier=0.8,
                 cpu_limit_multiplier=0.75,
                 battery_optimization_mode=True,
@@ -180,7 +180,7 @@ class ComprehensiveIntegrationTest:
             from py.aivillage.core.monitoring.sprint6_monitor import Sprint6Monitor
 
             # Initialize monitoring
-            profiler = DeviceProfiler()
+            DeviceProfiler()
             monitor = Sprint6Monitor()
 
             # Test monitoring capabilities
@@ -216,12 +216,12 @@ class ComprehensiveIntegrationTest:
             with patch.object(profiler.profile, "total_memory_gb", 2.0):
                 with patch.object(profiler.profile, "cpu_cores", 2):
                     # Test adaptation to constraints
-                    snapshot = profiler.take_snapshot()
-                    suitable = profiler.is_suitable_for_evolution("nightly")
+                    profiler.take_snapshot()
+                    profiler.is_suitable_for_evolution("nightly")
                     allocation = profiler.get_evolution_resource_allocation()
 
                     # Test constraint enforcement
-                    can_register = constraint_manager.register_task("constrained_test", "nightly")
+                    constraint_manager.register_task("constrained_test", "nightly")
 
             duration = time.time() - start_time
             self.log_test_result(
@@ -258,20 +258,20 @@ class ComprehensiveIntegrationTest:
             profiler = DeviceProfiler()
 
             # Step 2: Resource monitoring
-            monitor = ResourceMonitor(profiler)
+            ResourceMonitor(profiler)
 
             # Step 3: Constraint management
             constraint_manager = ConstraintManager(profiler)
 
             # Step 4: Adaptive loading
-            adaptive_loader = AdaptiveLoader(profiler, constraint_manager)
+            AdaptiveLoader(profiler, constraint_manager)
 
             # Step 5: P2P node
-            p2p_node = P2PNode(node_id="multi_init_test")
+            P2PNode(node_id="multi_init_test")
 
             # Step 6: Evolution system
             config = InfrastructureConfig(enable_p2p=False)
-            evolution_system = InfrastructureAwareEvolution(config)
+            InfrastructureAwareEvolution(config)
 
             duration = time.time() - start_time
             self.log_test_result(
@@ -297,7 +297,7 @@ class ComprehensiveIntegrationTest:
 
             # Test graceful degradation
             profiler = DeviceProfiler()
-            monitor = ResourceMonitor(profiler)
+            ResourceMonitor(profiler)
 
             # Simulate various error conditions and test recovery
             test_scenarios = [
@@ -310,7 +310,7 @@ class ComprehensiveIntegrationTest:
                 try:
                     scenario_func()
                     # System should continue functioning
-                    snapshot = profiler.take_snapshot()
+                    profiler.take_snapshot()
                     recovery_count += 1
                 except Exception as scenario_error:
                     logger.warning(f"Scenario {scenario_name} failed: {scenario_error}")

@@ -228,10 +228,10 @@ class ImportFixTask(BaseCleanupTask):
 
         # Define common path mappings
         path_mappings = {
-            "from agent_forge": "from core.agent-forge",
+            "from agent_forge": "from core.agent_forge",
             "from hyperrag": "from core.hyperrag",
             "from p2p": "from packages.p2p",
-            "import agent_forge": "import core.agent-forge",
+            "import agent_forge": "import core.agent_forge",
             "import hyperrag": "import core.hyperrag",
             "import p2p": "import packages.p2p",
         }

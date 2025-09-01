@@ -425,14 +425,14 @@ class TokenomicsDeploymentSystem:
                 bandwidth_gb_contributed=row["bandwidth_gb_contributed"],
                 uptime_percentage=row["uptime_percentage"],
                 quality_score=row["quality_score"],
-                first_contribution=datetime.fromisoformat(row["first_contribution"])
-                if row["first_contribution"]
-                else None,
+                first_contribution=(
+                    datetime.fromisoformat(row["first_contribution"]) if row["first_contribution"] else None
+                ),
                 last_activity=datetime.fromisoformat(row["last_activity"]) if row["last_activity"] else None,
                 consecutive_days_active=row["consecutive_days_active"],
-                staking_start_date=datetime.fromisoformat(row["staking_start_date"])
-                if row["staking_start_date"]
-                else None,
+                staking_start_date=(
+                    datetime.fromisoformat(row["staking_start_date"]) if row["staking_start_date"] else None
+                ),
                 staking_duration_days=row["staking_duration_days"],
                 compound_staking_enabled=bool(row["compound_staking_enabled"]),
                 reputation_score=row["reputation_score"],
@@ -451,9 +451,11 @@ class TokenomicsDeploymentSystem:
                 event_type=EconomicEventType(row["event_type"]),
                 base_reward_amount=row["base_reward_amount"],
                 multiplier_rules=json.loads(row["multiplier_rules"]),
-                tier_multipliers={IncentiveTier(k): v for k, v in json.loads(row["tier_multipliers"]).items()}
-                if row["tier_multipliers"]
-                else {},
+                tier_multipliers=(
+                    {IncentiveTier(k): v for k, v in json.loads(row["tier_multipliers"]).items()}
+                    if row["tier_multipliers"]
+                    else {}
+                ),
                 min_threshold=row["min_threshold"],
                 max_reward_per_day=row["max_reward_per_day"],
                 cooldown_hours=row["cooldown_hours"],
@@ -990,9 +992,11 @@ class TokenomicsDeploymentSystem:
                     total_participants=len(self.participants),
                     active_nodes=network_stats["total_validators"],
                     compute_hours_contributed=sum(p.compute_hours_contributed for p in self.participants.values()),
-                    staking_ratio=network_stats["total_staked"] / network_stats["current_supply"]
-                    if network_stats["current_supply"] > 0
-                    else 0,
+                    staking_ratio=(
+                        network_stats["total_staked"] / network_stats["current_supply"]
+                        if network_stats["current_supply"] > 0
+                        else 0
+                    ),
                     staking_rewards_distributed=int(network_stats["total_rewards_distributed"]),
                 )
 
@@ -1218,10 +1222,11 @@ class TokenomicsDeploymentSystem:
                     for r in self.reward_history
                     if (datetime.utcnow() - r.timestamp).total_seconds() < 86400
                 ),
-                "avg_reward_per_participant": sum(p.total_earned for p in self.participants.values())
-                / len(self.participants)
-                if self.participants
-                else 0,
+                "avg_reward_per_participant": (
+                    sum(p.total_earned for p in self.participants.values()) / len(self.participants)
+                    if self.participants
+                    else 0
+                ),
             },
         }
 
@@ -1254,9 +1259,9 @@ class TokenomicsDeploymentSystem:
             },
             "staking": {
                 "is_staking": participant.staking_start_date is not None,
-                "staking_start_date": participant.staking_start_date.isoformat()
-                if participant.staking_start_date
-                else None,
+                "staking_start_date": (
+                    participant.staking_start_date.isoformat() if participant.staking_start_date else None
+                ),
                 "compound_enabled": participant.compound_staking_enabled,
                 "pending_rewards": float(self._from_wei(await self.calculate_staking_rewards(participant_id))),
             },

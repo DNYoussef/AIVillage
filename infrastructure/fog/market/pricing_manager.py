@@ -23,14 +23,13 @@ from decimal import Decimal, getcontext
 from enum import Enum
 import logging
 import statistics
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict
 import uuid
 
 # Import reputation system for pricing integration
-from ..reputation import BayesianReputationEngine, integrate_with_pricing
+from ..reputation import BayesianReputationEngine
 
 # Import constitutional pricing components
-from .constitutional_pricing import ConstitutionalPricingEngine
 from .audit_pricing import AuditTrailManager
 
 # Set high precision for financial calculations
@@ -77,16 +76,16 @@ class MarketCondition(str, Enum):
 
 class UserSizeTier(str, Enum):
     """User size tiers for different pricing models"""
-    
-    BRONZE = "bronze"    # Mobile-first, basic users
-    SILVER = "silver"    # Hybrid cloud-edge users  
-    GOLD = "gold"        # Cloud-heavy, premium users
-    PLATINUM = "platinum" # Dedicated enterprise users
-    
+
+    BRONZE = "bronze"  # Mobile-first, basic users
+    SILVER = "silver"  # Hybrid cloud-edge users
+    GOLD = "gold"  # Cloud-heavy, premium users
+    PLATINUM = "platinum"  # Dedicated enterprise users
+
     # Legacy compatibility
-    SMALL = "bronze"     # Alias for bronze
-    MEDIUM = "silver"    # Alias for silver
-    LARGE = "gold"       # Alias for gold
+    SMALL = "bronze"  # Alias for bronze
+    MEDIUM = "silver"  # Alias for silver
+    LARGE = "gold"  # Alias for gold
     ENTERPRISE = "platinum"  # Alias for platinum
 
 
@@ -235,31 +234,31 @@ class PricingAnomalyAlert:
             self.severity = "low"
 
 
-@dataclass 
+@dataclass
 class SizeTierPricing:
     """Size-tier specific pricing configuration"""
-    
+
     tier: UserSizeTier
-    
+
     # Inference pricing (per request)
     inference_price_min: Decimal
     inference_price_max: Decimal
     inference_price_base: Decimal
-    
+
     # Training pricing (per hour)
     training_price_min: Decimal
-    training_price_max: Decimal  
+    training_price_max: Decimal
     training_price_base: Decimal
-    
+
     # Resource limits and guarantees
     max_concurrent_jobs: int = 10
     guaranteed_uptime_percentage: Decimal = Decimal("95")
     max_latency_sla_ms: Decimal = Decimal("500")
-    
+
     # Volume discounts
     volume_discount_threshold: int = 100  # requests/month
     volume_discount_percentage: Decimal = Decimal("0.1")  # 10%
-    
+
     # Priority and QoS
     priority_multiplier: Decimal = Decimal("1.0")
     dedicated_support: bool = False
@@ -269,26 +268,26 @@ class SizeTierPricing:
 @dataclass
 class H200HourPricing:
     """H200-hour equivalent pricing calculation"""
-    
+
     device_computing_power: Decimal  # TOPS_d - device computing power
-    utilization_rate: Decimal        # u - utilization rate (0-1)
-    time_hours: Decimal              # t - time in hours
+    utilization_rate: Decimal  # u - utilization rate (0-1)
+    time_hours: Decimal  # t - time in hours
     h200_reference_tops: Decimal = Decimal("989")  # H200 reference TOPS
-    
+
     def calculate_h200_hours(self) -> Decimal:
         """Calculate H200-hour equivalent: H200h(d) = (TOPS_d × u × t) / T_ref"""
         return (self.device_computing_power * self.utilization_rate * self.time_hours) / self.h200_reference_tops
-    
+
     def calculate_constitutional_multiplier(self, transparency_level: str) -> Decimal:
         """Calculate constitutional compliance multiplier"""
         multipliers = {
             "basic": Decimal("1.0"),
             "enhanced": Decimal("1.1"),
             "full_audit": Decimal("1.25"),
-            "constitutional": Decimal("1.5")
+            "constitutional": Decimal("1.5"),
         }
         return multipliers.get(transparency_level, Decimal("1.0"))
-    
+
     def calculate_tee_premium(self, tee_enabled: bool) -> Decimal:
         """Calculate TEE security premium"""
         return Decimal("1.3") if tee_enabled else Decimal("1.0")
@@ -297,25 +296,25 @@ class H200HourPricing:
 @dataclass
 class ConstitutionalTierMapping:
     """Mapping between user tiers and constitutional pricing"""
-    
+
     tier: UserSizeTier
-    h200_hour_base_rate: Decimal     # Base H200-hour rate for tier
+    h200_hour_base_rate: Decimal  # Base H200-hour rate for tier
     constitutional_discount: Decimal  # Discount for constitutional compliance
-    audit_transparency_bonus: Decimal # Bonus for audit transparency
-    max_h200_hours_per_month: Decimal # Monthly H200-hour limit
-    
+    audit_transparency_bonus: Decimal  # Bonus for audit transparency
+    max_h200_hours_per_month: Decimal  # Monthly H200-hour limit
+
     def calculate_tier_price(self, h200_hours: Decimal, constitutional_level: str = "basic") -> Decimal:
         """Calculate final price for tier with constitutional adjustments"""
         base_cost = h200_hours * self.h200_hour_base_rate
-        
+
         # Apply constitutional discount
         if constitutional_level != "basic":
-            base_cost *= (Decimal("1.0") - self.constitutional_discount)
-            
+            base_cost *= Decimal("1.0") - self.constitutional_discount
+
         # Apply transparency bonus
         if constitutional_level in ["full_audit", "constitutional"]:
-            base_cost *= (Decimal("1.0") - self.audit_transparency_bonus)
-            
+            base_cost *= Decimal("1.0") - self.audit_transparency_bonus
+
         return base_cost
 
 
@@ -377,23 +376,29 @@ class DynamicPricingManager:
     - Historical analytics and forecasting
     """
 
-    def __init__(self, token_system=None, auction_engine=None, reputation_engine=None, 
-                 constitutional_engine=None, audit_manager=None):
+    def __init__(
+        self,
+        token_system=None,
+        auction_engine=None,
+        reputation_engine=None,
+        constitutional_engine=None,
+        audit_manager=None,
+    ):
         self.token_system = token_system
         self.auction_engine = auction_engine
-        
+
         # Reputation system integration
         self.reputation_engine = reputation_engine or BayesianReputationEngine()
-        
+
         # Constitutional pricing integration
         self.constitutional_engine = constitutional_engine
         self.audit_manager = audit_manager or AuditTrailManager()
-        
+
         # H200-hour reference specs for constitutional pricing
         self.h200_reference_specs = {
-            "tops": Decimal("989"),       # H200 TOPS performance
-            "memory_gb": Decimal("141"),  # H200 memory capacity 
-            "power_watts": Decimal("700") # H200 power consumption
+            "tops": Decimal("989"),  # H200 TOPS performance
+            "memory_gb": Decimal("141"),  # H200 memory capacity
+            "power_watts": Decimal("700"),  # H200 power consumption
         }
 
         # Price bands for each resource lane
@@ -403,7 +408,7 @@ class DynamicPricingManager:
         # Size-tier pricing configurations
         self.tier_pricing: dict[UserSizeTier, SizeTierPricing] = {}
         self._initialize_tier_pricing()
-        
+
         # Constitutional tier mappings
         self.constitutional_tiers: dict[UserSizeTier, ConstitutionalTierMapping] = {}
         self._initialize_constitutional_tier_mappings()
@@ -526,7 +531,7 @@ class DynamicPricingManager:
 
     def _initialize_tier_pricing(self):
         """Initialize size-tier pricing configurations"""
-        
+
         # Small tier: Mobile-first, budget-conscious
         self.tier_pricing[UserSizeTier.SMALL] = SizeTierPricing(
             tier=UserSizeTier.SMALL,
@@ -543,7 +548,7 @@ class DynamicPricingManager:
             volume_discount_percentage=Decimal("0.05"),
             priority_multiplier=Decimal("0.8"),
         )
-        
+
         # Medium tier: Hybrid cloud-edge users
         self.tier_pricing[UserSizeTier.MEDIUM] = SizeTierPricing(
             tier=UserSizeTier.MEDIUM,
@@ -560,7 +565,7 @@ class DynamicPricingManager:
             volume_discount_percentage=Decimal("0.10"),
             priority_multiplier=Decimal("1.0"),
         )
-        
+
         # Large tier: Cloud-heavy users
         self.tier_pricing[UserSizeTier.LARGE] = SizeTierPricing(
             tier=UserSizeTier.LARGE,
@@ -577,7 +582,7 @@ class DynamicPricingManager:
             volume_discount_percentage=Decimal("0.15"),
             priority_multiplier=Decimal("1.2"),
         )
-        
+
         # Enterprise tier: Dedicated enterprise with custom SLAs
         self.tier_pricing[UserSizeTier.ENTERPRISE] = SizeTierPricing(
             tier=UserSizeTier.ENTERPRISE,
@@ -596,7 +601,7 @@ class DynamicPricingManager:
             dedicated_support=True,
             custom_pricing=True,
         )
-        
+
         # Platinum tier: Constitutional enterprise tier
         self.tier_pricing[UserSizeTier.PLATINUM] = SizeTierPricing(
             tier=UserSizeTier.PLATINUM,
@@ -615,44 +620,44 @@ class DynamicPricingManager:
             dedicated_support=True,
             custom_pricing=True,
         )
-        
+
     def _initialize_constitutional_tier_mappings(self):
         """Initialize constitutional tier mappings with H200-hour rates"""
-        
+
         # Bronze Tier - Constitutional democrats
         self.constitutional_tiers[UserSizeTier.BRONZE] = ConstitutionalTierMapping(
             tier=UserSizeTier.BRONZE,
-            h200_hour_base_rate=Decimal("0.50"),      # $0.50 per H200-hour
-            constitutional_discount=Decimal("0.05"),   # 5% constitutional compliance discount
+            h200_hour_base_rate=Decimal("0.50"),  # $0.50 per H200-hour
+            constitutional_discount=Decimal("0.05"),  # 5% constitutional compliance discount
             audit_transparency_bonus=Decimal("0.03"),  # 3% audit transparency bonus
-            max_h200_hours_per_month=Decimal("100")    # 100 H200-hours monthly limit
+            max_h200_hours_per_month=Decimal("100"),  # 100 H200-hours monthly limit
         )
-        
-        # Silver Tier - Constitutional republicans  
+
+        # Silver Tier - Constitutional republicans
         self.constitutional_tiers[UserSizeTier.SILVER] = ConstitutionalTierMapping(
             tier=UserSizeTier.SILVER,
-            h200_hour_base_rate=Decimal("0.75"),      # $0.75 per H200-hour
-            constitutional_discount=Decimal("0.08"),   # 8% constitutional compliance discount
+            h200_hour_base_rate=Decimal("0.75"),  # $0.75 per H200-hour
+            constitutional_discount=Decimal("0.08"),  # 8% constitutional compliance discount
             audit_transparency_bonus=Decimal("0.05"),  # 5% audit transparency bonus
-            max_h200_hours_per_month=Decimal("500")    # 500 H200-hours monthly limit
+            max_h200_hours_per_month=Decimal("500"),  # 500 H200-hours monthly limit
         )
-        
+
         # Gold Tier - Constitutional libertarians
         self.constitutional_tiers[UserSizeTier.GOLD] = ConstitutionalTierMapping(
             tier=UserSizeTier.GOLD,
-            h200_hour_base_rate=Decimal("1.00"),      # $1.00 per H200-hour
-            constitutional_discount=Decimal("0.10"),   # 10% constitutional compliance discount
+            h200_hour_base_rate=Decimal("1.00"),  # $1.00 per H200-hour
+            constitutional_discount=Decimal("0.10"),  # 10% constitutional compliance discount
             audit_transparency_bonus=Decimal("0.08"),  # 8% audit transparency bonus
-            max_h200_hours_per_month=Decimal("2000")   # 2000 H200-hours monthly limit
+            max_h200_hours_per_month=Decimal("2000"),  # 2000 H200-hours monthly limit
         )
-        
+
         # Platinum Tier - Constitutional enterprise
         self.constitutional_tiers[UserSizeTier.PLATINUM] = ConstitutionalTierMapping(
             tier=UserSizeTier.PLATINUM,
-            h200_hour_base_rate=Decimal("1.50"),      # $1.50 per H200-hour
-            constitutional_discount=Decimal("0.15"),   # 15% constitutional compliance discount
+            h200_hour_base_rate=Decimal("1.50"),  # $1.50 per H200-hour
+            constitutional_discount=Decimal("0.15"),  # 15% constitutional compliance discount
             audit_transparency_bonus=Decimal("0.12"),  # 12% audit transparency bonus
-            max_h200_hours_per_month=Decimal("10000")  # 10000 H200-hours monthly limit
+            max_h200_hours_per_month=Decimal("10000"),  # 10000 H200-hours monthly limit
         )
 
     async def update_market_conditions(
@@ -695,8 +700,11 @@ class DynamicPricingManager:
         )
 
     async def get_resource_price(
-        self, lane: ResourceLane, quantity: Decimal = Decimal("1"), duration_hours: Decimal = Decimal("1"),
-        node_id: str = None
+        self,
+        lane: ResourceLane,
+        quantity: Decimal = Decimal("1"),
+        duration_hours: Decimal = Decimal("1"),
+        node_id: str = None,
     ) -> dict[str, Any]:
         """Get current price for specific resource, optionally for a specific node"""
 
@@ -716,11 +724,11 @@ class DynamicPricingManager:
 
         # Supply/demand adjustment
         supply_demand_multiplier = self._calculate_supply_demand_multiplier(band)
-        
+
         # Reputation-based pricing adjustment
         reputation_multiplier = Decimal("1.0")
         trust_score = 0.5  # Default neutral trust
-        
+
         if node_id and self.reputation_engine:
             trust_score = self.reputation_engine.get_trust_score(node_id)
             # Higher trust nodes get price premium (up to 30% bonus)
@@ -728,7 +736,9 @@ class DynamicPricingManager:
             reputation_multiplier = max(Decimal("0.7"), min(Decimal("1.3"), reputation_multiplier))
 
         # Final price calculation
-        final_price = base_cost * volume_multiplier * duration_multiplier * supply_demand_multiplier * reputation_multiplier
+        final_price = (
+            base_cost * volume_multiplier * duration_multiplier * supply_demand_multiplier * reputation_multiplier
+        )
 
         return {
             "lane": lane.value,
@@ -753,33 +763,33 @@ class DynamicPricingManager:
         }
 
     async def get_federated_inference_price(
-        self, 
+        self,
         user_tier: UserSizeTier,
         model_size: str,
         requests_count: int = 1,
         participants_needed: int = 1,
         privacy_level: str = "medium",
-        node_id: str = None
+        node_id: str = None,
     ) -> dict[str, Any]:
         """Get price for federated inference based on user tier and requirements"""
-        
+
         if user_tier not in self.tier_pricing:
             raise ValueError(f"Unknown user tier: {user_tier}")
-        
+
         tier_config = self.tier_pricing[user_tier]
-        
+
         # Get base price from tier configuration
         base_price_per_request = tier_config.inference_price_base
-        
+
         # Model size multiplier
         model_multipliers = {
             "small": Decimal("0.5"),
             "medium": Decimal("1.0"),
-            "large": Decimal("2.0"), 
+            "large": Decimal("2.0"),
             "xlarge": Decimal("4.0"),
         }
         model_multiplier = model_multipliers.get(model_size, Decimal("1.0"))
-        
+
         # Privacy level multiplier
         privacy_multipliers = {
             "low": Decimal("1.0"),
@@ -788,32 +798,32 @@ class DynamicPricingManager:
             "critical": Decimal("2.0"),
         }
         privacy_multiplier = privacy_multipliers.get(privacy_level, Decimal("1.2"))
-        
+
         # Participants multiplier (coordination complexity)
         participants_multiplier = Decimal("1.0") + (Decimal(str(participants_needed - 1)) * Decimal("0.1"))
-        
+
         # Volume discount
         volume_discount = Decimal("1.0")
         if requests_count >= tier_config.volume_discount_threshold:
             volume_discount = Decimal("1.0") - tier_config.volume_discount_percentage
-            
+
         # Priority multiplier from tier
         priority_multiplier = tier_config.priority_multiplier
-        
+
         # Market dynamics (use federated inference lane)
         if ResourceLane.FEDERATED_INFERENCE in self.price_bands:
             inference_band = self.price_bands[ResourceLane.FEDERATED_INFERENCE]
             market_multiplier = self._calculate_supply_demand_multiplier(inference_band)
         else:
             market_multiplier = Decimal("1.0")
-            
+
         # Reputation adjustment
         reputation_multiplier = Decimal("1.0")
         trust_score = 0.5
         if node_id and self.reputation_engine:
             trust_score = self.reputation_engine.get_trust_score(node_id)
             reputation_multiplier = Decimal("1.0") + (Decimal(str(trust_score)) - Decimal("0.5")) * Decimal("0.3")
-            
+
         # Calculate final price per request
         price_per_request = (
             base_price_per_request
@@ -825,15 +835,14 @@ class DynamicPricingManager:
             * market_multiplier
             * reputation_multiplier
         )
-        
+
         # Ensure within tier bounds
         price_per_request = max(
-            tier_config.inference_price_min,
-            min(tier_config.inference_price_max, price_per_request)
+            tier_config.inference_price_min, min(tier_config.inference_price_max, price_per_request)
         )
-        
+
         total_cost = price_per_request * Decimal(str(requests_count))
-        
+
         return {
             "workload_type": "federated_inference",
             "user_tier": user_tier.value,
@@ -871,18 +880,18 @@ class DynamicPricingManager:
         participants_needed: int,
         privacy_level: str = "high",
         reliability_requirement: str = "high",
-        node_id: str = None
+        node_id: str = None,
     ) -> dict[str, Any]:
         """Get price for federated training based on user tier and requirements"""
-        
+
         if user_tier not in self.tier_pricing:
             raise ValueError(f"Unknown user tier: {user_tier}")
-            
+
         tier_config = self.tier_pricing[user_tier]
-        
+
         # Get base price from tier configuration
         base_price_per_hour = tier_config.training_price_base
-        
+
         # Model size multiplier (training is more resource intensive)
         model_multipliers = {
             "small": Decimal("1.0"),
@@ -891,7 +900,7 @@ class DynamicPricingManager:
             "xlarge": Decimal("8.0"),
         }
         model_multiplier = model_multipliers.get(model_size, Decimal("2.0"))
-        
+
         # Privacy level multiplier (higher for training)
         privacy_multipliers = {
             "low": Decimal("1.0"),
@@ -900,7 +909,7 @@ class DynamicPricingManager:
             "critical": Decimal("2.5"),
         }
         privacy_multiplier = privacy_multipliers.get(privacy_level, Decimal("1.8"))
-        
+
         # Reliability requirement multiplier
         reliability_multipliers = {
             "best_effort": Decimal("0.8"),
@@ -909,30 +918,30 @@ class DynamicPricingManager:
             "guaranteed": Decimal("2.0"),
         }
         reliability_multiplier = reliability_multipliers.get(reliability_requirement, Decimal("1.4"))
-        
+
         # Participants multiplier (higher coordination costs)
         participants_multiplier = Decimal("1.0") + (Decimal(str(participants_needed - 1)) * Decimal("0.2"))
-        
+
         # Duration discount (longer training gets discount)
         duration_multiplier = self._calculate_duration_multiplier(Decimal(str(duration_hours)))
-        
+
         # Priority multiplier from tier
         priority_multiplier = tier_config.priority_multiplier
-        
+
         # Market dynamics (use federated training lane)
         if ResourceLane.FEDERATED_TRAINING in self.price_bands:
             training_band = self.price_bands[ResourceLane.FEDERATED_TRAINING]
             market_multiplier = self._calculate_supply_demand_multiplier(training_band)
         else:
             market_multiplier = Decimal("1.0")
-            
+
         # Reputation adjustment (more important for training)
         reputation_multiplier = Decimal("1.0")
         trust_score = 0.7  # Higher default for training
         if node_id and self.reputation_engine:
             trust_score = self.reputation_engine.get_trust_score(node_id)
             reputation_multiplier = Decimal("1.0") + (Decimal(str(trust_score)) - Decimal("0.5")) * Decimal("0.5")
-            
+
         # Calculate final price per hour
         price_per_hour = (
             base_price_per_hour
@@ -945,15 +954,12 @@ class DynamicPricingManager:
             * market_multiplier
             * reputation_multiplier
         )
-        
+
         # Ensure within tier bounds
-        price_per_hour = max(
-            tier_config.training_price_min,
-            min(tier_config.training_price_max, price_per_hour)
-        )
-        
+        price_per_hour = max(tier_config.training_price_min, min(tier_config.training_price_max, price_per_hour))
+
         total_cost = price_per_hour * Decimal(str(duration_hours))
-        
+
         return {
             "workload_type": "federated_training",
             "user_tier": user_tier.value,
@@ -1413,26 +1419,22 @@ class DynamicPricingManager:
 
         average_risk = sum(risk_factors) / len(risk_factors)
         return min(Decimal("1"), average_risk)
-    
+
     async def calculate_h200_hour_equivalent(
         self,
         device_computing_power_tops: Decimal,
         utilization_rate: Decimal,
         time_hours: Decimal,
-        device_id: str = None
+        device_id: str = None,
     ) -> Dict[str, Any]:
         """Calculate H200-hour equivalent using formula: H200h(d) = (TOPS_d × u × t) / T_ref"""
-        
+
         # Core H200-hour calculation
-        h200_hours = (
-            device_computing_power_tops * 
-            utilization_rate * 
-            time_hours
-        ) / self.h200_reference_specs["tops"]
-        
+        h200_hours = (device_computing_power_tops * utilization_rate * time_hours) / self.h200_reference_specs["tops"]
+
         # Calculate efficiency metrics
         power_efficiency_ratio = device_computing_power_tops / self.h200_reference_specs["power_watts"]
-        
+
         result = {
             "device_id": device_id or f"device_{uuid.uuid4().hex[:8]}",
             "raw_computing_power_tops": float(device_computing_power_tops),
@@ -1442,20 +1444,15 @@ class DynamicPricingManager:
             "h200_reference_tops": float(self.h200_reference_specs["tops"]),
             "power_efficiency_ratio": float(power_efficiency_ratio),
             "calculation_formula": "H200h(d) = (TOPS_d × u × t) / T_ref",
-            "timestamp": datetime.now(UTC).isoformat()
+            "timestamp": datetime.now(UTC).isoformat(),
         }
-        
+
         # Audit trail logging
         if self.audit_manager:
-            self.audit_manager.log_calculation(
-                "h200_hour_calculation",
-                result,
-                device_id,
-                "h200_pricing_engine"
-            )
-        
+            self.audit_manager.log_calculation("h200_hour_calculation", result, device_id, "h200_pricing_engine")
+
         return result
-    
+
     async def get_constitutional_h200_price(
         self,
         user_tier: UserSizeTier,
@@ -1464,49 +1461,49 @@ class DynamicPricingManager:
         time_hours: Decimal,
         constitutional_level: str = "basic",
         tee_enabled: bool = False,
-        device_id: str = None
+        device_id: str = None,
     ) -> Dict[str, Any]:
         """Get constitutional H200-hour pricing with transparency and audit trail"""
-        
+
         if user_tier not in self.constitutional_tiers:
             raise ValueError(f"Unknown constitutional tier: {user_tier}")
-        
+
         # Calculate H200-hour equivalent
         h200_calculation = await self.calculate_h200_hour_equivalent(
             device_computing_power_tops, utilization_rate, time_hours, device_id
         )
         h200_hours = Decimal(str(h200_calculation["h200_hours_equivalent"]))
-        
+
         # Get constitutional tier configuration
         tier_config = self.constitutional_tiers[user_tier]
-        
+
         # Calculate base cost
         base_cost = tier_config.calculate_tier_price(h200_hours, constitutional_level)
-        
+
         # Apply constitutional adjustments
         constitutional_multiplier = Decimal("1.0")
         adjustments = {}
-        
+
         # Constitutional compliance discount
         if constitutional_level != "basic":
             const_discount = tier_config.constitutional_discount
             constitutional_multiplier -= const_discount
             adjustments["constitutional_discount"] = -float(const_discount)
-        
+
         # Audit transparency bonus
         if constitutional_level in ["full_audit", "constitutional"]:
             audit_bonus = tier_config.audit_transparency_bonus
             constitutional_multiplier -= audit_bonus
             adjustments["audit_transparency_bonus"] = -float(audit_bonus)
-        
+
         # TEE security premium
         if tee_enabled:
             tee_premium = Decimal("0.30")  # 30% premium for TEE
             constitutional_multiplier += tee_premium
             adjustments["tee_security_premium"] = float(tee_premium)
-        
+
         final_cost = base_cost * constitutional_multiplier
-        
+
         # Create comprehensive pricing result
         result = {
             "quote_id": str(uuid.uuid4()),
@@ -1520,57 +1517,57 @@ class DynamicPricingManager:
                 "constitutional_multiplier": float(constitutional_multiplier),
                 "final_cost": float(final_cost),
                 "adjustments": adjustments,
-                "currency": "USD"
+                "currency": "USD",
             },
             "tier_limits": {
                 "max_h200_hours_monthly": float(tier_config.max_h200_hours_per_month),
                 "constitutional_discount": float(tier_config.constitutional_discount),
-                "audit_transparency_bonus": float(tier_config.audit_transparency_bonus)
+                "audit_transparency_bonus": float(tier_config.audit_transparency_bonus),
             },
             "constitutional_features": {
                 "transparency_enabled": constitutional_level != "basic",
                 "audit_trail": constitutional_level in ["full_audit", "constitutional"],
                 "tee_security": tee_enabled,
-                "governance_participation": True
+                "governance_participation": True,
             },
             "quote_valid_until": (datetime.now(UTC) + timedelta(minutes=15)).isoformat(),
-            "generated_at": datetime.now(UTC).isoformat()
+            "generated_at": datetime.now(UTC).isoformat(),
         }
-        
+
         # Audit trail logging
         if self.audit_manager:
             self.audit_manager.log_pricing_quote(result, "constitutional_pricing_manager")
-        
+
         return result
-    
+
     async def get_tee_enhanced_pricing(
         self,
         lane: ResourceLane,
         quantity: Decimal = Decimal("1"),
         duration_hours: Decimal = Decimal("1"),
         tee_level: str = "basic",  # "basic", "enhanced", "confidential"
-        node_id: str = None
+        node_id: str = None,
     ) -> Dict[str, Any]:
         """Get TEE-enhanced workload pricing with security premiums"""
-        
+
         # Get base resource pricing
         base_pricing = await self.get_resource_price(lane, quantity, duration_hours, node_id)
         base_cost = Decimal(str(base_pricing["final_price"]))
-        
+
         # TEE security premiums by level
         tee_premiums = {
-            "basic": Decimal("0.20"),      # 20% premium for basic TEE
-            "enhanced": Decimal("0.35"),   # 35% premium for enhanced TEE
-            "confidential": Decimal("0.50") # 50% premium for confidential computing
+            "basic": Decimal("0.20"),  # 20% premium for basic TEE
+            "enhanced": Decimal("0.35"),  # 35% premium for enhanced TEE
+            "confidential": Decimal("0.50"),  # 50% premium for confidential computing
         }
-        
+
         tee_premium = tee_premiums.get(tee_level, Decimal("0.20"))
         tee_enhanced_cost = base_cost * (Decimal("1.0") + tee_premium)
-        
+
         # Additional constitutional compliance bonus
         constitutional_bonus = Decimal("0.05")  # 5% discount for constitutional compliance
         final_cost = tee_enhanced_cost * (Decimal("1.0") - constitutional_bonus)
-        
+
         result = {
             "lane": lane.value,
             "tee_level": tee_level,
@@ -1581,27 +1578,22 @@ class DynamicPricingManager:
                 "tee_enhanced_cost": float(tee_enhanced_cost),
                 "constitutional_bonus": float(constitutional_bonus * 100),
                 "final_cost": float(final_cost),
-                "currency": "USD"
+                "currency": "USD",
             },
             "tee_features": {
                 "hardware_security": True,
                 "encrypted_computation": True,
                 "attestation_available": tee_level in ["enhanced", "confidential"],
                 "confidential_computing": tee_level == "confidential",
-                "constitutional_compliant": True
+                "constitutional_compliant": True,
             },
-            "generated_at": datetime.now(UTC).isoformat()
+            "generated_at": datetime.now(UTC).isoformat(),
         }
-        
+
         # Audit trail logging
         if self.audit_manager:
-            self.audit_manager.log_calculation(
-                "tee_enhanced_pricing",
-                result,
-                node_id,
-                "tee_pricing_manager"
-            )
-        
+            self.audit_manager.log_calculation("tee_enhanced_pricing", result, node_id, "tee_pricing_manager")
+
         return result
 
 
@@ -1616,9 +1608,7 @@ async def get_pricing_manager() -> DynamicPricingManager:
     if _pricing_manager is None:
         # Initialize with constitutional and audit features
         audit_manager = AuditTrailManager()
-        _pricing_manager = DynamicPricingManager(
-            audit_manager=audit_manager
-        )
+        _pricing_manager = DynamicPricingManager(audit_manager=audit_manager)
         await _pricing_manager.start()
 
     return _pricing_manager
@@ -1666,53 +1656,41 @@ async def get_h200_hour_quote(
     utilization_rate: float,
     time_hours: float,
     constitutional_level: str = "basic",
-    tee_enabled: bool = False
+    tee_enabled: bool = False,
 ) -> Dict[str, Any]:
     """Get H200-hour constitutional pricing quote"""
-    
+
     manager = await get_pricing_manager()
     tier_enum = UserSizeTier(user_tier)
-    
+
     return await manager.get_constitutional_h200_price(
         tier_enum,
         Decimal(str(device_tops)),
         Decimal(str(utilization_rate)),
         Decimal(str(time_hours)),
         constitutional_level,
-        tee_enabled
+        tee_enabled,
     )
 
 
-async def calculate_h200_equivalent(
-    device_tops: float,
-    utilization_rate: float,
-    time_hours: float
-) -> Dict[str, Any]:
+async def calculate_h200_equivalent(device_tops: float, utilization_rate: float, time_hours: float) -> Dict[str, Any]:
     """Calculate H200-hour equivalent for device"""
-    
+
     manager = await get_pricing_manager()
-    
+
     return await manager.calculate_h200_hour_equivalent(
-        Decimal(str(device_tops)),
-        Decimal(str(utilization_rate)),
-        Decimal(str(time_hours))
+        Decimal(str(device_tops)), Decimal(str(utilization_rate)), Decimal(str(time_hours))
     )
 
 
 async def get_tee_pricing_quote(
-    lane: str,
-    quantity: float = 1.0,
-    duration_hours: float = 1.0,
-    tee_level: str = "basic"
+    lane: str, quantity: float = 1.0, duration_hours: float = 1.0, tee_level: str = "basic"
 ) -> Dict[str, Any]:
     """Get TEE-enhanced pricing quote"""
-    
+
     manager = await get_pricing_manager()
     resource_lane = ResourceLane(lane)
-    
+
     return await manager.get_tee_enhanced_pricing(
-        resource_lane,
-        Decimal(str(quantity)),
-        Decimal(str(duration_hours)),
-        tee_level
+        resource_lane, Decimal(str(quantity)), Decimal(str(duration_hours)), tee_level
     )

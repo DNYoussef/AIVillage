@@ -14,12 +14,12 @@ from .bayesian_reputation import (
     ReputationTier,
     integrate_with_scheduler,
     integrate_with_pricing,
-    create_reputation_metrics
+    create_reputation_metrics,
 )
 
 __all__ = [
     "BayesianReputationEngine",
-    "ReputationScore", 
+    "ReputationScore",
     "ReputationEvent",
     "TrustComposition",
     "ReputationConfig",
@@ -27,5 +27,5 @@ __all__ = [
     "ReputationTier",
     "integrate_with_scheduler",
     "integrate_with_pricing",
-    "create_reputation_metrics"
+    "create_reputation_metrics",
 ]

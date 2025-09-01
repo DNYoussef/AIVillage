@@ -126,7 +126,7 @@ class HyperRAG:
                 content=f"Retrieved content for: {query}",
                 source="vector",
                 relevance_score=0.85,
-                retrieval_confidence=0.8
+                retrieval_confidence=0.8,
             )
         ]
 
@@ -135,7 +135,7 @@ class HyperRAG:
             answer=f"Based on available information about '{query}', here is the synthesized response.",
             confidence=0.82,
             supporting_sources=["vector"],
-            synthesis_method="mock_synthesis"
+            synthesis_method="mock_synthesis",
         )
 
         latency = (time.time() - start_time) * 1000
@@ -146,7 +146,7 @@ class HyperRAG:
             total_latency_ms=latency,
             processing_mode=mode,
             systems_used=["vector"],
-            confidence_score=0.82
+            confidence_score=0.82,
         )
 
         self.stats["queries_processed"] += 1
@@ -161,10 +161,7 @@ class HyperRAG:
         return {
             "initialized": self.initialized,
             "statistics": self.stats.copy(),
-            "config": {
-                "vector_enabled": self.config.enable_vector_rag,
-                "graph_enabled": self.config.enable_graph_rag
-            }
+            "config": {"vector_enabled": self.config.enable_vector_rag, "graph_enabled": self.config.enable_graph_rag},
         }
 
 
@@ -190,20 +187,12 @@ class RAGComponentValidator:
         try:
             # Test that RAG classes are available (they're defined at module level now)
             # Verify the classes exist and can be instantiated
-            test_config = RAGConfig()
-            test_query_mode = QueryMode.BALANCED
-            test_retrieved = RetrievedInformation(
-                id="test", 
-                content="test", 
-                source="test", 
-                relevance_score=0.8, 
-                retrieval_confidence=0.8
+            RAGConfig()
+            RetrievedInformation(
+                id="test", content="test", source="test", relevance_score=0.8, retrieval_confidence=0.8
             )
-            test_synthesized = SynthesizedAnswer(
-                answer="test", 
-                confidence=0.8, 
-                supporting_sources=["test"], 
-                synthesis_method="test"
+            SynthesizedAnswer(
+                answer="test", confidence=0.8, supporting_sources=["test"], synthesis_method="test"
             )
 
             self.log_result("rag_core_classes", True, "Core RAG classes are available and functional")

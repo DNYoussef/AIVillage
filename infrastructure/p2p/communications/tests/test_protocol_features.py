@@ -1,12 +1,11 @@
 import asyncio
 
-import pytest
-
 from packages.p2p.communications.protocol import CommunicationsProtocol
 from packages.p2p.communications.service_directory import service_directory
+import pytest
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_reconnect_and_queue_drain(monkeypatch):
     a = CommunicationsProtocol("a", port=43101, heartbeat_interval=0.1)
     b = CommunicationsProtocol("b", port=43102, heartbeat_interval=0.1)
@@ -21,12 +20,13 @@ async def test_reconnect_and_queue_drain(monkeypatch):
     await asyncio.sleep(0.2)
     assert "b" not in a.pending_messages or not a.pending_messages["b"]
     history = b.get_message_history("a")
-    assert history and history[0]["message"]["content"] == "hi"
+    assert history
+    assert history[0]["message"]["content"] == "hi"
     await a.stop_server()
     await b.stop_server()
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_broadcast_fanout():
     a = CommunicationsProtocol("a", port=43103, heartbeat_interval=0.1)
     b = CommunicationsProtocol("b", port=43104, heartbeat_interval=0.1)
@@ -40,7 +40,7 @@ async def test_broadcast_fanout():
     await asyncio.gather(a.stop_server(), b.stop_server(), c.stop_server())
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_rpc_round_trip():
     a = CommunicationsProtocol("a", port=43106, heartbeat_interval=0.1)
     b = CommunicationsProtocol("b", port=43107, heartbeat_interval=0.1)
@@ -52,11 +52,12 @@ async def test_rpc_round_trip():
 
     b.register_handler("rpc_request", handler)
     resp = await a.rpc("b", {"ping": 1}, timeout=2.0)
-    assert resp and resp["payload"] == {"ok": True}
+    assert resp
+    assert resp["payload"] == {"ok": True}
     await asyncio.gather(a.stop_server(), b.stop_server())
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_heartbeat_timeout():
     a = CommunicationsProtocol("a", port=43108, heartbeat_interval=0.05, heartbeat_miss_limit=1)
     b = CommunicationsProtocol("b", port=43109, heartbeat_interval=0.05, heartbeat_miss_limit=1)

@@ -81,17 +81,13 @@ def mock_fog_scheduler():
 
     # Mock scheduler operations
     scheduler_mock.submit_task = AsyncMock(return_value="task_789")
-    scheduler_mock.get_task_status = AsyncMock(return_value={
-        "status": "running",
-        "progress": 0.5,
-        "resources_allocated": True
-    })
+    scheduler_mock.get_task_status = AsyncMock(
+        return_value={"status": "running", "progress": 0.5, "resources_allocated": True}
+    )
     scheduler_mock.cancel_task = AsyncMock(return_value=True)
-    scheduler_mock.get_resource_utilization = AsyncMock(return_value={
-        "cpu": Decimal("0.65"),
-        "memory": Decimal("0.72"),
-        "storage": Decimal("0.48")
-    })
+    scheduler_mock.get_resource_utilization = AsyncMock(
+        return_value={"cpu": Decimal("0.65"), "memory": Decimal("0.72"), "storage": Decimal("0.48")}
+    )
 
     return scheduler_mock
 
@@ -109,7 +105,7 @@ def sample_market_conditions():
         "demand_multiplier": Decimal("1.15"),
         "supply_multiplier": Decimal("0.92"),
         "volatility_index": Decimal("0.18"),
-        "manipulation_risk": Decimal("0.05")
+        "manipulation_risk": Decimal("0.05"),
     }
 
 
@@ -128,8 +124,8 @@ def sample_resource_requirements():
             "min_trust_score": Decimal("0.8"),
             "min_reputation": Decimal("0.7"),
             "max_latency_ms": 50,
-            "availability_requirement": Decimal("0.99")
-        }
+            "availability_requirement": Decimal("0.99"),
+        },
     }
 
 
@@ -146,14 +142,14 @@ def sample_provider_profiles():
                 "cpu_cores": Decimal("16"),
                 "memory_gb": Decimal("32"),
                 "storage_gb": Decimal("1000"),
-                "bandwidth_mbps": Decimal("5000")
+                "bandwidth_mbps": Decimal("5000"),
             },
             "pricing_history": [
                 {"timestamp": datetime.utcnow(), "price": Decimal("0.10")},
                 {"timestamp": datetime.utcnow() - timedelta(hours=1), "price": Decimal("0.09")},
             ],
             "location": "us-east-1",
-            "uptime_percentage": Decimal("99.8")
+            "uptime_percentage": Decimal("99.8"),
         },
         {
             "provider_id": "test_provider_2",
@@ -165,7 +161,7 @@ def sample_provider_profiles():
                 "memory_gb": Decimal("16"),
                 "storage_gb": Decimal("500"),
                 "bandwidth_mbps": Decimal("2000"),
-                "gpu_units": Decimal("2")
+                "gpu_units": Decimal("2"),
             },
             "pricing_history": [
                 {"timestamp": datetime.utcnow(), "price": Decimal("0.12")},
@@ -173,8 +169,8 @@ def sample_provider_profiles():
             ],
             "location": "us-west-2",
             "uptime_percentage": Decimal("99.5"),
-            "specialized_hardware": ["cuda", "tensor_rt"]
-        }
+            "specialized_hardware": ["cuda", "tensor_rt"],
+        },
     ]
 
 
@@ -185,10 +181,10 @@ def sample_auction_config():
         "default_duration_minutes": 30,
         "minimum_deposit_percentage": Decimal("0.10"),  # 10% of reserve price
         "quality_weight": Decimal("0.30"),  # 30% weight for quality scoring
-        "price_weight": Decimal("0.70"),   # 70% weight for price scoring
-        "settlement_type": "second_price", # Vickrey auction
+        "price_weight": Decimal("0.70"),  # 70% weight for price scoring
+        "settlement_type": "second_price",  # Vickrey auction
         "anti_griefing_threshold": Decimal("0.75"),
-        "circuit_breaker_multiplier": Decimal("3.0")
+        "circuit_breaker_multiplier": Decimal("3.0"),
     }
 
 
@@ -202,21 +198,21 @@ def sample_pricing_config():
             "storage": Decimal("0.001"),
             "bandwidth": Decimal("0.0001"),
             "gpu": Decimal("1.20"),
-            "specialized": Decimal("2.00")
+            "specialized": Decimal("2.00"),
         },
         "multipliers": {
             "demand_low": Decimal("0.8"),
             "demand_normal": Decimal("1.0"),
             "demand_high": Decimal("1.5"),
-            "demand_premium": Decimal("2.2")
+            "demand_premium": Decimal("2.2"),
         },
         "volatility_threshold": Decimal("0.25"),
         "circuit_breaker_threshold": Decimal("5.0"),
         "bulk_discount_tiers": [
             {"min_quantity": Decimal("100"), "discount": Decimal("0.05")},
             {"min_quantity": Decimal("1000"), "discount": Decimal("0.10")},
-            {"min_quantity": Decimal("10000"), "discount": Decimal("0.15")}
-        ]
+            {"min_quantity": Decimal("10000"), "discount": Decimal("0.15")},
+        ],
     }
 
 
@@ -228,20 +224,20 @@ def mock_performance_metrics():
             "average_settlement_time_seconds": Decimal("45.3"),
             "successful_auctions_percentage": Decimal("0.94"),
             "average_bid_count": Decimal("5.7"),
-            "price_discovery_efficiency": Decimal("0.89")
+            "price_discovery_efficiency": Decimal("0.89"),
         },
         "pricing_metrics": {
             "price_accuracy_score": Decimal("0.91"),
             "volatility_prediction_accuracy": Decimal("0.84"),
             "circuit_breaker_activations": 3,
-            "market_manipulation_detections": 1
+            "market_manipulation_detections": 1,
         },
         "system_metrics": {
             "average_response_time_ms": Decimal("120.5"),
             "throughput_requests_per_second": Decimal("85.7"),
             "error_rate_percentage": Decimal("0.02"),
-            "availability_percentage": Decimal("99.95")
-        }
+            "availability_percentage": Decimal("99.95"),
+        },
     }
 
 
@@ -262,24 +258,12 @@ def setup_test_environment():
 # Custom pytest markers for organizing tests
 def pytest_configure(config):
     """Configure custom pytest markers."""
-    config.addinivalue_line(
-        "markers", "auction: mark test as auction engine test"
-    )
-    config.addinivalue_line(
-        "markers", "pricing: mark test as pricing manager test"
-    )
-    config.addinivalue_line(
-        "markers", "integration: mark test as integration test"
-    )
-    config.addinivalue_line(
-        "markers", "performance: mark test as performance test"
-    )
-    config.addinivalue_line(
-        "markers", "slow: mark test as slow running test"
-    )
-    config.addinivalue_line(
-        "markers", "unit: mark test as unit test"
-    )
+    config.addinivalue_line("markers", "auction: mark test as auction engine test")
+    config.addinivalue_line("markers", "pricing: mark test as pricing manager test")
+    config.addinivalue_line("markers", "integration: mark test as integration test")
+    config.addinivalue_line("markers", "performance: mark test as performance test")
+    config.addinivalue_line("markers", "slow: mark test as slow running test")
+    config.addinivalue_line("markers", "unit: mark test as unit test")
 
 
 # Async test utilities

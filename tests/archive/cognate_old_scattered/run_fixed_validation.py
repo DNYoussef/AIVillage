@@ -32,9 +32,9 @@ def validate_file_structure():
     """Validate the file structure is complete."""
     project_root = Path(__file__).parent.parent.parent
     # Try both naming conventions
-    cognate_pretrain_dir = project_root / "core" / "agent-forge" / "phases" / "cognate_pretrain"
+    cognate_pretrain_dir = project_root / "core" / "agent_forge" / "phases" / "cognate_pretrain"
     if not cognate_pretrain_dir.exists():
-        cognate_pretrain_dir = project_root / "core" / "agent-forge" / "phases" / "cognate-pretrain"
+        cognate_pretrain_dir = project_root / "core" / "agent_forge" / "phases" / "cognate-pretrain"
 
     print("=" * 60)
     print("COGNATE 25M SYSTEM - STANDALONE VALIDATION (FIXED)")
@@ -77,9 +77,9 @@ def validate_core_functionality():
     """Validate core functionality by analyzing code."""
     project_root = Path(__file__).parent.parent.parent
     # Try both naming conventions
-    cognate_pretrain_dir = project_root / "core" / "agent-forge" / "phases" / "cognate_pretrain"
+    cognate_pretrain_dir = project_root / "core" / "agent_forge" / "phases" / "cognate_pretrain"
     if not cognate_pretrain_dir.exists():
-        cognate_pretrain_dir = project_root / "core" / "agent-forge" / "phases" / "cognate-pretrain"
+        cognate_pretrain_dir = project_root / "core" / "agent_forge" / "phases" / "cognate-pretrain"
 
     print("\n2. CORE FUNCTIONALITY ANALYSIS")
     print("-" * 30)
@@ -139,7 +139,7 @@ def validate_integration():
     project_root = Path(__file__).parent.parent.parent
 
     # Check for EvoMerge integration
-    evomerge_file = project_root / "core" / "agent-forge" / "phases" / "evomerge.py"
+    evomerge_file = project_root / "core" / "agent_forge" / "phases" / "evomerge.py"
     if evomerge_file.exists():
         print("OK EvoMerge phase file exists")
 
@@ -157,8 +157,8 @@ def validate_integration():
 
     # Check for existing Cognate models
     cognate_output_dirs = [
-        project_root / "core" / "agent-forge" / "phases" / "cognate-pretrain" / "models",
-        project_root / "core" / "agent-forge" / "phases" / "trained_25m_models",
+        project_root / "core" / "agent_forge" / "phases" / "cognate-pretrain" / "models",
+        project_root / "core" / "agent_forge" / "phases" / "trained_25m_models",
     ]
 
     for output_dir in cognate_output_dirs:

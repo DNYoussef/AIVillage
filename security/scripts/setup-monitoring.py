@@ -5,62 +5,59 @@ Configures continuous dependency monitoring, alerting, and automated responses
 across all ecosystems in the project.
 """
 
-import json
 import os
 import sys
 import yaml
 from pathlib import Path
-from typing import Dict, List, Any
-from datetime import datetime, timezone
 import logging
-import subprocess
 
 # Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
 
 class DependencyMonitoringSetup:
     """Sets up comprehensive dependency monitoring for AIVillage"""
-    
+
     def __init__(self, project_root: str):
         self.project_root = Path(project_root)
         self.security_dir = self.project_root / "security"
         self.config_dir = self.security_dir / "configs"
         self.scripts_dir = self.security_dir / "scripts"
-        
+
         # Ensure directories exist
         self.security_dir.mkdir(exist_ok=True)
         self.config_dir.mkdir(exist_ok=True)
         self.scripts_dir.mkdir(exist_ok=True)
-        
+
     def setup_monitoring(self):
         """Set up complete dependency monitoring system"""
         logger.info("Setting up comprehensive dependency monitoring...")
-        
+
         # Create monitoring configurations
         self._create_monitoring_configs()
-        
+
         # Setup GitHub Actions workflows
         self._setup_github_workflows()
-        
+
         # Create alerting configurations
         self._setup_alerting()
-        
+
         # Setup dashboard configuration
         self._setup_dashboard()
-        
+
         # Create maintenance scripts
         self._create_maintenance_scripts()
-        
+
         # Setup pre-commit hooks
         self._setup_precommit_hooks()
-        
+
         logger.info("Dependency monitoring setup complete!")
-        
+
     def _create_monitoring_configs(self):
         """Create comprehensive monitoring configuration files"""
         logger.info("Creating monitoring configurations...")
-        
+
         # Dependabot configuration
         dependabot_config = {
             "version": 2,
@@ -76,11 +73,9 @@ class DependencyMonitoringSetup:
                     "rebase-strategy": "auto",
                     "allow": [
                         {"dependency-type": "direct"},
-                        {"dependency-type": "indirect", "update-type": "security"}
+                        {"dependency-type": "indirect", "update-type": "security"},
                     ],
-                    "ignore": [
-                        {"dependency-name": "*", "update-type": "version-update:semver-major"}
-                    ]
+                    "ignore": [{"dependency-name": "*", "update-type": "version-update:semver-major"}],
                 },
                 {
                     "package-ecosystem": "npm",
@@ -89,7 +84,7 @@ class DependencyMonitoringSetup:
                     "reviewers": ["security-team"],
                     "assignees": ["security-team"],
                     "labels": ["dependencies", "security", "javascript"],
-                    "open-pull-requests-limit": 10
+                    "open-pull-requests-limit": 10,
                 },
                 {
                     "package-ecosystem": "cargo",
@@ -98,7 +93,7 @@ class DependencyMonitoringSetup:
                     "reviewers": ["security-team"],
                     "assignees": ["security-team"],
                     "labels": ["dependencies", "security", "rust"],
-                    "open-pull-requests-limit": 10
+                    "open-pull-requests-limit": 10,
                 },
                 {
                     "package-ecosystem": "gomod",
@@ -107,7 +102,7 @@ class DependencyMonitoringSetup:
                     "reviewers": ["security-team"],
                     "assignees": ["security-team"],
                     "labels": ["dependencies", "security", "go"],
-                    "open-pull-requests-limit": 10
+                    "open-pull-requests-limit": 10,
                 },
                 {
                     "package-ecosystem": "docker",
@@ -115,41 +110,33 @@ class DependencyMonitoringSetup:
                     "schedule": {"interval": "weekly"},
                     "reviewers": ["devops-team"],
                     "labels": ["dependencies", "docker"],
-                    "open-pull-requests-limit": 5
-                }
-            ]
+                    "open-pull-requests-limit": 5,
+                },
+            ],
         }
-        
+
         dependabot_file = self.project_root / ".github" / "dependabot.yml"
         dependabot_file.parent.mkdir(exist_ok=True)
-        with open(dependabot_file, 'w') as f:
+        with open(dependabot_file, "w") as f:
             yaml.dump(dependabot_config, f, indent=2)
-            
+
         # CodeQL configuration for dependency scanning
         codeql_config = {
             "name": "CodeQL Analysis",
-            "queries": [
-                "security-and-quality",
-                "security-experimental"
-            ],
-            "paths-ignore": [
-                "**/node_modules/**",
-                "**/target/**",
-                "**/.venv/**",
-                "**/build/**"
-            ],
-            "disable-default-path-filters": False
+            "queries": ["security-and-quality", "security-experimental"],
+            "paths-ignore": ["**/node_modules/**", "**/target/**", "**/.venv/**", "**/build/**"],
+            "disable-default-path-filters": False,
         }
-        
+
         codeql_file = self.project_root / ".github" / "codeql" / "codeql-config.yml"
         codeql_file.parent.mkdir(exist_ok=True)
-        with open(codeql_file, 'w') as f:
+        with open(codeql_file, "w") as f:
             yaml.dump(codeql_config, f, indent=2)
-            
+
     def _setup_github_workflows(self):
         """Create GitHub Actions workflows for monitoring"""
         logger.info("Setting up GitHub Actions workflows...")
-        
+
         # Create dependency monitoring workflow
         monitoring_workflow = {
             "name": "Dependency Monitoring",
@@ -157,11 +144,11 @@ class DependencyMonitoringSetup:
                 "schedule": [{"cron": "0 */6 * * *"}],  # Every 6 hours
                 "workflow_dispatch": {},
                 "push": {"branches": ["main", "develop"]},
-                "pull_request": {"branches": ["main", "develop"]}
+                "pull_request": {"branches": ["main", "develop"]},
             },
             "env": {
                 "SECURITY_ALERTS_WEBHOOK": "${{ secrets.SECURITY_ALERTS_WEBHOOK }}",
-                "DASHBOARD_API_KEY": "${{ secrets.DASHBOARD_API_KEY }}"
+                "DASHBOARD_API_KEY": "${{ secrets.DASHBOARD_API_KEY }}",
             },
             "jobs": {
                 "monitor-dependencies": {
@@ -172,40 +159,34 @@ class DependencyMonitoringSetup:
                         {
                             "name": "Set up Python",
                             "uses": "actions/setup-python@v4",
-                            "with": {"python-version": "3.12"}
+                            "with": {"python-version": "3.12"},
                         },
                         {
                             "name": "Install monitoring tools",
-                            "run": "pip install pip-audit safety bandit semgrep requests pyyaml"
+                            "run": "pip install pip-audit safety bandit semgrep requests pyyaml",
                         },
-                        {
-                            "name": "Run dependency monitoring",
-                            "run": "python security/scripts/monitor-dependencies.py"
-                        },
-                        {
-                            "name": "Update security dashboard",
-                            "run": "python security/scripts/update-dashboard.py"
-                        },
+                        {"name": "Run dependency monitoring", "run": "python security/scripts/monitor-dependencies.py"},
+                        {"name": "Update security dashboard", "run": "python security/scripts/update-dashboard.py"},
                         {
                             "name": "Send alerts if needed",
                             "if": "failure()",
-                            "run": "python security/scripts/send-alerts.py"
-                        }
-                    ]
+                            "run": "python security/scripts/send-alerts.py",
+                        },
+                    ],
                 }
-            }
+            },
         }
-        
+
         workflows_dir = self.project_root / ".github" / "workflows"
         workflows_dir.mkdir(exist_ok=True)
-        
-        with open(workflows_dir / "dependency-monitoring.yml", 'w') as f:
+
+        with open(workflows_dir / "dependency-monitoring.yml", "w") as f:
             yaml.dump(monitoring_workflow, f, indent=2, sort_keys=False)
-            
+
     def _setup_alerting(self):
         """Setup alerting configuration"""
         logger.info("Setting up alerting system...")
-        
+
         alerting_config = {
             "alerting": {
                 "channels": [
@@ -221,11 +202,11 @@ class DependencyMonitoringSetup:
                                     "type": "section",
                                     "text": {
                                         "type": "mrkdwn",
-                                        "text": "*Severity:* {severity}\n*Package:* {package}\n*Vulnerability:* {vulnerability_id}\n*Description:* {description}"
-                                    }
+                                        "text": "*Severity:* {severity}\n*Package:* {package}\n*Vulnerability:* {vulnerability_id}\n*Description:* {description}",
+                                    },
                                 }
-                            ]
-                        }
+                            ],
+                        },
                     },
                     {
                         "name": "github_issues",
@@ -235,29 +216,29 @@ class DependencyMonitoringSetup:
                         "labels": ["security", "vulnerability", "automated"],
                         "issue_template": {
                             "title": "🚨 {severity} Security Vulnerability: {package}",
-                            "body": "## Security Alert\n\n**Package:** {package}\n**Version:** {version}\n**Vulnerability ID:** {vulnerability_id}\n**Severity:** {severity}\n**CVSS Score:** {cvss_score}\n\n## Description\n{description}\n\n## Recommendation\n{recommendation}\n\n## References\n{references}\n\n---\n*This issue was created automatically by the dependency monitoring system.*"
-                        }
+                            "body": "## Security Alert\n\n**Package:** {package}\n**Version:** {version}\n**Vulnerability ID:** {vulnerability_id}\n**Severity:** {severity}\n**CVSS Score:** {cvss_score}\n\n## Description\n{description}\n\n## Recommendation\n{recommendation}\n\n## References\n{references}\n\n---\n*This issue was created automatically by the dependency monitoring system.*",
+                        },
                     },
                     {
                         "name": "email",
                         "type": "smtp",
                         "severity_levels": ["critical"],
                         "recipients": ["security@aivillage.dev"],
-                        "subject_template": "🚨 CRITICAL: Security Vulnerability in {package}"
-                    }
+                        "subject_template": "🚨 CRITICAL: Security Vulnerability in {package}",
+                    },
                 ],
                 "rules": [
                     {
                         "name": "critical_vulnerabilities",
                         "condition": "severity == 'critical'",
                         "actions": ["slack", "github_issues", "email"],
-                        "immediate": True
+                        "immediate": True,
                     },
                     {
                         "name": "high_vulnerabilities",
                         "condition": "severity == 'high'",
                         "actions": ["slack", "github_issues"],
-                        "delay_minutes": 30
+                        "delay_minutes": 30,
                     },
                     {
                         "name": "medium_vulnerabilities",
@@ -265,19 +246,19 @@ class DependencyMonitoringSetup:
                         "actions": ["slack"],
                         "batch": True,
                         "batch_size": 10,
-                        "batch_timeout_hours": 4
-                    }
-                ]
+                        "batch_timeout_hours": 4,
+                    },
+                ],
             }
         }
-        
-        with open(self.config_dir / "alerting.yml", 'w') as f:
+
+        with open(self.config_dir / "alerting.yml", "w") as f:
             yaml.dump(alerting_config, f, indent=2)
-            
+
     def _setup_dashboard(self):
         """Setup security dashboard configuration"""
         logger.info("Setting up security dashboard...")
-        
+
         dashboard_config = {
             "dashboard": {
                 "title": "AIVillage Dependency Security Dashboard",
@@ -287,52 +268,39 @@ class DependencyMonitoringSetup:
                         "name": "vulnerability_scans",
                         "type": "json_files",
                         "path": "security/reports/*.json",
-                        "refresh": "1h"
+                        "refresh": "1h",
                     },
-                    {
-                        "name": "dependency_inventory",
-                        "type": "sbom",
-                        "path": "security/sboms/*.json",
-                        "refresh": "24h"
-                    }
+                    {"name": "dependency_inventory", "type": "sbom", "path": "security/sboms/*.json", "refresh": "24h"},
                 ],
                 "widgets": [
                     {
                         "title": "Vulnerability Overview",
                         "type": "stat_cards",
-                        "metrics": ["critical", "high", "medium", "low"]
+                        "metrics": ["critical", "high", "medium", "low"],
                     },
-                    {
-                        "title": "Vulnerability Trends",
-                        "type": "time_series",
-                        "timeframe": "30d"
-                    },
+                    {"title": "Vulnerability Trends", "type": "time_series", "timeframe": "30d"},
                     {
                         "title": "Top Vulnerable Packages",
                         "type": "table",
-                        "columns": ["package", "ecosystem", "severity", "age"]
+                        "columns": ["package", "ecosystem", "severity", "age"],
                     },
-                    {
-                        "title": "Ecosystem Breakdown",
-                        "type": "pie_chart",
-                        "data": "vulnerabilities_by_ecosystem"
-                    },
+                    {"title": "Ecosystem Breakdown", "type": "pie_chart", "data": "vulnerabilities_by_ecosystem"},
                     {
                         "title": "Patching Performance",
                         "type": "bar_chart",
-                        "metrics": ["mean_time_to_patch", "vulnerabilities_patched"]
-                    }
-                ]
+                        "metrics": ["mean_time_to_patch", "vulnerabilities_patched"],
+                    },
+                ],
             }
         }
-        
-        with open(self.config_dir / "dashboard.yml", 'w') as f:
+
+        with open(self.config_dir / "dashboard.yml", "w") as f:
             yaml.dump(dashboard_config, f, indent=2)
-            
+
     def _create_maintenance_scripts(self):
         """Create maintenance and monitoring scripts"""
         logger.info("Creating maintenance scripts...")
-        
+
         # Monitor dependencies script
         monitor_script = '''#!/usr/bin/env python3
 """
@@ -420,13 +388,13 @@ def check_critical_issues():
 if __name__ == "__main__":
     main()
 '''
-        
-        with open(self.scripts_dir / "monitor-dependencies.py", 'w') as f:
+
+        with open(self.scripts_dir / "monitor-dependencies.py", "w") as f:
             f.write(monitor_script)
-            
+
         # Make script executable
         os.chmod(self.scripts_dir / "monitor-dependencies.py", 0o755)
-        
+
         # Dashboard update script
         dashboard_script = '''#!/usr/bin/env python3
 """
@@ -469,11 +437,11 @@ def main():
 if __name__ == "__main__":
     main()
 '''
-        
-        with open(self.scripts_dir / "update-dashboard.py", 'w') as f:
+
+        with open(self.scripts_dir / "update-dashboard.py", "w") as f:
             f.write(dashboard_script)
         os.chmod(self.scripts_dir / "update-dashboard.py", 0o755)
-        
+
         # Alert sender script
         alert_script = '''#!/usr/bin/env python3
 """
@@ -531,15 +499,15 @@ def send_slack_alert(webhook_url, vuln_data):
 if __name__ == "__main__":
     main()
 '''
-        
-        with open(self.scripts_dir / "send-alerts.py", 'w') as f:
+
+        with open(self.scripts_dir / "send-alerts.py", "w") as f:
             f.write(alert_script)
         os.chmod(self.scripts_dir / "send-alerts.py", 0o755)
-        
+
     def _setup_precommit_hooks(self):
         """Setup pre-commit hooks for dependency security"""
         logger.info("Setting up pre-commit hooks...")
-        
+
         precommit_config = {
             "repos": [
                 {
@@ -551,23 +519,24 @@ if __name__ == "__main__":
                             "entry": "python security/scripts/monitor-dependencies.py",
                             "language": "system",
                             "files": r"(requirements.*\.txt|package\.json|Cargo\.toml|go\.mod)$",
-                            "pass_filenames": False
+                            "pass_filenames": False,
                         },
                         {
                             "id": "sbom-update",
                             "name": "Update SBOM",
                             "entry": "python security/scripts/generate-sbom.py",
-                            "language": "system", 
+                            "language": "system",
                             "files": r"(requirements.*\.txt|package\.json|Cargo\.toml|go\.mod)$",
-                            "pass_filenames": False
-                        }
-                    ]
+                            "pass_filenames": False,
+                        },
+                    ],
                 }
             ]
         }
-        
-        with open(self.project_root / ".pre-commit-config.yaml", 'w') as f:
+
+        with open(self.project_root / ".pre-commit-config.yaml", "w") as f:
             yaml.dump(precommit_config, f, indent=2)
+
 
 def main():
     """Main setup function"""
@@ -575,10 +544,10 @@ def main():
         project_root = sys.argv[1]
     else:
         project_root = "."
-    
+
     setup = DependencyMonitoringSetup(project_root)
     setup.setup_monitoring()
-    
+
     print("✅ Dependency monitoring setup complete!")
     print("📊 Configured components:")
     print("  - GitHub Actions workflows")
@@ -593,6 +562,7 @@ def main():
     print("  2. Set up Slack/email notifications")
     print("  3. Install and configure pre-commit hooks")
     print("  4. Test the monitoring pipeline")
+
 
 if __name__ == "__main__":
     main()

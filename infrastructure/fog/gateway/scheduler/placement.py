@@ -1044,9 +1044,11 @@ class FogScheduler:
                     "load_balance_score": solution.load_balance_objective,
                 },
                 "strategy": strategy.value,
-                "pareto_front_size": len([s for s in self.placement_engine.population if s.dominance_rank == 0])
-                if strategy == PlacementStrategy.NSGA_II
-                else 1,
+                "pareto_front_size": (
+                    len([s for s in self.placement_engine.population if s.dominance_rank == 0])
+                    if strategy == PlacementStrategy.NSGA_II
+                    else 1
+                ),
             }
 
         except Exception as e:

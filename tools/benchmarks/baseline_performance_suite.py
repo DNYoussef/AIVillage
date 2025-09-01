@@ -407,9 +407,9 @@ class BaselinePerformanceSuite:
             "baseline_summary": {
                 "components_with_baselines": len(self.current_baselines),
                 "historical_measurements": len(self.historical_baselines),
-                "last_updated": max([b["timestamp"] for b in self.historical_baselines])
-                if self.historical_baselines
-                else None,
+                "last_updated": (
+                    max([b["timestamp"] for b in self.historical_baselines]) if self.historical_baselines else None
+                ),
             },
             "current_baselines": {
                 component: {
@@ -456,11 +456,11 @@ class BaselinePerformanceSuite:
                             "to_date": curr["timestamp"],
                             "throughput_change_percent": throughput_change,
                             "latency_change_percent": latency_change,
-                            "trend": "IMPROVING"
-                            if throughput_change > 0 and latency_change < 0
-                            else "DEGRADING"
-                            if throughput_change < 0 or latency_change > 0
-                            else "STABLE",
+                            "trend": (
+                                "IMPROVING"
+                                if throughput_change > 0 and latency_change < 0
+                                else "DEGRADING" if throughput_change < 0 or latency_change > 0 else "STABLE"
+                            ),
                         }
                     )
 

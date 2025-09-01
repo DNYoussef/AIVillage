@@ -25,10 +25,9 @@ import pickle
 import sqlite3
 import time
 from typing import Any
-from typing import Dict, List, Optional, Union, Set
 import uuid
 
-from ..mobile_integration.libp2p_mesh import MeshMessage, MeshMessageType
+from infrastructure.p2p.mobile_integration.libp2p_mesh import MeshMessage, MeshMessageType
 
 logger = logging.getLogger(__name__)
 
@@ -243,9 +242,10 @@ class MessageQueue:
                 try:
                     # Security: Use safe JSON deserialization instead of pickle
                     import json
+
                     try:
                         # Deserialize message safely using JSON
-                        message_data_json = row[10].decode('utf-8') if isinstance(row[10], bytes) else row[10]
+                        message_data_json = row[10].decode("utf-8") if isinstance(row[10], bytes) else row[10]
                         message_data = json.loads(message_data_json)
                         message = MeshMessage.from_dict(message_data)
                     except (json.JSONDecodeError, UnicodeDecodeError) as e:

@@ -324,7 +324,7 @@ class TestDeploymentManifestGenerator:
 
             # Verify model info
             model_info = manifest["model_info"]
-            assert model_info["name"] == "agent-forge-v1.0.0-test"
+            assert model_info["name"] == "agent_forge-v1.0.0-test"
             assert model_info["version"] == "v1.0.0-test"
             assert "description" in model_info
             assert "file_size_bytes" in model_info
@@ -597,7 +597,7 @@ class TestDeploymentIntegration:
                     loaded_manifest = json.load(f)
 
                 # Verify key fields
-                assert loaded_manifest["model_info"]["name"] == "agent-forge-v0.1.0-test"
+                assert loaded_manifest["model_info"]["name"] == "agent_forge-v0.1.0-test"
                 assert loaded_manifest["model_info"]["compression_pipeline"] == "BitNet -> SeedLM"
                 assert loaded_manifest["evaluation_metrics"]["accuracy"] == 0.78
                 assert loaded_manifest["security"]["sha256_hash"] is not None

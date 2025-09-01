@@ -296,12 +296,13 @@ async def startup_event() -> None:
 
 
 if __name__ == "__main__":
-    import uvicorn
     import os
+
+    import uvicorn
 
     # Security: Use environment variable for host binding in production
     # Default to localhost for development safety
     host = os.getenv("CREDITS_API_HOST", "127.0.0.1")
     port = int(os.getenv("CREDITS_API_PORT", "8002"))
-    
+
     uvicorn.run(app, host=host, port=port)

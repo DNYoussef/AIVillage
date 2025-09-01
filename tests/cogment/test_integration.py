@@ -116,14 +116,14 @@ class TestCogmentEvoMergeAdapter:
         assert isinstance(is_compatible, bool)
         # Same architecture should be compatible
         assert is_compatible, "Same architecture models should be merge compatible"
-        
+
         # Test incompatible models - different architectures
         incompatible_config = CogmentConfig(d_model=128, n_layers=2, vocab_size=3000, max_seq_len=64)
         model3 = CogmentModel(incompatible_config)
-        
+
         is_incompatible = evomerge_adapter.validate_merge_compatibility(model1, model3)
         assert not is_incompatible, "Different architecture models should not be merge compatible"
-        
+
         # Test edge case: None model
         try:
             none_result = evomerge_adapter.validate_merge_compatibility(model1, None)

@@ -5,7 +5,7 @@ Analyze parameter distribution in Cogment system components.
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "core", "agent-forge", "models"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "core", "agent_forge", "models"))
 
 
 from cogment.core.config import CogmentConfig

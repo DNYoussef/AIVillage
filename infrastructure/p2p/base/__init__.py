@@ -19,12 +19,11 @@ Key Benefits:
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List, Union, AsyncGenerator, Callable
 from dataclasses import dataclass
-from enum import Enum, auto
-import logging
-import asyncio
 from datetime import datetime
+from enum import Enum
+import logging
+from typing import Any, AsyncGenerator, Callable, Dict, List, Optional, Union
 import uuid
 
 # Configure logging
@@ -35,12 +34,11 @@ __version__ = "2.0.0"
 __all__ = [
     # Base classes
     "BaseTransport",
-    "BaseProtocol", 
+    "BaseProtocol",
     "BaseMessage",
     "BaseNode",
     "BaseDiscovery",
     "BaseMetrics",
-    
     # Enums and types
     "TransportStatus",
     "MessageType",
@@ -49,33 +47,31 @@ __all__ = [
     "NodeRole",
     "DiscoveryMethod",
     "MetricType",
-    
     # Data classes
     "ConnectionInfo",
     "PeerCapabilities",
     "MessageMetadata",
     "DiscoveryResult",
     "MetricSample",
-    
     # Exceptions
     "P2PBaseException",
     "TransportError",
     "ProtocolError",
     "DiscoveryError",
     "MetricsError",
-    
     # Utilities
     "generate_peer_id",
     "validate_message",
-    "create_metadata"
+    "create_metadata",
 ]
 
 
 # Enums for standardized types
 class TransportStatus(Enum):
     """Transport connection status."""
+
     DISCONNECTED = "disconnected"
-    CONNECTING = "connecting" 
+    CONNECTING = "connecting"
     CONNECTED = "connected"
     RECONNECTING = "reconnecting"
     FAILED = "failed"
@@ -84,6 +80,7 @@ class TransportStatus(Enum):
 
 class MessageType(Enum):
     """Standard message types."""
+
     DATA = "data"
     CONTROL = "control"
     HEARTBEAT = "heartbeat"
@@ -95,6 +92,7 @@ class MessageType(Enum):
 
 class MessagePriority(Enum):
     """Message priority levels."""
+
     LOW = 1
     MEDIUM = 2
     HIGH = 3
@@ -103,6 +101,7 @@ class MessagePriority(Enum):
 
 class ProtocolCapability(Enum):
     """Protocol capabilities."""
+
     ENCRYPTION = "encryption"
     COMPRESSION = "compression"
     NAT_TRAVERSAL = "nat_traversal"
@@ -115,6 +114,7 @@ class ProtocolCapability(Enum):
 
 class NodeRole(Enum):
     """Node roles in P2P network."""
+
     CLIENT = "client"
     SERVER = "server"
     PEER = "peer"
@@ -125,6 +125,7 @@ class NodeRole(Enum):
 
 class DiscoveryMethod(Enum):
     """Peer discovery methods."""
+
     BROADCAST = "broadcast"
     MULTICAST = "multicast"
     DHT = "dht"
@@ -135,6 +136,7 @@ class DiscoveryMethod(Enum):
 
 class MetricType(Enum):
     """Types of metrics."""
+
     COUNTER = "counter"
     GAUGE = "gauge"
     HISTOGRAM = "histogram"
@@ -145,6 +147,7 @@ class MetricType(Enum):
 @dataclass
 class ConnectionInfo:
     """Connection information for a peer."""
+
     peer_id: str
     address: str
     port: int
@@ -154,7 +157,7 @@ class ConnectionInfo:
     last_activity: datetime
     status: TransportStatus
     metadata: Dict[str, Any] = None
-    
+
     def __post_init__(self):
         if self.metadata is None:
             self.metadata = {}
@@ -163,6 +166,7 @@ class ConnectionInfo:
 @dataclass
 class PeerCapabilities:
     """Capabilities advertised by a peer."""
+
     peer_id: str
     supported_protocols: List[str]
     capabilities: List[ProtocolCapability]
@@ -170,15 +174,16 @@ class PeerCapabilities:
     bandwidth_limit: Optional[int] = None
     storage_capacity: Optional[int] = None
     compute_resources: Dict[str, Any] = None
-    
+
     def __post_init__(self):
         if self.compute_resources is None:
             self.compute_resources = {}
 
 
-@dataclass 
+@dataclass
 class MessageMetadata:
     """Metadata for P2P messages."""
+
     message_id: str
     sender_id: str
     recipient_id: Optional[str]
@@ -188,7 +193,7 @@ class MessageMetadata:
     ttl: Optional[int] = None
     routing_hints: Dict[str, Any] = None
     encryption_info: Dict[str, Any] = None
-    
+
     def __post_init__(self):
         if self.routing_hints is None:
             self.routing_hints = {}
@@ -199,12 +204,13 @@ class MessageMetadata:
 @dataclass
 class DiscoveryResult:
     """Result of peer discovery operation."""
+
     discovered_peers: List[str]
     discovery_method: DiscoveryMethod
     discovery_time: float
     network_topology: Dict[str, Any] = None
     bootstrap_nodes: List[str] = None
-    
+
     def __post_init__(self):
         if self.network_topology is None:
             self.network_topology = {}
@@ -215,12 +221,13 @@ class DiscoveryResult:
 @dataclass
 class MetricSample:
     """A single metric measurement."""
+
     name: str
     value: Union[int, float]
     metric_type: MetricType
     timestamp: datetime
     labels: Dict[str, str] = None
-    
+
     def __post_init__(self):
         if self.labels is None:
             self.labels = {}
@@ -229,7 +236,7 @@ class MetricSample:
 # Exception hierarchy
 class P2PBaseException(Exception):
     """Base exception for all P2P errors."""
-    
+
     def __init__(self, message: str, error_code: Optional[str] = None, details: Optional[Dict] = None):
         super().__init__(message)
         self.error_code = error_code
@@ -239,125 +246,115 @@ class P2PBaseException(Exception):
 
 class TransportError(P2PBaseException):
     """Transport-related errors."""
-    pass
+
 
 
 class ProtocolError(P2PBaseException):
     """Protocol-related errors."""
-    pass
+
 
 
 class DiscoveryError(P2PBaseException):
     """Discovery-related errors."""
-    pass
+
 
 
 class MetricsError(P2PBaseException):
     """Metrics-related errors."""
-    pass
+
 
 
 # Abstract base classes
 class BaseTransport(ABC):
     """
     Abstract base class for all P2P transport implementations.
-    
+
     Defines the standard interface that all transport protocols
     (LibP2P, BitChat, BetaNet, etc.) must implement.
     """
-    
+
     def __init__(self, transport_id: str):
         self.transport_id = transport_id
         self.status = TransportStatus.DISCONNECTED
         self.connections: Dict[str, ConnectionInfo] = {}
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self._event_handlers: Dict[str, List[Callable]] = {}
-    
+
     @property
     @abstractmethod
     def transport_type(self) -> str:
         """Get the transport type identifier."""
-        pass
-    
+
     @property
     @abstractmethod
     def capabilities(self) -> List[ProtocolCapability]:
         """Get list of transport capabilities."""
-        pass
-    
+
     @abstractmethod
     async def initialize(self, config: Dict[str, Any]) -> None:
         """Initialize the transport with configuration."""
-        pass
-    
+
     @abstractmethod
     async def connect(self, peer_address: str, **kwargs) -> str:
         """
         Connect to a peer.
-        
+
         Args:
             peer_address: Address of the peer to connect to
             **kwargs: Additional connection parameters
-            
+
         Returns:
             peer_id: Unique identifier for the connected peer
-            
+
         Raises:
             TransportError: If connection fails
         """
-        pass
-    
+
     @abstractmethod
     async def disconnect(self, peer_id: str) -> None:
         """Disconnect from a peer."""
-        pass
-    
+
     @abstractmethod
-    async def send_message(self, peer_id: str, message: 'BaseMessage') -> bool:
+    async def send_message(self, peer_id: str, message: "BaseMessage") -> bool:
         """
         Send a message to a peer.
-        
+
         Args:
             peer_id: Target peer identifier
             message: Message to send
-            
+
         Returns:
             bool: True if message was sent successfully
         """
-        pass
-    
+
     @abstractmethod
-    async def receive_messages(self) -> AsyncGenerator['BaseMessage', None]:
+    async def receive_messages(self) -> AsyncGenerator["BaseMessage", None]:
         """Async generator yielding received messages."""
-        pass
-    
+
     @abstractmethod
     async def get_peer_info(self, peer_id: str) -> Optional[ConnectionInfo]:
         """Get connection information for a peer."""
-        pass
-    
+
     @abstractmethod
     async def list_peers(self) -> List[str]:
         """Get list of connected peer IDs."""
-        pass
-    
+
     @abstractmethod
     async def shutdown(self) -> None:
         """Shutdown the transport."""
-        pass
-    
+
     # Event handling methods
     def add_event_handler(self, event_type: str, handler: Callable):
         """Add an event handler."""
         if event_type not in self._event_handlers:
             self._event_handlers[event_type] = []
         self._event_handlers[event_type].append(handler)
-    
+
     def remove_event_handler(self, event_type: str, handler: Callable):
         """Remove an event handler."""
         if event_type in self._event_handlers:
             self._event_handlers[event_type].remove(handler)
-    
+
     async def _emit_event(self, event_type: str, **kwargs):
         """Emit an event to registered handlers."""
         if event_type in self._event_handlers:
@@ -371,88 +368,77 @@ class BaseTransport(ABC):
 class BaseProtocol(ABC):
     """
     Abstract base class for protocol handlers.
-    
+
     Defines the interface for handling specific protocol logic
     within transport implementations.
     """
-    
+
     def __init__(self, protocol_name: str):
         self.protocol_name = protocol_name
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-    
+
     @property
     @abstractmethod
     def version(self) -> str:
         """Get protocol version."""
-        pass
-    
+
     @property
     @abstractmethod
     def capabilities(self) -> List[ProtocolCapability]:
         """Get protocol capabilities."""
-        pass
-    
+
     @abstractmethod
-    async def encode_message(self, message: 'BaseMessage') -> bytes:
+    async def encode_message(self, message: "BaseMessage") -> bytes:
         """Encode a message for transmission."""
-        pass
-    
+
     @abstractmethod
-    async def decode_message(self, data: bytes) -> 'BaseMessage':
+    async def decode_message(self, data: bytes) -> "BaseMessage":
         """Decode received data into a message."""
-        pass
-    
+
     @abstractmethod
     async def handle_handshake(self, peer_id: str) -> Dict[str, Any]:
         """Handle protocol handshake with a peer."""
-        pass
-    
+
     @abstractmethod
     async def validate_peer(self, peer_id: str, credentials: Dict[str, Any]) -> bool:
         """Validate peer credentials."""
-        pass
 
 
 class BaseMessage(ABC):
     """
     Abstract base class for P2P messages.
-    
+
     Provides standard message structure and serialization.
     """
-    
+
     def __init__(self, metadata: MessageMetadata, payload: Any):
         self.metadata = metadata
         self.payload = payload
         self.created_at = datetime.now()
-    
+
     @property
     @abstractmethod
     def message_type(self) -> MessageType:
         """Get the message type."""
-        pass
-    
+
     @abstractmethod
     def to_dict(self) -> Dict[str, Any]:
         """Convert message to dictionary."""
-        pass
-    
+
     @classmethod
     @abstractmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'BaseMessage':
+    def from_dict(cls, data: Dict[str, Any]) -> "BaseMessage":
         """Create message from dictionary."""
-        pass
-    
+
     @abstractmethod
     def serialize(self) -> bytes:
         """Serialize message to bytes."""
-        pass
-    
-    @classmethod  
+
+    @classmethod
     @abstractmethod
-    def deserialize(cls, data: bytes) -> 'BaseMessage':
+    def deserialize(cls, data: bytes) -> "BaseMessage":
         """Deserialize bytes to message."""
-        pass
-    
+
     def validate(self) -> bool:
         """Validate message structure and content."""
         try:
@@ -471,131 +457,113 @@ class BaseMessage(ABC):
 class BaseNode(ABC):
     """
     Abstract base class for P2P network nodes.
-    
+
     Represents a participant in the P2P network with identity,
     capabilities, and networking functions.
     """
-    
+
     def __init__(self, node_id: str):
         self.node_id = node_id
         self.role = NodeRole.PEER
         self.capabilities = PeerCapabilities(
-            peer_id=node_id,
-            supported_protocols=[],
-            capabilities=[],
-            max_connections=100
+            peer_id=node_id, supported_protocols=[], capabilities=[], max_connections=100
         )
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-    
+
     @property
     @abstractmethod
     def identity(self) -> Dict[str, Any]:
         """Get node identity information."""
-        pass
-    
+
     @abstractmethod
     async def join_network(self, bootstrap_nodes: List[str]) -> None:
         """Join the P2P network using bootstrap nodes."""
-        pass
-    
+
     @abstractmethod
     async def leave_network(self) -> None:
         """Leave the P2P network gracefully."""
-        pass
-    
+
     @abstractmethod
     async def get_network_status(self) -> Dict[str, Any]:
         """Get current network status and topology."""
-        pass
-    
+
     @abstractmethod
     async def advertise_capabilities(self) -> None:
         """Advertise node capabilities to the network."""
-        pass
 
 
 class BaseDiscovery(ABC):
     """
     Abstract base class for peer discovery mechanisms.
-    
+
     Defines interface for discovering and tracking peers
     in the P2P network.
     """
-    
+
     def __init__(self, discovery_id: str):
         self.discovery_id = discovery_id
         self.discovered_peers: Dict[str, PeerCapabilities] = {}
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-    
+
     @property
     @abstractmethod
     def supported_methods(self) -> List[DiscoveryMethod]:
         """Get list of supported discovery methods."""
-        pass
-    
+
     @abstractmethod
     async def start_discovery(self, method: DiscoveryMethod, **kwargs) -> None:
         """Start peer discovery using specified method."""
-        pass
-    
+
     @abstractmethod
     async def stop_discovery(self) -> None:
         """Stop peer discovery."""
-        pass
-    
+
     @abstractmethod
     async def discover_peers(self, timeout: int = 30) -> DiscoveryResult:
         """Discover peers on the network."""
-        pass
-    
+
     @abstractmethod
     async def announce_presence(self) -> None:
         """Announce this node's presence to the network."""
-        pass
-    
+
     @abstractmethod
     async def query_peer_capabilities(self, peer_id: str) -> Optional[PeerCapabilities]:
         """Query capabilities of a specific peer."""
-        pass
 
 
 class BaseMetrics(ABC):
     """
     Abstract base class for metrics collection and monitoring.
-    
+
     Provides standardized metrics collection across all P2P components.
     """
-    
+
     def __init__(self, component_name: str):
         self.component_name = component_name
         self.metrics: Dict[str, List[MetricSample]] = {}
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-    
+
     @abstractmethod
-    async def record_metric(self, name: str, value: Union[int, float], 
-                          metric_type: MetricType, labels: Optional[Dict[str, str]] = None) -> None:
+    async def record_metric(
+        self, name: str, value: Union[int, float], metric_type: MetricType, labels: Optional[Dict[str, str]] = None
+    ) -> None:
         """Record a metric sample."""
-        pass
-    
+
     @abstractmethod
     async def get_metric(self, name: str, time_range: Optional[tuple] = None) -> List[MetricSample]:
         """Get metric samples within time range."""
-        pass
-    
+
     @abstractmethod
     async def get_all_metrics(self) -> Dict[str, List[MetricSample]]:
         """Get all recorded metrics."""
-        pass
-    
+
     @abstractmethod
     async def export_metrics(self, format: str = "json") -> Union[str, bytes]:
         """Export metrics in specified format."""
-        pass
-    
+
     @abstractmethod
     async def clear_metrics(self, older_than: Optional[datetime] = None) -> None:
         """Clear old metrics."""
-        pass
 
 
 # Utility functions
@@ -609,10 +577,13 @@ def validate_message(message: BaseMessage) -> bool:
     return message.validate()
 
 
-def create_metadata(sender_id: str, message_type: MessageType, 
-                   priority: MessagePriority = MessagePriority.MEDIUM,
-                   recipient_id: Optional[str] = None,
-                   ttl: Optional[int] = None) -> MessageMetadata:
+def create_metadata(
+    sender_id: str,
+    message_type: MessageType,
+    priority: MessagePriority = MessagePriority.MEDIUM,
+    recipient_id: Optional[str] = None,
+    ttl: Optional[int] = None,
+) -> MessageMetadata:
     """Create standard message metadata."""
     return MessageMetadata(
         message_id=generate_peer_id("msg"),
@@ -621,7 +592,7 @@ def create_metadata(sender_id: str, message_type: MessageType,
         message_type=message_type,
         priority=priority,
         timestamp=datetime.now(),
-        ttl=ttl
+        ttl=ttl,
     )
 
 

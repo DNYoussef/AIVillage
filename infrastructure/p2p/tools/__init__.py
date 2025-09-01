@@ -16,7 +16,7 @@ Version: 2.0.0
 __version__ = "2.0.0"
 __all__ = [
     "TestRunner",
-    "BenchmarkSuite", 
+    "BenchmarkSuite",
     "NetworkAnalyzer",
     "DebugTools",
 ]

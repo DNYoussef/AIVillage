@@ -24,7 +24,7 @@ print(f"DEBUG: Project root: {project_root}")
 print(f"DEBUG: PYTHONPATH: {os.environ.get('PYTHONPATH', 'Not set')}")
 
 # Add cognate_pretrain directory to Python path (exact same as controller)
-cognate_pretrain_dir = project_root / "core" / "agent-forge" / "phases" / "cognate_pretrain"
+cognate_pretrain_dir = project_root / "core" / "agent_forge" / "phases" / "cognate_pretrain"
 if str(cognate_pretrain_dir) not in sys.path:
     sys.path.insert(0, str(cognate_pretrain_dir))
 

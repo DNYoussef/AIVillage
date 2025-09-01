@@ -2,13 +2,14 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Optional
 import time
+from typing import Any, Dict, Optional
 import uuid
 
 
 class MessageType(Enum):
     """Standard message types for P2P communication."""
+
     HEARTBEAT = "heartbeat"
     DATA = "data"
     CONTROL = "control"
@@ -18,6 +19,7 @@ class MessageType(Enum):
 
 class MessagePriority(Enum):
     """Message priority levels."""
+
     CRITICAL = 1
     HIGH = 2
     NORMAL = 3
@@ -27,6 +29,7 @@ class MessagePriority(Enum):
 @dataclass
 class MessageMetadata:
     """Message metadata for routing and processing."""
+
     sender_id: str
     receiver_id: str
     timestamp: float
@@ -34,7 +37,7 @@ class MessageMetadata:
     ttl: int = 10
     hop_count: int = 0
     signature: Optional[str] = None
-    
+
     def __post_init__(self):
         if not self.message_id:
             self.message_id = str(uuid.uuid4())
@@ -45,19 +48,20 @@ class MessageMetadata:
 @dataclass
 class Message:
     """Basic P2P message structure."""
+
     message_type: MessageType
     sender_id: str
     receiver_id: str
     payload: Dict[str, Any]
     timestamp: float = None
     message_id: str = None
-    
+
     def __post_init__(self):
         if self.timestamp is None:
             self.timestamp = time.time()
         if self.message_id is None:
             self.message_id = str(uuid.uuid4())
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert message to dictionary."""
         return {
@@ -70,18 +74,19 @@ class Message:
         }
 
 
-@dataclass  
+@dataclass
 class UnifiedMessage:
     """Unified message format for all P2P communications."""
+
     metadata: MessageMetadata
     content: Dict[str, Any]
     priority: MessagePriority = MessagePriority.NORMAL
     encrypted: bool = False
-    
+
     def __post_init__(self):
         if not self.metadata.message_id:
             self.metadata.message_id = str(uuid.uuid4())
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert unified message to dictionary."""
         return {
@@ -98,9 +103,9 @@ class UnifiedMessage:
             "priority": self.priority.value,
             "encrypted": self.encrypted,
         }
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'UnifiedMessage':
+    def from_dict(cls, data: Dict[str, Any]) -> "UnifiedMessage":
         """Create UnifiedMessage from dictionary."""
         metadata_data = data.get("metadata", {})
         metadata = MessageMetadata(
@@ -112,7 +117,7 @@ class UnifiedMessage:
             hop_count=metadata_data.get("hop_count", 0),
             signature=metadata_data.get("signature"),
         )
-        
+
         return cls(
             metadata=metadata,
             content=data.get("content", {}),

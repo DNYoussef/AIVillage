@@ -641,9 +641,9 @@ class P2PMeshIntegration:
             self.peers[sender_id] = PeerInfo(
                 peer_id=sender_id,
                 peer_type=PeerType.MOBILE,  # Default
-                connection_type=ConnectionType.BLUETOOTH
-                if transport_type == TransportType.BITCHAT
-                else ConnectionType.WIFI_HOTSPOT,
+                connection_type=(
+                    ConnectionType.BLUETOOTH if transport_type == TransportType.BITCHAT else ConnectionType.WIFI_HOTSPOT
+                ),
                 address="",  # Transport layer handles addressing
                 port=0,
                 capabilities=set(),

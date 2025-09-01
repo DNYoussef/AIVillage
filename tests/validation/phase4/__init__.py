@@ -18,12 +18,12 @@ from .integration.service_integration_tester import ServiceIntegrationTester
 from .reports.validation_reporter import ValidationReporter
 
 __all__ = [
-    'Phase4ValidationSuite',
-    'CouplingAnalyzer',
-    'PerformanceMonitor',
-    'QualityAnalyzer',
-    'BackwardsCompatibilityTester',
-    'RegressionTester',
-    'ServiceIntegrationTester',
-    'ValidationReporter'
+    "Phase4ValidationSuite",
+    "CouplingAnalyzer",
+    "PerformanceMonitor",
+    "QualityAnalyzer",
+    "BackwardsCompatibilityTester",
+    "RegressionTester",
+    "ServiceIntegrationTester",
+    "ValidationReporter",
 ]

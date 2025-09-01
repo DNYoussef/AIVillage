@@ -5,7 +5,7 @@ Test integration between Agent 2's GatedLTM and Agent 1's RefinementCore.
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "core", "agent-forge", "models"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "core", "agent_forge", "models"))
 
 # Import Agent 1's components
 from cogment.core.config import CogmentConfig

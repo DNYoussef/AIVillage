@@ -79,18 +79,22 @@ app = FastAPI(title="Model Chat Interface API")
 # SECURITY: Add secure CORS middleware - NO WILDCARDS
 try:
     from src.security.cors_config import SECURE_CORS_CONFIG
+
     app.add_middleware(CORSMiddleware, **SECURE_CORS_CONFIG)
 except ImportError:
     # Fallback secure configuration
     import os
+
     env = os.getenv("AIVILLAGE_ENV", "development")
-    cors_origins = ["http://localhost:3000", "http://localhost:8080"] if env != "production" else ["https://aivillage.app"]
+    cors_origins = (
+        ["http://localhost:3000", "http://localhost:8080"] if env != "production" else ["https://aivillage.app"]
+    )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cors_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allow_headers=["Accept", "Content-Type", "Authorization"]
+        allow_headers=["Accept", "Content-Type", "Authorization"],
     )
 
 

@@ -563,9 +563,9 @@ class MarketSchedulerIntegration:
             },
             "timing": {
                 "created_at": task.created_at.isoformat(),
-                "allocation_started_at": task.market_allocation_started_at.isoformat()
-                if task.market_allocation_started_at
-                else None,
+                "allocation_started_at": (
+                    task.market_allocation_started_at.isoformat() if task.market_allocation_started_at else None
+                ),
                 "allocated_at": task.allocated_at.isoformat() if task.allocated_at else None,
                 "allocation_time_seconds": (
                     (task.allocated_at - task.market_allocation_started_at).total_seconds()

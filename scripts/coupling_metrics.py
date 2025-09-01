@@ -537,9 +537,7 @@ class ProjectCouplingAnalyzer:
                     + (
                         "IMPROVED"
                         if project_metrics.improvement_score > 0
-                        else "DEGRADED"
-                        if project_metrics.improvement_score < 0
-                        else "STABLE"
+                        else "DEGRADED" if project_metrics.improvement_score < 0 else "STABLE"
                     ),
                     "",
                 ]

@@ -431,9 +431,9 @@ class HyperRAG:
                         evidence_sources.append(
                             {
                                 "content": memory_trace.content,
-                                "type": "episodic"
-                                if memory_trace.memory_type == HippoMemoryType.EPISODIC
-                                else "semantic",
+                                "type": (
+                                    "episodic" if memory_trace.memory_type == HippoMemoryType.EPISODIC else "semantic"
+                                ),
                                 "confidence": memory_trace.strength,
                                 "source": "neural_memory",
                                 "metadata": memory_trace.metadata,

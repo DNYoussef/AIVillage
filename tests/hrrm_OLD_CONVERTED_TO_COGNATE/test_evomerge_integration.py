@@ -167,6 +167,7 @@ class TestEvoMergeIntegration:
             except Exception as e:
                 # Expected due to mocking
                 import logging
+
                 logging.exception("EvoMerge phase load_base_models failed (expected due to mocking): %s", str(e))
 
     def test_evomerge_config_seed_fields(self):

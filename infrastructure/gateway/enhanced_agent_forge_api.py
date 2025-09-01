@@ -36,18 +36,22 @@ app = FastAPI(title="Enhanced Agent Forge API")
 # SECURITY: Add secure CORS middleware - NO WILDCARDS
 try:
     from src.security.cors_config import SECURE_CORS_CONFIG
+
     app.add_middleware(CORSMiddleware, **SECURE_CORS_CONFIG)
 except ImportError:
     # Fallback secure configuration
     import os
+
     env = os.getenv("AIVILLAGE_ENV", "development")
-    cors_origins = ["http://localhost:3000", "http://localhost:8080"] if env != "production" else ["https://aivillage.app"]
+    cors_origins = (
+        ["http://localhost:3000", "http://localhost:8080"] if env != "production" else ["https://aivillage.app"]
+    )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cors_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allow_headers=["Accept", "Content-Type", "Authorization"]
+        allow_headers=["Accept", "Content-Type", "Authorization"],
     )
 
 # Global state
@@ -137,7 +141,7 @@ async def run_real_cognate_training(task_id: str, parameters: dict[str, Any]):
 
         # Setup training environment
         training_script = (
-            Path(__file__).parent.parent / "core/agent-forge/phases/cognate_pretrain/real_pretraining_pipeline.py"
+            Path(__file__).parent.parent / "core/agent_forge/phases/cognate_pretrain/real_pretraining_pipeline.py"
         )
 
         if not training_script.exists():

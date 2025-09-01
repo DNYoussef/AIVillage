@@ -55,7 +55,7 @@ async def test_wandb_manager():
         logger.info(f"W&B auth setup: {auth_success}")
 
         # Test initialization (should fallback to offline mode if needed)
-        init_success = init_wandb(project="test-agent-forge")
+        init_success = init_wandb(project="test-agent_forge")
         logger.info(f"W&B init: {init_success}")
 
         # Test logging (should work in offline mode)

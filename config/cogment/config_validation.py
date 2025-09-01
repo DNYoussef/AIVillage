@@ -472,9 +472,7 @@ class CogmentConfigValidator:
         complexity = sequence_factor * refinement_factor * steps_factor
         return complexity
 
-    def generate_validation_report(
-        self, validation_result: ValidationResult, output_path: Path | None = None
-    ) -> str:
+    def generate_validation_report(self, validation_result: ValidationResult, output_path: Path | None = None) -> str:
         """
         Generate a comprehensive validation report.
 

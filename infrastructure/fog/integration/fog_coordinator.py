@@ -27,6 +27,7 @@ from ..privacy.onion_routing import NodeType, OnionRouter
 from ..quorum.quorum_manager import QuorumManager
 from ..scheduler.enhanced_sla_tiers import EnhancedSLATierManager, SLAMetrics, SLATier
 from ..tokenomics.fog_token_system import FogTokenSystem
+
 # Privacy integration imports moved to avoid circular dependency
 
 logger = logging.getLogger(__name__)
@@ -68,7 +69,7 @@ class FogCoordinator:
         self.resource_manager: MobileResourceManager | None = None
         self.quorum_manager: QuorumManager | None = None
         self.sla_tier_manager: EnhancedSLATierManager | None = None
-        self.onion_coordinator: 'FogOnionCoordinator | None' = None
+        self.onion_coordinator: "FogOnionCoordinator | None" = None
 
         # System state
         self.is_running = False
@@ -288,7 +289,7 @@ class FogCoordinator:
     async def _initialize_onion_coordinator(self):
         """Initialize the fog onion coordinator"""
         from .fog_onion_coordinator import FogOnionCoordinator, PrivacyLevel
-        
+
         self.onion_coordinator = FogOnionCoordinator(
             node_id=f"onion-{self.node_id}",
             fog_coordinator=self,
@@ -701,9 +702,11 @@ class FogCoordinator:
                     privacy_task = PrivacyAwareTask(
                         task_id=request_data["task_id"],
                         privacy_level=PrivacyLevel[request_data.get("privacy_level", "PRIVATE")],
-                        task_data=request_data["task_data"].encode()
-                        if isinstance(request_data["task_data"], str)
-                        else request_data["task_data"],
+                        task_data=(
+                            request_data["task_data"].encode()
+                            if isinstance(request_data["task_data"], str)
+                            else request_data["task_data"]
+                        ),
                         compute_requirements=request_data.get("compute_requirements", {}),
                         client_id=request_data["client_id"],
                         require_onion_circuit=request_data.get("require_onion_circuit", True),
@@ -740,9 +743,11 @@ class FogCoordinator:
                 if self.onion_coordinator:
                     success = await self.onion_coordinator.send_private_gossip(
                         recipient_id=request_data["recipient_id"],
-                        message=request_data["message"].encode()
-                        if isinstance(request_data["message"], str)
-                        else request_data["message"],
+                        message=(
+                            request_data["message"].encode()
+                            if isinstance(request_data["message"], str)
+                            else request_data["message"]
+                        ),
                         privacy_level=PrivacyLevel[request_data.get("privacy_level", "PRIVATE")],
                     )
                     return {"success": success}

@@ -7,102 +7,115 @@ import pytest
 import torch
 
 # Import P2P components
-from infrastructure.p2p import P2PNetwork, NetworkConfig, PeerInfo as P2PPeerInfo, create_network
-from infrastructure.p2p.core.message_delivery import MessageDelivery, DeliveryStatus, MessagePriority
+from infrastructure.p2p import P2PNetwork, NetworkConfig, PeerInfo as P2PPeerInfo
 
 # Mock missing classes for test functionality
 try:
     from infrastructure.p2p.nodes.p2p_node import P2PNode
 except ImportError:
+
     class P2PNode:
         def __init__(self, node_id, port):
             self.node_id = node_id
             self.port = port
             self.known_addresses = []
             self.message_handlers = {}
-        
+
         def add_known_address(self, host, port):
             self.known_addresses.append((host, port))
-        
+
         def register_handler(self, message_type, handler):
             self.message_handlers[message_type] = handler
-        
+
         async def connect_to_peer(self, host, port):
             return False
-        
+
         async def send_message(self, peer_id, message_type, payload):
             return False
+
 
 try:
     from infrastructure.p2p.streaming.tensor_streaming import TensorStreaming
 except ImportError:
+
     class TensorStreaming:
         def __init__(self, node, config=None):
             self.node = node
-            self.config = config or type('StreamingConfig', (), {'chunk_size': 32*1024, 'compression': 'LZ4'})()
+            self.config = config or type("StreamingConfig", (), {"chunk_size": 32 * 1024, "compression": "LZ4"})()
             self.active_transfers = {}
             self.tensor_metadata = {}
-        
+
         async def send_tensor(self, tensor, name, receiver_id):
             return f"tensor_{name}_{receiver_id}"
-        
+
         async def _serialize_tensor(self, tensor, tensor_id, name, metadata):
             import struct
-            serialized_data = struct.pack('f' * tensor.numel(), *tensor.flatten().tolist())
-            metadata_obj = type('TensorMetadata', (), {
-                'name': name,
-                'shape': tensor.shape,
-                'dtype': str(tensor.dtype),
-                'device': str(tensor.device),
-                'is_torch': True
-            })()
+
+            serialized_data = struct.pack("f" * tensor.numel(), *tensor.flatten().tolist())
+            metadata_obj = type(
+                "TensorMetadata",
+                (),
+                {
+                    "name": name,
+                    "shape": tensor.shape,
+                    "dtype": str(tensor.dtype),
+                    "device": str(tensor.device),
+                    "is_torch": True,
+                },
+            )()
             return serialized_data, metadata_obj
-        
+
         async def _reconstruct_tensor(self, tensor_id):
             # Mock reconstruction
             return torch.randn(8, dtype=torch.float32)
-        
+
         async def _compress_tensor(self, data, compression_type):
-            return data[:len(data)//2]  # Mock compression
-        
+            return data[: len(data) // 2]  # Mock compression
+
         async def _decompress_tensor(self, data, compression_type):
             return data + data  # Mock decompression
-        
+
         def _split_into_chunks(self, data, tensor_id):
             chunk_size = self.config.chunk_size
             chunks = []
             for i in range(0, len(data), chunk_size):
-                chunk_data = data[i:i+chunk_size]
-                chunk = type('TensorChunk', (), {
-                    'chunk_index': i // chunk_size,
-                    'total_chunks': (len(data) + chunk_size - 1) // chunk_size,
-                    'data': chunk_data,
-                    'checksum': 'md5hash' * 4  # Mock MD5 hex string
-                })()
+                chunk_data = data[i : i + chunk_size]
+                chunk = type(
+                    "TensorChunk",
+                    (),
+                    {
+                        "chunk_index": i // chunk_size,
+                        "total_chunks": (len(data) + chunk_size - 1) // chunk_size,
+                        "data": chunk_data,
+                        "checksum": "md5hash" * 4,  # Mock MD5 hex string
+                    },
+                )()
                 chunks.append(chunk)
             return chunks
-        
+
         def get_streaming_stats(self):
             return {
-                'tensors_sent': 0,
-                'tensors_received': 0,
-                'bytes_sent': 0,
-                'bytes_received': 0,
-                'compression_ratio': 1.0,
-                'active_transfers': 0
+                "tensors_sent": 0,
+                "tensors_received": 0,
+                "bytes_sent": 0,
+                "bytes_received": 0,
+                "compression_ratio": 1.0,
+                "active_transfers": 0,
             }
-        
+
         async def _handle_tensor_chunk(self, message, peer):
             pass
+
 
 try:
     from infrastructure.p2p.config import StreamingConfig, CompressionType
 except ImportError:
+
     class CompressionType:
-        LZ4 = 'LZ4'
-    
+        LZ4 = "LZ4"
+
     class StreamingConfig:
-        def __init__(self, chunk_size=64*1024, compression=CompressionType.LZ4):
+        def __init__(self, chunk_size=64 * 1024, compression=CompressionType.LZ4):
             if chunk_size <= 0:
                 raise ValueError("chunk_size must be positive")
             self.chunk_size = chunk_size
@@ -149,7 +162,7 @@ class TestP2PNetwork:
             await network.initialize()
             # Test discovery start (may not find peers in test environment)
             await network.start_discovery()
-            
+
             # Check that discovery methods are available
             peers = await network.get_peers()
             assert isinstance(peers, list)
@@ -164,10 +177,7 @@ class TestP2PNetwork:
 
         # Test peer info creation
         peer_info = P2PPeerInfo(
-            peer_id="peer-1",
-            addresses=["127.0.0.1:8005"],
-            protocols=["libp2p"],
-            metadata={"test": "data"}
+            peer_id="peer-1", addresses=["127.0.0.1:8005"], protocols=["libp2p"], metadata={"test": "data"}
         )
 
         # Add peer manually
@@ -182,13 +192,9 @@ class TestP2PNetwork:
     async def test_network_statistics(self):
         """Test network statistics collection."""
         network = P2PNetwork(NetworkConfig(mode="direct"))
-        
+
         # Add some mock peers
-        network.peers["peer-1"] = P2PPeerInfo(
-            peer_id="peer-1",
-            addresses=["127.0.0.1:8001"],
-            protocols=["libp2p"]
-        )
+        network.peers["peer-1"] = P2PPeerInfo(peer_id="peer-1", addresses=["127.0.0.1:8001"], protocols=["libp2p"])
 
         peers = await network.get_peers()
         assert len(peers) == 1
@@ -199,13 +205,14 @@ class TestP2PNetwork:
 try:
     from infrastructure.p2p.mesh.device_mesh import DeviceMesh, MeshProtocol, ConnectionType
 except ImportError:
+
     class MeshProtocol:
-        OPTIMIZED_LINK_STATE = 'optimized_link_state'
-    
+        OPTIMIZED_LINK_STATE = "optimized_link_state"
+
     class ConnectionType:
-        TCP_IP = 'tcp_ip'
-        BLUETOOTH = 'bluetooth'
-    
+        TCP_IP = "tcp_ip"
+        BLUETOOTH = "bluetooth"
+
     class DeviceMesh:
         def __init__(self, node, protocol=MeshProtocol.OPTIMIZED_LINK_STATE):
             self.node = node
@@ -213,32 +220,32 @@ except ImportError:
             self.max_hops = 5
             self.routing_table = {}
             self.message_store = {}
-            self.device_capabilities = type('DeviceCapabilities', (), {
-                'device_type': 'desktop',
-                'os_type': 'windows',
-                'cpu_cores': 4,
-                'available_memory': 8192
-            })()
-        
+            self.device_capabilities = type(
+                "DeviceCapabilities",
+                (),
+                {"device_type": "desktop", "os_type": "windows", "cpu_cores": 4, "available_memory": 8192},
+            )()
+
         def add_mesh_peer(self, peer_id, connection_type):
             self.routing_table[peer_id] = connection_type
-        
+
         def _update_routing_table(self):
             pass
-        
+
         def _store_message_for_later(self, peer_id, message_data):
             if peer_id not in self.message_store:
                 self.message_store[peer_id] = []
             self.message_store[peer_id].append(message_data)
-        
+
         def get_mesh_status(self):
             return {
-                'protocol': self.protocol,
-                'device_capabilities': self.device_capabilities.__dict__,
-                'network_topology': 'mesh',
-                'routing_table_size': len(self.routing_table),
-                'connection_types': list(self.routing_table.values())
+                "protocol": self.protocol,
+                "device_capabilities": self.device_capabilities.__dict__,
+                "network_topology": "mesh",
+                "routing_table_size": len(self.routing_table),
+                "connection_types": list(self.routing_table.values()),
             }
+
 
 class TestDeviceMesh:
     """Test device mesh networking."""
@@ -433,17 +440,18 @@ class TestTensorStreaming:
 
     def test_transfer_progress_tracking(self):
         """Test transfer progress tracking."""
+
         # Create TransferProgress mock
         class TransferProgress:
             def __init__(self, tensor_id, total_chunks, received_chunks):
                 self.tensor_id = tensor_id
                 self.total_chunks = total_chunks
                 self.received_chunks = received_chunks
-            
+
             @property
             def progress_percent(self):
                 return (self.received_chunks / self.total_chunks) * 100.0
-            
+
             @property
             def is_complete(self):
                 return self.received_chunks >= self.total_chunks
@@ -480,17 +488,24 @@ class TestTensorStreaming:
 try:
     from infrastructure.p2p.protocol import P2PCommunicationProtocol, P2PCapabilities
 except ImportError:
+
     class P2PCapabilities:
-        def __init__(self, supports_mesh_routing=False, supports_tensor_streaming=False, 
-                     supports_distributed_inference=False, max_concurrent_connections=10,
-                     preferred_protocols=None, device_resources=None):
+        def __init__(
+            self,
+            supports_mesh_routing=False,
+            supports_tensor_streaming=False,
+            supports_distributed_inference=False,
+            max_concurrent_connections=10,
+            preferred_protocols=None,
+            device_resources=None,
+        ):
             self.supports_mesh_routing = supports_mesh_routing
             self.supports_tensor_streaming = supports_tensor_streaming
             self.supports_distributed_inference = supports_distributed_inference
             self.max_concurrent_connections = max_concurrent_connections
-            self.preferred_protocols = preferred_protocols or ['tcp']
+            self.preferred_protocols = preferred_protocols or ["tcp"]
             self.device_resources = device_resources or {}
-    
+
     class P2PCommunicationProtocol:
         def __init__(self, node_id, port, capabilities=None):
             self.p2p_node = P2PNode(node_id, port)
@@ -499,49 +514,48 @@ except ImportError:
             self.local_agents = set()
             self.distributed_agents = {}
             self.message_routing_cache = {}
-        
+
         def register_local_agent(self, agent_id):
             self.local_agents.add(agent_id)
-        
+
         def register_distributed_agent(self, agent_id, peer_id):
             self.distributed_agents[agent_id] = peer_id
             self.message_routing_cache[agent_id] = peer_id
-        
+
         def get_p2p_status(self):
             return {
-                'node_id': self.p2p_node.node_id,
-                'local_agents': list(self.local_agents),
-                'distributed_agents': self.distributed_agents,
-                'capabilities': self.capabilities.__dict__,
-                'statistics': {}
+                "node_id": self.p2p_node.node_id,
+                "local_agents": list(self.local_agents),
+                "distributed_agents": self.distributed_agents,
+                "capabilities": self.capabilities.__dict__,
+                "statistics": {},
             }
-        
+
         def get_performance_metrics(self):
             return {
-                'node_metrics': {
-                    'node_id': self.p2p_node.node_id,
-                    'status': 'active',
-                    'connected_peers': 0
-                },
-                'mesh_metrics': {},
-                'streaming_metrics': {},
-                'routing_efficiency': 0.95
+                "node_metrics": {"node_id": self.p2p_node.node_id, "status": "active", "connected_peers": 0},
+                "mesh_metrics": {},
+                "streaming_metrics": {},
+                "routing_efficiency": 0.95,
             }
-        
+
         async def send_message(self, message):
             # Mock message sending
             pass
+
 
 # Mock P2PMessage class
 try:
     from infrastructure.p2p.message import P2PMessage
 except ImportError:
+
     class P2PMessage:
         def __init__(self, message_type, sender_id, receiver_id, payload):
             self.message_type = message_type
             self.sender_id = sender_id
             self.receiver_id = receiver_id
             self.payload = payload
+
 
 class TestP2PCommunicationProtocol:
     """Test P2P communication protocol integration."""
@@ -671,13 +685,14 @@ class TestIntegration:
         try:
             from src.communications.message import Message, MessageType, Priority
         except ImportError:
+
             class MessageType:
-                QUERY = 'query'
-                DATA = 'data'
-            
+                QUERY = "query"
+                DATA = "data"
+
             class Priority:
-                HIGH = 'high'
-            
+                HIGH = "high"
+
             class Message:
                 def __init__(self, type, sender, receiver, content, priority):
                     self.type = type

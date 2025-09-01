@@ -12,7 +12,6 @@ import logging
 import os
 from pathlib import Path
 import ssl
-from typing import Any
 
 from aiohttp import web, web_request
 from aiohttp.web_middlewares import middleware
@@ -34,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 class RefactoredSecureAPIServer:
     """Refactored secure API server using modular authentication.
-    
+
     This version replaces the God class with a clean architecture using
     the extracted authentication module. The original 890+ line class
     is now broken into focused, testable modules following SOLID principles.
@@ -46,7 +45,7 @@ class RefactoredSecureAPIServer:
         digital_twin_port: int = 8080,
         evolution_metrics_port: int = 8081,
         rag_pipeline_port: int = 8082,
-        auth_config: dict = None
+        auth_config: dict = None,
     ):
         """Initialize refactored secure API server."""
         self.host = host
@@ -82,10 +81,7 @@ class RefactoredSecureAPIServer:
         logger.info("Initializing refactored security components...")
 
         # Initialize the authentication module with dependencies
-        await self.auth_container.initialize(
-            rbac_system=self.rbac_system,
-            encryption_service=self.encryption
-        )
+        await self.auth_container.initialize(rbac_system=self.rbac_system, encryption_service=self.encryption)
 
         logger.info("Refactored security components initialized")
 
@@ -141,7 +137,7 @@ class RefactoredSecureAPIServer:
         """Enhanced security headers and monitoring."""
         # Security monitoring
         client_ip = request.remote
-        user_agent = request.headers.get("User-Agent", "unknown")
+        request.headers.get("User-Agent", "unknown")
 
         # Log security events
         logger.info(f"Request from {client_ip}: {request.method} {request.path}")
@@ -203,8 +199,7 @@ class RefactoredSecureAPIServer:
 
         # Extract device information
         device_info = DeviceInfo(
-            user_agent=request.headers.get("User-Agent", "unknown"),
-            ip_address=request.remote or "unknown"
+            user_agent=request.headers.get("User-Agent", "unknown"), ip_address=request.remote or "unknown"
         )
         request["device_info"] = device_info
 
@@ -236,10 +231,10 @@ class RefactoredSecureAPIServer:
             # Use the authentication service from our auth module
             auth_service = self.auth_container.get_auth_service()
             validation_result = await auth_service.validate_token(token)
-            
+
             if not validation_result.valid:
                 return web.json_response({"error": validation_result.error_message}, status=401)
-            
+
             request["user"] = validation_result.payload
             return await handler(request)
 
@@ -250,6 +245,7 @@ class RefactoredSecureAPIServer:
     def _check_rate_limit(self, key: str, max_requests: int, window_seconds: int) -> bool:
         """Check rate limiting for a key."""
         import time
+
         now = time.time()
 
         if key not in self.rate_limits:
@@ -528,22 +524,12 @@ if __name__ == "__main__":
         # Set environment variables
         os.environ["API_SECRET_KEY"] = secrets.token_urlsafe(32)
         os.environ["TLS_ENABLED"] = "false"  # Set to 'true' for production
-        
+
         # Configuration for auth module
         auth_config = {
-            "session": {
-                "redis_url": "redis://localhost:6379/0",
-                "session_ttl_hours": 24,
-                "max_sessions_per_user": 10
-            },
-            "authentication": {
-                "token_expiry_hours": 24,
-                "refresh_expiry_days": 30
-            },
-            "mfa": {
-                "totp_window": 1,
-                "backup_code_length": 8
-            }
+            "session": {"redis_url": "redis://localhost:6379/0", "session_ttl_hours": 24, "max_sessions_per_user": 10},
+            "authentication": {"token_expiry_hours": 24, "refresh_expiry_days": 30},
+            "mfa": {"totp_window": 1, "backup_code_length": 8},
         }
 
         server = RefactoredSecureAPIServer(auth_config=auth_config)

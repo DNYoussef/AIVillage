@@ -21,14 +21,14 @@ from infrastructure.shared.security.multi_tenant_system import MultiTenantSystem
 async def test_secure_database():
     """Test SecureDatabaseManager SQL injection prevention."""
     print("Testing SecureDatabaseManager...")
-    
+
     # Create temporary database
     fd, db_path = tempfile.mkstemp(suffix=".db")
     os.close(fd)
-    
+
     try:
         db = SecureDatabaseManager(db_path)
-        
+
         # Test 1: Store legitimate data
         print("  1. Testing legitimate operations...")
         hash1 = await db.store_memory("Test content", ["test"], 0.5)
@@ -43,7 +43,7 @@ async def test_secure_database():
             "' OR '1'='1",
             "' UNION SELECT * FROM sqlite_master --",
         ]
-        
+
         for query in injection_queries:
             results = await db.search_memories(query)
             assert isinstance(results, list), f"Search failed for: {query}"
@@ -53,7 +53,7 @@ async def test_secure_database():
         print("  3. Testing database integrity...")
         stats = await db.get_database_stats()
         assert stats["memory_count"] >= 1, "Database corruption detected"
-        
+
         # Verify original data is still there
         memory_check = await db.retrieve_memory(hash1)
         assert memory_check is not None, "Original data was corrupted"
@@ -63,16 +63,16 @@ async def test_secure_database():
         # Test 4: Knowledge graph injection
         print("  4. Testing knowledge graph injection...")
         await db.store_knowledge_triple("Python", "is_a", "language")
-        
+
         malicious_subjects = [
             "'; DROP TABLE knowledge_graph; --",
             "Python' OR '1'='1",
         ]
-        
+
         for subject in malicious_subjects:
             results = await db.query_knowledge_graph(subject=subject)
             assert isinstance(results, list), f"Knowledge graph query failed for: {subject}"
-        
+
         # Verify legitimate data still exists
         results = await db.query_knowledge_graph(subject="Python")
         assert len(results) >= 1, "Knowledge graph data was corrupted"
@@ -80,7 +80,7 @@ async def test_secure_database():
 
         db.close()
         print("  SUCCESS: SecureDatabaseManager is secure!")
-        
+
     finally:
         try:
             os.unlink(db_path)
@@ -91,14 +91,14 @@ async def test_secure_database():
 def test_multi_tenant_system():
     """Test MultiTenantSystem SQL injection prevention."""
     print("Testing MultiTenantSystem...")
-    
+
     # Create temporary database
     fd, db_path = tempfile.mkstemp(suffix=".db")
     os.close(fd)
-    
+
     try:
         system = MultiTenantSystem(db_path)
-        
+
         # Test 1: Create legitimate organization
         print("  1. Testing legitimate organization creation...")
         org_id = system.create_organization(
@@ -125,7 +125,7 @@ def test_multi_tenant_system():
             "'; DROP TABLE tenant_memberships; --",
             "user123' OR '1'='1",
         ]
-        
+
         for malicious_id in malicious_user_ids:
             has_access = system.check_tenant_access(
                 user_id=malicious_id,
@@ -149,7 +149,7 @@ def test_multi_tenant_system():
             "org'; DROP TABLE organizations; --",
             "test' OR '1'='1",
         ]
-        
+
         for malicious_name in malicious_names:
             try:
                 system.create_organization(
@@ -164,7 +164,7 @@ def test_multi_tenant_system():
         print("     PASS: Organization name injection handled safely")
 
         print("  SUCCESS: MultiTenantSystem is secure!")
-        
+
     finally:
         try:
             os.unlink(db_path)
@@ -177,24 +177,25 @@ async def main():
     print("SQL INJECTION SECURITY TEST")
     print("=" * 40)
     print()
-    
+
     try:
         # Test SecureDatabaseManager
         await test_secure_database()
         print()
-        
+
         # Test MultiTenantSystem
         test_multi_tenant_system()
         print()
-        
+
         print("=" * 40)
         print("ALL TESTS PASSED - SQL INJECTION PREVENTION IS WORKING!")
         print("=" * 40)
         return True
-        
+
     except Exception as e:
         print(f"TEST FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

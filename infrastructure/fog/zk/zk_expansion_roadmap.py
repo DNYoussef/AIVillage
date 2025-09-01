@@ -123,9 +123,11 @@ class ZKPredicateExpansionRoadmap:
                         dependencies=spec_data.get("dependencies", []),
                         security_assumptions=spec_data.get("security_assumptions", []),
                         current_phase=ExpansionPhase(spec_data.get("current_phase", "research")),
-                        estimated_completion_date=datetime.fromisoformat(spec_data["estimated_completion_date"])
-                        if spec_data.get("estimated_completion_date")
-                        else None,
+                        estimated_completion_date=(
+                            datetime.fromisoformat(spec_data["estimated_completion_date"])
+                            if spec_data.get("estimated_completion_date")
+                            else None
+                        ),
                         implementation_notes=spec_data.get("implementation_notes", ""),
                     )
                     self.predicate_specs[spec.predicate_name] = spec
@@ -142,9 +144,11 @@ class ZKPredicateExpansionRoadmap:
                         success_criteria=milestone_data.get("success_criteria", []),
                         assigned_to=milestone_data.get("assigned_to"),
                         status=milestone_data.get("status", "planned"),
-                        completion_date=datetime.fromisoformat(milestone_data["completion_date"])
-                        if milestone_data.get("completion_date")
-                        else None,
+                        completion_date=(
+                            datetime.fromisoformat(milestone_data["completion_date"])
+                            if milestone_data.get("completion_date")
+                            else None
+                        ),
                     )
                     self.milestones[milestone.milestone_id] = milestone
 
@@ -496,9 +500,9 @@ class ZKPredicateExpansionRoadmap:
                         "dependencies": spec.dependencies,
                         "security_assumptions": spec.security_assumptions,
                         "current_phase": spec.current_phase.value,
-                        "estimated_completion_date": spec.estimated_completion_date.isoformat()
-                        if spec.estimated_completion_date
-                        else None,
+                        "estimated_completion_date": (
+                            spec.estimated_completion_date.isoformat() if spec.estimated_completion_date else None
+                        ),
                         "implementation_notes": spec.implementation_notes,
                     }
                     for spec in self.predicate_specs.values()

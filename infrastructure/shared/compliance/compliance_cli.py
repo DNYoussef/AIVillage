@@ -82,9 +82,11 @@ class ComplianceCLI:
                 for location in discoveries:
                     rows.append(
                         [
-                            location.location_id[:20] + "..."
-                            if len(location.location_id) > 20
-                            else location.location_id,
+                            (
+                                location.location_id[:20] + "..."
+                                if len(location.location_id) > 20
+                                else location.location_id
+                            ),
                             location.source_type,
                             (location.path[:30] + "...") if len(location.path) > 30 else location.path,
                             location.classification.value,
@@ -161,9 +163,11 @@ class ComplianceCLI:
                     compliance_status = "✓" if location.compliant else "✗"
                     rows.append(
                         [
-                            location.location_id[:15] + "..."
-                            if len(location.location_id) > 15
-                            else location.location_id,
+                            (
+                                location.location_id[:15] + "..."
+                                if len(location.location_id) > 15
+                                else location.location_id
+                            ),
                             location.source_type,
                             (location.path[:25] + "...") if len(location.path) > 25 else location.path,
                             location.classification.value,

@@ -27,24 +27,20 @@ from .negative import *
 
 __all__ = [
     # Unit tests
-    'test_vulnerability_reporting',
-    'test_security_templates',
-    'test_dependency_auditing',
-    'test_sbom_generation',
-    'test_admin_security',
-    'test_boundary_security',
-    'test_grokfast_security',
-    
+    "test_vulnerability_reporting",
+    "test_security_templates",
+    "test_dependency_auditing",
+    "test_sbom_generation",
+    "test_admin_security",
+    "test_boundary_security",
+    "test_grokfast_security",
     # Integration tests
-    'test_security_workflows',
-    'test_end_to_end_security',
-    
+    "test_security_workflows",
+    "test_end_to_end_security",
     # Performance tests
-    'test_security_overhead',
-    
+    "test_security_overhead",
     # Compliance tests
-    'test_governance_framework',
-    
+    "test_governance_framework",
     # Negative tests
-    'test_attack_prevention',
+    "test_attack_prevention",
 ]

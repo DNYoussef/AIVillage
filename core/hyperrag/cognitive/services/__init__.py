@@ -24,9 +24,9 @@ from .knowledge_validator_service import KnowledgeValidatorService
 
 __all__ = [
     "GapDetectionService",
-    "NodeProposalService", 
+    "NodeProposalService",
     "RelationshipAnalyzerService",
     "ConfidenceCalculatorService",
     "GraphAnalyticsService",
-    "KnowledgeValidatorService"
+    "KnowledgeValidatorService",
 ]

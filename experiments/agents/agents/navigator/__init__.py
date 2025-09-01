@@ -28,7 +28,7 @@ from .path_policy import (
     PeerInfo,
     Receipt,
     # Utility classes
-    LinkChangeDetector
+    LinkChangeDetector,
 )
 
 # Service interfaces (for advanced usage)
@@ -40,7 +40,7 @@ from .interfaces.routing_interfaces import (
     IDTNHandlerService,
     IEnergyOptimizationService,
     ISecurityMixnodeService,
-    INavigatorFacadeService
+    INavigatorFacadeService,
 )
 
 # Event system
@@ -53,44 +53,41 @@ __author__ = "AI Village Navigation Team"
 __all__ = [
     # Primary interface (backward compatible)
     "NavigatorAgent",
-    "NavigatorFacade", 
+    "NavigatorFacade",
     "create_navigator_facade",
-    
     # Core types and enums
     "PathProtocol",
-    "EnergyMode", 
+    "EnergyMode",
     "RoutingPriority",
     "NetworkConditions",
     "MessageContext",
     "PeerInfo",
     "Receipt",
     "LinkChangeDetector",
-    
     # Service interfaces (advanced usage)
     "IRouteSelectionService",
-    "IProtocolManagerService", 
+    "IProtocolManagerService",
     "INetworkMonitoringService",
     "IQoSManagerService",
     "IDTNHandlerService",
     "IEnergyOptimizationService",
     "ISecurityMixnodeService",
     "INavigatorFacadeService",
-    
     # Event system
     "EventBusService",
     "get_event_bus",
-    "initialize_event_bus"
+    "initialize_event_bus",
 ]
 
 # Service registry for dynamic access
 AVAILABLE_SERVICES = [
     "RouteSelectionService",
-    "ProtocolManagerService", 
+    "ProtocolManagerService",
     "NetworkMonitoringService",
     "QoSManagerService",
     "DTNHandlerService",
     "EnergyOptimizationService",
-    "SecurityMixnodeService"
+    "SecurityMixnodeService",
 ]
 
 # Architecture metrics
@@ -100,7 +97,7 @@ ARCHITECTURE_METRICS = {
     "max_service_size_lines": 250,
     "coupling_reduction_target": "<20.0",
     "performance_target_maintained": True,
-    "backward_compatibility": True
+    "backward_compatibility": True,
 }
 
 
@@ -113,7 +110,7 @@ def get_architecture_info() -> dict:
         "metrics": ARCHITECTURE_METRICS,
         "primary_interface": "NavigatorFacade (NavigatorAgent alias)",
         "event_system": "EventBusService with publish/subscribe model",
-        "backward_compatibility": "Full compatibility with original PathPolicy interface"
+        "backward_compatibility": "Full compatibility with original PathPolicy interface",
     }
 
 
@@ -123,45 +120,45 @@ def get_service_overview() -> dict:
         "RouteSelectionService": {
             "purpose": "Core routing algorithms",
             "algorithms": ["Dijkstra", "A*", "Mesh routing", "Multi-hop optimization"],
-            "size_target": "200-250 lines"
+            "size_target": "200-250 lines",
         },
         "ProtocolManagerService": {
-            "purpose": "Protocol switching and connection management", 
+            "purpose": "Protocol switching and connection management",
             "protocols": ["BitChat", "Betanet", "SCION"],
-            "size_target": "180-220 lines"
+            "size_target": "180-220 lines",
         },
         "NetworkMonitoringService": {
             "purpose": "Network condition monitoring and link detection",
             "features": ["Link quality assessment", "Change detection", "Performance tracking"],
-            "size_target": "150-180 lines"
+            "size_target": "150-180 lines",
         },
         "QoSManagerService": {
             "purpose": "Quality of service management",
             "features": ["Traffic prioritization", "Bandwidth management", "SLA enforcement"],
-            "size_target": "120-150 lines"
+            "size_target": "120-150 lines",
         },
         "DTNHandlerService": {
             "purpose": "Delay-tolerant networking",
             "features": ["Message storage", "Opportunistic forwarding", "Buffer management"],
-            "size_target": "100-130 lines"
+            "size_target": "100-130 lines",
         },
         "EnergyOptimizationService": {
             "purpose": "Battery-aware routing",
             "features": ["Power management", "Energy-efficient paths", "Thermal management"],
-            "size_target": "100-120 lines"
+            "size_target": "100-120 lines",
         },
         "SecurityMixnodeService": {
             "purpose": "Privacy-aware routing",
             "features": ["Mixnode selection", "Anonymity circuits", "Privacy enforcement"],
-            "size_target": "80-100 lines"
-        }
+            "size_target": "80-100 lines",
+        },
     }
 
 
 # Quick start example
 def quick_start_example():
     """Example of how to use the new Navigator architecture"""
-    example_code = '''
+    example_code = """
     # Simple usage (backward compatible)
     from navigator import NavigatorAgent, MessageContext
     
@@ -191,23 +188,23 @@ def quick_start_example():
         blocked_countries={"XX"}, 
         min_bandwidth_mbps=2.0
     )
-    '''
-    
+    """
+
     return example_code
 
 
 if __name__ == "__main__":
     # Print architecture overview when module is run directly
     import json
-    
+
     print("Navigator Package Architecture Overview")
     print("=" * 50)
     print(json.dumps(get_architecture_info(), indent=2))
-    
+
     print("\nService Overview")
     print("=" * 50)
     print(json.dumps(get_service_overview(), indent=2))
-    
+
     print("\nQuick Start Example")
     print("=" * 50)
     print(quick_start_example())

@@ -14,11 +14,11 @@ from .test_boundary_security import *
 from .test_grokfast_security import *
 
 __all__ = [
-    'VulnerabilityReportingSecurityTest',
-    'SecurityTemplateValidationTest',
-    'DependencyAuditingSecurityTest',
-    'SBOMGenerationSecurityTest',
-    'AdminInterfaceSecurityTest',
-    'SecurityBoundaryTest',
-    'GrokFastSecurityTest',
+    "VulnerabilityReportingSecurityTest",
+    "SecurityTemplateValidationTest",
+    "DependencyAuditingSecurityTest",
+    "SBOMGenerationSecurityTest",
+    "AdminInterfaceSecurityTest",
+    "SecurityBoundaryTest",
+    "GrokFastSecurityTest",
 ]

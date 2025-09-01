@@ -10,8 +10,14 @@ import torch
 
 # Import constants for magic literal elimination
 from infrastructure.constants import (
-    PerformanceConstants, IncentiveDefaults, RewardConstants, TaskDifficultyConstants,
-    PerformanceFieldNames, TaskConstants, TaskActionMapping, MessageConstants, get_config_manager
+    PerformanceConstants,
+    RewardConstants,
+    TaskDifficultyConstants,
+    PerformanceFieldNames,
+    TaskConstants,
+    TaskActionMapping,
+    MessageConstants,
+    get_config_manager,
 )
 from infrastructure.constants.task_constants import TaskType
 
@@ -47,7 +53,9 @@ class IncentiveModel:
         base_incentive = self.incentive_matrix[agent_id, action_id]
 
         # Adjust incentive based on agent's past performance
-        performance_factor = agent_performance.get(task[PerformanceFieldNames.ASSIGNED_AGENT_FIELD], PerformanceConstants.NEUTRAL_TREND)
+        performance_factor = agent_performance.get(
+            task[PerformanceFieldNames.ASSIGNED_AGENT_FIELD], PerformanceConstants.NEUTRAL_TREND
+        )
 
         # Adjust incentive based on task difficulty
         task_difficulty = self._calculate_task_difficulty(task)
@@ -123,11 +131,15 @@ class IncentiveModel:
         success = result.get(PerformanceFieldNames.SUCCESS_FIELD, False)
         current = agent_performance.get(agent, PerformanceConstants.NEUTRAL_TREND)
         if success:
-            agent_performance[agent] = min(current * PerformanceConstants.PERFORMANCE_BOOST_FACTOR, 
-                                         self._config_manager.get_max_performance_multiplier())
+            agent_performance[agent] = min(
+                current * PerformanceConstants.PERFORMANCE_BOOST_FACTOR,
+                self._config_manager.get_max_performance_multiplier(),
+            )
         else:
-            agent_performance[agent] = max(current * PerformanceConstants.PERFORMANCE_PENALTY_FACTOR, 
-                                         self._config_manager.get_min_performance_multiplier())
+            agent_performance[agent] = max(
+                current * PerformanceConstants.PERFORMANCE_PENALTY_FACTOR,
+                self._config_manager.get_min_performance_multiplier(),
+            )
         if analytics is not None:
             try:
                 analytics.update_performance_history(agent_performance[agent])
@@ -162,31 +174,52 @@ class IncentiveModel:
     def _calculate_reward(self, result: dict[str, Any]) -> float:
         # Enhanced reward calculation
         base_reward = result.get(PerformanceFieldNames.SUCCESS_FIELD, 0) * RewardConstants.BASE_SUCCESS_REWARD
-        time_factor = max(0, RewardConstants.TIME_WEIGHT - 
-                         result.get(PerformanceFieldNames.TIME_TAKEN_FIELD, RewardConstants.DEFAULT_TIME_TAKEN) / 
-                         result.get(PerformanceFieldNames.EXPECTED_TIME_FIELD, RewardConstants.DEFAULT_EXPECTED_TIME))
+        time_factor = max(
+            0,
+            RewardConstants.TIME_WEIGHT
+            - result.get(PerformanceFieldNames.TIME_TAKEN_FIELD, RewardConstants.DEFAULT_TIME_TAKEN)
+            / result.get(PerformanceFieldNames.EXPECTED_TIME_FIELD, RewardConstants.DEFAULT_EXPECTED_TIME),
+        )
         quality_factor = result.get(PerformanceFieldNames.QUALITY_FIELD, RewardConstants.DEFAULT_QUALITY_SCORE)
-        cost_factor = max(0, RewardConstants.COST_WEIGHT - 
-                         result.get(PerformanceFieldNames.COST_FIELD, RewardConstants.DEFAULT_COST) / 
-                         result.get(PerformanceFieldNames.BUDGET_FIELD, RewardConstants.DEFAULT_BUDGET))
-        innovation_factor = PerformanceConstants.NEUTRAL_TREND + (RewardConstants.INNOVATION_BONUS if 
-                           result.get(PerformanceFieldNames.INNOVATIVE_SOLUTION_FIELD, False) else 0)
-        collaboration_factor = PerformanceConstants.NEUTRAL_TREND + (RewardConstants.COLLABORATION_BONUS * 
-                              len(result.get(PerformanceFieldNames.COLLABORATORS_FIELD, [])))
+        cost_factor = max(
+            0,
+            RewardConstants.COST_WEIGHT
+            - result.get(PerformanceFieldNames.COST_FIELD, RewardConstants.DEFAULT_COST)
+            / result.get(PerformanceFieldNames.BUDGET_FIELD, RewardConstants.DEFAULT_BUDGET),
+        )
+        innovation_factor = PerformanceConstants.NEUTRAL_TREND + (
+            RewardConstants.INNOVATION_BONUS
+            if result.get(PerformanceFieldNames.INNOVATIVE_SOLUTION_FIELD, False)
+            else 0
+        )
+        collaboration_factor = PerformanceConstants.NEUTRAL_TREND + (
+            RewardConstants.COLLABORATION_BONUS * len(result.get(PerformanceFieldNames.COLLABORATORS_FIELD, []))
+        )
 
-        return base_reward * (time_factor + quality_factor + cost_factor) / RewardConstants.REWARD_NORMALIZATION_DIVISOR * innovation_factor * collaboration_factor
+        return (
+            base_reward
+            * (time_factor + quality_factor + cost_factor)
+            / RewardConstants.REWARD_NORMALIZATION_DIVISOR
+            * innovation_factor
+            * collaboration_factor
+        )
 
     def _calculate_task_difficulty(self, task: dict[str, Any]) -> float:
         # Implement logic to calculate task difficulty
         # This could be based on task complexity, estimated time, required skills, etc.
         complexity = task.get(PerformanceFieldNames.COMPLEXITY_FIELD, TaskDifficultyConstants.DEFAULT_COMPLEXITY)
-        estimated_time = task.get(PerformanceFieldNames.ESTIMATED_TIME_FIELD, TaskDifficultyConstants.DEFAULT_ESTIMATED_TIME)
+        estimated_time = task.get(
+            PerformanceFieldNames.ESTIMATED_TIME_FIELD, TaskDifficultyConstants.DEFAULT_ESTIMATED_TIME
+        )
         required_skills = len(task.get(PerformanceFieldNames.REQUIRED_SKILLS_FIELD, []))
         priority = task.get(PerformanceFieldNames.PRIORITY_FIELD, TaskDifficultyConstants.DEFAULT_PRIORITY)
 
-        difficulty = (complexity * estimated_time * 
-                     (PerformanceConstants.NEUTRAL_TREND + required_skills * TaskDifficultyConstants.SKILL_MULTIPLIER) * 
-                     priority) / TaskDifficultyConstants.DIFFICULTY_DIVISOR
+        difficulty = (
+            complexity
+            * estimated_time
+            * (PerformanceConstants.NEUTRAL_TREND + required_skills * TaskDifficultyConstants.SKILL_MULTIPLIER)
+            * priority
+        ) / TaskDifficultyConstants.DIFFICULTY_DIVISOR
         return min(max(difficulty, TaskDifficultyConstants.DIFFICULTY_MIN), TaskDifficultyConstants.DIFFICULTY_MAX)
 
     def _calculate_performance_trend(self, agent_id: int) -> float:

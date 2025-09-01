@@ -49,7 +49,7 @@ class TestPasswordManager:  # pragma: allowlist secret
     def test_password_hashing(self):  # pragma: allowlist secret
         """Test password hashing."""
         pm = PasswordManager()  # pragma: allowlist secret
-        password = "test_password_hash_123!"  # pragma: allowlist secret
+        password = "test_password_hash_123!"  # nosec B106 - test password # pragma: allowlist secret
 
         hash1 = pm.hash_password(password)  # pragma: allowlist secret
         hash2 = pm.hash_password(password)  # pragma: allowlist secret
@@ -310,7 +310,9 @@ class TestAuthenticationManager:
         """Test user creation with weak password."""
         with pytest.raises(ValueError, match="Password validation failed"):  # pragma: allowlist secret
             self.auth_manager.create_user(
-                username="weakpass", email="weak@example.com", password="weak"  # nosec B106 - test password for security testing
+                username="weakpass",
+                email="weak@example.com",
+                password="weak",  # nosec B106 - test password for security testing
             )
 
     def test_successful_authentication(self):

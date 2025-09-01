@@ -304,7 +304,7 @@ class UnifiedCacheManager:
 
         # Service-specific cache assignments
         self.service_cache_map = {
-            "agent-forge": self.redis,  # High-performance structured caching
+            "agent_forge": self.redis,  # High-performance structured caching
             "hyperrag": self.memcached,  # Fast query result caching
             "p2p-mesh": self.redis,  # Message routing and peer data
             "api-gateway": self.redis,  # API response caching
@@ -395,14 +395,14 @@ async def cache_agent_forge_result(
     """Cache Agent Forge pipeline phase result"""
     params_hash = CacheKey.hash_params(params)
     key = CacheKey.agent_forge_key(phase, model, params_hash)
-    return await cache_manager.set(key, result, ttl, "agent-forge")
+    return await cache_manager.set(key, result, ttl, "agent_forge")
 
 
 async def get_cached_agent_forge_result(phase: str, model: str, params: dict[str, Any]) -> Any | None:
     """Get cached Agent Forge pipeline result"""
     params_hash = CacheKey.hash_params(params)
     key = CacheKey.agent_forge_key(phase, model, params_hash)
-    return await cache_manager.get(key, "agent-forge")
+    return await cache_manager.get(key, "agent_forge")
 
 
 async def cache_hyperrag_query(query_type: str, query: str, collection: str, result: Any, ttl: int = 600) -> bool:

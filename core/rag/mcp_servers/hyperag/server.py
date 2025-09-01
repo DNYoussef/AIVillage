@@ -60,7 +60,7 @@ class HypeRAGMCPServer:
                 "Insecure default JWT secret detected. "
                 "Please set JWT_SECRET environment variable with a secure random value."
             )
-        
+
         self.permission_manager = PermissionManager(
             jwt_secret=jwt_secret,
             enable_audit=self.config.get("audit", {}).get("enabled", True),

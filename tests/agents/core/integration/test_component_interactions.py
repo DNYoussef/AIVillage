@@ -379,6 +379,7 @@ class TestComponentInteractions:
                 await integrated_agent.retrieve_similar_memories("test query")
             except Exception as e:
                 import logging
+
                 logging.exception("Memory component error during integration test: %s", str(e))
 
         # Then: Other components should remain functional

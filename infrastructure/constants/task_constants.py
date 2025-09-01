@@ -1,12 +1,13 @@
 """Task management constants and type-safe enums."""
 
 from dataclasses import dataclass
-from enum import Enum, auto
+from enum import Enum
 from typing import Final
 
 
 class TaskType(Enum):
     """Task type enumeration for action mapping."""
+
     CRITICAL = "critical"
     ROUTINE = "routine"
     ANALYSIS = "analysis"
@@ -15,6 +16,7 @@ class TaskType(Enum):
 
 class TaskComplexityLevel(Enum):
     """Task complexity levels."""
+
     SIMPLE = 1
     MODERATE = 3
     COMPLEX = 5
@@ -24,6 +26,7 @@ class TaskComplexityLevel(Enum):
 
 class TaskPriorityLevel(Enum):
     """Task priority levels."""
+
     LOWEST = 1
     LOW = 2
     NORMAL = 3
@@ -35,6 +38,7 @@ class TaskPriorityLevel(Enum):
 @dataclass(frozen=True)
 class TaskDefaults:
     """Default values for task creation and management."""
+
     PRIORITY: Final[int] = 1
     BATCH_SIZE: Final[int] = 5
     MAX_RETRIES: Final[int] = 3
@@ -47,6 +51,7 @@ class TaskDefaults:
 @dataclass(frozen=True)
 class TaskLimits:
     """Limits and validation constraints for tasks."""
+
     MAX_PRIORITY: Final[int] = 10
     MIN_PRIORITY: Final[int] = 1
     MAX_COMPLEXITY: Final[int] = 10
@@ -60,26 +65,26 @@ class TaskLimits:
 @dataclass(frozen=True)
 class TaskConstants:
     """Core task management constants."""
-    
+
     # Default values
     DEFAULT_PRIORITY: Final[int] = TaskDefaults.PRIORITY
     DEFAULT_BATCH_SIZE: Final[int] = TaskDefaults.BATCH_SIZE
     MAX_RETRIES: Final[int] = TaskDefaults.MAX_RETRIES
-    
+
     # Action mapping constants
     CRITICAL_ACTION_ID: Final[int] = 0
     ROUTINE_HIGH_PRIORITY_ACTION_ID: Final[int] = 1
     ANALYSIS_ACTION_ID: Final[int] = 2
     HIGH_COMPLEXITY_ACTION_ID: Final[int] = 3
     DEFAULT_ACTION_ID: Final[int] = 4
-    
+
     # Task type keywords
     ANALYSIS_KEYWORD: Final[str] = "analysis"
-    
+
     # Performance thresholds
     ROUTINE_PRIORITY_THRESHOLD: Final[int] = TaskDefaults.ROUTINE_PRIORITY_THRESHOLD
     HIGH_COMPLEXITY_THRESHOLD: Final[int] = TaskDefaults.HIGH_COMPLEXITY_THRESHOLD
-    
+
     # Validation limits
     MAX_PRIORITY: Final[int] = TaskLimits.MAX_PRIORITY
     MIN_PRIORITY: Final[int] = TaskLimits.MIN_PRIORITY
@@ -89,6 +94,7 @@ class TaskConstants:
 
 class TaskActionMapping(Enum):
     """Maps task characteristics to action IDs."""
+
     CRITICAL = 0
     ROUTINE_HIGH_PRIORITY = 1
     ANALYSIS = 2

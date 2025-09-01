@@ -7,6 +7,4 @@ to the decomposed GraphFixer services.
 
 from .graph_fixer_facade import GraphFixerFacade
 
-__all__ = [
-    "GraphFixerFacade"
-]
+__all__ = ["GraphFixerFacade"]

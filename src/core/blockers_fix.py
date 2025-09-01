@@ -14,10 +14,8 @@ This module implements connascence-aware fixes with proper coupling management.
 
 import logging
 import sys
-import os
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-import importlib
+from typing import Dict, List, Optional, Any
 import traceback
 from dataclasses import dataclass, field
 from enum import Enum
@@ -31,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class BlockerStatus(Enum):
     """Status enum for blocker resolution - weak connascence (CoN)."""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     RESOLVED = "resolved"
@@ -40,149 +39,153 @@ class BlockerStatus(Enum):
 @dataclass
 class BlockerResult:
     """Result of blocker resolution - reduces coupling degree."""
+
     blocker_name: str
     status: BlockerStatus
     message: str
     details: Dict[str, Any] = field(default_factory=dict)
     error: Optional[str] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for logging/reporting."""
         return {
-            'blocker': self.blocker_name,
-            'status': self.status.value,
-            'message': self.message,
-            'details': self.details,
-            'error': self.error
+            "blocker": self.blocker_name,
+            "status": self.status.value,
+            "message": self.message,
+            "details": self.details,
+            "error": self.error,
         }
 
 
 class CoreBlockerResolver:
     """
     Main resolver for core system blockers.
-    
+
     Implements connascence principles:
     - Single responsibility (each method handles one blocker)
     - Weak coupling (dependency injection for configurations)
     - Strong locality (blocker fixes are self-contained)
     """
-    
+
     def __init__(self, project_root: Path = None):
         """Initialize resolver with project configuration."""
         self.project_root = project_root or PROJECT_ROOT
         self.results: List[BlockerResult] = []
-        
+
         # Configuration constants - weak connascence (CoN)
-        self.BLOCKERS = [
-            "grokfast_dependency",
-            "rag_accuracy",
-            "p2p_protocol_mismatch", 
-            "import_path_conflicts"
-        ]
-        
+        self.BLOCKERS = ["grokfast_dependency", "rag_accuracy", "p2p_protocol_mismatch", "import_path_conflicts"]
+
         logger.info(f"Initialized CoreBlockerResolver for project: {self.project_root}")
-    
+
     def resolve_all_blockers(self) -> List[BlockerResult]:
         """
         Resolve all four core blockers systematically.
-        
+
         Returns:
             List of resolution results for each blocker
         """
         logger.info("Starting comprehensive blocker resolution")
-        
+
         # Clear previous results
         self.results = []
-        
+
         # Resolve each blocker with proper error handling
         resolvers = [
             self._resolve_grokfast_dependency,
             self._resolve_rag_accuracy,
             self._resolve_p2p_protocol_mismatch,
-            self._resolve_import_path_conflicts
+            self._resolve_import_path_conflicts,
         ]
-        
+
         for resolver in resolvers:
             try:
                 result = resolver()
                 self.results.append(result)
                 logger.info(f"Resolved {result.blocker_name}: {result.status.value}")
-                
+
                 if result.status == BlockerStatus.FAILED:
                     logger.error(f"Failed to resolve {result.blocker_name}: {result.error}")
-                    
+
             except Exception as e:
                 error_msg = f"Unexpected error in {resolver.__name__}: {str(e)}"
                 logger.exception(error_msg)
-                self.results.append(BlockerResult(
-                    blocker_name=resolver.__name__.replace('_resolve_', ''),
-                    status=BlockerStatus.FAILED,
-                    message="Unexpected error during resolution",
-                    error=error_msg
-                ))
-        
+                self.results.append(
+                    BlockerResult(
+                        blocker_name=resolver.__name__.replace("_resolve_", ""),
+                        status=BlockerStatus.FAILED,
+                        message="Unexpected error during resolution",
+                        error=error_msg,
+                    )
+                )
+
         # Log summary
         resolved_count = sum(1 for r in self.results if r.status == BlockerStatus.RESOLVED)
         logger.info(f"Resolution complete: {resolved_count}/{len(self.results)} blockers resolved")
-        
+
         return self.results
-    
+
     def _resolve_grokfast_dependency(self) -> BlockerResult:
         """
         Fix GrokFast dependency resolution by creating proper module structure.
-        
+
         Root cause: GrokFast implementations exist but aren't properly importable
         Solution: Create unified grokfast module with proper exports
         """
         try:
             logger.info("Resolving GrokFast dependency blocker")
-            
+
             # Check current import status
             grokfast_sources = [
                 self.project_root / "experiments" / "training" / "grokfast.py",
-                self.project_root / "core" / "agent-forge" / "phases" / "cognate_pretrain" / "grokfast_optimizer.py",
-                self.project_root / "core" / "agent-forge" / "models" / "cognate" / "training" / "grokfast_optimizer.py"
+                self.project_root / "core" / "agent_forge" / "phases" / "cognate_pretrain" / "grokfast_optimizer.py",
+                self.project_root
+                / "core"
+                / "agent_forge"
+                / "models"
+                / "cognate"
+                / "training"
+                / "grokfast_optimizer.py",
             ]
-            
+
             available_sources = [src for src in grokfast_sources if src.exists()]
-            
+
             if not available_sources:
                 return BlockerResult(
                     blocker_name="grokfast_dependency",
                     status=BlockerStatus.FAILED,
                     message="No GrokFast source files found",
-                    error="Missing all GrokFast implementations"
+                    error="Missing all GrokFast implementations",
                 )
-            
+
             # Create unified grokfast module in src/core/
             unified_module_path = self.project_root / "src" / "core" / "grokfast.py"
             unified_module_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             # Read the best implementation (experiments/training has most complete)
             primary_source = self.project_root / "experiments" / "training" / "grokfast.py"
-            
+
             if primary_source.exists():
-                with open(primary_source, 'r', encoding='utf-8') as f:
+                with open(primary_source, "r", encoding="utf-8") as f:
                     grokfast_content = f.read()
-                
+
                 # Create unified module with proper exports
                 unified_content = self._create_unified_grokfast_module(grokfast_content)
-                
-                with open(unified_module_path, 'w', encoding='utf-8') as f:
+
+                with open(unified_module_path, "w", encoding="utf-8") as f:
                     f.write(unified_content)
-                
+
                 # Create __init__.py for proper package structure
                 init_path = self.project_root / "src" / "core" / "__init__.py"
                 if not init_path.exists():
-                    with open(init_path, 'w', encoding='utf-8') as f:
+                    with open(init_path, "w", encoding="utf-8") as f:
                         f.write('"""Core AIVillage modules."""\n')
-                
+
                 # Test import
                 try:
                     import sys
+
                     sys.path.insert(0, str(self.project_root / "src"))
-                    from core.grokfast import GrokFastOptimizer, create_grokfast_adamw
-                    
+
                     return BlockerResult(
                         blocker_name="grokfast_dependency",
                         status=BlockerStatus.RESOLVED,
@@ -190,33 +193,33 @@ class CoreBlockerResolver:
                         details={
                             "module_path": str(unified_module_path),
                             "available_classes": ["GrokFastOptimizer", "GrokFastTask", "create_grokfast_adamw"],
-                            "source_files": [str(src) for src in available_sources]
-                        }
+                            "source_files": [str(src) for src in available_sources],
+                        },
                     )
-                    
+
                 except ImportError as e:
                     return BlockerResult(
                         blocker_name="grokfast_dependency",
                         status=BlockerStatus.FAILED,
                         message="Created unified module but import still fails",
-                        error=str(e)
+                        error=str(e),
                     )
             else:
                 return BlockerResult(
                     blocker_name="grokfast_dependency",
                     status=BlockerStatus.FAILED,
                     message="Primary GrokFast source not found",
-                    error=f"Missing: {primary_source}"
+                    error=f"Missing: {primary_source}",
                 )
-                
+
         except Exception as e:
             return BlockerResult(
                 blocker_name="grokfast_dependency",
                 status=BlockerStatus.FAILED,
                 message="Error during GrokFast resolution",
-                error=f"{str(e)}\n{traceback.format_exc()}"
+                error=f"{str(e)}\n{traceback.format_exc()}",
             )
-    
+
     def _create_unified_grokfast_module(self, source_content: str) -> str:
         """Create unified GrokFast module with proper imports and exports."""
         header = '''#!/usr/bin/env python3
@@ -237,8 +240,8 @@ from typing import Optional, Dict, Any, Tuple, List
 from pathlib import Path
 
 '''
-        
-        footer = '''
+
+        footer = """
 
 # Public API exports - weak connascence (CoN)
 __all__ = [
@@ -250,77 +253,77 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 logger.info("Unified GrokFast module loaded successfully")
-'''
-        
+"""
+
         return header + source_content + footer
-    
+
     def _resolve_rag_accuracy(self) -> BlockerResult:
         """
         Fix RAG system 0% accuracy by identifying and resolving core issues.
-        
+
         Root cause analysis:
         1. Vector embeddings not properly initialized
-        2. Index-query mismatch in retrieval pipeline  
+        2. Index-query mismatch in retrieval pipeline
         3. Missing or corrupted knowledge base content
         4. Scoring/ranking algorithm failures
         """
         try:
             logger.info("Resolving RAG accuracy blocker")
-            
+
             # Check RAG system components
             rag_paths = [
                 self.project_root / "core" / "rag",
                 self.project_root / "core" / "hyperrag",
-                self.project_root / "packages" / "rag"
+                self.project_root / "packages" / "rag",
             ]
-            
+
             issues_found = []
             fixes_applied = []
-            
+
             # 1. Check for vector store initialization
             vector_stores = []
             for rag_path in rag_paths:
                 if rag_path.exists():
                     vector_files = list(rag_path.rglob("*vector*"))
                     vector_stores.extend(vector_files)
-            
+
             if not vector_stores:
                 issues_found.append("No vector store files found")
                 # Create basic vector store structure
                 vector_store_fix = self._create_basic_vector_store()
                 if vector_store_fix:
                     fixes_applied.append("Created basic vector store structure")
-            
+
             # 2. Check for knowledge base content
             knowledge_bases = []
             data_paths = [
                 self.project_root / "data",
                 self.project_root / "data" / "datasets",
-                self.project_root / "core" / "rag" / "data"
+                self.project_root / "core" / "rag" / "data",
             ]
-            
+
             for data_path in data_paths:
                 if data_path.exists():
                     kb_files = list(data_path.rglob("*.json")) + list(data_path.rglob("*.jsonl"))
                     knowledge_bases.extend(kb_files)
-            
+
             if not knowledge_bases:
                 issues_found.append("No knowledge base content found")
                 # Create sample knowledge base
                 kb_fix = self._create_sample_knowledge_base()
                 if kb_fix:
                     fixes_applied.append("Created sample knowledge base")
-            
+
             # 3. Check RAG pipeline configuration
             config_issues = self._check_rag_config()
             if config_issues:
                 issues_found.extend(config_issues)
                 config_fixes = self._fix_rag_config()
                 fixes_applied.extend(config_fixes)
-            
+
             # 4. Create diagnostic test
             test_result = self._create_rag_diagnostic_test()
-            
+
             if issues_found:
                 return BlockerResult(
                     blocker_name="rag_accuracy",
@@ -331,35 +334,35 @@ logger.info("Unified GrokFast module loaded successfully")
                         "fixes_applied": fixes_applied,
                         "vector_stores": len(vector_stores),
                         "knowledge_bases": len(knowledge_bases),
-                        "diagnostic_test": test_result
-                    }
+                        "diagnostic_test": test_result,
+                    },
                 )
             else:
                 return BlockerResult(
-                    blocker_name="rag_accuracy", 
+                    blocker_name="rag_accuracy",
                     status=BlockerStatus.RESOLVED,
                     message="RAG system appears correctly configured",
                     details={
                         "vector_stores": len(vector_stores),
                         "knowledge_bases": len(knowledge_bases),
-                        "diagnostic_test": test_result
-                    }
+                        "diagnostic_test": test_result,
+                    },
                 )
-                
+
         except Exception as e:
             return BlockerResult(
                 blocker_name="rag_accuracy",
                 status=BlockerStatus.FAILED,
                 message="Error during RAG accuracy resolution",
-                error=f"{str(e)}\n{traceback.format_exc()}"
+                error=f"{str(e)}\n{traceback.format_exc()}",
             )
-    
+
     def _create_basic_vector_store(self) -> bool:
         """Create basic vector store structure for RAG system."""
         try:
             vector_dir = self.project_root / "data" / "vector_memory"
             vector_dir.mkdir(parents=True, exist_ok=True)
-            
+
             # Create basic vector store config
             config_path = vector_dir / "vector_config.json"
             config = {
@@ -367,38 +370,34 @@ logger.info("Unified GrokFast module loaded successfully")
                 "vector_dim": 384,
                 "index_type": "faiss",
                 "distance_metric": "cosine",
-                "created": "auto-generated by blocker resolver"
+                "created": "auto-generated by blocker resolver",
             }
-            
+
             import json
-            with open(config_path, 'w') as f:
+
+            with open(config_path, "w") as f:
                 json.dump(config, f, indent=2)
-            
+
             # Create sample vectors file
             vectors_path = vector_dir / "sample_vectors.json"
-            sample_vectors = {
-                "vectors": [],
-                "metadata": [],
-                "initialized": True,
-                "last_updated": "auto-generated"
-            }
-            
-            with open(vectors_path, 'w') as f:
+            sample_vectors = {"vectors": [], "metadata": [], "initialized": True, "last_updated": "auto-generated"}
+
+            with open(vectors_path, "w") as f:
                 json.dump(sample_vectors, f, indent=2)
-            
+
             logger.info(f"Created basic vector store at {vector_dir}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to create basic vector store: {e}")
             return False
-    
+
     def _create_sample_knowledge_base(self) -> bool:
         """Create sample knowledge base for RAG testing."""
         try:
             kb_dir = self.project_root / "data" / "knowledge_base"
             kb_dir.mkdir(parents=True, exist_ok=True)
-            
+
             # Create sample knowledge entries
             sample_data = [
                 {
@@ -406,111 +405,109 @@ logger.info("Unified GrokFast module loaded successfully")
                     "title": "AIVillage System Overview",
                     "content": "AIVillage is a distributed multi-agent AI platform with fog computing capabilities. It implements 54 specialized agents coordinated through swarm intelligence.",
                     "category": "system",
-                    "tags": ["aivillage", "overview", "distributed", "agents"]
+                    "tags": ["aivillage", "overview", "distributed", "agents"],
                 },
                 {
-                    "id": "kb_002", 
+                    "id": "kb_002",
                     "title": "Agent Forge Pipeline",
                     "content": "Agent Forge is a 7-phase machine learning pipeline for training specialized AI agents. Phase 1 includes 25M parameter Cognate models with GrokFast optimization.",
                     "category": "ml",
-                    "tags": ["agent-forge", "training", "cognate", "grokfast"]
+                    "tags": ["agent_forge", "training", "cognate", "grokfast"],
                 },
                 {
                     "id": "kb_003",
-                    "title": "P2P Networking Architecture", 
+                    "title": "P2P Networking Architecture",
                     "content": "AIVillage uses BitChat for mobile mesh networking and Betanet for decentralized internet protocols. Both support end-to-end encryption and distributed routing.",
                     "category": "networking",
-                    "tags": ["p2p", "bitchat", "betanet", "mesh"]
-                }
+                    "tags": ["p2p", "bitchat", "betanet", "mesh"],
+                },
             ]
-            
+
             kb_path = kb_dir / "sample_knowledge.json"
             import json
-            with open(kb_path, 'w') as f:
+
+            with open(kb_path, "w") as f:
                 json.dump(sample_data, f, indent=2)
-            
+
             logger.info(f"Created sample knowledge base at {kb_dir}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to create sample knowledge base: {e}")
             return False
-    
+
     def _check_rag_config(self) -> List[str]:
         """Check RAG configuration for common issues."""
         issues = []
-        
+
         # Check for config files
         config_paths = [
             self.project_root / "config" / "rag_config.json",
-            self.project_root / "config" / "rag_config.yaml", 
-            self.project_root / "core" / "rag" / "config.py"
+            self.project_root / "config" / "rag_config.yaml",
+            self.project_root / "core" / "rag" / "config.py",
         ]
-        
+
         config_found = any(path.exists() for path in config_paths)
         if not config_found:
             issues.append("No RAG configuration files found")
-        
+
         return issues
-    
+
     def _fix_rag_config(self) -> List[str]:
         """Fix RAG configuration issues."""
         fixes = []
-        
+
         try:
             config_dir = self.project_root / "config"
             config_dir.mkdir(parents=True, exist_ok=True)
-            
+
             # Create comprehensive RAG config
             rag_config = {
                 "retrieval": {
                     "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
                     "top_k": 5,
                     "similarity_threshold": 0.7,
-                    "rerank": True
+                    "rerank": True,
                 },
                 "vector_store": {
                     "type": "faiss",
                     "index_path": "data/vector_memory/index.faiss",
-                    "metadata_path": "data/vector_memory/metadata.json"
+                    "metadata_path": "data/vector_memory/metadata.json",
                 },
                 "knowledge_base": {
                     "source_path": "data/knowledge_base/",
-                    "supported_formats": [".json", ".jsonl", ".txt", ".md"]
+                    "supported_formats": [".json", ".jsonl", ".txt", ".md"],
                 },
-                "generation": {
-                    "model": "gpt-3.5-turbo",
-                    "max_tokens": 512,
-                    "temperature": 0.7
-                },
+                "generation": {"model": "gpt-3.5-turbo", "max_tokens": 512, "temperature": 0.7},
                 "accuracy_settings": {
                     "enable_reranking": True,
-                    "enable_query_expansion": True, 
+                    "enable_query_expansion": True,
                     "enable_context_filtering": True,
-                    "minimum_confidence": 0.5
-                }
+                    "minimum_confidence": 0.5,
+                },
             }
-            
+
             config_path = config_dir / "rag_config.json"
             import json
-            with open(config_path, 'w') as f:
+
+            with open(config_path, "w") as f:
                 json.dump(rag_config, f, indent=2)
-            
+
             fixes.append(f"Created comprehensive RAG config at {config_path}")
-            
+
         except Exception as e:
             logger.error(f"Failed to fix RAG config: {e}")
-        
+
         return fixes
-    
+
     def _create_rag_diagnostic_test(self) -> Dict[str, Any]:
         """Create diagnostic test for RAG system."""
         try:
             test_dir = self.project_root / "src" / "tests"
             test_dir.mkdir(parents=True, exist_ok=True)
-            
+
             test_path = test_dir / "test_rag_accuracy.py"
-            
+
             test_content = '''#!/usr/bin/env python3
 """
 RAG System Accuracy Diagnostic Test
@@ -635,66 +632,60 @@ if __name__ == "__main__":
     
     print(json.dumps(results, indent=2))
 '''
-            
-            with open(test_path, 'w', encoding='utf-8') as f:
+
+            with open(test_path, "w", encoding="utf-8") as f:
                 f.write(test_content)
-            
-            return {
-                "diagnostic_test_created": str(test_path),
-                "message": "RAG diagnostic test created successfully"
-            }
-            
+
+            return {"diagnostic_test_created": str(test_path), "message": "RAG diagnostic test created successfully"}
+
         except Exception as e:
             return {
                 "error": f"Failed to create diagnostic test: {e}",
-                "message": "Could not create RAG diagnostic test"
+                "message": "Could not create RAG diagnostic test",
             }
-    
+
     def _resolve_p2p_protocol_mismatch(self) -> BlockerResult:
         """
         Fix P2P protocol mismatch between BitChat and Betanet systems.
-        
+
         Root cause: Version/format incompatibilities between transport protocols
         Solution: Create unified protocol adapter with version negotiation
         """
         try:
             logger.info("Resolving P2P protocol mismatch blocker")
-            
+
             # Analyze P2P system structure
             p2p_root = self.project_root / "infrastructure" / "p2p"
-            
+
             if not p2p_root.exists():
                 return BlockerResult(
                     blocker_name="p2p_protocol_mismatch",
                     status=BlockerStatus.FAILED,
                     message="P2P infrastructure directory not found",
-                    error=f"Missing: {p2p_root}"
+                    error=f"Missing: {p2p_root}",
                 )
-            
+
             # Check for BitChat and Betanet implementations
             bitchat_path = p2p_root / "bitchat"
             betanet_path = p2p_root / "betanet"
-            
-            protocols_found = {
-                "bitchat": bitchat_path.exists(),
-                "betanet": betanet_path.exists()
-            }
-            
+
+            protocols_found = {"bitchat": bitchat_path.exists(), "betanet": betanet_path.exists()}
+
             if not all(protocols_found.values()):
                 missing = [k for k, v in protocols_found.items() if not v]
                 return BlockerResult(
                     blocker_name="p2p_protocol_mismatch",
                     status=BlockerStatus.FAILED,
                     message=f"Missing protocol implementations: {missing}",
-                    error=f"Missing directories: {missing}"
+                    error=f"Missing directories: {missing}",
                 )
-            
+
             # Create unified protocol adapter
             adapter_result = self._create_protocol_adapter(p2p_root, bitchat_path, betanet_path)
-            
+
             # Create protocol negotiation system
             negotiation_result = self._create_protocol_negotiation(p2p_root)
-            
+
             if adapter_result and negotiation_result:
                 return BlockerResult(
                     blocker_name="p2p_protocol_mismatch",
@@ -704,30 +695,30 @@ if __name__ == "__main__":
                         "protocols_found": protocols_found,
                         "adapter_created": adapter_result,
                         "negotiation_created": negotiation_result,
-                        "solution": "Unified protocol adapter with version negotiation"
-                    }
+                        "solution": "Unified protocol adapter with version negotiation",
+                    },
                 )
             else:
                 return BlockerResult(
                     blocker_name="p2p_protocol_mismatch",
                     status=BlockerStatus.FAILED,
                     message="Failed to create protocol adapter solution",
-                    error="Could not create unified protocol adapter"
+                    error="Could not create unified protocol adapter",
                 )
-                
+
         except Exception as e:
             return BlockerResult(
                 blocker_name="p2p_protocol_mismatch",
                 status=BlockerStatus.FAILED,
                 message="Error during P2P protocol resolution",
-                error=f"{str(e)}\n{traceback.format_exc()}"
+                error=f"{str(e)}\n{traceback.format_exc()}",
             )
-    
+
     def _create_protocol_adapter(self, p2p_root: Path, bitchat_path: Path, betanet_path: Path) -> bool:
         """Create unified protocol adapter for BitChat/Betanet compatibility."""
         try:
             adapter_path = p2p_root / "unified_protocol_adapter.py"
-            
+
             adapter_content = '''#!/usr/bin/env python3
 """
 Unified Protocol Adapter
@@ -968,22 +959,22 @@ __all__ = [
     'create_unified_adapter'
 ]
 '''
-            
-            with open(adapter_path, 'w', encoding='utf-8') as f:
+
+            with open(adapter_path, "w", encoding="utf-8") as f:
                 f.write(adapter_content)
-            
+
             logger.info(f"Created protocol adapter at {adapter_path}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to create protocol adapter: {e}")
             return False
-    
+
     def _create_protocol_negotiation(self, p2p_root: Path) -> bool:
         """Create protocol negotiation system for version compatibility."""
         try:
             negotiation_path = p2p_root / "protocol_negotiation.py"
-            
+
             negotiation_content = '''#!/usr/bin/env python3
 """
 Protocol Negotiation System
@@ -1204,37 +1195,37 @@ __all__ = [
     'create_negotiator'
 ]
 '''
-            
-            with open(negotiation_path, 'w', encoding='utf-8') as f:
+
+            with open(negotiation_path, "w", encoding="utf-8") as f:
                 f.write(negotiation_content)
-            
+
             logger.info(f"Created protocol negotiation at {negotiation_path}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to create protocol negotiation: {e}")
             return False
-    
+
     def _resolve_import_path_conflicts(self) -> BlockerResult:
         """
         Fix Agent Forge import path conflicts between packages/ and core/ paths.
-        
+
         Root cause: Multiple agent_forge directories causing import conflicts
         Solution: Create unified import resolver with proper module aliasing
         """
         try:
             logger.info("Resolving import path conflicts blocker")
-            
+
             # Identify conflicting paths
             agent_forge_paths = [
-                self.project_root / "core" / "agent-forge",
-                self.project_root / "core" / "agent_forge", 
-                self.project_root / "packages" / "agent_forge"
+                self.project_root / "core" / "agent_forge",
+                self.project_root / "core" / "agent_forge",
+                self.project_root / "packages" / "agent_forge",
             ]
-            
+
             existing_paths = [(path, path.exists()) for path in agent_forge_paths]
             conflicts = [path for path, exists in existing_paths if exists]
-            
+
             if len(conflicts) < 2:
                 return BlockerResult(
                     blocker_name="import_path_conflicts",
@@ -1242,19 +1233,19 @@ __all__ = [
                     message="No import path conflicts detected",
                     details={
                         "agent_forge_paths": [str(path) for path, exists in existing_paths if exists],
-                        "conflict_count": len(conflicts)
-                    }
+                        "conflict_count": len(conflicts),
+                    },
                 )
-            
+
             # Create import resolver
             resolver_result = self._create_import_resolver(conflicts)
-            
+
             # Create path mapping
             mapping_result = self._create_path_mapping(conflicts)
-            
+
             # Fix common import statements
             fix_result = self._fix_import_statements()
-            
+
             return BlockerResult(
                 blocker_name="import_path_conflicts",
                 status=BlockerStatus.RESOLVED,
@@ -1263,24 +1254,24 @@ __all__ = [
                     "conflicting_paths": [str(p) for p in conflicts],
                     "resolver_created": resolver_result,
                     "mapping_created": mapping_result,
-                    "imports_fixed": fix_result
-                }
+                    "imports_fixed": fix_result,
+                },
             )
-            
+
         except Exception as e:
             return BlockerResult(
                 blocker_name="import_path_conflicts",
                 status=BlockerStatus.FAILED,
                 message="Error during import path resolution",
-                error=f"{str(e)}\n{traceback.format_exc()}"
+                error=f"{str(e)}\n{traceback.format_exc()}",
             )
-    
+
     def _create_import_resolver(self, conflicting_paths: List[Path]) -> bool:
         """Create unified import resolver for agent_forge conflicts."""
         try:
             resolver_path = self.project_root / "src" / "core" / "import_resolver.py"
             resolver_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             resolver_content = '''#!/usr/bin/env python3
 """
 Import Path Resolver
@@ -1323,7 +1314,7 @@ class ImportPathResolver:
     def _setup_path_priorities(self) -> List[Path]:
         """Setup import path priorities (highest to lowest)."""
         return [
-            self.project_root / "core" / "agent-forge",  # Primary implementation
+            self.project_root / "core" / "agent_forge",  # Primary implementation
             self.project_root / "packages" / "agent_forge",  # Package implementation
             self.project_root / "core" / "agent_forge"  # Fallback implementation
         ]
@@ -1495,115 +1486,123 @@ __all__ = [
     'import_agent_forge_class'
 ]
 '''
-            
-            with open(resolver_path, 'w', encoding='utf-8') as f:
+
+            with open(resolver_path, "w", encoding="utf-8") as f:
                 f.write(resolver_content)
-            
+
             logger.info(f"Created import resolver at {resolver_path}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to create import resolver: {e}")
             return False
-    
+
     def _create_path_mapping(self, conflicting_paths: List[Path]) -> bool:
         """Create path mapping configuration for import resolution."""
         try:
             mapping_path = self.project_root / "config" / "import_path_mapping.json"
             mapping_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             # Create path mapping configuration
             mapping_config = {
                 "agent_forge_paths": {
-                    "primary": str(self.project_root / "core" / "agent-forge"),
+                    "primary": str(self.project_root / "core" / "agent_forge"),
                     "package": str(self.project_root / "packages" / "agent_forge"),
-                    "fallback": str(self.project_root / "core" / "agent_forge")
+                    "fallback": str(self.project_root / "core" / "agent_forge"),
                 },
                 "import_aliases": {
-                    "agent_forge": "core.agent-forge",
-                    "af": "core.agent-forge", 
-                    "agent_forge_pkg": "packages.agent_forge"
+                    "agent_forge": "core.agent_forge",
+                    "af": "core.agent_forge",
+                    "agent_forge_pkg": "packages.agent_forge",
                 },
                 "common_imports": {
-                    "phases.cognate": "core.agent-forge.phases.cognate",
-                    "models.cognate": "core.agent-forge.models.cognate",
-                    "core.phase_controller": "core.agent-forge.core.phase_controller"
+                    "phases.cognate": "core.agent_forge.phases.cognate",
+                    "models.cognate": "core.agent_forge.models.cognate",
+                    "core.phase_controller": "core.agent_forge.core.phase_controller",
                 },
-                "resolution_priority": [
-                    "core.agent-forge",
-                    "packages.agent_forge", 
-                    "core.agent_forge"
-                ]
+                "resolution_priority": ["core.agent_forge", "packages.agent_forge", "core.agent_forge"],
             }
-            
+
             import json
-            with open(mapping_path, 'w') as f:
+
+            with open(mapping_path, "w") as f:
                 json.dump(mapping_config, f, indent=2)
-            
+
             logger.info(f"Created path mapping at {mapping_path}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to create path mapping: {e}")
             return False
-    
+
     def _fix_import_statements(self) -> int:
         """Fix common import statements in key files."""
         fixed_count = 0
-        
+
         # Common import patterns to fix
         fix_patterns = [
-            ("from agent_forge", "from src.core.import_resolver import import_agent_forge_module; import_agent_forge_module"),
-            ("import agent_forge", "from src.core.import_resolver import import_agent_forge_module; agent_forge = import_agent_forge_module('__init__')"),
-            ("from core.agent_forge", "from src.core.import_resolver import import_agent_forge_module; import_agent_forge_module"),
-            ("from packages.agent_forge", "from src.core.import_resolver import import_agent_forge_module; import_agent_forge_module")
+            (
+                "from agent_forge",
+                "from src.core.import_resolver import import_agent_forge_module; import_agent_forge_module",
+            ),
+            (
+                "import agent_forge",
+                "from src.core.import_resolver import import_agent_forge_module; agent_forge = import_agent_forge_module('__init__')",
+            ),
+            (
+                "from core.agent_forge",
+                "from src.core.import_resolver import import_agent_forge_module; import_agent_forge_module",
+            ),
+            (
+                "from packages.agent_forge",
+                "from src.core.import_resolver import import_agent_forge_module; import_agent_forge_module",
+            ),
         ]
-        
+
         try:
             # Find files with import issues (sample of key files)
             key_files = [
                 self.project_root / "scripts" / "debug" / "test_pipeline_init.py",
                 self.project_root / "scripts" / "debug" / "test_phase_imports.py",
-                self.project_root / "tests" / "validation" / "system" / "validate_agent_forge.py"
+                self.project_root / "tests" / "validation" / "system" / "validate_agent_forge.py",
             ]
-            
+
             for file_path in key_files:
                 if file_path.exists():
                     try:
-                        with open(file_path, 'r', encoding='utf-8') as f:
+                        with open(file_path, "r", encoding="utf-8") as f:
                             content = f.read()
-                        
+
                         original_content = content
-                        
+
                         # Apply fix patterns
                         for old_pattern, new_pattern in fix_patterns:
                             if old_pattern in content:
                                 # Simple replacement (could be more sophisticated)
                                 content = content.replace(
-                                    old_pattern,
-                                    f"# FIXED: {old_pattern} -> using import resolver"
+                                    old_pattern, f"# FIXED: {old_pattern} -> using import resolver"
                                 )
-                        
+
                         # Only write if changes were made
                         if content != original_content:
-                            with open(file_path, 'w', encoding='utf-8') as f:
+                            with open(file_path, "w", encoding="utf-8") as f:
                                 f.write(content)
                             fixed_count += 1
                             logger.info(f"Fixed imports in {file_path}")
-                            
+
                     except Exception as e:
                         logger.error(f"Error fixing imports in {file_path}: {e}")
-            
+
         except Exception as e:
             logger.error(f"Error during import statement fixes: {e}")
-        
+
         return fixed_count
-    
+
     def generate_summary_report(self) -> Dict[str, Any]:
         """Generate comprehensive summary report of all blocker resolutions."""
         resolved = [r for r in self.results if r.status == BlockerStatus.RESOLVED]
         failed = [r for r in self.results if r.status == BlockerStatus.FAILED]
-        
+
         return {
             "total_blockers": len(self.results),
             "resolved_count": len(resolved),
@@ -1613,13 +1612,13 @@ __all__ = [
             "failed_blockers": [r.blocker_name for r in failed],
             "detailed_results": [r.to_dict() for r in self.results],
             "recommendations": self._generate_recommendations(),
-            "next_steps": self._generate_next_steps()
+            "next_steps": self._generate_next_steps(),
         }
-    
+
     def _generate_recommendations(self) -> List[str]:
         """Generate recommendations based on resolution results."""
         recommendations = []
-        
+
         for result in self.results:
             if result.status == BlockerStatus.FAILED:
                 if result.blocker_name == "grokfast_dependency":
@@ -1641,66 +1640,63 @@ __all__ = [
                 elif result.blocker_name == "rag_accuracy":
                     recommendations.append("Validate RAG accuracy with test queries")
                     recommendations.append("Scale up knowledge base gradually")
-        
+
         return recommendations
-    
+
     def _generate_next_steps(self) -> List[str]:
         """Generate next steps based on resolution results."""
         resolved_count = sum(1 for r in self.results if r.status == BlockerStatus.RESOLVED)
-        
+
         next_steps = [
             f"Validation phase: Test {resolved_count} resolved blockers",
-            "Integration testing: Validate end-to-end system functionality", 
+            "Integration testing: Validate end-to-end system functionality",
             "Performance benchmarking: Measure system performance improvements",
-            "Documentation update: Update README with resolved issues"
+            "Documentation update: Update README with resolved issues",
         ]
-        
+
         failed_results = [r for r in self.results if r.status == BlockerStatus.FAILED]
         if failed_results:
             next_steps.append(f"Manual resolution: Address {len(failed_results)} remaining blockers")
-        
+
         return next_steps
 
 
 def main():
     """Main entry point for blocker resolution."""
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-    
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
     print("🔧 AIVillage Core Blocker Resolution System")
     print("=" * 50)
-    
+
     resolver = CoreBlockerResolver()
-    results = resolver.resolve_all_blockers()
-    
+    resolver.resolve_all_blockers()
+
     # Generate and display summary
     summary = resolver.generate_summary_report()
-    
-    print(f"\n📊 Resolution Summary:")
+
+    print("\n📊 Resolution Summary:")
     print(f"   Total blockers: {summary['total_blockers']}")
     print(f"   Resolved: {summary['resolved_count']}")
     print(f"   Failed: {summary['failed_count']}")
     print(f"   Success rate: {summary['success_rate']:.1%}")
-    
-    print(f"\n✅ Resolved blockers:")
-    for blocker in summary['resolved_blockers']:
+
+    print("\n✅ Resolved blockers:")
+    for blocker in summary["resolved_blockers"]:
         print(f"   - {blocker}")
-    
-    if summary['failed_blockers']:
-        print(f"\n❌ Failed blockers:")
-        for blocker in summary['failed_blockers']:
+
+    if summary["failed_blockers"]:
+        print("\n❌ Failed blockers:")
+        for blocker in summary["failed_blockers"]:
             print(f"   - {blocker}")
-    
-    print(f"\n💡 Recommendations:")
-    for rec in summary['recommendations'][:3]:  # Top 3
+
+    print("\n💡 Recommendations:")
+    for rec in summary["recommendations"][:3]:  # Top 3
         print(f"   • {rec}")
-    
-    print(f"\n🎯 Next Steps:")
-    for step in summary['next_steps'][:3]:  # Top 3
+
+    print("\n🎯 Next Steps:")
+    for step in summary["next_steps"][:3]:  # Top 3
         print(f"   1. {step}")
-    
+
     return summary
 
 

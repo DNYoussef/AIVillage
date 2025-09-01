@@ -7,7 +7,7 @@ slow gradients while dampening fast gradients. Based on the GrokFast paper.
 
 import logging
 from collections import defaultdict, deque
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 
 import torch
 import torch.nn as nn

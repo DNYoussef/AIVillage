@@ -27,7 +27,7 @@ def test_cognate_imports():
     """Test that all cognate components can be imported."""
     try:
         # Try direct path import
-        sys.path.insert(0, str(project_root / "core" / "agent-forge" / "phases" / "cognate_pretrain"))
+        sys.path.insert(0, str(project_root / "core" / "agent_forge" / "phases" / "cognate_pretrain"))
 
         print("SUCCESS: All cognate imports successful")
         return True
@@ -42,7 +42,7 @@ def test_cognate_imports():
 def test_cognate_config():
     """Test cognate configuration creation."""
     try:
-        sys.path.insert(0, str(project_root / "core" / "agent-forge" / "phases" / "cognate_pretrain"))
+        sys.path.insert(0, str(project_root / "core" / "agent_forge" / "phases" / "cognate_pretrain"))
         from refiner_core import CognateConfig
 
         config = CognateConfig()
@@ -66,7 +66,7 @@ def test_parameter_validation():
     """Test parameter count validation."""
     print("INFO: Parameter validation")
     print("Target: 25,083,528 parameters")
-    print("Implementation: Available in core/agent-forge/phases/cognate_pretrain/refiner_core.py")
+    print("Implementation: Available in core/agent_forge/phases/cognate_pretrain/refiner_core.py")
     print("Validation: 99.94% accuracy achieved per implementation")
 
     return True
@@ -74,7 +74,7 @@ def test_parameter_validation():
 
 def test_file_structure():
     """Test that the consolidated file structure exists."""
-    cognate_dir = project_root / "core" / "agent-forge" / "phases" / "cognate_pretrain"
+    cognate_dir = project_root / "core" / "agent_forge" / "phases" / "cognate_pretrain"
 
     required_files = ["model_factory.py", "refiner_core.py", "pretrain_three_models.py", "full_cognate_25m.py"]
 

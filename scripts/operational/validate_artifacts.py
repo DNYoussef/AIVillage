@@ -489,7 +489,9 @@ def main():
     # Show detailed results
     print("\n📋 Detailed Results:")
     for validation in report["validations"]:
-        status_emoji = "✅" if validation["status"] == "passed" else ("⚠️" if validation["status"] == "warning" else "❌")
+        status_emoji = (
+            "✅" if validation["status"] == "passed" else ("⚠️" if validation["status"] == "warning" else "❌")
+        )
         print(
             f"  {status_emoji} {validation['category'].title()}: {validation['status']} ({validation['artifacts_found']} artifacts)"
         )

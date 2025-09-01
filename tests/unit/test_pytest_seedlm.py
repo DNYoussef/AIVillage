@@ -18,58 +18,59 @@ try:
 except FileNotFoundError:
     # Create mock classes if seedlm.py is not found
     class SeedLMConfig:
-        def __init__(self, compression_levels=None, block_sizes=None, latent_dims=None, 
-                     lfsr_taps=None, error_threshold=0.001, max_memory_gb=16.0):
+        def __init__(
+            self,
+            compression_levels=None,
+            block_sizes=None,
+            latent_dims=None,
+            lfsr_taps=None,
+            error_threshold=0.001,
+            max_memory_gb=16.0,
+        ):
             self.compression_levels = compression_levels or [0.1, 0.3, 0.5, 0.7, 0.9]
             self.block_sizes = block_sizes or [4, 8, 16, 32]
             self.latent_dims = latent_dims or [2, 4, 8, 16]
             self.lfsr_taps = lfsr_taps or [16, 14, 13, 11]
             self.error_threshold = error_threshold
             self.max_memory_gb = max_memory_gb
-    
+
     class SeedLMCompressionError(Exception):
         pass
-    
+
     class SeedLMDecompressionError(Exception):
         pass
-    
+
     class ProgressiveSeedLMEncoder:
         def __init__(self, config):
             self.config = config
-        
+
         def encode(self, weight, compression_level=0.5):
             return {
-                'data': {'compression_ratio': 2.0},
-                'metadata': {
-                    'original_shape': list(weight.shape),
-                    'original_dtype': str(weight.dtype)
-                }
+                "data": {"compression_ratio": 2.0},
+                "metadata": {"original_shape": list(weight.shape), "original_dtype": str(weight.dtype)},
             }
-        
+
         def decode(self, compressed):
-            shape = compressed['metadata']['original_shape']
-            dtype = getattr(torch, compressed['metadata']['original_dtype'].split('.')[-1])
+            shape = compressed["metadata"]["original_shape"]
+            dtype = getattr(torch, compressed["metadata"]["original_dtype"].split(".")[-1])
             return torch.randn(*shape, dtype=dtype)
-        
+
         def encode_progressive(self, weight, base_quality=0.3, enhancement_layers=2, quality_increments=None):
-            return {
-                'base_layer': {},
-                'enhancement_layers': [{} for _ in range(enhancement_layers)]
-            }
-        
+            return {"base_layer": {}, "enhancement_layers": [{} for _ in range(enhancement_layers)]}
+
         def decode_progressive(self, compressed, num_layers=1):
             return torch.randn(64, 128)
-    
+
     class AdaptiveBlockAnalyzer:
         def determine_block_size(self, weight):
             variance = torch.var(weight).item()
             return 16 if variance < 1.0 else 8
-    
+
     class MultiScaleLFSRGenerator:
         def __init__(self, seeds, tap_configs):
             self.seeds = seeds
             self.tap_configs = tap_configs
-        
+
         def generate_basis(self, rows, cols):
             basis = torch.randn(rows, cols)
             # Mock orthogonalization

@@ -28,19 +28,17 @@ __all__ = [
     # Main facade for backwards compatibility
     "FogCoordinatorFacade",
     "create_fog_coordinator",
-    
     # Service infrastructure
     "BaseFogService",
-    "ServiceStatus", 
+    "ServiceStatus",
     "ServiceHealthCheck",
     "EventBus",
     "ServiceRegistry",
     "ServiceFactory",
     "ServiceDependency",
-    
     # Individual services
     "FogHarvestingService",
-    "FogRoutingService", 
+    "FogRoutingService",
     "FogMarketplaceService",
     "FogTokenomicsService",
     "FogNetworkingService",
@@ -55,22 +53,22 @@ __description__ = "Service-oriented fog computing architecture"
 
 # Service coupling metrics (target: <15.0 average)
 SERVICE_COUPLING_METRICS = {
-    "FogHarvestingService": 12.3,      # Reduced from 39.8 original
-    "FogRoutingService": 11.8,         # Privacy and routing focused  
-    "FogMarketplaceService": 14.2,     # Service marketplace coordination
-    "FogTokenomicsService": 8.9,       # Token economics management
-    "FogNetworkingService": 13.1,      # P2P networking coordination
-    "FogMonitoringService": 9.4,       # Health and metrics tracking
-    "FogConfigurationService": 7.2,    # Configuration management
-    "average_coupling": 11.0           # Target achieved: <15.0
+    "FogHarvestingService": 12.3,  # Reduced from 39.8 original
+    "FogRoutingService": 11.8,  # Privacy and routing focused
+    "FogMarketplaceService": 14.2,  # Service marketplace coordination
+    "FogTokenomicsService": 8.9,  # Token economics management
+    "FogNetworkingService": 13.1,  # P2P networking coordination
+    "FogMonitoringService": 9.4,  # Health and metrics tracking
+    "FogConfigurationService": 7.2,  # Configuration management
+    "average_coupling": 11.0,  # Target achieved: <15.0
 }
 
 # Architecture benefits
 ARCHITECTURE_BENEFITS = {
-    "coupling_reduction": "72.3%",      # From 39.8 to 11.0 average
-    "single_responsibility": "100%",    # Each service has single focus
-    "testability": "Enhanced",          # Isolated service testing
-    "maintainability": "High",         # Clear service boundaries
-    "scalability": "Improved",         # Independent service scaling
-    "backwards_compatibility": "100%", # Full API preservation
+    "coupling_reduction": "72.3%",  # From 39.8 to 11.0 average
+    "single_responsibility": "100%",  # Each service has single focus
+    "testability": "Enhanced",  # Isolated service testing
+    "maintainability": "High",  # Clear service boundaries
+    "scalability": "Improved",  # Independent service scaling
+    "backwards_compatibility": "100%",  # Full API preservation
 }

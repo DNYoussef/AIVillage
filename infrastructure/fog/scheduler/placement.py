@@ -24,7 +24,7 @@ from typing import Any
 from .marketplace import BidType, PricingTier
 
 # Import reputation system for trust scoring
-from ..reputation import BayesianReputationEngine, integrate_with_scheduler
+from ..reputation import BayesianReputationEngine
 
 logger = logging.getLogger(__name__)
 
@@ -863,7 +863,7 @@ class FogScheduler:
         self.node_registry: dict[str, FogNode] = {}
         self.job_queue: list[JobRequest] = []
         self.placement_cache: dict[str, PlacementSolution] = {}
-        
+
         # Reputation system integration
         self.reputation_engine = reputation_engine or BayesianReputationEngine()
 
@@ -904,7 +904,7 @@ class FogScheduler:
                 node.queued_jobs = status_update["queued_jobs"]
 
             node.last_heartbeat = datetime.now(UTC)
-            
+
             # Update reputation system with latest trust score
             reputation_score = self.reputation_engine.get_reputation_score(node_id)
             if reputation_score:
@@ -1055,9 +1055,11 @@ class FogScheduler:
                     "load_balance_score": solution.load_balance_objective,
                 },
                 "strategy": strategy.value,
-                "pareto_front_size": len([s for s in self.placement_engine.population if s.dominance_rank == 0])
-                if strategy == PlacementStrategy.NSGA_II
-                else 1,
+                "pareto_front_size": (
+                    len([s for s in self.placement_engine.population if s.dominance_rank == 0])
+                    if strategy == PlacementStrategy.NSGA_II
+                    else 1
+                ),
             }
 
         except Exception as e:

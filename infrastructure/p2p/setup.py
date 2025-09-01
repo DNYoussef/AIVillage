@@ -7,22 +7,25 @@ comprehensive dependency management and installation profiles.
 Innovation Score: 8.9/10 - Complete package standardization
 """
 
-from setuptools import setup, find_packages
 import os
 from pathlib import Path
+
+from setuptools import find_packages, setup
 
 # Read the README file
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text() if (this_directory / "README.md").exists() else ""
 
+
 # Read version from __init__.py
 def get_version():
     init_path = os.path.join(os.path.dirname(__file__), "__init__.py")
-    with open(init_path, 'r') as f:
+    with open(init_path) as f:
         for line in f:
-            if line.startswith('__version__'):
-                return line.split('=')[1].strip().strip('"').strip("'")
+            if line.startswith("__version__"):
+                return line.split("=")[1].strip().strip('"').strip("'")
     return "2.0.0"
+
 
 # Core dependencies (always installed)
 CORE_DEPS = [
@@ -106,12 +109,10 @@ setup(
         "mesh": MESH_DEPS,
         "privacy": PRIVACY_DEPS,
         "scion": SCION_DEPS,
-        
         # Combined profiles
         "standard": LIBP2P_DEPS + MESH_DEPS,
         "full": LIBP2P_DEPS + MESH_DEPS + PRIVACY_DEPS + SCION_DEPS,
         "anonymous": PRIVACY_DEPS + LIBP2P_DEPS,
-        
         # Development
         "dev": DEV_DEPS,
         "docs": DOCS_DEPS,
@@ -134,9 +135,19 @@ setup(
     },
     zip_safe=False,
     keywords=[
-        "p2p", "peer-to-peer", "networking", "libp2p", "mesh", 
-        "anonymous", "privacy", "distributed", "decentralized",
-        "bitchat", "betanet", "scion", "nat-traversal"
+        "p2p",
+        "peer-to-peer",
+        "networking",
+        "libp2p",
+        "mesh",
+        "anonymous",
+        "privacy",
+        "distributed",
+        "decentralized",
+        "bitchat",
+        "betanet",
+        "scion",
+        "nat-traversal",
     ],
     project_urls={
         "Bug Reports": "https://github.com/aivillage/infrastructure/issues",

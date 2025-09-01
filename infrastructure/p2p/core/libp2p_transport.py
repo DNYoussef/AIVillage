@@ -11,14 +11,24 @@ import logging
 import time
 from typing import Any
 
-from ..mobile_integration.libp2p_mesh import (
+from infrastructure.p2p.mobile_integration.libp2p_mesh import (
     LibP2PMeshNetwork,
     MeshConfiguration,
     MeshMessage,
     MeshMessageType,
 )
-from ..protocols.mesh_networking import DistanceVectorRouting, GossipProtocol, TopologyManager, TopologyType
-from ..security.production_security import SecurityConfig, SecurityLevel, SecurityManager
+from infrastructure.p2p.protocols.mesh_networking import (
+    DistanceVectorRouting,
+    GossipProtocol,
+    TopologyManager,
+    TopologyType,
+)
+from infrastructure.p2p.security.production_security import (
+    SecurityConfig,
+    SecurityLevel,
+    SecurityManager,
+)
+
 from .message_delivery import DeliveryConfig, MessageDeliveryService, MessagePriority
 from .message_types import MessageMetadata, MessageType, UnifiedMessage
 from .transport_manager import TransportCapabilities

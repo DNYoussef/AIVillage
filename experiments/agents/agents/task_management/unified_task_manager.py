@@ -15,9 +15,12 @@ from core.error_handling import AIVillageException, Message, MessageType, Priori
 
 # Import constants for magic literal elimination
 from infrastructure.constants import (
-    TaskConstants, ProjectConstants, ProjectStatus, TimingConstants,
-    MessageConstants, ErrorMessageConstants, PerformanceFieldNames,
-    get_config_manager
+    TaskConstants,
+    ProjectConstants,
+    MessageConstants,
+    ErrorMessageConstants,
+    PerformanceFieldNames,
+    get_config_manager,
 )
 
 from .incentive_model import IncentiveModel
@@ -79,10 +82,11 @@ class UnifiedManagement:
             logger.info("Created task: %s for agent: %s", task.id, agent)
 
             if project_id:
-                await self.add_task_to_project(project_id, task.id, {
-                    PerformanceFieldNames.DESCRIPTION_FIELD: description, 
-                    MessageConstants.ASSIGNED_AGENT: agent
-                })
+                await self.add_task_to_project(
+                    project_id,
+                    task.id,
+                    {PerformanceFieldNames.DESCRIPTION_FIELD: description, MessageConstants.ASSIGNED_AGENT: agent},
+                )
 
             return task
         except Exception as e:
@@ -108,8 +112,7 @@ class UnifiedManagement:
         try:
             # Use the decision maker to select the best agent
             decision = await self.decision_maker.make_decision(
-                f"Select the best agent for task: {task_description}", 
-                MessageConstants.DECISION_THRESHOLD
+                f"Select the best agent for task: {task_description}", MessageConstants.DECISION_THRESHOLD
             )
             return decision.get(
                 MessageConstants.BEST_ALTERNATIVE,
@@ -125,8 +128,8 @@ class UnifiedManagement:
             self.ongoing_tasks[task.id] = task.update_status(TaskStatus.IN_PROGRESS)
             agent = task.assigned_agents[0]
             incentive = self.incentive_model.calculate_incentive(
-                {PerformanceFieldNames.ASSIGNED_AGENT_FIELD: agent, PerformanceFieldNames.TASK_ID_FIELD: task.id}, 
-                self.agent_performance
+                {PerformanceFieldNames.ASSIGNED_AGENT_FIELD: agent, PerformanceFieldNames.TASK_ID_FIELD: task.id},
+                self.agent_performance,
             )
             await self.notify_agent_with_incentive(agent, task, incentive[MessageConstants.INCENTIVE])
         except Exception as e:
@@ -165,10 +168,10 @@ class UnifiedManagement:
             await self.update_dependent_tasks(updated_task)
 
             agent = task.assigned_agents[0]
-            self.incentive_model.update({
-                PerformanceFieldNames.ASSIGNED_AGENT_FIELD: agent, 
-                PerformanceFieldNames.TASK_ID_FIELD: task_id
-            }, result)
+            self.incentive_model.update(
+                {PerformanceFieldNames.ASSIGNED_AGENT_FIELD: agent, PerformanceFieldNames.TASK_ID_FIELD: task_id},
+                result,
+            )
             self.incentive_model.update_agent_performance(
                 self.agent_performance,
                 agent,
@@ -311,10 +314,7 @@ class UnifiedManagement:
                     type=MessageType.TASK,
                     sender=MessageConstants.UNIFIED_MANAGEMENT,
                     receiver=agent,
-                    content={
-                        MessageConstants.TASK_ID: task.id, 
-                        MessageConstants.DESCRIPTION: task.description
-                    },
+                    content={MessageConstants.TASK_ID: task.id, MessageConstants.DESCRIPTION: task.description},
                 )
             )
         except Exception as e:
@@ -336,7 +336,9 @@ class UnifiedManagement:
         try:
             # Validate batch size within limits
             if not TaskConstants.MIN_BATCH_SIZE <= size <= TaskConstants.MAX_BATCH_SIZE:
-                raise ValueError(f"Batch size must be between {TaskConstants.MIN_BATCH_SIZE} and {TaskConstants.MAX_BATCH_SIZE}")
+                raise ValueError(
+                    f"Batch size must be between {TaskConstants.MIN_BATCH_SIZE} and {TaskConstants.MAX_BATCH_SIZE}"
+                )
             self.batch_size = size
             logger.info("Set batch size to %d", size)
         except Exception as e:

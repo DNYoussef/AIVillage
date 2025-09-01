@@ -230,7 +230,9 @@ class FogOrchestrationService:
                 self.is_running = True
                 await self._emit_event("orchestration_started", {"startup_time": self.startup_time})
 
-                logger.info(f"Fog orchestration service started successfully with {len(initialization_order)} components")
+                logger.info(
+                    f"Fog orchestration service started successfully with {len(initialization_order)} components"
+                )
                 return True
 
             except Exception as e:
@@ -238,9 +240,7 @@ class FogOrchestrationService:
                 await self._cleanup_started_components()
                 return False
 
-    async def _start_component(
-        self, component_name: str, retry_attempts: int = 3, retry_delay: float = 5.0
-    ) -> bool:
+    async def _start_component(self, component_name: str, retry_attempts: int = 3, retry_delay: float = 5.0) -> bool:
         """Start a single component with retry logic."""
         component = self.registry.get_component(component_name)
         if not component:
@@ -544,6 +544,7 @@ class FogOrchestrationService:
         """Get basic memory usage information."""
         try:
             import psutil
+
             process = psutil.Process()
             return {
                 "rss_mb": process.memory_info().rss / 1024 / 1024,

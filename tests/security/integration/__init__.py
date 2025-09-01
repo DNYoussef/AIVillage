@@ -9,6 +9,6 @@ from .test_security_workflows import *
 from .test_end_to_end_security import *
 
 __all__ = [
-    'SecurityWorkflowIntegrationTest',
-    'EndToEndSecurityTest',
+    "SecurityWorkflowIntegrationTest",
+    "EndToEndSecurityTest",
 ]

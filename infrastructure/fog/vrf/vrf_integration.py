@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional, Set, Callable
 
 from .vrf_neighbor_selection import VRFNeighborSelector, NodeInfo, VRFProof
 from ..integration.fog_coordinator import FogCoordinator
-from ...p2p.protocols.mesh_networking import TopologyManager, PeerMetrics, NetworkMetrics
+from ...p2p.protocols.mesh_networking import TopologyManager, PeerMetrics
 from ...p2p.core.transport_manager import TransportManager, TransportType
 
 logger = logging.getLogger(__name__)
@@ -24,23 +24,23 @@ logger = logging.getLogger(__name__)
 @dataclass
 class VRFNetworkConfig:
     """Configuration for VRF-enabled networking."""
-    
+
     # VRF parameters
     target_degree: int = 8
     min_degree: int = 4
     max_degree: int = 16
     selection_interval: float = 300.0
-    
+
     # Integration parameters
     discovery_interval: float = 60.0
     health_check_interval: float = 120.0
     topology_sync_interval: float = 180.0
-    
+
     # Security parameters
     verification_threshold: float = 0.7
     eclipse_detection_threshold: float = 0.8
     trust_decay_rate: float = 0.95
-    
+
     # Performance parameters
     max_concurrent_connections: int = 20
     connection_timeout: float = 30.0
@@ -50,7 +50,7 @@ class VRFNetworkConfig:
 class VRFMeshIntegrator:
     """
     Integrates VRF neighbor selection with P2P mesh networking.
-    
+
     Provides verifiable randomness for secure topology formation while
     maintaining compatibility with existing networking infrastructure.
     """
@@ -62,7 +62,7 @@ class VRFMeshIntegrator:
         transport_manager: Optional[TransportManager] = None,
         topology_manager: Optional[TopologyManager] = None,
         config: Optional[VRFNetworkConfig] = None,
-        **kwargs
+        **kwargs,
     ):
         self.node_id = node_id
         self.fog_coordinator = fog_coordinator
@@ -78,7 +78,7 @@ class VRFMeshIntegrator:
             max_degree=self.config.max_degree,
             selection_interval=self.config.selection_interval,
             verification_threshold=self.config.verification_threshold,
-            **kwargs
+            **kwargs,
         )
 
         # Network state
@@ -99,7 +99,7 @@ class VRFMeshIntegrator:
             "connections_failed": 0,
             "topology_updates": 0,
             "vrf_verifications": 0,
-            "integration_errors": 0
+            "integration_errors": 0,
         }
 
         # Background tasks
@@ -113,7 +113,7 @@ class VRFMeshIntegrator:
         """Start the VRF mesh integration system."""
         try:
             logger.info("Starting VRF mesh integration...")
-            
+
             # Start VRF selector
             if not await self.vrf_selector.start():
                 raise Exception("Failed to start VRF selector")
@@ -156,7 +156,7 @@ class VRFMeshIntegrator:
         # Close active connections
         for connection in list(self.active_connections.values()):
             try:
-                if hasattr(connection, 'close'):
+                if hasattr(connection, "close"):
                     await connection.close()
             except Exception as e:
                 logger.warning(f"Error closing connection: {e}")
@@ -172,7 +172,7 @@ class VRFMeshIntegrator:
 
         try:
             # Use fog coordinator for discovery if available
-            if self.fog_coordinator and hasattr(self.fog_coordinator, 'quorum_manager'):
+            if self.fog_coordinator and hasattr(self.fog_coordinator, "quorum_manager"):
                 quorum_nodes = await self._discover_via_quorum()
                 discovered_peers.extend(quorum_nodes)
 
@@ -192,7 +192,7 @@ class VRFMeshIntegrator:
                 unique_peers[peer.node_id] = peer
 
             discovered_peers = list(unique_peers.values())
-            
+
             # Add discovered peers to VRF selector
             for peer in discovered_peers:
                 await self.vrf_selector.add_node(peer)
@@ -277,7 +277,7 @@ class VRFMeshIntegrator:
             # Close connection if active
             if peer_id in self.active_connections:
                 connection = self.active_connections.pop(peer_id)
-                if hasattr(connection, 'close'):
+                if hasattr(connection, "close"):
                     await connection.close()
 
             # Check if we need to find replacement neighbors
@@ -298,7 +298,7 @@ class VRFMeshIntegrator:
         try:
             # Get existing peers from topology manager
             existing_peers = []
-            
+
             # Convert topology manager peers to NodeInfo
             for peer_id, peer_metrics in self.topology_manager.peers.items():
                 node_info = NodeInfo(
@@ -326,23 +326,22 @@ class VRFMeshIntegrator:
     async def _discover_via_quorum(self) -> List[NodeInfo]:
         """Discover peers via quorum manager."""
         peers = []
-        
+
         try:
-            if self.fog_coordinator and hasattr(self.fog_coordinator, 'quorum_manager'):
-                quorum_manager = self.fog_coordinator.quorum_manager
-                
+            if self.fog_coordinator and hasattr(self.fog_coordinator, "quorum_manager"):
+
                 # Get quorum members (implementation would depend on quorum manager API)
                 # This is a placeholder - actual implementation would use real API
                 quorum_nodes = []  # await quorum_manager.get_members()
-                
+
                 for node_data in quorum_nodes:
                     node_info = NodeInfo(
-                        node_id=node_data.get('id', ''),
-                        public_key=node_data.get('public_key', b''),
-                        address=node_data.get('address', ''),
-                        port=node_data.get('port', 0),
-                        reliability_score=node_data.get('reliability', 1.0),
-                        trust_score=node_data.get('trust', 1.0)
+                        node_id=node_data.get("id", ""),
+                        public_key=node_data.get("public_key", b""),
+                        address=node_data.get("address", ""),
+                        port=node_data.get("port", 0),
+                        reliability_score=node_data.get("reliability", 1.0),
+                        trust_score=node_data.get("trust", 1.0),
                     )
                     peers.append(node_info)
 
@@ -354,15 +353,15 @@ class VRFMeshIntegrator:
     async def _discover_via_transport(self) -> List[NodeInfo]:
         """Discover peers via transport manager."""
         peers = []
-        
+
         try:
             if self.transport_manager:
                 # Get peer information from transport capabilities
                 # This would depend on transport manager API
                 transport_status = self.transport_manager.get_status()
-                
+
                 # Extract peer information (placeholder implementation)
-                for transport_type in transport_status.get('available_transports', []):
+                for transport_type in transport_status.get("available_transports", []):
                     # Would get actual peer list from transport
                     pass
 
@@ -374,7 +373,7 @@ class VRFMeshIntegrator:
     async def _discover_via_topology(self) -> List[NodeInfo]:
         """Discover peers via topology manager."""
         peers = []
-        
+
         try:
             if self.topology_manager:
                 # Convert topology manager peers to NodeInfo
@@ -387,7 +386,7 @@ class VRFMeshIntegrator:
                         reliability_score=1.0 - peer_metrics.packet_loss_rate,
                         latency_ms=peer_metrics.latency_ms,
                         bandwidth_mbps=peer_metrics.bandwidth_mbps,
-                        trust_score=peer_metrics.trust_score
+                        trust_score=peer_metrics.trust_score,
                     )
                     peers.append(node_info)
 
@@ -399,7 +398,7 @@ class VRFMeshIntegrator:
     async def _establish_neighbor_connections(self, neighbors: List[str]) -> Dict[str, bool]:
         """Establish connections to VRF-selected neighbors."""
         connection_results = {}
-        
+
         for neighbor_id in neighbors:
             if neighbor_id in self.active_connections:
                 connection_results[neighbor_id] = True
@@ -410,11 +409,11 @@ class VRFMeshIntegrator:
 
             try:
                 self.pending_connections.add(neighbor_id)
-                
+
                 # Attempt connection
                 success = await self._connect_to_peer(neighbor_id)
                 connection_results[neighbor_id] = success
-                
+
                 if success:
                     self.integration_metrics["connections_established"] += 1
                 else:
@@ -443,14 +442,14 @@ class VRFMeshIntegrator:
                 # This would use actual transport manager API
                 # For now, simulate connection
                 await asyncio.sleep(0.1)  # Simulate connection time
-                
+
                 # Store connection (placeholder)
                 self.active_connections[peer_id] = {
-                    'peer_id': peer_id,
-                    'connected_at': asyncio.get_event_loop().time(),
-                    'transport_type': TransportType.LIBP2P_MESH
+                    "peer_id": peer_id,
+                    "connected_at": asyncio.get_event_loop().time(),
+                    "transport_type": TransportType.LIBP2P_MESH,
                 }
-                
+
                 return True
 
             return False
@@ -475,7 +474,7 @@ class VRFMeshIntegrator:
                             peer_id=neighbor_id,
                             latency_ms=node_info.latency_ms,
                             bandwidth_mbps=node_info.bandwidth_mbps,
-                            trust_score=node_info.trust_score
+                            trust_score=node_info.trust_score,
                         )
                         self.topology_manager.add_peer(neighbor_id, peer_metrics)
 
@@ -490,7 +489,7 @@ class VRFMeshIntegrator:
         """Handle VRF-related messages."""
         try:
             # Extract VRF message type and process accordingly
-            if hasattr(message, 'message_type') and 'vrf' in message.message_type.value.lower():
+            if hasattr(message, "message_type") and "vrf" in message.message_type.value.lower():
                 # Process VRF verification request, proof sharing, etc.
                 pass
 
@@ -516,10 +515,10 @@ class VRFMeshIntegrator:
             try:
                 # Monitor connection health
                 await self._check_connection_health()
-                
+
                 # Update peer metrics
                 await self._update_peer_metrics()
-                
+
                 await asyncio.sleep(self.config.health_check_interval)
 
             except asyncio.CancelledError:
@@ -552,8 +551,8 @@ class VRFMeshIntegrator:
 
         for peer_id, connection in self.active_connections.items():
             # Check connection age and health
-            connection_age = current_time - connection.get('connected_at', current_time)
-            
+            connection_age = current_time - connection.get("connected_at", current_time)
+
             # Implement health checks based on connection type
             if connection_age > 3600:  # 1 hour old connections need refresh
                 unhealthy_connections.append(peer_id)
@@ -571,7 +570,7 @@ class VRFMeshIntegrator:
                 await self.vrf_selector.update_node_metrics(
                     peer_id,
                     last_seen=asyncio.get_event_loop().time(),
-                    reliability_score=min(1.0, self.vrf_selector.known_nodes[peer_id].reliability_score * 1.01)
+                    reliability_score=min(1.0, self.vrf_selector.known_nodes[peer_id].reliability_score * 1.01),
                 )
 
     def register_connection_handler(self, handler: Callable):
@@ -585,7 +584,7 @@ class VRFMeshIntegrator:
     def get_status(self) -> Dict[str, Any]:
         """Get comprehensive integration status."""
         vrf_status = self.vrf_selector.get_status()
-        
+
         return {
             "integration": {
                 "active_connections": len(self.active_connections),
@@ -593,13 +592,13 @@ class VRFMeshIntegrator:
                 "discovery_active": self.peer_discovery_active,
                 "health_monitoring_active": self.health_monitoring_active,
                 "topology_sync_active": self.topology_sync_active,
-                "metrics": self.integration_metrics.copy()
+                "metrics": self.integration_metrics.copy(),
             },
             "vrf": vrf_status,
             "config": {
                 "target_degree": self.config.target_degree,
                 "min_degree": self.config.min_degree,
                 "max_degree": self.config.max_degree,
-                "selection_interval": self.config.selection_interval
-            }
+                "selection_interval": self.config.selection_interval,
+            },
         }

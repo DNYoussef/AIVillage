@@ -15,6 +15,7 @@ security protocols for the LibP2P mesh network.
 import asyncio
 import base64
 from collections import defaultdict, deque
+import contextlib
 from dataclasses import dataclass, field
 from enum import Enum
 import hashlib
@@ -433,14 +434,14 @@ class TrustManager:
         """Periodic maintenance of trust scores."""
         current_time = time.time()
 
-        for peer_id, identity in self.peer_identities.items():
+        for _peer_id, identity in self.peer_identities.items():
             # Apply trust decay
             identity.trust_score *= 1.0 - self.trust_decay_rate
 
             # Clean old behavior patterns
             old_patterns = [
                 timestamp
-                for timestamp in identity.message_patterns.keys()
+                for timestamp in identity.message_patterns
                 if current_time - float(timestamp) > self.behavior_window * 2
             ]
             for timestamp in old_patterns:
@@ -629,10 +630,9 @@ class SecurityManager:
         self.running = False
         if self._maintenance_task:
             self._maintenance_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._maintenance_task
-            except asyncio.CancelledError:
-                pass
+
         logger.info("Security manager stopped")
 
     async def authenticate_peer(self, peer_id: str, auth_data: dict[str, Any]) -> bool:

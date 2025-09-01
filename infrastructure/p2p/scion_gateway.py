@@ -62,19 +62,16 @@ class GatewayConfig:
 class SCIONGatewayError(Exception):
     """Base exception for SCION Gateway operations."""
 
-    pass
 
 
 class SCIONConnectionError(SCIONGatewayError):
     """SCION Gateway connection error."""
 
-    pass
 
 
 class SCIONPacketError(SCIONGatewayError):
     """SCION packet processing error."""
 
-    pass
 
 
 class SCIONGateway:

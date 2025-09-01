@@ -24,7 +24,7 @@ print(f"Core path: {core_path}")
 print(f"Core exists: {core_path.exists()}")
 
 # Check what's actually in the core directory
-agent_forge_path = core_path / "agent-forge"
+agent_forge_path = core_path / "agent_forge"
 print(f"Agent-forge path: {agent_forge_path}")
 print(f"Agent-forge exists: {agent_forge_path.exists()}")
 

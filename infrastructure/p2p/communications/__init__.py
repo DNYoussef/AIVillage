@@ -19,8 +19,8 @@ Features:
 Version: 2.0.0
 """
 
-from typing import TYPE_CHECKING
 import logging
+from typing import TYPE_CHECKING
 
 # Package information
 __version__ = "2.0.0"
@@ -41,6 +41,7 @@ try:
     from .service_info import ServiceInfo
     from .standard_protocol import StandardCommunicationProtocol
     from .websocket_handler import WebSocketHandler
+
     logger.info("Communications core components loaded")
 except ImportError as e:
     logger.warning(f"Communications core components not available: {e}")
@@ -66,6 +67,7 @@ try:
     from .credit_manager import CreditManager
     from .credits import Credits
     from .credits_api import CreditsAPI
+
     logger.debug("Communications credit system loaded")
 except ImportError as e:
     logger.debug(f"Credit system not available: {e}")
@@ -77,6 +79,7 @@ except ImportError as e:
 try:
     from .a2a_protocol import A2AProtocol
     from .community_hub import CommunityHub
+
     logger.debug("Communications specialized protocols loaded")
 except ImportError as e:
     logger.debug(f"Specialized protocols not available: {e}")
@@ -86,6 +89,7 @@ except ImportError as e:
 
 try:
     from .sharder import ShardPlanner
+
     logger.debug("Communications sharding loaded")
 except ImportError as e:
     logger.debug(f"Sharding not available: {e}")
@@ -94,6 +98,7 @@ except ImportError as e:
 
 try:
     from .protocol import CommunicationsProtocol
+
     logger.debug("Communications unified protocol loaded")
 except ImportError as e:
     logger.debug(f"Unified protocol not available: {e}")
@@ -107,31 +112,26 @@ __all__ = [
     "MessageType",
     "Priority",
     "MessagePassing",
-    "MessagePassingSystem", 
+    "MessagePassingSystem",
     "MessageQueue",
     "MessageRouter",
     "ProtocolHandler",
-    
     # Service discovery
     "ServiceDiscovery",
     "ServiceInfo",
     "ServiceRegistry",
     "discover_services",
-    
     # Protocols
     "StandardCommunicationProtocol",
     "CommunicationsProtocol",
     "WebSocketHandler",
-    
     # Credit system
     "CreditManager",
     "Credits",
     "CreditsAPI",
-    
     # Specialized protocols
     "A2AProtocol",
     "CommunityHub",
-    
     # Infrastructure
     "ShardPlanner",
 ]

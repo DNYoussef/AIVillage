@@ -36,7 +36,7 @@ from .consensus_security_manager import (
     SecurityLevel,
     SecurityAlert,
     ThresholdSignature,
-    ZKProof
+    ZKProof,
 )
 
 from .federated_auth_system import (
@@ -53,7 +53,7 @@ from .federated_auth_system import (
     AuthenticationChallenge,
     AuthenticationResponse,
     SessionToken,
-    AccessRequest
+    AccessRequest,
 )
 
 from .threat_modeling_system import (
@@ -68,7 +68,7 @@ from .threat_modeling_system import (
     Vulnerability,
     ThreatScenario,
     SecurityControl,
-    MitigationStatus
+    MitigationStatus,
 )
 
 from .audit_trail_system import (
@@ -84,7 +84,7 @@ from .audit_trail_system import (
     AuditEvent,
     ComplianceRule,
     ForensicQuery,
-    AnomalyPattern
+    AnomalyPattern,
 )
 
 from .secure_key_manager import (
@@ -100,7 +100,7 @@ from .secure_key_manager import (
     CryptographicKey,
     KeyShare,
     KeyBackup,
-    RotationEvent
+    RotationEvent,
 )
 
 # Version information
@@ -112,22 +112,21 @@ __email__ = "security@aivillage.dev"
 __all__ = [
     # Consensus Security
     "ConsensusSecurityManager",
-    "ThresholdCryptographySystem", 
+    "ThresholdCryptographySystem",
     "ZeroKnowledgeProofSystem",
     "AttackDetectionSystem",
     "SecureFederatedAggregation",
     "FederatedSecurityCoordinator",
     "create_federated_security_coordinator",
     "AttackType",
-    "SecurityLevel", 
+    "SecurityLevel",
     "SecurityAlert",
     "ThresholdSignature",
     "ZKProof",
-    
     # Authentication & Authorization
     "FederatedAuthenticationSystem",
     "CryptographicKeyManager",
-    "MultiFactorAuthenticator", 
+    "MultiFactorAuthenticator",
     "RoleBasedAccessControl",
     "FederatedSessionManager",
     "create_federated_auth_system",
@@ -136,30 +135,28 @@ __all__ = [
     "SessionStatus",
     "NodeIdentity",
     "AuthenticationChallenge",
-    "AuthenticationResponse", 
+    "AuthenticationResponse",
     "SessionToken",
     "AccessRequest",
-    
     # Threat Modeling
     "ThreatModelingEngine",
     "FederatedThreatDatabase",
     "create_threat_modeling_system",
     "ThreatCategory",
     "AttackVector",
-    "RiskLevel", 
+    "RiskLevel",
     "ThreatActor",
     "Asset",
     "Vulnerability",
     "ThreatScenario",
     "SecurityControl",
     "MitigationStatus",
-    
     # Audit & Compliance
     "AuditTrailSystem",
     "EventBuffer",
     "ComplianceEngine",
     "AnomalyDetectionEngine",
-    "ForensicAnalysisEngine", 
+    "ForensicAnalysisEngine",
     "create_audit_trail_system",
     "EventType",
     "EventSeverity",
@@ -168,21 +165,20 @@ __all__ = [
     "ComplianceRule",
     "ForensicQuery",
     "AnomalyPattern",
-    
     # Key Management
     "SecureKeyManager",
     "SecureKeyStore",
     "DistributedKeyGenerator",
     "KeyRotationManager",
     "KeyBackupManager",
-    "create_secure_key_manager", 
+    "create_secure_key_manager",
     "KeyType",
     "KeyStatus",
     "RotationTrigger",
     "CryptographicKey",
-    "KeyShare", 
+    "KeyShare",
     "KeyBackup",
-    "RotationEvent"
+    "RotationEvent",
 ]
 
 # Configuration defaults
@@ -192,26 +188,26 @@ DEFAULT_SECURITY_CONFIG = {
         "zk_proofs_enabled": True,
         "byzantine_tolerance": 1,
         "attack_detection_enabled": True,
-        "reputation_threshold": 0.5
+        "reputation_threshold": 0.5,
     },
     "authentication": {
         "require_mfa": True,
         "session_timeout": 3600,
         "max_login_attempts": 3,
-        "password_complexity": "high"
+        "password_complexity": "high",
     },
     "audit": {
         "blockchain_anchoring": True,
         "anomaly_detection": True,
         "compliance_frameworks": ["SOC2", "ISO27001"],
-        "retention_period_days": 2555  # 7 years
+        "retention_period_days": 2555,  # 7 years
     },
     "key_management": {
         "auto_rotation": True,
         "backup_required": True,
         "rotation_interval_days": 90,
-        "key_strength": 2048
-    }
+        "key_strength": 2048,
+    },
 }
 
 # Compliance mappings
@@ -220,36 +216,25 @@ COMPLIANCE_MAPPINGS = {
         "data_access_logging": True,
         "consent_tracking": True,
         "retention_limits": True,
-        "right_to_be_forgotten": True
+        "right_to_be_forgotten": True,
     },
     "HIPAA": {
         "phi_access_logging": True,
         "minimum_necessary": True,
         "audit_controls": True,
-        "encryption_required": True
+        "encryption_required": True,
     },
-    "SOC2": {
-        "security_monitoring": True,
-        "access_controls": True,
-        "system_availability": True,
-        "data_integrity": True
-    },
+    "SOC2": {"security_monitoring": True, "access_controls": True, "system_availability": True, "data_integrity": True},
     "ISO27001": {
         "risk_assessment": True,
         "security_controls": True,
         "incident_management": True,
-        "continuous_monitoring": True
-    }
+        "continuous_monitoring": True,
+    },
 }
 
 # Security event severity levels
-SEVERITY_LEVELS = {
-    "INFO": 0,
-    "NOTICE": 1, 
-    "WARNING": 2,
-    "ERROR": 3,
-    "CRITICAL": 4
-}
+SEVERITY_LEVELS = {"INFO": 0, "NOTICE": 1, "WARNING": 2, "ERROR": 3, "CRITICAL": 4}
 
 # Attack detection thresholds
 ATTACK_THRESHOLDS = {
@@ -258,28 +243,33 @@ ATTACK_THRESHOLDS = {
     "eclipse": 0.6,
     "dos": 0.9,
     "gradient_inversion": 0.8,
-    "model_poisoning": 0.7
+    "model_poisoning": 0.7,
 }
+
 
 def get_security_config(component: str) -> dict:
     """Get default security configuration for component"""
     return DEFAULT_SECURITY_CONFIG.get(component, {})
 
+
 def get_compliance_requirements(framework: str) -> dict:
     """Get compliance requirements for framework"""
     return COMPLIANCE_MAPPINGS.get(framework, {})
 
+
 def validate_security_config(config: dict) -> bool:
     """Validate security configuration"""
     required_components = ["consensus", "authentication", "audit", "key_management"]
-    
+
     for component in required_components:
         if component not in config:
             return False
-    
+
     return True
+
 
 # Module initialization
 import logging
+
 logger = logging.getLogger(__name__)
 logger.info(f"Initialized fog security infrastructure v{__version__}")

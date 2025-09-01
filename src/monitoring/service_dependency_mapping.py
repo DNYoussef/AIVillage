@@ -111,7 +111,7 @@ class ServiceRegistry:
         # Core services
         self.register_service(
             ServiceInfo(
-                name="agent-forge",
+                name="agent_forge",
                 component="ml-pipeline",
                 version="2.0.0",
                 host="localhost",
@@ -255,7 +255,7 @@ class ServiceRegistry:
         # Agent Forge dependencies
         self.add_dependency(
             ServiceDependency(
-                "agent-forge",
+                "agent_forge",
                 "postgresql",
                 DependencyType.DATABASE,
                 "/health",
@@ -265,7 +265,7 @@ class ServiceRegistry:
         )
         self.add_dependency(
             ServiceDependency(
-                "agent-forge",
+                "agent_forge",
                 "redis-master",
                 DependencyType.CACHE,
                 "/health",
@@ -300,7 +300,7 @@ class ServiceRegistry:
         self.add_dependency(
             ServiceDependency(
                 "api-gateway",
-                "agent-forge",
+                "agent_forge",
                 DependencyType.HTTP_API,
                 "/health",
                 critical=True,

@@ -42,6 +42,7 @@ class MockSecureCodeRunner:
                         return max(0.0, min(1.0, score))
                     except BaseException as e:
                         import logging
+
                         logging.exception("Code execution error: %s", str(e))
 
                 # Check for params.get pattern
@@ -53,6 +54,7 @@ class MockSecureCodeRunner:
 
         except Exception as e:
             import logging
+
             logging.exception("Code sandbox execution error: %s", str(e))
             return 0.0
 

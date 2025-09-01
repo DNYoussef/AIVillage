@@ -9,18 +9,21 @@ try:
     # Try to import from local grokfast implementation first
     import sys
     from pathlib import Path
-    grokfast_path = str(Path(__file__).parent.parent.parent.parent.parent / "core" / "agent-forge" / "phases" / "cognate_pretrain")
+
+    grokfast_path = str(
+        Path(__file__).parent.parent.parent.parent.parent / "core" / "agent_forge" / "phases" / "cognate_pretrain"
+    )
     if grokfast_path not in sys.path:
         sys.path.append(grokfast_path)
-    
+
     # Use local grokfast optimizer as base for AugmentedAdam functionality
-    from grokfast_optimizer import GrokFastOptimizer
-    
+
     class AugmentedAdam(torch.optim.Adam):  # type: ignore[misc]
         """Local implementation of AugmentedAdam using GrokFast principles."""
+
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            
+
 except ImportError:  # pragma: no cover - fallback implementation
 
     class AugmentedAdam(torch.optim.Adam):  # type: ignore[misc]

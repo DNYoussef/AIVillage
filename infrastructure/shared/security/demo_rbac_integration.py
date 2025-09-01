@@ -41,7 +41,7 @@ async def demo_rbac_system():
     developer = await rbac.create_user(
         username="alice_dev",
         email="alice@demo.corp",
-        password="DevPassword123!",
+        password="DevPassword123!",  # nosec B106 - demo password for testing
         tenant_id=tenant.tenant_id,
         role=Role.DEVELOPER,
     )
@@ -50,7 +50,7 @@ async def demo_rbac_system():
     data_scientist = await rbac.create_user(
         username="bob_scientist",
         email="bob@demo.corp",
-        password="DataPassword123!",
+        password="DataPassword123!",  # nosec B106 - demo password for testing
         tenant_id=tenant.tenant_id,
         role=Role.DATA_SCIENTIST,
     )
@@ -59,7 +59,7 @@ async def demo_rbac_system():
     regular_user = await rbac.create_user(
         username="charlie_user",
         email="charlie@demo.corp",
-        password="UserPassword123!",
+        password="UserPassword123!",  # nosec B106 - demo password for testing
         tenant_id=tenant.tenant_id,
         role=Role.USER,
     )
@@ -70,7 +70,7 @@ async def demo_rbac_system():
 
     admin_session = await rbac.authenticate(
         username="demo_admin",
-        password="SecurePassword123!",
+        password="SecurePassword123!",  # nosec B106 - demo password for testing
         tenant_id=tenant.tenant_id,
         ip_address="127.0.0.1",
         user_agent="Demo/1.0",
@@ -79,7 +79,7 @@ async def demo_rbac_system():
 
     dev_session = await rbac.authenticate(
         username="alice_dev",
-        password="DevPassword123!",
+        password="DevPassword123!",  # nosec B106 - demo password for testing
         tenant_id=tenant.tenant_id,
         ip_address="127.0.0.1",
         user_agent="Demo/1.0",
@@ -228,7 +228,7 @@ async def demo_rbac_system():
     other_user = await rbac.create_user(
         username="eve_other",
         email="eve@other.corp",
-        password="EvePassword123!",
+        password="EvePassword123!",  # nosec B106 - demo password for testing
         tenant_id=tenant2.tenant_id,
         role=Role.USER,
     )
@@ -308,7 +308,7 @@ async def demo_api_server():
             "POST /rag/collections/{id}/query - Query RAG",
             "POST /p2p/networks - Create P2P network",
             "GET  /p2p/networks - List P2P networks",
-            "POST /agent-forge/training - Start training",
+            "POST /agent_forge/training - Start training",
             "POST /digital-twin - Create digital twin",
             "POST /mobile/devices - Register device",
             "GET  /audit/logs - Get audit logs",

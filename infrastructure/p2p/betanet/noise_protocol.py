@@ -4,7 +4,7 @@ Enhanced Noise XK Protocol Implementation with ECH Integration
 Implements the Noise XK handshake pattern for BetaNet HTX transport with
 Encrypted Client Hello (ECH) support, providing enhanced forward secrecy
 and protection against SNI leakage. Based on archaeological findings from
-branches codex/add-ech-config-parsing-and-validation and 
+branches codex/add-ech-config-parsing-and-validation and
 codex/implement-noise-protocol-with-perfect-forward-secrecy.
 
 Archaeological Integration Status: ACTIVE

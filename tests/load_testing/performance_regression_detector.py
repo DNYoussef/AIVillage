@@ -22,7 +22,7 @@ import logging
 import statistics
 import sys
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import subprocess
@@ -129,7 +129,7 @@ class StatisticalAnalysis:
         t_stat = (mean1 - mean2) / (pooled_std * math.sqrt(1 / n1 + 1 / n2))
 
         # Degrees of freedom
-        df = n1 + n2 - 2
+        n1 + n2 - 2
 
         # Simple p-value approximation (for production use scipy.stats)
         # This is a rough approximation - replace with proper t-distribution
@@ -175,7 +175,7 @@ class StatisticalAnalysis:
         sum_y = sum(y_values)
         sum_xy = sum(x * y for x, y in zip(x_values, y_values))
         sum_x2 = sum(x * x for x in x_values)
-        sum_y2 = sum(y * y for y in y_values)
+        sum(y * y for y in y_values)
 
         # Calculate slope and correlation
         if n * sum_x2 - sum_x * sum_x == 0:

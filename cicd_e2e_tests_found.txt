@@ -1,0 +1,5 @@
+./tests/constitutional/test_integration_e2e.py
+./tests/e2e/comprehensive_integration_test.py
+./tests/e2e/test_scion_gateway.py
+./tests/python/e2e/comprehensive_integration_test.py
+./tools/development/build/workspace/apps/new_env/Lib/site-packages/onnxruntime/transformers/models/llama/benchmark_e2e.py

@@ -6,22 +6,17 @@ with fog computing task distribution and service hosting.
 """
 
 import asyncio
-import json
 import pytest
 from unittest.mock import AsyncMock, Mock, patch
-from datetime import datetime, UTC, timedelta
+from datetime import datetime, UTC
 
 # Import fog components
 from infrastructure.fog.integration.fog_coordinator import FogCoordinator
 from infrastructure.fog.integration.fog_onion_coordinator import (
     FogOnionCoordinator,
     PrivacyAwareTask,
-    PrivacyAwareService,
     PrivacyLevel,
-    TaskPrivacyPolicy,
 )
-from infrastructure.fog.privacy.onion_routing import NodeType, OnionRouter, OnionCircuit
-from infrastructure.fog.privacy.mixnet_integration import NymMixnetClient
 
 
 class TestFogOnionIntegration:
@@ -64,14 +59,14 @@ class TestFogOnionIntegration:
 
         coordinator.onion_router = mock_onion_router
         coordinator.mixnet_client = mock_mixnet_client
-        
+
         # Also set the fog coordinator's onion router to our mock
         # to prevent it from being overridden during start()
         fog_coordinator.onion_router = mock_onion_router
 
         # Mock consensus and circuit building
         mock_onion_router.consensus = {f"node_{i}": Mock() for i in range(10)}
-        
+
         # Create mock circuit
         mock_circuit_obj = Mock()
         mock_circuit_obj.circuit_id = "test-circuit-123"
@@ -79,9 +74,9 @@ class TestFogOnionIntegration:
         mock_circuit_obj.hops = [Mock(), Mock(), Mock()]
         mock_circuit_obj.bytes_sent = 0
         mock_circuit_obj.bytes_received = 0
-        
+
         mock_onion_router.build_circuit = AsyncMock(return_value=mock_circuit_obj)
-        
+
         # Mock the circuits registry in the onion router
         mock_onion_router.circuits = {"test-circuit-123": mock_circuit_obj}
         mock_onion_router.send_data = AsyncMock(return_value=True)
@@ -95,7 +90,7 @@ class TestFogOnionIntegration:
 
         mock_mixnet_client.send_anonymous_message = AsyncMock(return_value="packet-789")
         mock_mixnet_client.start = AsyncMock(return_value=True)  # For start
-        mock_mixnet_client.stop = AsyncMock(return_value=True)   # For teardown
+        mock_mixnet_client.stop = AsyncMock(return_value=True)  # For teardown
         mock_mixnet_client.get_mixnet_stats = AsyncMock(
             return_value={
                 "client_id": "test-mixnet",
@@ -110,12 +105,12 @@ class TestFogOnionIntegration:
                 coordinator.circuit_pools[privacy_level] = [mock_circuit_obj]
 
         # Mock the circuit pool initialization to avoid actual circuit building
-        with patch.object(coordinator, '_initialize_circuit_pools') as mock_init_pools:
+        with patch.object(coordinator, "_initialize_circuit_pools") as mock_init_pools:
             mock_init_pools.return_value = None
-            with patch.object(coordinator, '_start_background_tasks') as mock_bg_tasks:
+            with patch.object(coordinator, "_start_background_tasks") as mock_bg_tasks:
                 mock_bg_tasks.return_value = None
                 await coordinator.start()
-        
+
         yield coordinator
         await coordinator.stop()
 
@@ -144,7 +139,7 @@ class TestFogOnionIntegration:
 
         # Verify circuit was used (send_data should be called for routing)
         onion_coordinator.onion_router.send_data.assert_called()
-        
+
         # Verify task is properly tracked
         assert onion_coordinator.privacy_tasks[task.task_id] == task
 

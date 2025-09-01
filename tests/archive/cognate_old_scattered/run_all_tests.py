@@ -107,8 +107,8 @@ class CognateTestRunner:
         """Run all test suites comprehensively."""
         print("🚀 COGNATE 25M SYSTEM - COMPREHENSIVE VALIDATION")
         print("=" * 80)
-        print(f"Testing reorganized Cognate system")
-        print(f"Test suites: Import, Functional, Integration, File Organization, Error Handling")
+        print("Testing reorganized Cognate system")
+        print("Test suites: Import, Functional, Integration, File Organization, Error Handling")
         print("=" * 80)
 
         self.results["start_time"] = time.time()
@@ -153,7 +153,7 @@ class CognateTestRunner:
         failed = self.results["failed_tests"]
         success_rate = (passed / total * 100) if total > 0 else 0
 
-        print(f"📊 OVERALL RESULTS:")
+        print("📊 OVERALL RESULTS:")
         print(f"   Total Tests Run: {total}")
         print(f"   Tests Passed: {passed}")
         print(f"   Tests Failed: {failed}")
@@ -161,7 +161,7 @@ class CognateTestRunner:
         print(f"   Duration: {duration:.2f} seconds")
 
         # Per-suite breakdown
-        print(f"\n📋 TEST SUITE BREAKDOWN:")
+        print("\n📋 TEST SUITE BREAKDOWN:")
         for suite_name, suite_results in self.results["test_suites"].items():
             suite_total = suite_results["tests_run"]
             suite_passed = suite_results["tests_passed"]
@@ -172,7 +172,7 @@ class CognateTestRunner:
             print(f"   {status} {suite_name}: {suite_passed}/{suite_total} ({suite_rate:.1f}%)")
 
         # Critical issues
-        print(f"\n🔍 CRITICAL ANALYSIS:")
+        print("\n🔍 CRITICAL ANALYSIS:")
         critical_issues = []
 
         # Check for import failures
@@ -197,7 +197,7 @@ class CognateTestRunner:
             print("   ✅ No critical issues detected")
 
         # Recommendations
-        print(f"\n💡 RECOMMENDATIONS:")
+        print("\n💡 RECOMMENDATIONS:")
         if failed == 0:
             print("   ✅ All tests passed! Cognate system reorganization is successful.")
             print("   ✅ Ready for production deployment.")
@@ -210,7 +210,7 @@ class CognateTestRunner:
             print("   ❌ Do not deploy until issues are resolved.")
 
         # Success criteria check
-        print(f"\n🎯 SUCCESS CRITERIA VALIDATION:")
+        print("\n🎯 SUCCESS CRITERIA VALIDATION:")
         success_criteria = [
             ("All imports work without errors", import_results.get("tests_failed", 1) == 0),
             ("Models created successfully with correct specs", func_results.get("tests_passed", 0) >= 3),
@@ -240,7 +240,7 @@ class CognateTestRunner:
             import_results.get("tests_failed", 1) == 0 and func_results.get("tests_passed", 0) >= 3
         )
 
-        print(f"\n🏆 FINAL VERDICT:")
+        print("\n🏆 FINAL VERDICT:")
         if all_criteria_met:
             print("   🎉 COMPLETE SUCCESS - All success criteria met!")
             print("   ✅ Cognate 25M reorganization is fully validated")

@@ -20,9 +20,9 @@ import time
 from collections import defaultdict, deque
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 import psutil
 
@@ -794,7 +794,7 @@ class PerformanceBenchmarker:
         # Test compression
         large_message = {"data": "x" * 10000}  # 10KB message
         start_time = time.time()
-        compressed = network_optimizer._serialize_message(large_message)
+        network_optimizer._serialize_message(large_message)
         compression_time_ms = (time.time() - start_time) * 1000
 
         # Simulate discovery time
@@ -1031,7 +1031,7 @@ if __name__ == "__main__":
 
         # Print summary
         summary = report["performance_summary"]
-        print(f"\nPerformance Summary:")
+        print("\nPerformance Summary:")
         print(f"Overall Performance: {summary['overall_performance'].upper()}")
         print(f"Targets Met: {summary['targets_met']}/{summary['targets_total']}")
         print(f"Performance Score: {summary['performance_score']:.1%}")

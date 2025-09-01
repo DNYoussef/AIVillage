@@ -347,7 +347,7 @@ class CloudCostAnalyzer:
                     ),
                     ResourceSpecification(
                         resource_type=ResourceType.COMPUTE,
-                        name="agent-forge",
+                        name="agent_forge",
                         description="Agent Forge training servers",
                         cpu_cores=16,
                         memory_gb=64,
@@ -660,7 +660,7 @@ class CloudCostAnalyzer:
 
         # Spot instance recommendations
         training_costs = sum(
-            cost.monthly_cost for cost in analysis.resource_costs if "agent-forge" in cost.resource_spec.name.lower()
+            cost.monthly_cost for cost in analysis.resource_costs if "agent_forge" in cost.resource_spec.name.lower()
         )
         if training_costs > Decimal("50"):
             spot_savings = training_costs * Decimal("0.7")  # 70% savings with spot

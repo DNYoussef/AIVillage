@@ -12,6 +12,7 @@ Tests the complete SDK marketplace integration:
 from datetime import UTC, datetime
 
 import pytest
+
 try:
     import aiohttp
 except ImportError:
@@ -19,49 +20,47 @@ except ImportError:
     class aiohttp:
         class ClientError(Exception):
             pass
-        
+
         class ClientResponseError(Exception):
             def __init__(self, request_info, history, status, message):
                 self.status = status
                 self.message = message
                 super().__init__(message)
 
+
 # Import fog components or create mocks if not available
 try:
     from packages.fog.gateway.scheduler.marketplace import BidType, PricingTier, get_marketplace_engine
-    from packages.fog.sdk.python.fog_client import CostEstimate, FogClient, FogClientError, MarketplacePrices, PriceQuote
+    from packages.fog.sdk.python.fog_client import (
+        CostEstimate,
+        FogClient,
+        FogClientError,
+        MarketplacePrices,
+        PriceQuote,
+    )
 except ImportError:
     # Create mock classes for fog components
     from enum import Enum
-    
+
     class BidType(Enum):
-        SPOT = 'spot'
-        ON_DEMAND = 'on_demand'
-    
+        SPOT = "spot"
+        ON_DEMAND = "on_demand"
+
     class PricingTier(Enum):
-        BASIC = 'basic'
-        STANDARD = 'standard'
-        PREMIUM = 'premium'
-    
+        BASIC = "basic"
+        STANDARD = "standard"
+        PREMIUM = "premium"
+
     class CostEstimate:
         def __init__(self):
             self.estimated_cost = 1.0
-            self.pricing_tier = 'basic'
-            self.bid_type = 'spot'
+            self.pricing_tier = "basic"
+            self.bid_type = "spot"
             self.duration_hours = 2.0
             self.confidence_level = 0.85
-            self.cost_breakdown = {
-                'cpu_cost': 0.5,
-                'memory_cost': 0.3,
-                'disk_cost': 0.1,
-                'network_cost': 0.1
-            }
-            self.price_range = {
-                'min': 0.8,
-                'max': 1.2,
-                'market': 1.0
-            }
-    
+            self.cost_breakdown = {"cpu_cost": 0.5, "memory_cost": 0.3, "disk_cost": 0.1, "network_cost": 0.1}
+            self.price_range = {"min": 0.8, "max": 1.2, "market": 1.0}
+
     class PriceQuote:
         def __init__(self):
             self.available = True
@@ -73,120 +72,113 @@ except ImportError:
             self.available_providers = 2
             self.suggested_max_price = 0.11
             self.reason = None
-    
+
     class MarketplacePrices:
         def __init__(self):
-            self.currency = 'USD'
+            self.currency = "USD"
             self.spot_price_per_cpu_hour = 0.08
             self.on_demand_price_per_cpu_hour = 0.12
             self.price_volatility = 0.15
             self.available_providers = 2
             self.pricing_tiers = {
-                'basic': {'multiplier': 1.0},
-                'standard': {'multiplier': 1.5},
-                'premium': {'multiplier': 2.0}
+                "basic": {"multiplier": 1.0},
+                "standard": {"multiplier": 1.5},
+                "premium": {"multiplier": 2.0},
             }
-    
+
     class FogClientError(Exception):
         pass
-    
+
     class FogClient:
         def __init__(self, base_url, api_key, namespace):
             self.base_url = base_url
             self.api_key = api_key
             self.namespace = namespace
             self._request = None
-        
+
         async def __aenter__(self):
             return self
-        
+
         async def __aexit__(self, exc_type, exc_val, exc_tb):
             pass
-        
+
         async def get_price_quote(self, **kwargs):
             quote = PriceQuote()
             if self._request:
-                result = await self._request('GET', '/v1/fog/quotes', json_data=kwargs)
-                if not result.get('available', True):
+                result = await self._request("GET", "/v1/fog/quotes", json_data=kwargs)
+                if not result.get("available", True):
                     quote.available = False
-                    quote.reason = result.get('reason')
+                    quote.reason = result.get("reason")
             return quote
-        
+
         async def get_marketplace_prices(self):
             return MarketplacePrices()
-        
+
         async def estimate_job_cost(self, **kwargs):
             return CostEstimate()
-        
+
         async def submit_bid(self, **kwargs):
-            return {'bid_id': 'test_bid_123', 'status': 'pending'}
-        
+            return {"bid_id": "test_bid_123", "status": "pending"}
+
         async def get_bid_status(self, bid_id):
-            return {
-                'bid_id': bid_id,
-                'status': 'pending',
-                'cpu_cores': 1.0,
-                'memory_gb': 2.0,
-                'max_price': 0.25
-            }
-        
+            return {"bid_id": bid_id, "status": "pending", "cpu_cores": 1.0, "memory_gb": 2.0, "max_price": 0.25}
+
         async def run_job_with_budget(self, **kwargs):
-            return type('JobResult', (), {
-                'job_id': 'test-job-12345',
-                'status': 'completed',
-                'exit_code': 0,
-                'cpu_seconds_used': 3600.0
-            })()
-    
+            return type(
+                "JobResult",
+                (),
+                {"job_id": "test-job-12345", "status": "completed", "exit_code": 0, "cpu_seconds_used": 3600.0},
+            )()
+
     async def get_marketplace_engine():
         class MockMarketplaceEngine:
             def __init__(self):
                 self.pending_bids = {}
-            
+
             async def add_resource_listing(self, **kwargs):
                 pass
-            
+
             async def stop(self):
                 pass
-            
+
             async def get_price_quote(self, **kwargs):
                 return {
-                    'available': True,
-                    'quote': {
-                        'min_price': 0.08,
-                        'max_price': 0.15,
-                        'avg_price': 0.10
-                    },
-                    'market_conditions': {},
-                    'recommendations': {}
+                    "available": True,
+                    "quote": {"min_price": 0.08, "max_price": 0.15, "avg_price": 0.10},
+                    "market_conditions": {},
+                    "recommendations": {},
                 }
-            
+
             async def get_marketplace_status(self):
                 return {
-                    'pricing': {
-                        'current_spot_price_per_cpu_hour': 0.08,
-                        'current_on_demand_price_per_cpu_hour': 0.12,
-                        'price_volatility_24h': 0.15
+                    "pricing": {
+                        "current_spot_price_per_cpu_hour": 0.08,
+                        "current_on_demand_price_per_cpu_hour": 0.12,
+                        "price_volatility_24h": 0.15,
                     },
-                    'resource_supply': {'utilization_rate': 0.7},
-                    'resource_demand': {'demand_supply_ratio': 1.2},
-                    'marketplace_summary': {'active_listings': 5}
+                    "resource_supply": {"utilization_rate": 0.7},
+                    "resource_demand": {"demand_supply_ratio": 1.2},
+                    "marketplace_summary": {"active_listings": 5},
                 }
-            
+
             async def submit_bid(self, **kwargs):
-                bid_id = f'bid_{len(self.pending_bids)}'
-                bid = type('Bid', (), {
-                    'status': BidType.SPOT,
-                    'cpu_cores': kwargs.get('cpu_cores', 1.0),
-                    'memory_gb': kwargs.get('memory_gb', 2.0),
-                    'max_price': kwargs.get('max_price', 0.25),
-                    'created_at': type('datetime', (), {'isoformat': lambda: '2023-01-01T00:00:00Z'}),
-                    'matched_listing_id': None,
-                    'actual_cost': None
-                })()
+                bid_id = f"bid_{len(self.pending_bids)}"
+                bid = type(
+                    "Bid",
+                    (),
+                    {
+                        "status": BidType.SPOT,
+                        "cpu_cores": kwargs.get("cpu_cores", 1.0),
+                        "memory_gb": kwargs.get("memory_gb", 2.0),
+                        "max_price": kwargs.get("max_price", 0.25),
+                        "created_at": type("datetime", (), {"isoformat": lambda: "2023-01-01T00:00:00Z"}),
+                        "matched_listing_id": None,
+                        "actual_cost": None,
+                    },
+                )()
                 self.pending_bids[bid_id] = bid
                 return bid_id
-        
+
         return MockMarketplaceEngine()
 
 

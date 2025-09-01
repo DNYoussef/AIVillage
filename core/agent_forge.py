@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Enhanced Module Bridge for agent-forge (hyphenated directory) to agent_forge (underscore import)
-This allows importing agent_forge.phases.cognate_pretrain even though the directory is agent-forge
+Enhanced Module Bridge for agent_forge (hyphenated directory) to agent_forge (underscore import)
+This allows importing agent_forge.phases.cognate_pretrain even though the directory is agent_forge
 
 Handles all submodules and provides proper error messages for debugging.
 """
@@ -14,8 +14,8 @@ import sys
 # Set up logging for debugging imports
 logger = logging.getLogger(__name__)
 
-# Get the actual agent-forge directory
-_agent_forge_dir = Path(__file__).parent / "agent-forge"
+# Get the actual agent_forge directory
+_agent_forge_dir = Path(__file__).parent / "agent_forge"
 
 
 def _load_hyphenated_module(name, path, submodule_name=None):
@@ -114,7 +114,7 @@ _import_errors = []
 
 if _agent_forge_dir.exists():
     try:
-        # Load the main agent-forge module
+        # Load the main agent_forge module
         _agent_forge_module = _load_hyphenated_module("agent_forge", _agent_forge_dir)
         if _agent_forge_module:
             # Load core modules

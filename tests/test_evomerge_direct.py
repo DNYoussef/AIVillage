@@ -23,7 +23,7 @@ def test_evomerge_files_exist():
     """Test that EvoMerge files exist."""
     print("Testing EvoMerge file structure...")
 
-    evomerge_file = PROJECT_ROOT / "core" / "agent-forge" / "phases" / "evomerge.py"
+    evomerge_file = PROJECT_ROOT / "core" / "agent_forge" / "phases" / "evomerge.py"
     if evomerge_file.exists():
         print(f"   OK EvoMerge phase file exists: {evomerge_file}")
 
@@ -53,8 +53,8 @@ def test_evomerge_results_exist():
     print("\nChecking for existing EvoMerge results...")
 
     results_locations = [
-        PROJECT_ROOT / "core" / "agent-forge" / "phases" / "evomerge_50gen_final_results.json",
-        PROJECT_ROOT / "core" / "agent-forge" / "phases" / "cognate_evomerge_output" / "evomerge_results.json",
+        PROJECT_ROOT / "core" / "agent_forge" / "phases" / "evomerge_50gen_final_results.json",
+        PROJECT_ROOT / "core" / "agent_forge" / "phases" / "cognate_evomerge_output" / "evomerge_results.json",
     ]
 
     found_results = False
@@ -92,8 +92,8 @@ def test_evomerge_output_models():
     print("\nChecking for EvoMerge output models...")
 
     output_dirs = [
-        PROJECT_ROOT / "core" / "agent-forge" / "phases" / "cognate_evomerge_output",
-        PROJECT_ROOT / "core" / "agent-forge" / "phases" / "evomerge_50gen_final",
+        PROJECT_ROOT / "core" / "agent_forge" / "phases" / "cognate_evomerge_output",
+        PROJECT_ROOT / "core" / "agent_forge" / "phases" / "evomerge_50gen_final",
     ]
 
     found_models = False

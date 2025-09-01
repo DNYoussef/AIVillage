@@ -13,6 +13,7 @@ mesh network uses for advanced networking features.
 
 import asyncio
 from collections import defaultdict, deque
+import contextlib
 from dataclasses import dataclass, field
 from enum import Enum
 import logging
@@ -152,10 +153,9 @@ class GossipProtocol:
         self.running = False
         if self._gossip_task:
             self._gossip_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._gossip_task
-            except asyncio.CancelledError:
-                pass
+
 
     def add_peer(self, peer_id: str, metrics: PeerMetrics | None = None):
         """Add a peer to gossip with."""
@@ -307,10 +307,9 @@ class DistanceVectorRouting:
         self.running = False
         if self._update_task:
             self._update_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._update_task
-            except asyncio.CancelledError:
-                pass
+
 
     def add_neighbor(self, neighbor_id: str, cost: float = 1.0):
         """Add or update a neighbor."""
@@ -413,7 +412,7 @@ class DistanceVectorRouting:
 
                 # Send distance vector to neighbors
                 distance_vector = self.get_distance_vector()
-                for neighbor_id in self.neighbors.keys():
+                for neighbor_id in self.neighbors:
                     await self._send_distance_vector(neighbor_id, distance_vector)
 
                 await asyncio.sleep(self.update_interval)
@@ -461,10 +460,9 @@ class TopologyManager:
         self.running = False
         if self._optimization_task:
             self._optimization_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._optimization_task
-            except asyncio.CancelledError:
-                pass
+
 
     def add_peer(self, peer_id: str, metrics: PeerMetrics | None = None):
         """Add peer to topology."""
@@ -530,7 +528,7 @@ class TopologyManager:
         path_count = 0
 
         # Simple BFS for shortest paths
-        for start_peer in self.peers.keys():
+        for start_peer in self.peers:
             visited = {start_peer}
             queue = deque([(start_peer, 0)])
 
@@ -554,7 +552,7 @@ class TopologyManager:
         total_clustering = 0
         node_count = 0
 
-        for peer in self.peers.keys():
+        for peer in self.peers:
             neighbors = self.connections[peer]
             if len(neighbors) < 2:
                 continue
@@ -595,13 +593,13 @@ class TopologyManager:
         changes = []
 
         # Try to connect all peers to all others (within limits)
-        for peer1 in self.peers.keys():
+        for peer1 in self.peers:
             current_connections = len(self.connections[peer1])
 
             if current_connections < self.max_connections_per_node:
                 # Find best peers to connect to
                 candidates = []
-                for peer2 in self.peers.keys():
+                for peer2 in self.peers:
                     if (
                         peer1 != peer2
                         and peer2 not in self.connections[peer1]
@@ -702,11 +700,11 @@ class TopologyManager:
             changes.extend(await self._optimize_for_hierarchy())
         else:  # Normal conditions - balanced approach
             # Ensure minimum connectivity
-            for peer in self.peers.keys():
+            for peer in self.peers:
                 if len(self.connections[peer]) < self.min_connections_per_node:
                     # Find best peer to connect to
                     candidates = []
-                    for other_peer in self.peers.keys():
+                    for other_peer in self.peers:
                         if peer != other_peer and other_peer not in self.connections[peer]:
                             metrics = self.peers[other_peer]
                             score = metrics.trust_score * (1.0 - metrics.latency_ms / 1000.0)

@@ -7,6 +7,7 @@ from typing import Final
 
 class MessageSenders(Enum):
     """Standard message senders."""
+
     UNIFIED_MANAGEMENT = "UnifiedManagement"
     TASK_MANAGER = "TaskManager"
     SYSTEM = "System"
@@ -15,6 +16,7 @@ class MessageSenders(Enum):
 
 class MessageContent(Enum):
     """Standard message content fields."""
+
     TASK_ID = "task_id"
     DESCRIPTION = "description"
     INCENTIVE = "incentive"
@@ -24,22 +26,22 @@ class MessageContent(Enum):
 @dataclass(frozen=True)
 class MessageDefaults:
     """Default values for message handling."""
-    
+
     # Standard senders
     UNIFIED_MANAGEMENT_SENDER: Final[str] = MessageSenders.UNIFIED_MANAGEMENT.value
     TASK_MANAGER_SENDER: Final[str] = MessageSenders.TASK_MANAGER.value
     SYSTEM_SENDER: Final[str] = MessageSenders.SYSTEM.value
     DEFAULT_AGENT_NAME: Final[str] = MessageSenders.DEFAULT_AGENT.value
-    
+
     # Message content field names
     TASK_ID_FIELD: Final[str] = MessageContent.TASK_ID.value
     DESCRIPTION_FIELD: Final[str] = MessageContent.DESCRIPTION.value
     INCENTIVE_FIELD: Final[str] = MessageContent.INCENTIVE.value
     ASSIGNED_AGENT_FIELD: Final[str] = MessageContent.ASSIGNED_AGENT.value
-    
+
     # Agent selection fallback
     BEST_ALTERNATIVE_KEY: Final[str] = "best_alternative"
-    
+
     # Decision making threshold
     DECISION_THRESHOLD: Final[float] = 0.5
 
@@ -47,19 +49,19 @@ class MessageDefaults:
 @dataclass(frozen=True)
 class MessageConstants:
     """Core message handling constants."""
-    
+
     # Sender identifiers
     UNIFIED_MANAGEMENT: Final[str] = MessageDefaults.UNIFIED_MANAGEMENT_SENDER
     TASK_MANAGER: Final[str] = MessageDefaults.TASK_MANAGER_SENDER
     SYSTEM: Final[str] = MessageDefaults.SYSTEM_SENDER
     DEFAULT_AGENT: Final[str] = MessageDefaults.DEFAULT_AGENT_NAME
-    
+
     # Content field names
     TASK_ID: Final[str] = MessageDefaults.TASK_ID_FIELD
     DESCRIPTION: Final[str] = MessageDefaults.DESCRIPTION_FIELD
     INCENTIVE: Final[str] = MessageDefaults.INCENTIVE_FIELD
     ASSIGNED_AGENT: Final[str] = MessageDefaults.ASSIGNED_AGENT_FIELD
-    
+
     # Decision making
     BEST_ALTERNATIVE: Final[str] = MessageDefaults.BEST_ALTERNATIVE_KEY
     DECISION_THRESHOLD: Final[float] = MessageDefaults.DECISION_THRESHOLD
@@ -68,11 +70,11 @@ class MessageConstants:
 @dataclass(frozen=True)
 class ErrorMessageConstants:
     """Error message templates for consistent error handling."""
-    
+
     # Task error messages
     TASK_NOT_FOUND_TEMPLATE: Final[str] = "Task {task_id} not found in ongoing tasks"
     PROJECT_NOT_FOUND_TEMPLATE: Final[str] = "Project with ID {project_id} not found"
-    
+
     # Error prefixes
     ERROR_CREATING_TASK: Final[str] = "Error creating task"
     ERROR_CREATING_COMPLEX_TASK: Final[str] = "Error creating complex task"

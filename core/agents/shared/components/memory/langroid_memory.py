@@ -319,15 +319,19 @@ class LangroidMemoryManager:
             "total_memories": len(self._personal_memory),
             "importance_distribution": importance_counts,
             "avg_unexpectedness": avg_unexpectedness,
-            "most_accessed": {
-                "memory_id": most_accessed.memory_id,
-                "retrieval_count": most_accessed.retrieval_count,
-                "content_preview": most_accessed.content[:100] + "..."
-                if len(most_accessed.content) > 100
-                else most_accessed.content,
-            }
-            if most_accessed
-            else None,
+            "most_accessed": (
+                {
+                    "memory_id": most_accessed.memory_id,
+                    "retrieval_count": most_accessed.retrieval_count,
+                    "content_preview": (
+                        most_accessed.content[:100] + "..."
+                        if len(most_accessed.content) > 100
+                        else most_accessed.content
+                    ),
+                }
+                if most_accessed
+                else None
+            ),
         }
 
     def export_memories(self) -> list[dict[str, Any]]:

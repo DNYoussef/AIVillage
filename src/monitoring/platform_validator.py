@@ -401,7 +401,7 @@ class ObservabilityValidator:
                         aivillage_services = [
                             s
                             for s in services
-                            if "aivillage" in s.lower() or any(svc in s for svc in ["agent-forge", "hyperrag", "p2p"])
+                            if "aivillage" in s.lower() or any(svc in s for svc in ["agent_forge", "hyperrag", "p2p"])
                         ]
 
                         if aivillage_services:
@@ -502,7 +502,7 @@ class ObservabilityValidator:
                         aivillage_labels = [
                             l
                             for l in labels
-                            if any(svc in l for svc in ["agent-forge", "hyperrag", "p2p", "aivillage"])
+                            if any(svc in l for svc in ["agent_forge", "hyperrag", "p2p", "aivillage"])
                         ]
 
                         if aivillage_labels:
@@ -631,7 +631,12 @@ class ObservabilityValidator:
 
         try:
             # Test Redis connectivity and configuration
-            redis_client = redis.Redis(host="localhost", port=6379, decode_responses=True, password="aivillage2024")
+            redis_client = redis.Redis(
+                host="localhost",
+                port=6379,
+                decode_responses=True,
+                password="aivillage2024",  # nosec B106 - test Redis password for validation
+            )
 
             # Test Redis ping
             if redis_client.ping():

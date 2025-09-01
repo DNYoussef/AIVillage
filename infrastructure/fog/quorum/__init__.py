@@ -9,4 +9,4 @@ power region, and network topology diversity validation.
 from .infrastructure_classifier import InfrastructureClassifier
 from .quorum_manager import QuorumManager
 
-__all__ = ['QuorumManager', 'InfrastructureClassifier']
+__all__ = ["QuorumManager", "InfrastructureClassifier"]

@@ -33,7 +33,7 @@ def test_unified_main():
         return False
 
     # Test mode help
-    for mode in ["agent-forge", "king", "rag", "core"]:
+    for mode in ["agent_forge", "king", "rag", "core"]:
         cmd = f"{sys.executable} main.py --mode {mode} --action status"
         ret, out, err = run_command(cmd)
         if ret == 0 or "module not found" in err.lower():
@@ -87,7 +87,7 @@ def test_cli_arguments():
 
     # Test unified main with various arguments
     test_cases = [
-        f"{sys.executable} main.py --mode agent-forge --action train --config test.yaml",
+        f"{sys.executable} main.py --mode agent_forge --action train --config test.yaml",
         f"{sys.executable} main.py --mode king --action run --task 'test task'",
         f"{sys.executable} main.py --mode rag --action query --question 'test question'",
         f"{sys.executable} main.py --mode core --action status",

@@ -1,8 +1,6 @@
 from dataclasses import dataclass, field
-from typing import Dict, List
 
 # Import constants for type safety and consistency
-from infrastructure.constants import get_config_manager
 
 from .task import Task
 

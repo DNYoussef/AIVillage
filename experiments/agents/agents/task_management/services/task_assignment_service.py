@@ -2,8 +2,8 @@
 Task Assignment Service - Handles task assignment and agent selection.
 Extracted from UnifiedManagement god class.
 """
+
 import logging
-from typing import Any
 
 from AIVillage.experimental.agents.agents.planning.unified_decision_maker import UnifiedDecisionMaker
 from core.error_handling import AIVillageException, Message, MessageType, Priority, StandardCommunicationProtocol
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 class TaskAssignmentService:
     """Service responsible for task assignment and agent selection."""
-    
+
     def __init__(
         self,
         communication_protocol: StandardCommunicationProtocol,
@@ -29,16 +29,16 @@ class TaskAssignmentService:
         self._incentive_service = incentive_service
         self._ongoing_tasks: dict[str, Task] = {}
         self._available_agents: list[str] = []
-        
+
     async def assign_task(self, task: Task) -> None:
         """Assign a task to an agent with incentive calculation."""
         try:
             self._ongoing_tasks[task.id] = task.update_status(TaskStatus.IN_PROGRESS)
             agent = task.assigned_agents[0]
-            
+
             incentive = await self._incentive_service.calculate_incentive(agent, task)
             await self._notify_agent_with_incentive(agent, task, incentive)
-            
+
             logger.info("Assigned task %s to agent %s with incentive %f", task.id, agent, incentive)
         except Exception as e:
             logger.exception("Error assigning task: %s", e)
@@ -50,16 +50,13 @@ class TaskAssignmentService:
         try:
             if not self._available_agents:
                 return "default_agent"
-                
+
             decision = await self._decision_maker.make_decision(
                 f"Select the best agent for task: {task_description}", 0.5
             )
-            
-            best_agent = decision.get(
-                "best_alternative",
-                self._available_agents[0]
-            )
-            
+
+            best_agent = decision.get("best_alternative", self._available_agents[0])
+
             logger.debug("Selected agent %s for task: %s", best_agent, task_description[:50])
             return best_agent
         except Exception as e:

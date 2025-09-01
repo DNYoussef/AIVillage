@@ -30,7 +30,7 @@ class AgentForgeIntegrationTest:
 
         # Add paths for imports
         self.core_path = Path(__file__).parent.parent / "core"
-        self.agent_forge_path = self.core_path / "agent-forge"
+        self.agent_forge_path = self.core_path / "agent_forge"
 
         sys.path.insert(0, str(self.core_path))
         sys.path.insert(0, str(self.agent_forge_path))
@@ -473,11 +473,9 @@ class AgentForgeIntegrationTest:
         return {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "duration_seconds": duration,
-            "overall_status": "FUNCTIONAL"
-            if successful_tests >= 4
-            else "PARTIAL"
-            if successful_tests >= 2
-            else "FAILED",
+            "overall_status": (
+                "FUNCTIONAL" if successful_tests >= 4 else "PARTIAL" if successful_tests >= 2 else "FAILED"
+            ),
             "test_counts": {
                 "successful_tests": successful_tests,
                 "total_tests": total_tests,

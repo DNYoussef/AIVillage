@@ -148,7 +148,9 @@ class PolyglotAgent(AgentInterface):
 
     async def get_embedding(self, text: str) -> list[float]:
         """Generate multilingual-aware embeddings"""
-        hash_value = int(hashlib.md5(text.encode(), usedforsecurity=False).hexdigest(), 16)  # Used for multilingual embedding generation, not security
+        hash_value = int(
+            hashlib.md5(text.encode(), usedforsecurity=False).hexdigest(), 16
+        )  # Used for multilingual embedding generation, not security
         # Multilingual embeddings capture cross-language semantic similarity
         return [(hash_value % 1000) / 1000.0] * 384
 

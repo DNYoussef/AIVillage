@@ -24,8 +24,4 @@ from .test_auction_engine import TestAuctionEngine
 from .test_market_integration import TestMarketIntegration
 from .test_pricing_manager import TestDynamicPricingManager
 
-__all__ = [
-    "TestAuctionEngine",
-    "TestDynamicPricingManager",
-    "TestMarketIntegration"
-]
+__all__ = ["TestAuctionEngine", "TestDynamicPricingManager", "TestMarketIntegration"]

@@ -76,7 +76,6 @@ class ConceptManager:
         prerequisite_difficulty = len(prerequisites) * 0.05
         difficulty = min(base_difficulty + prerequisite_difficulty, 1.0)
 
-
         return min(difficulty, 1.0)
 
     def generate_assessment_criteria(self, concept: str, grade: int) -> list[str]:

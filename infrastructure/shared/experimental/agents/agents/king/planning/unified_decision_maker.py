@@ -588,9 +588,7 @@ class UnifiedDecisionMaker:
             (
                 "red"
                 if G.nodes[node]["antifragility"] < -3
-                else "green"
-                if G.nodes[node]["antifragility"] > 3
-                else "yellow"
+                else "green" if G.nodes[node]["antifragility"] > 3 else "yellow"
             )
             for node in G.nodes()
         ]
