@@ -1,14 +1,15 @@
 # Claude Code Configuration - SPARC Development Environment
 
-## 🚨 CRITICAL: CONCURRENT EXECUTION & FILE MANAGEMENT
+## CRITICAL: CONCURRENT EXECUTION & FILE MANAGEMENT
 
 **ABSOLUTE RULES**:
 1. ALL operations MUST be concurrent/parallel in a single message
 2. **NEVER save working files, text/mds and tests to the root folder**
 3. ALWAYS organize files in appropriate subdirectories
 4. **USE CLAUDE CODE'S TASK TOOL** for spawning agents concurrently, not just MCP
+5. **NO UNICODE** - Never use Unicode characters, emojis, or special symbols in any output or files
 
-### ⚡ GOLDEN RULE: "1 MESSAGE = ALL RELATED OPERATIONS"
+### GOLDEN RULE: "1 MESSAGE = ALL RELATED OPERATIONS"
 
 **MANDATORY PATTERNS:**
 - **TodoWrite**: ALWAYS batch ALL todos in ONE call (5-10+ todos minimum)
@@ -17,11 +18,11 @@
 - **Bash commands**: ALWAYS batch ALL terminal operations in ONE message
 - **Memory operations**: ALWAYS batch ALL memory store/retrieve in ONE message
 
-### 🎯 CRITICAL: Claude Code Task Tool for Agent Execution
+### CRITICAL: Claude Code Task Tool for Agent Execution
 
 **Claude Code's Task tool is the PRIMARY way to spawn agents:**
 ```javascript
-// ✅ CORRECT: Use Claude Code's Task tool for parallel agent execution
+// CORRECT: Use Claude Code's Task tool for parallel agent execution
 [Single Message]:
   Task("Research agent", "Analyze requirements and patterns...", "researcher")
   Task("Coder agent", "Implement core features...", "coder")
@@ -35,7 +36,7 @@
 - `mcp__claude-flow__agent_spawn` - Define agent types for coordination
 - `mcp__claude-flow__task_orchestrate` - Orchestrate high-level workflows
 
-### 📁 File Organization Rules
+### File Organization Rules
 
 **NEVER save to root folder. Use these directories:**
 - `/src` - Source code files
@@ -84,7 +85,7 @@ This project uses SPARC (Specification, Pseudocode, Architecture, Refinement, Co
 - **Clean Architecture**: Separate concerns
 - **Documentation**: Keep updated
 
-## 🚀 Available Agents (54 Total)
+## Available Agents (54 Total)
 
 ### Core Development
 `coder`, `reviewer`, `tester`, `planner`, `researcher`
@@ -113,7 +114,7 @@ This project uses SPARC (Specification, Pseudocode, Architecture, Refinement, Co
 ### Migration & Planning
 `migration-planner`, `swarm-init`
 
-## 🎯 Claude Code vs MCP Tools
+## Claude Code vs MCP Tools
 
 ### Claude Code Handles ALL EXECUTION:
 - **Task tool**: Spawn and run agents concurrently for actual work
@@ -138,31 +139,50 @@ This project uses SPARC (Specification, Pseudocode, Architecture, Refinement, Co
 
 **KEY**: MCP coordinates the strategy, Claude Code's Task tool executes with real agents.
 
-## 🚀 Quick Setup
+## Quick Setup
 
 ```bash
 # Add Claude Flow MCP server
 claude mcp add claude-flow npx claude-flow@alpha mcp start
 ```
 
-## MCP Tool Categories
+## MCP Servers (9 Enhanced Capabilities)
 
-### Coordination
+### Integrated MCP Servers:
+1. **GitHub** - Repository management, PR creation, code search
+2. **HuggingFace** - ML models, embeddings, tokenization
+3. **Markitdown** - PDF/DOCX/HTML to Markdown conversion
+4. **DeepWiki** - Wikipedia knowledge, fact checking, citations
+5. **Context7** - Distributed caching, session persistence
+6. **Apify** - Web scraping, browser automation
+7. **Sequential Thinking** - Chain of thought reasoning
+8. **Firecrawl** - Deep web crawling, content extraction
+9. **Memory** - Persistent memory across sessions
+
+### MCP Tool Categories
+
+#### Coordination & Orchestration
 `swarm_init`, `agent_spawn`, `task_orchestrate`
 
-### Monitoring
+#### Monitoring & Metrics
 `swarm_status`, `agent_list`, `agent_metrics`, `task_status`, `task_results`
 
-### Memory & Neural
+#### Memory & Neural
 `memory_usage`, `neural_status`, `neural_train`, `neural_patterns`
 
-### GitHub Integration
+#### GitHub Integration
 `github_swarm`, `repo_analyze`, `pr_enhance`, `issue_triage`, `code_review`
 
-### System
+#### System & Performance
 `benchmark_run`, `features_detect`, `swarm_monitor`
 
-## 🚀 Agent Execution Flow with Claude Code
+#### External MCP Servers
+- **GitHub MCP**: Code generation, repository analysis
+- **HuggingFace MCP**: Model inference, embeddings
+- **Memory MCP**: Cross-session persistence
+- **Sequential Thinking MCP**: Step-by-step reasoning
+
+## Agent Execution Flow with Claude Code
 
 ### The Correct Pattern:
 
@@ -170,6 +190,7 @@ claude mcp add claude-flow npx claude-flow@alpha mcp start
 2. **REQUIRED**: Use Claude Code's Task tool to spawn agents that do actual work
 3. **REQUIRED**: Each agent runs hooks for coordination
 4. **REQUIRED**: Batch all operations in single messages
+5. **NEW**: Leverage MCP servers for enhanced capabilities
 
 ### Example Full-Stack Development:
 
@@ -192,31 +213,31 @@ claude mcp add claude-flow npx claude-flow@alpha mcp start
   Write "database/schema.sql"
 ```
 
-## 📋 Agent Coordination Protocol
+## Agent Coordination Protocol
 
 ### Every Agent Spawned via Task Tool MUST:
 
-**1️⃣ BEFORE Work:**
+**1. BEFORE Work:**
 ```bash
 npx claude-flow@alpha hooks pre-task --description "[task]"
 npx claude-flow@alpha hooks session-restore --session-id "swarm-[id]"
 ```
 
-**2️⃣ DURING Work:**
+**2. DURING Work:**
 ```bash
 npx claude-flow@alpha hooks post-edit --file "[file]" --memory-key "swarm/[agent]/[step]"
 npx claude-flow@alpha hooks notify --message "[what was done]"
 ```
 
-**3️⃣ AFTER Work:**
+**3. AFTER Work:**
 ```bash
 npx claude-flow@alpha hooks post-task --task-id "[task]"
 npx claude-flow@alpha hooks session-end --export-metrics true
 ```
 
-## 🎯 Concurrent Execution Examples
+## Concurrent Execution Examples
 
-### ✅ CORRECT WORKFLOW: MCP Coordinates, Claude Code Executes
+### CORRECT WORKFLOW: MCP Coordinates, Claude Code Executes
 
 ```javascript
 // Step 1: MCP tools set up coordination (optional, for complex tasks)
@@ -255,7 +276,7 @@ npx claude-flow@alpha hooks session-end --export-metrics true
   Write "app/docs/API.md"
 ```
 
-### ❌ WRONG (Multiple Messages):
+### WRONG (Multiple Messages):
 ```javascript
 Message 1: mcp__claude-flow__swarm_init
 Message 2: Task("agent 1")
@@ -294,16 +315,55 @@ Message 4: Write "file.js"
 - Restore context
 - Export workflows
 
-## Advanced Features (v2.0.0)
+## Advanced Features (v2.1.0)
 
-- 🚀 Automatic Topology Selection
-- ⚡ Parallel Execution (2.8-4.4x speed)
-- 🧠 Neural Training
-- 📊 Bottleneck Analysis
-- 🤖 Smart Auto-Spawning
-- 🛡️ Self-Healing Workflows
-- 💾 Cross-Session Memory
-- 🔗 GitHub Integration
+- Automatic Topology Selection
+- Parallel Execution (2.8-4.4x speed)
+- Neural Training with DSPy Optimization
+- Bottleneck Analysis
+- Smart Auto-Spawning with MCP Server Selection
+- Self-Healing Workflows
+- Enhanced Cross-Session Memory (Memory MCP)
+- GitHub Integration (GitHub MCP)
+- ML Model Access (HuggingFace MCP)
+- Deep Web Research (Firecrawl + DeepWiki MCP)
+- DSPy Prompt Optimization
+- Sequential Thinking Chains
+
+## DSPy Prompting System
+
+### How to Use DSPy Correctly:
+
+```python
+# Initialize DSPy with MCP servers
+from .claude.dspy_integration.enhanced_dspy_mcp import DSPyMCPSystem
+
+system = DSPyMCPSystem()
+await system.initialize(['memory', 'sequentialthinking', 'github'])
+
+# Chain of Thought Reasoning
+reasoning, answer = await system.reason("Complex architectural question")
+
+# Code Generation with Research
+code_result = await system.code("Implement OAuth2 authentication")
+
+# Knowledge Synthesis
+knowledge = await system.research("Best practices for microservices")
+```
+
+### DSPy Automatic Enhancements:
+- **Sequential Thinking**: Breaks down complex problems step-by-step
+- **Memory Integration**: Retrieves historical context and patterns
+- **Research Phase**: Gathers information from GitHub, DeepWiki, HuggingFace
+- **Prompt Optimization**: Uses examples to improve prompt quality
+- **Parallel Processing**: Executes MCP server calls concurrently
+
+### DSPy Best Practices:
+1. Always initialize required MCP servers first
+2. Let DSPy handle context management automatically
+3. Use memory server for persistent learning
+4. Add examples to improve optimization
+5. Leverage server-specific capabilities
 
 ## Integration Tips
 
@@ -314,6 +374,8 @@ Message 4: Write "file.js"
 5. Train patterns from success
 6. Enable hooks automation
 7. Use GitHub tools first
+8. Initialize MCP servers based on task requirements
+9. Use DSPy for complex reasoning tasks
 
 ## Support
 
