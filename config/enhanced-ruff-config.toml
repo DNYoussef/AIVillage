@@ -1,7 +1,5 @@
 # Enhanced Ruff Configuration for Auto-Fix
 # Enables comprehensive auto-fixing for CI/CD quality gates
-
-[tool.ruff]
 line-length = 120
 target-version = "py311"
 
