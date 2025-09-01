@@ -158,7 +158,7 @@ def main():
 
         all_passed = True
         for check_name, passed in integration_checks:
-            status = "PASS" if passed else "FAIL"
+            status = "PASS" if passed else "FAIL"  # nosec B105 - status indicator, not password
             print(f"     {check_name}: {status}")
             if not passed:
                 all_passed = False
@@ -182,7 +182,7 @@ def main():
         print("   Option A Parameter Verification:")
         for param, expected in option_a_params.items():
             actual = actual_params[param]
-            status = "PASS" if actual == expected else "FAIL"
+            status = "PASS" if actual == expected else "FAIL"  # nosec B105 - status indicator, not password
             print(f"     {param}: expected={expected}, actual={actual} {status}")
 
         # Final summary

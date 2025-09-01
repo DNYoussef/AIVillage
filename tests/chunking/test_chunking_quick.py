@@ -201,7 +201,7 @@ async def quick_chunking_validation():
 
     print("\nSuccess Criteria:")
     for criterion, passed in success_criteria.items():
-        status = "PASS" if passed else "FAIL"
+        status = "PASS" if passed else "FAIL"  # nosec B105 - status indicator, not password
         print(f"  - {criterion.replace('_', ' ').title()}: {status}")
 
     overall_success = passed_criteria >= 3  # Need at least 3/4 criteria
