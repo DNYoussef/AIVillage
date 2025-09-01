@@ -1,0 +1,2 @@
+agent-forge is not a valid Python package name
+MyPy analysis exit code: 2
