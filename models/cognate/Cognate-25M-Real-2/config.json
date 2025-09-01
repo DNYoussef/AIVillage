@@ -1,0 +1,18 @@
+{
+  "model_name": "Cognate-25M-Real-2",
+  "variant_name": "cognate-25m-2",
+  "parameter_count": 25069534,
+  "trainable_parameters": 25069534,
+  "random_seed": 43,
+  "architecture": "Enhanced25MCognate",
+  "features": [
+    "ACT adaptive computation with halting",
+    "Long-Term Memory (LTM) with cross-attention",
+    "Titans-style memory consolidation",
+    "Train-many/infer-few paradigm",
+    "25M parameters (25,069,534 exact)"
+  ],
+  "created_at": "2025-08-28T22:00:10.938210",
+  "model_path": "C:\\Users\\17175\\Desktop\\AIVillage\\cognate_models\\Cognate-25M-Real-2\\pytorch_model.bin",
+  "ready_for_evomerge": true
+}

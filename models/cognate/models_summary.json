@@ -1,0 +1,52 @@
+{
+  "summary": {
+    "total_models": 3,
+    "total_parameters": 75208602,
+    "created_at": "2025-08-28T22:00:11.430600",
+    "ready_for_evomerge": true
+  },
+  "models": [
+    {
+      "model_id": "cognate_real_1_0000002a",
+      "model_name": "Cognate-25M-Real-1",
+      "phase_name": "Cognate",
+      "parameter_count": 25069534,
+      "created_at": "2025-08-28T22:00:10.379334",
+      "training_status": "completed",
+      "training_mode": "real_pytorch_model",
+      "random_seed": 42,
+      "ready_for_evomerge": true,
+      "model_path": "C:\\Users\\17175\\Desktop\\AIVillage\\cognate_models\\Cognate-25M-Real-1\\pytorch_model.bin",
+      "config_path": "C:\\Users\\17175\\Desktop\\AIVillage\\cognate_models\\Cognate-25M-Real-1\\config.json",
+      "architecture": "Enhanced25MCognate"
+    },
+    {
+      "model_id": "cognate_real_2_0000002b",
+      "model_name": "Cognate-25M-Real-2",
+      "phase_name": "Cognate",
+      "parameter_count": 25069534,
+      "created_at": "2025-08-28T22:00:10.939207",
+      "training_status": "completed",
+      "training_mode": "real_pytorch_model",
+      "random_seed": 43,
+      "ready_for_evomerge": true,
+      "model_path": "C:\\Users\\17175\\Desktop\\AIVillage\\cognate_models\\Cognate-25M-Real-2\\pytorch_model.bin",
+      "config_path": "C:\\Users\\17175\\Desktop\\AIVillage\\cognate_models\\Cognate-25M-Real-2\\config.json",
+      "architecture": "Enhanced25MCognate"
+    },
+    {
+      "model_id": "cognate_real_3_0000002c",
+      "model_name": "Cognate-25M-Real-3",
+      "phase_name": "Cognate",
+      "parameter_count": 25069534,
+      "created_at": "2025-08-28T22:00:11.429602",
+      "training_status": "completed",
+      "training_mode": "real_pytorch_model",
+      "random_seed": 44,
+      "ready_for_evomerge": true,
+      "model_path": "C:\\Users\\17175\\Desktop\\AIVillage\\cognate_models\\Cognate-25M-Real-3\\pytorch_model.bin",
+      "config_path": "C:\\Users\\17175\\Desktop\\AIVillage\\cognate_models\\Cognate-25M-Real-3\\config.json",
+      "architecture": "Enhanced25MCognate"
+    }
+  ]
+}

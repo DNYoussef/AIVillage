@@ -1,0 +1,27 @@
+{
+  "pretraining_completed_at": "2025-08-28T22:07:09.315393",
+  "total_models": 3,
+  "successful_models": 0,
+  "failed_models": 3,
+  "total_training_time_hours": 0,
+  "training_results": [
+    {
+      "model_name": "Cognate-25M-Real-1",
+      "seed": 42,
+      "status": "failed",
+      "error": "FullPretrainingConfig.__init__() got an unexpected keyword argument 'model_path'"
+    },
+    {
+      "model_name": "Cognate-25M-Real-2",
+      "seed": 43,
+      "status": "failed",
+      "error": "FullPretrainingConfig.__init__() got an unexpected keyword argument 'model_path'"
+    },
+    {
+      "model_name": "Cognate-25M-Real-3",
+      "seed": 44,
+      "status": "failed",
+      "error": "FullPretrainingConfig.__init__() got an unexpected keyword argument 'model_path'"
+    }
+  ]
+}
