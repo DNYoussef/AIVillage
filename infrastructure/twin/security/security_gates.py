@@ -33,7 +33,7 @@ class GateResult(Enum):
 
     PASS = "PASS"  # nosec B105 - enum value, not password
     WARN = "WARN"
-    FAIL = "FAIL"
+    FAIL = "FAIL"  # nosec B105 - enum value, not password
     SKIP = "SKIP"
 
 
