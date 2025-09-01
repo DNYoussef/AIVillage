@@ -1,0 +1,12 @@
+{
+  "total_cost": 0.0,
+  "cost_by_task": {
+    "problem_generation": 0.0,
+    "evaluation_grading": 0.0,
+    "content_variation": 0.0,
+    "research_documentation": 0.0,
+    "code_generation": 0.0,
+    "mathematical_reasoning": 0.0
+  },
+  "model_performance": {}
+}

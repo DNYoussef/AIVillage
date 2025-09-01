@@ -1,0 +1,50 @@
+{
+  "embedder": {
+    "model_name": "paraphrase-MiniLM-L3-v2",
+    "device": "cpu",
+    "batch_size": 32,
+    "vector_dimension": 384
+  },
+  "retrieval": {
+    "vector_top_k": 20,
+    "keyword_top_k": 20,
+    "final_top_k": 10,
+    "rerank_enabled": true,
+    "rerank_model": "cross-encoder/ms-marco-MiniLM-L-2-v2"
+  },
+  "cache": {
+    "enabled": true,
+    "l1_size": 128,
+    "l2_enabled": true,
+    "l2_redis_url": "redis://localhost:6379/1",
+    "l3_directory": "/tmp/rag_cache",
+    "ttl_seconds": 3600
+  },
+  "chunking": {
+    "chunk_size": 512,
+    "chunk_overlap": 50,
+    "preserve_boundaries": true,
+    "min_chunk_size": 100
+  },
+  "indexing": {
+    "faiss_index_path": "./data/faiss_index",
+    "bm25_corpus_path": "./data/bm25_corpus",
+    "auto_save": true,
+    "backup_enabled": true
+  },
+  "performance": {
+    "target_latency_ms": 100,
+    "enable_profiling": false,
+    "log_slow_queries": true,
+    "batch_processing": true
+  },
+  "api": {
+    "port": 8082,
+    "host": "0.0.0.0",
+    "cors_enabled": true,
+    "rate_limiting": {
+      "enabled": true,
+      "requests_per_minute": 60
+    }
+  }
+}

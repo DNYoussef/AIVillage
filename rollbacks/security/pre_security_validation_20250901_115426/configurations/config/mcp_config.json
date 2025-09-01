@@ -1,0 +1,50 @@
+{
+  "mcpServers": {
+    "hyperag": {
+      "command": "python",
+      "args": ["src/mcp_servers/hyperag/mcp_server.py"],
+      "env": {
+        "PYTHONPATH": "."
+      },
+      "transport": "stdio",
+      "disabled": false,
+      "timeout": 30,
+      "description": "HypeRAG knowledge graph and memory server"
+    },
+    "memory": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-memory"],
+      "env": {
+        "MEMORY_FILE_PATH": ".mcp/memory.db",
+        "PATH": "C:\\Program Files\\nodejs;%PATH%"
+      },
+      "transport": "stdio",
+      "disabled": false,
+      "timeout": 30,
+      "description": "Persistent memory and knowledge graph"
+    },
+    "sequential-thinking": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "env": {
+        "PATH": "C:\\Program Files\\nodejs;%PATH%"
+      },
+      "transport": "stdio",
+      "disabled": false,
+      "timeout": 30,
+      "description": "Multi-step reasoning and planning"
+    },
+    "markdown": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-markdown"],
+      "env": {
+        "MARKDOWN_ROOT_PATH": "./docs",
+        "PATH": "C:\\Program Files\\nodejs;%PATH%"
+      },
+      "transport": "stdio",
+      "disabled": true,
+      "timeout": 30,
+      "description": "Local markdown documentation server (disabled - package not available)"
+    }
+  }
+}

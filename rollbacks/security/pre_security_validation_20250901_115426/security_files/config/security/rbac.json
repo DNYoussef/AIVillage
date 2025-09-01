@@ -1,0 +1,145 @@
+{
+  "rbac": {
+    "jwt_secret": "${JWT_SECRET}",
+    "jwt_algorithm": "HS256",
+    "token_expiry_hours": 1,
+    "refresh_expiry_days": 7,
+    "max_login_attempts": 5,
+    "lockout_duration_minutes": 15
+  },
+  "multi_tenant": {
+    "base_path": "data/tenants",
+    "database_path": "data/tenants.db",
+    "default_quotas": {
+      "max_agents": 10,
+      "max_rag_collections": 5,
+      "max_p2p_nodes": 20,
+      "storage_quota_gb": 100,
+      "compute_quota_vcpu": 8,
+      "memory_quota_gb": 32
+    },
+    "encryption": {
+      "algorithm": "AES-256-GCM",
+      "key_derivation": "PBKDF2-SHA256",
+      "iterations": 100000
+    }
+  },
+  "permissions": {
+    "role_inheritance": {
+      "super_admin": ["admin", "developer", "data_scientist", "operator", "user", "guest"],
+      "admin": ["developer", "data_scientist", "operator", "user", "guest"],
+      "developer": ["user", "guest"],
+      "data_scientist": ["user", "guest"],
+      "operator": ["guest"],
+      "user": ["guest"]
+    },
+    "resource_isolation": {
+      "enforce_tenant_boundaries": true,
+      "allow_cross_tenant_sharing": false,
+      "require_explicit_permissions": true
+    }
+  },
+  "audit": {
+    "log_all_actions": true,
+    "log_failed_attempts": true,
+    "retention_days": 90,
+    "sensitive_data_masking": true,
+    "real_time_monitoring": true
+  },
+  "api": {
+    "cors_origins": ["http://localhost:3000", "https://aivillage.local"],
+    "rate_limiting": {
+      "enabled": true,
+      "requests_per_minute": 100,
+      "burst_size": 20
+    },
+    "request_timeout_seconds": 30,
+    "max_request_size_mb": 10
+  },
+  "integrations": {
+    "agents": {
+      "default_isolation": true,
+      "resource_limits": {
+        "max_memory_mb": 512,
+        "max_cpu_percent": 25,
+        "max_execution_time_minutes": 30
+      }
+    },
+    "rag": {
+      "encryption_at_rest": true,
+      "vector_db_isolation": true,
+      "knowledge_graph_isolation": true,
+      "privacy_preserving_queries": true
+    },
+    "p2p": {
+      "network_isolation": true,
+      "encrypted_transport": true,
+      "peer_authentication": true,
+      "traffic_analysis_protection": true
+    },
+    "agent_forge": {
+      "training_isolation": true,
+      "model_encryption": true,
+      "compute_quotas": true,
+      "result_isolation": true
+    },
+    "digital_twin": {
+      "local_processing_only": true,
+      "automatic_data_deletion": true,
+      "differential_privacy": true,
+      "user_consent_required": true
+    },
+    "mobile": {
+      "device_registration_required": true,
+      "battery_aware_processing": true,
+      "thermal_throttling": true,
+      "offline_capability": true
+    }
+  },
+  "security": {
+    "password_policy": {
+      "min_length": 12,
+      "require_uppercase": true,
+      "require_lowercase": true,
+      "require_numbers": true,
+      "require_special_chars": true,
+      "password_history": 5
+    },
+    "session_security": {
+      "secure_cookies": true,
+      "same_site": "Strict",
+      "http_only": true,
+      "session_rotation": true
+    },
+    "mfa": {
+      "enabled": false,
+      "required_for_admin": true,
+      "totp_issuer": "AIVillage",
+      "backup_codes": 10
+    },
+    "ip_restrictions": {
+      "enabled": false,
+      "allowed_networks": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"],
+      "blocked_countries": []
+    }
+  },
+  "monitoring": {
+    "metrics": {
+      "enabled": true,
+      "endpoint": "/metrics",
+      "include_sensitive_data": false
+    },
+    "health_checks": {
+      "enabled": true,
+      "database_check": true,
+      "rbac_system_check": true,
+      "integration_checks": true
+    },
+    "alerts": {
+      "failed_login_threshold": 10,
+      "suspicious_activity_detection": true,
+      "quota_exceeded_alerts": true,
+      "security_violation_alerts": true
+    }
+  }
+}

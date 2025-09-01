@@ -1,0 +1,134 @@
+# Security Gate Configuration
+# Defines security thresholds and policies for CI/CD pipelines
+
+security_gates:
+  # Main CI Pipeline Gates
+  main_ci:
+    enabled: true
+    fail_fast: true
+    thresholds:
+      secret_detection:
+        block_on_new_secrets: true
+        baseline_file: ".secrets.baseline"
+      vulnerability_scanning:
+        max_critical: 0
+        max_high: 2
+        max_medium: 10
+      code_security:
+        bandit_severity: "HIGH"
+        semgrep_severity: "ERROR"
+      anti_patterns:
+        magic_literals_threshold: 20
+        god_object_threshold: 500
+        coupling_threshold: 12.0
+        complexity_threshold: 15
+
+  # Production Deployment Gates
+  production:
+    enabled: true
+    fail_fast: true
+    require_approval: true
+    emergency_bypass:
+      enabled: true
+      requires_token: true
+      audit_required: true
+    thresholds:
+      secret_detection:
+        block_on_any_secrets: true
+        production_validation: true
+      vulnerability_scanning:
+        max_critical: 0
+        max_high: 0
+        max_medium: 2
+      architecture:
+        coupling_threshold: 8.0
+        complexity_threshold: 10
+        security_score_minimum: 90
+
+  # Image Security Gates
+  container_security:
+    enabled: true
+    thresholds:
+      vulnerability_scanning:
+        max_critical: 0
+        max_high: 1
+        max_medium: 5
+      configuration:
+        block_root_user: true
+        require_health_checks: true
+        block_secrets_in_layers: true
+
+  # P2P Network Gates
+  p2p_security:
+    enabled: true
+    strict_mode: true
+    thresholds:
+      encryption_validation: true
+      protocol_security: true
+      transport_validation: true
+      mesh_security: true
+
+# Alert Configuration
+alerts:
+  security_violations:
+    notify_security_team: true
+    create_incident: true
+    block_deployment: true
+
+  emergency_bypass:
+    notify_security_lead: true
+    require_post_incident_review: true
+    audit_retention_days: 365
+
+# Compliance Settings
+compliance:
+  retention_days:
+    security_reports: 365
+    compliance_reports: 365
+    audit_logs: 2555  # 7 years
+    vulnerability_scans: 90
+
+  reporting:
+    generate_compliance_report: true
+    include_security_metrics: true
+    include_vulnerability_trends: true
+
+# Security Tools Configuration
+tools:
+  detect_secrets:
+    version: ">=1.4.0"
+    plugins:
+      - "ArtifactoryDetector"
+      - "AWSKeyDetector"
+      - "Base64HighEntropyString"
+      - "BasicAuthDetector"
+      - "CloudantDetector"
+      - "HexHighEntropyString"
+      - "IbmCloudIamDetector"
+      - "IbmCosHmacDetector"
+      - "JwtTokenDetector"
+      - "KeywordDetector"
+      - "MailchimpDetector"
+      - "PrivateKeyDetector"
+      - "SlackDetector"
+      - "SoftlayerDetector"
+      - "SquareOAuthDetector"
+      - "StripeDetector"
+      - "TwilioKeyDetector"
+
+  bandit:
+    version: ">=1.7.0"
+    severity_levels: ["HIGH", "CRITICAL"]
+    confidence_levels: ["HIGH", "MEDIUM"]
+
+  semgrep:
+    version: ">=1.45.0"
+    rulesets:
+      - "security"
+      - "owasp-top-10"
+      - "cwe-top-25"
+
+  trivy:
+    version: ">=0.48.0"
+    severity_levels: ["UNKNOWN", "LOW", "MEDIUM", "HIGH", "CRITICAL"]
+    ignore_unfixed: false

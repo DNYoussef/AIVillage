@@ -1,0 +1,31 @@
+{
+  "jobs": {
+    "hidden_link_scan": "02:30 UTC"
+  },
+  "scanner": {
+    "hippo_log_path": "data/hippo_logs",
+    "lookback_hours": 24,
+    "min_co_mentions": 3,
+    "max_pairs_to_scan": 50,
+    "candidates_per_pair": 3,
+    "confidence_threshold": 0.5,
+    "batch_size": 10,
+    "max_concurrent_scans": 3
+  },
+  "guardian": {
+    "policy_path": "mcp_servers/hyperag/guardian/policies.yaml",
+    "enable_auto_apply": false,
+    "quarantine_review_required": true
+  },
+  "metrics": {
+    "output_path": "data/scan_metrics",
+    "retention_days": 90,
+    "alert_on_high_error_rate": true,
+    "alert_threshold": 0.1
+  },
+  "logging": {
+    "level": "INFO",
+    "log_path": "data/scan_logs",
+    "max_log_files": 30
+  }
+}

@@ -1,0 +1,22 @@
+[
+  ".claude\\claude-flow-config.json",
+  ".claude\\settings.json",
+  ".claude\\settings.local.json",
+  ".claude\\subagents_config.json",
+  ".vscode\\settings.json",
+  "config\\agent_forge_pipeline_summary.json",
+  "config\\artifacts_collection.json",
+  "config\\claude-rules.json",
+  "config\\mcp_config.json",
+  "config\\openrouter_metrics.json",
+  "config\\orchestration_test_results.json",
+  "config\\p2p_config.json",
+  "config\\rag_config.json",
+  "config\\scanner_config.json",
+  "config\\smoke_test_results.json",
+  "docs\\configuration_consistency_report.json",
+  "docs\\configuration_drift_report.json",
+  "tests\\security_report.json",
+  ".claude\\agents\\security_hardening_specialist.json",
+  ".claude\\claude-flow-metrics\\config.json"
+]

@@ -1,0 +1,64 @@
+{
+  "timestamp": "2025-09-01T17:10:50.235564",
+  "overall_score": 51.0,
+  "deployment_status": "BLOCKED",
+  "deployment_reason": "Security issues: HIGH_SEVERITY_SECURITY: 16 critical security issues, SYNTAX_ERRORS: 6 files with syntax errors",
+  "security_analysis": {
+    "total_files_analyzed": 58896,
+    "critical_issues": 0,
+    "high_issues": 16,
+    "medium_issues": 4,
+    "low_issues": 300,
+    "syntax_errors": [
+      {
+        "file": "src/security\\admin\\localhost_only_server.py",
+        "reason": "syntax error while parsing AST from file"
+      },
+      {
+        "file": "src/security\\admin\\localhost_only_server.py",
+        "reason": "syntax error while parsing AST from file"
+      },
+      {
+        "file": "src/security\\security_validation_framework_enhanced.py",
+        "reason": "syntax error while parsing AST from file"
+      },
+      {
+        "file": "src/security\\admin\\localhost_only_server.py",
+        "reason": "syntax error while parsing AST from file"
+      },
+      {
+        "file": "src/security\\admin\\localhost_only_server.py",
+        "reason": "syntax error while parsing AST from file"
+      },
+      {
+        "file": "src/security\\security_validation_framework_enhanced.py",
+        "reason": "syntax error while parsing AST from file"
+      }
+    ],
+    "deployment_blockers": [
+      "HIGH_SEVERITY_SECURITY: 16 critical security issues",
+      "SYNTAX_ERRORS: 6 files with syntax errors"
+    ],
+    "security_score": 0
+  },
+  "test_analysis": {
+    "pytest_config_status": "syntax_error_fixed",
+    "modified_test_files": 73,
+    "test_cache_files": 50,
+    "critical_test_issues": []
+  },
+  "workflow_analysis": {
+    "total_workflows": 15,
+    "unified_quality_pipeline": true,
+    "main_ci_pipeline": true,
+    "unified_linting": true,
+    "security_workflows": 5,
+    "workflow_issues": []
+  },
+  "recommendations": [
+    "CRITICAL: Address 16 high-severity security issues immediately",
+    "Fix 6 syntax errors in security-related files",
+    "Improve security posture - current score below acceptable threshold",
+    "Review and commit outstanding test file changes"
+  ]
+}

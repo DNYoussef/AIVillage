@@ -1,0 +1,20 @@
+{
+  "scan_timestamp": "2025-08-31T12:36:38.729402+00:00",
+  "project_name": "AIVillage",
+  "total_dependencies": 0,
+  "vulnerabilities": [],
+  "summary": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "info": 0
+  },
+  "ecosystems": {},
+  "recommendations": [
+    "\ud83d\udd04 Enable automated dependency updates where possible",
+    "\ud83d\udee1\ufe0f  Implement vulnerability scanning in CI/CD pipeline",
+    "\ud83d\udcca Monitor dependency health continuously",
+    "\ud83d\udd12 Consider using Software Bill of Materials (SBOM) for better visibility"
+  ]
+}

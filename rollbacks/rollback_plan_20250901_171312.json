@@ -1,0 +1,199 @@
+{
+  "timestamp": "2025-09-01T17:13:12.603981",
+  "deployment_status": "BLOCKED",
+  "rollback_strategy": "PREVENTIVE",
+  "current_commit": "2d31f6e5cd6affe21327a2c907959f6905f2354b",
+  "last_stable_commit": {
+    "before_security_emergency": "0719d40b",
+    "last_working_ci": "77337ea7",
+    "pre_consolidation": "e3376e75",
+    "emergency_fallback": "688c8366"
+  },
+  "rollback_targets": {
+    "security_files": {
+      "problematic_files": [
+        "src/security/admin/localhost_only_server.py",
+        "src/security/security_validation_framework_enhanced.py"
+      ],
+      "action": "REVERT_TO_WORKING_VERSION",
+      "priority": "P0_CRITICAL"
+    },
+    "workflow_files": {
+      "working_workflows": [
+        ".github/workflows/unified-quality-pipeline.yml",
+        ".github/workflows/main-ci.yml",
+        ".github/workflows/unified-linting.yml"
+      ],
+      "action": "PRESERVE_CURRENT",
+      "priority": "P1_HIGH"
+    },
+    "test_configuration": {
+      "files": [
+        "tests/pytest.ini"
+      ],
+      "action": "PRESERVE_FIXES",
+      "priority": "P2_MEDIUM"
+    },
+    "security_scans": {
+      "results_files": [
+        "security_scan_results.json",
+        "final_security_validation.json",
+        "bandit_scan.json"
+      ],
+      "action": "ARCHIVE_AND_REGENERATE",
+      "priority": "P1_HIGH"
+    }
+  },
+  "safety_checks": {
+    "pre_rollback_checks": {
+      "backup_current_state": {
+        "description": "Create full backup of current state",
+        "command": "git stash push -m \"Pre-rollback backup\"",
+        "verification": "git stash list | head -1"
+      },
+      "verify_git_status": {
+        "description": "Ensure git working directory is clean",
+        "command": "git status --porcelain",
+        "expected": "empty_output"
+      },
+      "check_branch_protection": {
+        "description": "Verify we can modify main branch",
+        "command": "git branch -a | grep main",
+        "verification": "current_branch_main"
+      }
+    },
+    "post_rollback_checks": {
+      "syntax_validation": {
+        "description": "Verify Python syntax after rollback",
+        "command": "python -m py_compile",
+        "target": "security_files"
+      },
+      "workflow_validation": {
+        "description": "Validate GitHub workflow syntax",
+        "command": "yamllint .github/workflows/",
+        "expected": "no_errors"
+      },
+      "security_scan_clean": {
+        "description": "Run clean security scan",
+        "command": "bandit -r src/ -ll",
+        "expected": "reduced_issues"
+      }
+    }
+  },
+  "recovery_procedures": [
+    {
+      "step": 1,
+      "name": "Emergency State Backup",
+      "description": "Create complete backup of current problematic state",
+      "commands": [
+        "git add .",
+        "git stash push -m \"Emergency backup before rollback\"",
+        "git log -1 --oneline > rollback_from_commit.txt"
+      ],
+      "verification": "git stash list | grep \"Emergency backup\"",
+      "rollback_on_failure": false
+    },
+    {
+      "step": 2,
+      "name": "Identify Target Commit",
+      "description": "Determine safest rollback target",
+      "commands": [
+        "git log --oneline -10 | grep -E \"(security|fix|stable)\""
+      ],
+      "verification": "manual_review_required",
+      "rollback_on_failure": false
+    },
+    {
+      "step": 3,
+      "name": "Selective File Rollback",
+      "description": "Roll back only problematic security files",
+      "commands": [
+        "git checkout 0719d40b -- src/security/admin/localhost_only_server.py",
+        "git checkout 0719d40b -- src/security/security_validation_framework_enhanced.py"
+      ],
+      "verification": "python -m py_compile src/security/admin/localhost_only_server.py",
+      "rollback_on_failure": true
+    },
+    {
+      "step": 4,
+      "name": "Clean Security Scan Results",
+      "description": "Remove corrupted security scan files",
+      "commands": [
+        "rm -f security_scan_results.json",
+        "rm -f final_security_validation.json",
+        "rm -f bandit_scan.json",
+        "rm -f final_security_scan.json"
+      ],
+      "verification": "ls security_*.json | wc -l",
+      "rollback_on_failure": false
+    },
+    {
+      "step": 5,
+      "name": "Regenerate Clean Security Scans",
+      "description": "Run fresh security scans on rolled-back code",
+      "commands": [
+        "bandit -r src/ -f json -o clean_security_scan.json -ll",
+        "python scripts/ci_pipeline_analyzer.py"
+      ],
+      "verification": "jq .security_analysis.high_issues clean_security_scan.json",
+      "rollback_on_failure": true
+    },
+    {
+      "step": 6,
+      "name": "Validate CI/CD Pipeline",
+      "description": "Ensure CI/CD pipeline can run successfully",
+      "commands": [
+        "python -m pytest tests/ --tb=short --maxfail=3",
+        "ruff check src/ --select E9,F63,F7,F82"
+      ],
+      "verification": "exit_code_0",
+      "rollback_on_failure": true
+    },
+    {
+      "step": 7,
+      "name": "Create Recovery Commit",
+      "description": "Commit the rollback with clear documentation",
+      "commands": [
+        "git add -A",
+        "git commit -m \"fix: Emergency rollback of security files with syntax errors\"",
+        "git log -1 --oneline"
+      ],
+      "verification": "git log -1 | grep \"Emergency rollback\"",
+      "rollback_on_failure": false
+    }
+  ],
+  "mcp_coordination": {
+    "github_mcp": {
+      "actions": [
+        "Create rollback tracking issue",
+        "Update PR status with rollback information",
+        "Monitor rollback procedure progress"
+      ],
+      "status": "ENABLED"
+    },
+    "sequential_thinking_mcp": {
+      "actions": [
+        "Systematic rollback procedure execution",
+        "Step-by-step verification and validation",
+        "Failure point analysis and recovery"
+      ],
+      "status": "ENABLED"
+    },
+    "memory_mcp": {
+      "actions": [
+        "Store rollback patterns for future prevention",
+        "Remember successful recovery procedures",
+        "Track deployment failure patterns"
+      ],
+      "status": "ENABLED"
+    },
+    "context7_mcp": {
+      "actions": [
+        "Cache rollback procedure status",
+        "Store recovery metrics and timings",
+        "Maintain rollback audit trail"
+      ],
+      "status": "ENABLED"
+    }
+  }
+}

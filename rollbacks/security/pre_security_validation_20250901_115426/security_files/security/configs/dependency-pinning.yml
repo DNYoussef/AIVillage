@@ -1,0 +1,296 @@
+# AIVillage Dependency Pinning Strategy
+# Enforces secure and reproducible dependency management across all ecosystems
+
+version: "1.0"
+
+# Global Pinning Strategy
+global:
+  strategy: "exact"  # exact, compatible, minor, patch
+  enforce_lockfiles: true
+  auto_update_security: true
+  security_threshold: "medium"
+  
+# Python Dependencies
+python:
+  package_manager: "pip"
+  strategy: "compatible"  # Use ~= for compatible versions
+  
+  requirements_files:
+    production:
+      - "config/requirements/requirements.txt"
+      pinning: "exact"
+      lockfile: "requirements.lock"
+      
+    development:
+      - "tests/requirements.txt"
+      pinning: "compatible"
+      lockfile: "tests/requirements.lock"
+      
+    optional:
+      - "**/requirements-*.txt"
+      pinning: "minor"
+      
+  security_packages:
+    # Always pin security-critical packages exactly
+    - name: "cryptography"
+      pinning: "exact"
+      min_version: "41.0.7"
+      
+    - name: "pyjwt"
+      pinning: "exact"
+      min_version: "2.8.0"
+      
+    - name: "requests"
+      pinning: "exact"
+      min_version: "2.31.0"
+      
+    - name: "urllib3"
+      pinning: "exact"
+      max_version: "2.2.2"  # Known vulnerability in newer versions
+      
+  banned_packages:
+    # Packages with known security issues or abandonware
+    - "pycrypto"  # Use cryptography instead
+    - "httplib2"  # Use requests instead
+    - "pickle5"   # Serialization security risks
+    
+  constraints_file: "config/requirements/constraints.txt"
+
+# Node.js Dependencies  
+nodejs:
+  package_manager: "npm"
+  strategy: "exact"
+  
+  package_files:
+    - "apps/web/package.json"
+    
+  lockfiles:
+    - "apps/web/package-lock.json"
+    
+  npm_config:
+    audit_level: "moderate"
+    fund: false
+    save_exact: true
+    package_lock: true
+    
+  security_packages:
+    - name: "crypto-js"
+      pinning: "exact"
+      min_version: "4.1.1"
+      
+    - name: "ws"
+      pinning: "exact" 
+      min_version: "8.13.0"
+      
+  banned_packages:
+    - "node-uuid"     # Use uuid instead
+    - "request"       # Deprecated, use axios/node-fetch
+    - "lodash"        # Security issues in older versions
+    
+  peer_dependencies: "warn"  # warn, error, ignore
+
+# Rust Dependencies
+rust:
+  package_manager: "cargo"
+  strategy: "compatible"  # Use ~ for compatible versions
+  
+  manifest_files:
+    - "**/Cargo.toml"
+    
+  lockfiles:
+    - "**/Cargo.lock"
+    
+  workspace_dependencies: true
+  
+  security_crates:
+    - name: "openssl"
+      version: ">=0.10.55"
+      
+    - name: "tokio-openssl" 
+      version: ">=0.6.3"
+      
+    - name: "ring"
+      version: ">=0.16.20"
+      
+  banned_crates:
+    - "openssl-sys"  # Use rustls instead when possible
+    - "native-tls"   # Platform-specific issues
+    
+  cargo_config:
+    audit_on_build: true
+    deny_on_advisory: true
+
+# Go Dependencies
+go:
+  package_manager: "go"
+  strategy: "exact"  # Go modules use exact versions by default
+  
+  module_files:
+    - "**/go.mod"
+    
+  sum_files:
+    - "**/go.sum"
+    
+  minimum_go_version: "1.21"
+  
+  security_modules:
+    - module: "golang.org/x/crypto"
+      min_version: "v0.12.0"
+      
+    - module: "golang.org/x/net"
+      min_version: "v0.15.0"
+      
+    - module: "google.golang.org/grpc"
+      min_version: "v1.56.3"
+      
+  banned_modules:
+    - "github.com/satori/go.uuid"  # Use google/uuid instead
+    
+  go_config:
+    checksum_verification: true
+    module_proxy: "https://proxy.golang.org"
+
+# Container Dependencies
+containers:
+  base_images:
+    allowed_registries:
+      - "docker.io/library"  # Official Docker images
+      - "gcr.io/distroless"  # Google distroless images
+      - "docker.io/alpine"   # Alpine Linux
+      
+    pinning_strategy: "digest"  # Use SHA256 digests
+    
+    approved_bases:
+      - name: "python:3.12-slim"
+        digest: "sha256:..."
+        security_scan_required: true
+        
+      - name: "node:20-alpine"
+        digest: "sha256:..."
+        security_scan_required: true
+        
+      - name: "rust:1.70-slim"
+        digest: "sha256:..."
+        security_scan_required: true
+
+# Lockfile Management
+lockfiles:
+  auto_update: false  # Manual control for security
+  commit_lockfiles: true
+  validate_on_ci: true
+  
+  python:
+    generate_command: "pip freeze > requirements.lock"
+    validate_command: "pip-compile --dry-run"
+    
+  nodejs:
+    generate_command: "npm ci"
+    validate_command: "npm audit --audit-level=moderate"
+    
+  rust:
+    generate_command: "cargo build"
+    validate_command: "cargo audit"
+    
+  go:
+    generate_command: "go mod tidy"
+    validate_command: "go mod verify"
+
+# Security Update Automation
+security_updates:
+  enabled: true
+  auto_merge_patch: false  # Always require human review
+  create_pr: true
+  
+  severity_handling:
+    critical:
+      max_age_hours: 24
+      auto_update: true
+      bypass_tests: false  # Still run tests even for critical
+      
+    high:
+      max_age_days: 7
+      auto_update: false
+      require_approval: true
+      
+    medium:
+      max_age_days: 30
+      auto_update: false
+      batch_updates: true
+      
+    low:
+      max_age_days: 90
+      auto_update: false
+      quarterly_review: true
+
+# Version Range Policies
+version_ranges:
+  python:
+    # ~= compatible release (recommended)
+    default_operator: "~="
+    major_version_pin: true
+    
+  nodejs:
+    # Exact versions for security
+    default_operator: ""
+    allow_pre_release: false
+    
+  rust:
+    # ^ caret for compatible versions
+    default_operator: "^"
+    edition_requirement: "2021"
+    
+  go:
+    # Exact versions in go.mod
+    semantic_versioning: true
+    retract_handling: "error"
+
+# Compliance and Auditing
+compliance:
+  sbom_generation: true
+  license_tracking: true
+  vulnerability_reporting: true
+  
+  audit_schedule:
+    dependencies: "weekly"
+    lockfiles: "daily"
+    security_updates: "daily"
+    
+  reporting:
+    format: ["json", "sarif", "cyclonedx"]
+    destinations: ["file", "github-security"]
+    
+# Integration Configuration
+integrations:
+  pre_commit:
+    hooks:
+      - "check-lockfiles"
+      - "validate-pinning"
+      - "security-audit"
+      
+  ci_cd:
+    fail_on_vulnerable: true
+    fail_on_unpinned: true
+    cache_dependencies: true
+    
+  ide_support:
+    vscode_extensions:
+      - "ms-python.python"
+      - "ms-vscode.vscode-node-azure-pack"
+      - "rust-lang.rust-analyzer"
+      - "golang.go"
+      
+# Monitoring and Alerting
+monitoring:
+  dependency_drift: true
+  license_changes: true
+  new_vulnerabilities: true
+  
+  alert_channels:
+    - "github-issues"
+    - "slack"
+    - "email"
+    
+  metrics:
+    track_update_frequency: true
+    track_vulnerability_resolution_time: true
+    track_dependency_age: true

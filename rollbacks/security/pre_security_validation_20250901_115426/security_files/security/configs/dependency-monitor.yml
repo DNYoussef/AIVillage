@@ -1,0 +1,199 @@
+# AIVillage Dependency Security Monitoring Configuration
+# This configuration defines the automated vulnerability monitoring pipeline
+
+version: "2.1"
+
+# Global Settings
+global:
+  project_name: "AIVillage"
+  contact: "security@aivillage.dev"
+  vulnerability_db_update_interval: "24h"
+  severity_threshold: "medium"
+  auto_remediation: true
+  
+# Ecosystem-specific configurations
+ecosystems:
+  python:
+    package_managers: ["pip", "poetry", "conda"]
+    requirements_files:
+      - "config/requirements/requirements.txt"
+      - "tests/requirements.txt"
+      - "**/requirements.txt"
+    lockfiles:
+      - "requirements.lock"
+      - "poetry.lock"
+      - "Pipfile.lock"
+    vulnerability_sources:
+      - "osv"
+      - "pypa-advisory"
+      - "snyk"
+      - "github-advisory"
+    scan_tools:
+      - "pip-audit"
+      - "safety"
+      - "bandit"
+      - "semgrep"
+    exclude_packages: []
+    
+  nodejs:
+    package_managers: ["npm", "yarn", "pnpm"]
+    manifest_files:
+      - "**/package.json"
+    lockfiles:
+      - "**/package-lock.json"
+      - "**/yarn.lock"
+      - "**/pnpm-lock.yaml"
+    vulnerability_sources:
+      - "npm-audit"
+      - "retirejs"
+      - "snyk"
+      - "github-advisory"
+    scan_tools:
+      - "npm-audit"
+      - "retire"
+      - "audit-ci"
+    exclude_packages: []
+    
+  rust:
+    package_managers: ["cargo"]
+    manifest_files:
+      - "**/Cargo.toml"
+    lockfiles:
+      - "**/Cargo.lock"
+    vulnerability_sources:
+      - "rustsec"
+      - "github-advisory"
+    scan_tools:
+      - "cargo-audit"
+      - "cargo-deny"
+    exclude_packages: []
+    
+  go:
+    package_managers: ["go"]
+    manifest_files:
+      - "**/go.mod"
+    lockfiles:
+      - "**/go.sum"
+    vulnerability_sources:
+      - "govulndb"
+      - "github-advisory"
+    scan_tools:
+      - "govulncheck"
+      - "nancy"
+    exclude_packages: []
+
+# Vulnerability Assessment Rules
+vulnerability_rules:
+  critical:
+    auto_create_issue: true
+    auto_assign: ["security-team"]
+    max_age_days: 0
+    requires_hotfix: true
+    
+  high:
+    auto_create_issue: true
+    auto_assign: ["security-team", "dev-team"]
+    max_age_days: 7
+    requires_patch: true
+    
+  medium:
+    auto_create_issue: true
+    auto_assign: ["dev-team"]
+    max_age_days: 30
+    requires_update: true
+    
+  low:
+    auto_create_issue: false
+    max_age_days: 90
+    advisory_only: true
+
+# SBOM Generation Configuration
+sbom:
+  formats: ["spdx-json", "cyclonedx-json", "cyclonedx-xml"]
+  include_dev_dependencies: true
+  include_transitive: true
+  cryptographic_signing:
+    enabled: true
+    key_provider: "cosign"
+    attestation_format: "in-toto"
+  metadata:
+    supplier: "AIVillage Team"
+    license_detection: true
+    vulnerability_assessment: true
+    
+# CI/CD Integration
+cicd:
+  github_actions:
+    workflow_file: ".github/workflows/security-scan.yml"
+    triggers: ["push", "pull_request", "schedule"]
+    fail_on_critical: true
+    fail_on_high: false
+    
+  pre_commit:
+    hooks:
+      - "dependency-check"
+      - "vulnerability-scan"
+      - "sbom-generate"
+      
+  post_deployment:
+    container_scanning: true
+    runtime_monitoring: true
+
+# Notification Settings
+notifications:
+  channels:
+    - type: "github-issue"
+      severity: ["critical", "high"]
+    - type: "slack"
+      webhook_url: "${SECURITY_SLACK_WEBHOOK}"
+      severity: ["critical", "high", "medium"]
+    - type: "email"
+      recipients: ["security@aivillage.dev"]
+      severity: ["critical"]
+      
+# Remediation Strategies
+remediation:
+  auto_update:
+    enabled: true
+    severity_threshold: "medium"
+    test_before_merge: true
+    create_pr: true
+    
+  version_pinning:
+    strategy: "exact"  # exact, compatible, minor
+    lockfile_enforcement: true
+    
+  alternative_packages:
+    research_enabled: true
+    community_score_threshold: 8.0
+    maintenance_check: true
+
+# Reporting Configuration
+reporting:
+  dashboard:
+    enabled: true
+    url: "https://security.aivillage.dev/dashboard"
+    
+  metrics:
+    track_resolution_time: true
+    track_false_positives: true
+    generate_trends: true
+    
+  compliance:
+    frameworks: ["NIST", "ISO27001", "SOC2"]
+    export_formats: ["pdf", "json"]
+    
+# Advanced Features
+advanced:
+  machine_learning:
+    false_positive_reduction: true
+    risk_scoring: true
+    
+  threat_intelligence:
+    feeds: ["cisa-kev", "nvd", "github-advisory"]
+    correlation: true
+    
+  license_compliance:
+    track_license_changes: true
+    forbidden_licenses: ["GPL-3.0", "AGPL-3.0"]
+    report_license_conflicts: true

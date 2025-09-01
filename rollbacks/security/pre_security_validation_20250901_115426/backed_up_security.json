@@ -1,0 +1,7 @@
+[
+  "security",
+  "config/security",
+  "reports/security",
+  "tests/security",
+  "scripts/security"
+]

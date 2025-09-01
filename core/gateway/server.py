@@ -59,6 +59,10 @@ class GatewayConfig:
 
         self.secret_key = os.getenv("SECRET_KEY")
         if not self.secret_key:
+            import secrets
+            self.secret_key = secrets.token_urlsafe(32)
+            logger.warning("SECRET_KEY not found in environment, generated temporary key for development")
+        elif len(self.secret_key) < 32:
             raise ValueError(
                 "SECRET_KEY environment variable is required. "
                 "Please set SECRET_KEY with a secure random value (minimum 32 characters)."

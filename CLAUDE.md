@@ -146,18 +146,61 @@ This project uses SPARC (Specification, Pseudocode, Architecture, Refinement, Co
 claude mcp add claude-flow npx claude-flow@alpha mcp start
 ```
 
-## MCP Servers (9 Enhanced Capabilities)
+## MCP Servers (Enhanced Capabilities) - ALL FUNCTIONAL
 
-### Integrated MCP Servers:
-1. **GitHub** - Repository management, PR creation, code search
-2. **HuggingFace** - ML models, embeddings, tokenization
-3. **Markitdown** - PDF/DOCX/HTML to Markdown conversion
-4. **DeepWiki** - Wikipedia knowledge, fact checking, citations
-5. **Context7** - Distributed caching, session persistence
-6. **Apify** - Web scraping, browser automation
-7. **Sequential Thinking** - Chain of thought reasoning
-8. **Firecrawl** - Deep web crawling, content extraction
-9. **Memory** - Persistent memory across sessions
+### CRITICAL: Working MCP Servers (Verified):
+1. **Memory** - Persistent memory and knowledge graph (.mcp/memory.db) ✅ WORKING
+2. **Sequential Thinking** - Multi-step reasoning and planning ✅ WORKING
+3. **HypeRAG** - Local knowledge graph and memory server ✅ WORKING
+
+### Configuration Status:
+- Memory MCP: `@modelcontextprotocol/server-memory@2025.4.25` - FUNCTIONAL
+- Sequential Thinking MCP: `@modelcontextprotocol/server-sequential-thinking@2025.7.1` - FUNCTIONAL
+- HypeRAG MCP: Local Python server - FUNCTIONAL
+- Markdown MCP: DISABLED (package unavailable)
+
+### Additional Available MCP Servers (Comprehensive):
+4. **GitHub MCP** - Repository management with 29+ tools for issues, PRs, CI/CD, security analysis
+   - Tools: Repository ops, issue management, PR operations, GitHub Actions, security scanning
+   - Auth: OAuth/PAT with remote server at https://api.githubcopilot.com/mcp/
+   - Use for: Repository intelligence, automated workflows, cross-repo operations
+   - Rate: 5K requests/hour, supports dynamic toolsets
+
+5. **HuggingFace MCP** - ML operations with unified multi-provider interface
+   - Tools: Model inference, embeddings, multi-modal processing, OpenAI compatibility
+   - Performance: 25K tokens/response, 164+ concurrent clients
+   - Providers: fal, Replicate, Sambanova, Together AI integration
+   - Use for: RAG systems, code assistants, multi-modal content, research tools
+
+6. **MarkItDown MCP** - Document format conversion to LLM-friendly Markdown
+   - Formats: PDF, DOCX, PPTX, XLSX, HTML, images (OCR), audio, CSV/JSON/XML
+   - Features: Structure preservation, semantic meaning focus, multi-format pipelines
+   - Use for: Knowledge base construction, document ingestion, automated workflows
+   - Limitations: PDF processing requires OCR, formatting loss in complex docs
+
+7. **DeepWiki MCP** - GitHub repository documentation access (NOT Wikipedia)
+   - Tools: read_wiki_structure, read_wiki_contents, ask_question
+   - Scope: GitHub repositories only, no general knowledge or Wikipedia access
+   - Use for: Rapid codebase understanding, documentation discovery, technical Q&A
+   - Endpoint: https://mcp.deepwiki.com/sse
+
+8. **Context7 MCP** - Real-time documentation retrieval (NOT distributed caching)
+   - Tools: resolve-library-id, get-library-docs
+   - Features: Version-specific docs, multi-platform integration, real-time injection
+   - Use for: Multi-agent development teams, documentation-driven architecture
+   - Limitations: No traditional caching, requires complementary memory systems
+
+9. **Apify MCP** - Web scraping and browser automation platform
+   - Actors: 5,000+ available through dynamic tool discovery
+   - Features: JavaScript execution, form automation, structured data extraction
+   - Rate: 30 requests/second, ethical scraping built-in, proxy rotation
+   - Use for: Competitive intelligence, content monitoring, QA automation
+
+10. **Firecrawl MCP** - Deep web crawling optimized for AI/LLM workflows
+    - Performance: 50x faster than traditional scrapers, sub-second responses
+    - Features: JavaScript rendering, smart page settlement, AI-powered research
+    - Coverage: 96% of web content, intelligent content filtering
+    - Tools: FIRECRAWL_SCRAPE_EXTRACT_DATA_LLM, FIRECRAWL_CRAWL_URLS, FIRECRAWL_BATCH_SCRAPE
 
 ### MCP Tool Categories
 
@@ -176,11 +219,16 @@ claude mcp add claude-flow npx claude-flow@alpha mcp start
 #### System & Performance
 `benchmark_run`, `features_detect`, `swarm_monitor`
 
-#### External MCP Servers
-- **GitHub MCP**: Code generation, repository analysis
-- **HuggingFace MCP**: Model inference, embeddings
-- **Memory MCP**: Cross-session persistence
-- **Sequential Thinking MCP**: Step-by-step reasoning
+#### External MCP Servers (Enhanced Integration)
+- **GitHub MCP**: 29+ tools for repo management, issues, PRs, CI/CD, security
+- **HuggingFace MCP**: ML inference, embeddings, multi-modal, 164+ concurrent clients
+- **Memory MCP**: Cross-session persistence with SQLite storage and knowledge graphs
+- **Sequential Thinking MCP**: Multi-step reasoning with branching and revision capabilities
+- **Firecrawl MCP**: 50x faster web crawling, LLM-optimized, JavaScript rendering
+- **MarkItDown MCP**: Document conversion, PDF/DOCX/HTML to Markdown, multi-format
+- **Context7 MCP**: Real-time documentation retrieval, version-specific, multi-platform
+- **DeepWiki MCP**: GitHub repository documentation access, technical Q&A
+- **Apify MCP**: 5,000+ web scraping actors, browser automation, ethical scraping
 
 ## Agent Execution Flow with Claude Code
 
@@ -213,25 +261,65 @@ claude mcp add claude-flow npx claude-flow@alpha mcp start
   Write "database/schema.sql"
 ```
 
-## Agent Coordination Protocol
+## Enhanced Agent Coordination Protocol
 
-### Every Agent Spawned via Task Tool MUST:
+### CRITICAL: Enhanced Agent Spawning with Memory, Sequential Thinking, and DSPy
 
-**1. BEFORE Work:**
-```bash
-npx claude-flow@alpha hooks pre-task --description "[task]"
-npx claude-flow@alpha hooks session-restore --session-id "swarm-[id]"
+**ALWAYS use this enhanced pattern when spawning agents:**
+
+```javascript
+// 1. Initialize Enhanced Coordination
+import { EnhancedAgentCoordinator } from './src/coordination/enhanced_agent_coordinator.py'
+coordinator = new EnhancedAgentCoordinator()
+
+// 2. Spawn ALL agents with enhanced capabilities in ONE message
+[Single Message with ALL agents]:
+  Task("Research agent with memory and sequential thinking", 
+       coordinator.generate_enhanced_agent_prompt("researcher", "task description", 
+       ["context_key1", "context_key2"], "Analyze -> Research -> Synthesize -> Validate"), 
+       "researcher")
+  Task("Coder agent with DSPy optimization", 
+       coordinator.generate_enhanced_agent_prompt("coder", "implementation task",
+       ["research_results", "architecture"], "Plan -> Implement -> Test -> Review"), 
+       "coder")
+  Task("System architect with cross-agent memory", 
+       coordinator.generate_enhanced_agent_prompt("system-architect", "design task",
+       ["requirements", "constraints"], "Analyze -> Design -> Validate -> Document"), 
+       "system-architect")
 ```
 
-**2. DURING Work:**
+### Enhanced Agent Requirements - MANDATORY FOR ALL AGENTS:
+
+**1️⃣ MEMORY INTEGRATION (REQUIRED):**
 ```bash
-npx claude-flow@alpha hooks post-edit --file "[file]" --memory-key "swarm/[agent]/[step]"
-npx claude-flow@alpha hooks notify --message "[what was done]"
+# Check shared memory BEFORE starting
+memory_key = "[agent_type]_context_[session_id]"
+# Store ALL significant findings 
+# Update coordination state regularly
 ```
 
-**3. AFTER Work:**
+**2️⃣ SEQUENTIAL THINKING (REQUIRED):**
 ```bash
-npx claude-flow@alpha hooks post-task --task-id "[task]"
+# Follow step-by-step reasoning chain
+# Document decision rationale
+# Validate each step before proceeding
+# Store reasoning process for DSPy learning
+```
+
+**3️⃣ DSPY OPTIMIZATION (REQUIRED):**
+```bash
+# Provide structured, measurable outputs
+# Include confidence scores (0-1) for decisions
+# Store performance metrics for learning
+# Use optimized prompts when available
+```
+
+**4️⃣ COORDINATION HOOKS (REQUIRED):**
+```bash
+npx claude-flow@alpha hooks pre-task --description "[task]" --session-id "[session]"
+npx claude-flow@alpha hooks post-edit --file "[file]" --memory-key "[agent]_progress_[session]"
+npx claude-flow@alpha hooks notify --message "[progress]"
+npx claude-flow@alpha hooks post-task --task-id "[agent]_[session]"
 npx claude-flow@alpha hooks session-end --export-metrics true
 ```
 
@@ -376,6 +464,47 @@ knowledge = await system.research("Best practices for microservices")
 7. Use GitHub tools first
 8. Initialize MCP servers based on task requirements
 9. Use DSPy for complex reasoning tasks
+
+## MCP Server Selection Guide
+
+### Task-Based Server Recommendations:
+
+**For Repository Work**:
+- Primary: GitHub MCP + Context7 MCP + Memory MCP
+- GitHub MCP: Repository management, issues, PRs, CI/CD operations
+- Context7 MCP: Real-time documentation access for current library versions
+- Memory MCP: Persistent learning from repository patterns and decisions
+
+**For ML/AI Development**:
+- Primary: HuggingFace MCP + Sequential Thinking MCP + Memory MCP
+- HuggingFace MCP: Model inference, embeddings, multi-modal processing
+- Sequential Thinking MCP: Complex reasoning chains for AI architecture decisions
+- Memory MCP: Cross-session learning from ML experiments and results
+
+**For Research & Content**:
+- Primary: Firecrawl MCP + MarkItDown MCP + DeepWiki MCP + Memory MCP
+- Firecrawl MCP: Deep web crawling optimized for AI workflows (50x faster)
+- MarkItDown MCP: Convert documents to LLM-friendly Markdown
+- DeepWiki MCP: GitHub repository documentation analysis
+- Memory MCP: Persistent research findings and patterns
+
+**For Web Automation**:
+- Primary: Apify MCP + Firecrawl MCP + Sequential Thinking MCP
+- Apify MCP: 5,000+ web scraping actors with ethical automation
+- Firecrawl MCP: Modern JavaScript-heavy sites with smart page settlement
+- Sequential Thinking MCP: Multi-step reasoning for complex automation workflows
+
+**For Comprehensive Analysis**:
+- All servers coordinated through Memory MCP as central hub
+- Sequential Thinking MCP orchestrates complex multi-system reasoning
+- Task-specific servers provide specialized capabilities
+
+### Performance Characteristics:
+
+**High-Speed Servers**: Firecrawl, Memory, Context7 (sub-second to millisecond responses)
+**High-Concurrency**: HuggingFace (164+ clients), Sequential Thinking, Memory
+**Rate-Limited**: GitHub (5K req/hour), Apify (30 req/sec) - plan accordingly
+**Processing-Intensive**: MarkItDown, HuggingFace - consider resource allocation
 
 ## Support
 

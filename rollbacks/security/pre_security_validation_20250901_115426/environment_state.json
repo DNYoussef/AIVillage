@@ -1,0 +1,10 @@
+{
+  "API_KEY": "***NOT_SET***",
+  "JWT_SECRET": "***NOT_SET***",
+  "DATABASE_URL": "***NOT_SET***",
+  "REDIS_URL": "***NOT_SET***",
+  "SMTP_HOST": "***NOT_SET***",
+  "SMTP_USER": "***NOT_SET***",
+  "ENVIRONMENT": "***NOT_SET***",
+  "DEBUG": "***NOT_SET***"
+}
