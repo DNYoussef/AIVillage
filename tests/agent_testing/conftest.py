@@ -1,3 +1,4 @@
+# ruff: noqa: S101  # Use of assert detected - Expected in test files
 """Test configuration and fixtures for agent testing.
 
 TDD London School methodology with comprehensive mock infrastructure.

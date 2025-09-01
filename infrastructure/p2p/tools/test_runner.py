@@ -36,10 +36,10 @@ except ImportError:
 
 class TestResult(Enum):
     """Test result status."""
-    PASS = "PASS"
-    FAIL = "FAIL"
-    SKIP = "SKIP"
-    ERROR = "ERROR"
+    PASS = "pass"
+    FAIL = "fail"
+    SKIP = "skip"
+    ERROR = "error"
 
 
 @dataclass
@@ -106,7 +106,7 @@ class TestRunner:
     
     async def run_all_tests(self, categories: Optional[List[str]] = None) -> Dict[str, Any]:
         """Run all registered tests."""
-        print(f"🧪 P2P Test Runner Starting")
+        print("P2P Test Runner Starting")
         print(f"{'='*60}")
         
         # Filter tests by category if specified
@@ -114,7 +114,7 @@ class TestRunner:
         if categories:
             tests_to_run = [t for t in self.tests if t.category in categories]
         
-        print(f"🔍 Running {len(tests_to_run)} tests...")
+        print(f"Running {len(tests_to_run)} tests...")
         start_time = time.time()
         
         # Run tests
@@ -131,7 +131,7 @@ class TestRunner:
     
     async def _run_single_test(self, test: TestCase) -> TestExecution:
         """Run a single test case."""
-        print(f"🏃 {test.name}: {test.description}")
+        print(f"Running {test.name}: {test.description}")
         
         start_time = time.time()
         
@@ -147,7 +147,7 @@ class TestRunner:
                         message=f"Missing prerequisites: {', '.join(missing)}"
                     )
                     self.results.append(result)
-                    print(f"   ⏭️  SKIP: {result.message}")
+                    print(f"   SKIP: {result.message}")
                     return result
             
             # Run test with timeout
@@ -161,7 +161,7 @@ class TestRunner:
                     duration=duration,
                     message="Test completed successfully"
                 )
-                print(f"   ✅ PASS ({duration:.2f}s)")
+                print(f"   PASS ({duration:.2f}s)")
                 
             except asyncio.TimeoutError:
                 duration = time.time() - start_time
@@ -171,7 +171,7 @@ class TestRunner:
                     duration=duration,
                     message=f"Test timed out after {test.timeout}s"
                 )
-                print(f"   ❌ FAIL: Timeout after {test.timeout}s")
+                print(f"   FAIL: Timeout after {test.timeout}s")
                 
         except Exception as e:
             duration = time.time() - start_time
@@ -182,7 +182,7 @@ class TestRunner:
                 message=str(e),
                 error=str(e)
             )
-            print(f"   💥 ERROR: {e}")
+            print(f"   ERROR: {e}")
         
         self.results.append(result)
         return result
@@ -220,7 +220,7 @@ class TestRunner:
             if test:
                 if test.category not in categories:
                     categories[test.category] = {'pass': 0, 'fail': 0, 'skip': 0, 'error': 0}
-                categories[test.category][result.result.value.lower()] += 1
+                categories[test.category][result.result.value] += 1
         
         return {
             'total_time': total_time,
@@ -236,18 +236,18 @@ class TestRunner:
     
     def _print_summary(self, summary: Dict[str, Any]):
         """Print test summary."""
-        print(f"\n📊 Test Summary")
+        print("\nTest Summary")
         print(f"{'='*60}")
-        print(f"⏱️  Total Time: {summary['total_time']:.2f}s")
-        print(f"🧪 Total Tests: {summary['total_tests']}")
-        print(f"✅ Passed: {summary['passed']}")
-        print(f"❌ Failed: {summary['failed']}")
-        print(f"⏭️  Skipped: {summary['skipped']}")
-        print(f"💥 Errors: {summary['errors']}")
-        print(f"📈 Success Rate: {summary['success_rate']:.1f}%")
+        print(f"Total Time: {summary['total_time']:.2f}s")
+        print(f"Total Tests: {summary['total_tests']}")
+        print(f"Passed: {summary['passed']}")
+        print(f"Failed: {summary['failed']}")
+        print(f"Skipped: {summary['skipped']}")
+        print(f"Errors: {summary['errors']}")
+        print(f"Success Rate: {summary['success_rate']:.1f}%")
         
         if summary['categories']:
-            print(f"\n📂 By Category:")
+            print("\nBy Category:")
             for category, stats in summary['categories'].items():
                 total_cat = sum(stats.values())
                 pass_rate = (stats['pass'] / total_cat * 100) if total_cat > 0 else 0
@@ -256,7 +256,7 @@ class TestRunner:
         # Print failed tests
         failed_tests = [r for r in self.results if r.result in [TestResult.FAIL, TestResult.ERROR]]
         if failed_tests:
-            print(f"\n❌ Failed Tests:")
+            print("\nFailed Tests:")
             for result in failed_tests:
                 print(f"   {result.name}: {result.message}")
 
@@ -407,13 +407,13 @@ async def main():
     if args.output:
         with open(args.output, 'w') as f:
             json.dump(summary, f, indent=2)
-        print(f"\n💾 Results saved to: {args.output}")
+        print(f"\nResults saved to: {args.output}")
     
     # Exit with appropriate code
     if summary['failed'] > 0 or summary['errors'] > 0:
         sys.exit(1)
     else:
-        print(f"\n🎉 All tests passed!")
+        print("\nAll tests passed!")
         sys.exit(0)
 
 

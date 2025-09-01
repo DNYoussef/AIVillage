@@ -1,3 +1,4 @@
+# ruff: noqa: S101  # Use of assert detected - Expected in test files
 """Behavioral Contract Tests for Agent System
 
 Tests that validate what agents do, not how they do it.

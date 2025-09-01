@@ -15,6 +15,7 @@ comprehensive coverage for:
 
 This fills the major testing gap identified in the consolidation analysis.
 """
+# ruff: noqa: S101  # Use of assert detected - Expected in test files
 
 
 import pytest

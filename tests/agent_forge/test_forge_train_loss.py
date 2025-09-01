@@ -1,3 +1,4 @@
+# ruff: noqa: S101  # Use of assert detected - Expected in test files
 from types import SimpleNamespace
 
 import torch

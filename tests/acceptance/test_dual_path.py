@@ -10,6 +10,7 @@ Scenarios:
 
 DoD: All scenarios pass; receipts recorded; metrics exported JSON.
 """
+# ruff: noqa: S101  # Use of assert detected - Expected in test files
 
 import asyncio
 import json

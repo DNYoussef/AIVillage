@@ -1,3 +1,4 @@
+# ruff: noqa: S101  # Use of assert detected - Expected in test files
 """Test Isolation Validation
 
 Tests that ensure test isolation and prevent interference between tests.

@@ -1,0 +1,277 @@
+# Enhanced Pre-commit Configuration with Maximum Auto-Fix Capabilities
+# Optimized for <1 minute execution with comprehensive auto-fixing
+
+repos:
+  # ============================================
+  # PYTHON AUTO-FIXING (Primary Tools)
+  # ============================================
+  
+  # Ruff - Comprehensive linting and auto-fixing
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.0
+    hooks:
+      - id: ruff
+        name: "🔧 Ruff Auto-Fix (Safe)"
+        args: [
+          --fix,                    # Enable auto-fixing
+          --exit-non-zero-on-fix,   # Exit with error code if fixes applied
+          --show-fixes,             # Show what was fixed
+          --extend-select=B006,B007,C408,C409,SIM102,SIM103,SIM110,SIM117,RUF100, # Add auto-fixable rules
+          --extend-fixable=F401,F811,E711,E712,E713,E714,UP032,UP034  # Enable fixes for these
+        ]
+        exclude: ^(deprecated/|archive/|experimental/|backups/)
+        files: \.py$
+        stages: [commit]
+      
+      - id: ruff
+        name: "⚠️ Ruff Auto-Fix (Unsafe - Review Required)"  
+        args: [
+          --fix,
+          --unsafe-fixes,           # Enable more aggressive fixes
+          --exit-non-zero-on-fix,
+          --show-fixes,
+          --select=RUF005,UP006,UP007, # Specific unsafe but valuable fixes
+        ]
+        exclude: ^(deprecated/|archive/|experimental/|tests/|backups/)
+        files: \.py$
+        stages: [manual]  # Only run when explicitly requested
+      
+      - id: ruff-format
+        name: "📝 Ruff Format"
+        exclude: ^(deprecated/|archive/|experimental/|backups/)
+        files: \.py$
+        stages: [commit]
+
+  # Black - Python code formatting
+  - repo: https://github.com/psf/black
+    rev: 23.9.1
+    hooks:
+      - id: black
+        name: "⚫ Black Format"
+        args: [--line-length=120, --fast]
+        exclude: ^(deprecated/|archive/|experimental/|backups/)
+        files: \.py$
+        stages: [commit]
+
+  # isort - Import sorting
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: "📚 Import Sort (isort)"
+        args: [
+          --profile, black,
+          --line-length, "120",
+          --force-sort-within-sections,
+          --combine-as,
+          --atomic
+        ]
+        exclude: ^(deprecated/|archive/|experimental/|backups/)
+        files: \.py$
+        stages: [commit]
+
+  # ============================================
+  # JAVASCRIPT/TYPESCRIPT AUTO-FIXING
+  # ============================================
+  
+  # ESLint - JavaScript/TypeScript linting and auto-fixing
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.35.0
+    hooks:
+      - id: eslint
+        name: "🔧 ESLint Auto-Fix"
+        args: [
+          --fix,                    # Auto-fix issues
+          --ext, '.js,.jsx,.ts,.tsx', # File extensions
+          --max-warnings, '0',      # Treat warnings as errors
+        ]
+        files: \.(js|jsx|ts|tsx)$
+        exclude: ^(node_modules/|deprecated/|archive/)
+        additional_dependencies:
+          - eslint@8.35.0
+          - '@typescript-eslint/parser@5.54.0'
+          - '@typescript-eslint/eslint-plugin@5.54.0'
+          - eslint-plugin-react@7.32.2
+          - eslint-plugin-react-hooks@4.6.0
+        stages: [commit]
+
+  # Prettier - Code formatting for JS/TS and other files
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.8.4
+    hooks:
+      - id: prettier
+        name: "💄 Prettier Format"
+        args: [--write]
+        files: \.(js|jsx|ts|tsx|json|css|scss|md|yaml|yml)$
+        exclude: ^(node_modules/|deprecated/|archive/|package-lock\.json)
+        stages: [commit]
+
+  # ============================================
+  # GENERAL FILE QUALITY (Fast Auto-Fixes)
+  # ============================================
+  
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      # Whitespace and line ending fixes
+      - id: trailing-whitespace
+        name: "✂️ Remove Trailing Whitespace"
+        exclude: ^(deprecated/|archive/|backups/|\.md$)
+        stages: [commit]
+        
+      - id: end-of-file-fixer
+        name: "📄 Fix End of File"
+        exclude: ^(deprecated/|archive/|backups/)
+        stages: [commit]
+        
+      - id: mixed-line-ending
+        name: "🔀 Fix Line Endings"
+        args: [--fix=lf]
+        exclude: ^(deprecated/|archive/|backups/)
+        stages: [commit]
+        
+      # JSON/YAML formatting
+      - id: pretty-format-json
+        name: "🎨 Format JSON"
+        args: [--autofix, --indent=2]
+        exclude: ^(deprecated/|archive/|package-lock\.json)
+        stages: [commit]
+        
+      # Fast validation checks (non-breaking)
+      - id: check-merge-conflict
+        name: "🔍 Check Merge Conflicts" 
+        stages: [commit]
+        
+      - id: check-added-large-files
+        name: "📦 Check File Sizes"
+        args: [--maxkb=1000]  # 1MB limit
+        stages: [commit]
+        
+      - id: check-toml
+        name: "🔧 Validate TOML"
+        files: \.toml$
+        exclude: ^(deprecated/|archive/)
+        stages: [commit]
+        
+      - id: check-yaml
+        name: "📋 Validate YAML"  
+        files: \.ya?ml$
+        exclude: ^(deprecated/|archive/)
+        stages: [commit]
+        
+      - id: check-json
+        name: "📊 Validate JSON"
+        files: \.json$
+        exclude: ^(deprecated/|archive/|package-lock\.json)
+        stages: [commit]
+
+  # ============================================
+  # SECURITY (Fast Detection, Auto-Fix Where Possible)
+  # ============================================
+  
+  # Detect secrets
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        name: "🔐 Detect Secrets"
+        args: [--baseline, .secrets.baseline, --force-use-all-plugins]
+        exclude: ^(deprecated/|archive/|backups/)
+        stages: [commit]
+
+  # ============================================
+  # SPECIALIZED AUTO-FIXES (Project-Specific)
+  # ============================================
+  
+  - repo: local
+    hooks:
+      # Magic literal detection with auto-fix suggestions
+      - id: magic-literal-autofix
+        name: "🪄 Magic Literal Auto-Fix"
+        entry: python scripts/ci/magic_literal_auto_fixer.py
+        language: system
+        files: \.py$
+        exclude: ^(deprecated/|archive/|experimental/|tests/|backups/)
+        args: [--fix-safe-literals, --generate-constants]
+        pass_filenames: true
+        stages: [commit]
+        
+      # God object detection (informational)
+      - id: god-object-check-fast
+        name: "👀 God Object Check (Fast)"
+        entry: timeout 15s python scripts/ci/god-object-detector.py
+        language: system
+        files: \.py$
+        exclude: ^(deprecated/|archive/|experimental/|tests/|backups/)
+        args: [--threshold, "1000", --method-threshold, "20", --auto-suggest-splits]
+        pass_filenames: true
+        stages: [commit]
+        
+      # Import organization enhancement
+      - id: import-organizer
+        name: "📋 Import Organizer"
+        entry: python scripts/ci/import_organizer.py
+        language: system
+        files: \.py$
+        exclude: ^(deprecated/|archive/|experimental/|backups/)
+        args: [--fix-unused, --group-imports, --add-future-imports]
+        pass_filenames: true
+        stages: [commit]
+
+# ============================================
+# PERFORMANCE OPTIMIZATIONS
+# ============================================
+
+# Global settings for maximum performance
+default_language_version:
+  python: python3.11
+  node: '18.16.0'
+
+# Performance settings
+fail_fast: false  # Run all hooks to maximize fixes per commit
+default_stages: [commit]
+minimum_pre_commit_version: '3.0.0'
+
+# Comprehensive but optimized exclusions
+exclude: |
+  (?x)^(
+    deprecated/|
+    archive/|
+    backups/|
+    \.git/|
+    __pycache__/|
+    \.pytest_cache/|
+    \.mypy_cache/|
+    \.ruff_cache/|
+    \.tox/|
+    \.venv/|
+    venv/|
+    env/|
+    \.env|
+    node_modules/|
+    \.DS_Store|
+    \.coverage|
+    htmlcov/|
+    \.nyc_output/|
+    dist/|
+    build/|
+    .*\.egg-info/|
+    \.idea/|
+    \.vscode/|
+    .*\.pyc|
+    .*\.pyo|
+    .*\.pyd|
+    .*\.so$|
+    .*\.dylib$|
+    .*\.dll$|
+    package-lock\.json|
+    yarn\.lock
+  )
+
+# ============================================
+# STAGED EXECUTION STRATEGY
+# ============================================
+
+# commit: Fast auto-fixes for immediate feedback
+# push: Additional comprehensive checks  
+# manual: Unsafe fixes that need review

@@ -1,0 +1,138 @@
+{
+  "scan_metadata": {
+    "scan_date": "2025-01-08",
+    "scan_type": "hardcoded_secrets_analysis", 
+    "scope": ["tests/", "examples/", "scripts/", "config/"],
+    "total_files_scanned": 156,
+    "total_findings": 78
+  },
+  "critical_findings": {
+    "count": 1,
+    "items": [
+      {
+        "file": "config/.env",
+        "line": 7,
+        "type": "exposed_api_key", 
+        "severity": "CRITICAL",
+        "description": "OpenRouter API key exposed in version control",
+        "value_pattern": "sk-or-v1-*",
+        "recommendation": "Rotate key immediately, move to environment variables"
+      }
+    ]
+  },
+  "high_risk_findings": {
+    "count": 12,
+    "items": [
+      {
+        "file": "tests/integration/test_cross_component_integration.py",
+        "lines": [72, 84, 129, 169, 174, 235, 243, 292, 300],
+        "type": "unsuppressed_test_passwords",
+        "severity": "HIGH", 
+        "description": "Test passwords without proper suppression comments",
+        "recommendation": "Add nosec B106 or pragma: allowlist secret comments"
+      },
+      {
+        "file": "tests/guards/performance/test_caching_performance_regression.py", 
+        "line": 65,
+        "type": "unsuppressed_redis_password",
+        "severity": "HIGH",
+        "description": "Redis password in test without suppression",
+        "recommendation": "Add pragma: allowlist secret comment"
+      },
+      {
+        "file": "tests/security/unit/test_admin_security.py",
+        "line": 26,
+        "type": "password_constant",
+        "severity": "HIGH", 
+        "description": "Password constant without suppression",
+        "recommendation": "Add nosec B106 comment"
+      }
+    ]
+  },
+  "medium_risk_findings": {
+    "count": 45,
+    "description": "Test credentials and mock data that should have suppression comments for security scanner compliance"
+  },
+  "low_risk_findings": {
+    "count": 20,
+    "description": "Legitimate test data with proper suppression comments already in place"
+  },
+  "suppression_patterns": {
+    "correctly_used": [
+      "# nosec B106 - test password",
+      "# pragma: allowlist secret", 
+      "# pragma: allowlist secret - test credential",
+      "# nosec B106, pragma: allowlist secret"
+    ],
+    "recommended_additions": [
+      "password=\"test_value\"  # nosec B106 - test password",
+      "api_key=\"test_key\"  # pragma: allowlist secret - mock API key", 
+      "token=\"test_token\"  # pragma: allowlist secret - test auth token"
+    ]
+  },
+  "file_categories": {
+    "authentication_tests": {
+      "count": 25,
+      "files": [
+        "tests/security/test_auth_system.py",
+        "tests/integration/test_integration_simple.py",
+        "tests/integration/test_end_to_end_system.py"
+      ],
+      "status": "mostly_suppressed"
+    },
+    "integration_tests": {
+      "count": 15,
+      "files": [
+        "tests/integration/test_cross_component_integration.py",
+        "tests/integration/test_unified_api.py"
+      ],
+      "status": "needs_suppression"
+    },
+    "configuration_files": {
+      "count": 3,
+      "files": [
+        "config/.env",
+        "tests/fixtures/service_fixtures.py"
+      ],
+      "status": "critical_exposure"
+    }
+  },
+  "remediation_priorities": {
+    "immediate": [
+      "Rotate OpenRouter API key",
+      "Add config/.env to .gitignore", 
+      "Remove config/.env from version control"
+    ],
+    "high": [
+      "Add suppression comments to unsuppressed test passwords",
+      "Implement automated secret scanning in CI/CD"
+    ],
+    "medium": [
+      "Standardize suppression comment format",
+      "Create developer guidelines for test credentials"
+    ],
+    "low": [
+      "Review properly suppressed cases for consistency",
+      "Set up quarterly security audits"
+    ]
+  },
+  "tools_and_scripts": {
+    "created": [
+      "docs/security/HARDCODED_SECRETS_ANALYSIS.md",
+      "scripts/security_suppression_fixer.py"
+    ],
+    "recommended": [
+      ".bandit configuration file",
+      "Pre-commit hooks for secret detection",
+      "CI/CD integration for security scanning"
+    ]
+  },
+  "statistics": {
+    "files_with_proper_suppression": 65,
+    "files_needing_suppression": 12,
+    "critical_exposures": 1,
+    "total_test_passwords_found": 89,
+    "suppressed_test_passwords": 77,
+    "unsuppressed_test_passwords": 12
+  }
+}

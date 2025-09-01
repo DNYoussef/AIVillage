@@ -1,3 +1,4 @@
+# ruff: noqa: S101  # Use of assert detected - Expected in test files
 """Component Integration Tests for Agent System
 
 Tests how agent components interact with each other while maintaining

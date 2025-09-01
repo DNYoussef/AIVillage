@@ -6,6 +6,7 @@ Tests the Navigator's SCION preference implementation with measurable ≤500ms s
 3. Offline-first BitChat when no internet connectivity
 4. Receipt emission for bounty reviewers with switch latency tracking
 """
+# ruff: noqa: S101  # Use of assert detected - Expected in test files
 
 import asyncio
 from dataclasses import asdict, dataclass

@@ -98,7 +98,15 @@ class HealthChecker(ABC):
     @abstractmethod
     async def check_health(self) -> HealthCheckResult:
         """Perform health check and return result."""
-        pass
+        logger.warning(f"Health check not implemented for component {self.component_id}")
+        return HealthCheckResult(
+            component_id=self.component_id,
+            component_type=self.component_type,
+            status=HealthStatus.UNKNOWN,
+            timestamp=datetime.now(),
+            message="Health check method not implemented",
+            recovery_suggestions=["Implement health check logic for this component"]
+        )
     
     async def check_with_retry(self) -> HealthCheckResult:
         """Perform health check with retry logic."""
@@ -115,8 +123,11 @@ class HealthChecker(ABC):
             
             except asyncio.TimeoutError:
                 last_error = f"Health check timed out after {self.timeout_seconds}s"
+                logger.error(f"Health check timeout for {self.component_id}: {last_error}")
             except Exception as e:
                 last_error = str(e)
+                logger.error(f"Health check exception for {self.component_id}: {last_error}", 
+                           extra={'component_id': self.component_id, 'error_type': type(e).__name__})
             
             if attempt < self.retry_attempts - 1:
                 await asyncio.sleep(self.retry_delay)

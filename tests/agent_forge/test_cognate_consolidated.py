@@ -1,3 +1,4 @@
+# ruff: noqa: S101  # Use of assert detected - Expected in test files
 #!/usr/bin/env python3
 """
 Consolidated Cognate Model Tests

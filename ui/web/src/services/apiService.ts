@@ -52,6 +52,7 @@ class APIService {
         data,
       };
     } catch (error) {
+      console.error(`API request failed: ${endpoint}`, error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Network error',
