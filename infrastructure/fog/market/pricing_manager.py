@@ -23,7 +23,7 @@ from decimal import Decimal, getcontext
 from enum import Enum
 import logging
 import statistics
-from typing import Any
+from typing import Any, Dict, List, Optional, Tuple
 import uuid
 
 # Import reputation system for pricing integration
