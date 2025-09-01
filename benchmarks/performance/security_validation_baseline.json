@@ -1,0 +1,50 @@
+{
+  "suite_duration": 58.984,
+  "benchmarks": {
+    "system_resources": {
+      "cpu": {
+        "percent": 86.2,
+        "count": 12
+      },
+      "memory": {
+        "used_mb": 13901.04,
+        "total_mb": 16273.03,
+        "percent": 85.4
+      },
+      "disk": {
+        "used_gb": 409.6,
+        "total_gb": 476.24,
+        "percent": 86.01
+      },
+      "timestamp": "2025-09-01T11:56:34.424476"
+    },
+    "module_imports": {
+      "import_times": {
+        "core.agent_forge": "TIMEOUT",
+        "core.rag": 5.479479789733887,
+        "core.monitoring": 5.43693470954895,
+        "core.p2p": 5.60889196395874
+      },
+      "successful_imports": 3,
+      "total_modules": 4,
+      "average_import_time": 5.508435487747192,
+      "success_rate": 0.75,
+      "timestamp": "2025-09-01T11:57:00.120892"
+    },
+    "test_execution": {
+      "collection_time": 25.013,
+      "test_count": 0,
+      "collection_rate": 0.0,
+      "collection_successful": false,
+      "timestamp": "2025-09-01T11:57:25.134102"
+    },
+    "gateway_startup": {
+      "total_startup_time": 7.264,
+      "config_load_time": 6.466,
+      "startup_successful": true,
+      "error": null,
+      "timestamp": "2025-09-01T11:57:32.398228"
+    }
+  },
+  "completed_at": "2025-09-01T11:57:32.398228"
+}

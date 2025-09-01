@@ -384,7 +384,7 @@ class AttackPreventionTest(unittest.TestCase):
         sql_injection_payloads = [
             "'; DROP TABLE users; --",
             "' OR '1'='1' --",
-            "'; UPDATE admin SET password='hacked'; --",
+            "'; UPDATE admin SET password='hacked'  # nosec B106 - test password; --",
             "' UNION SELECT username, password FROM users --",
             "'; INSERT INTO logs VALUES ('pwned'); --",
         ]

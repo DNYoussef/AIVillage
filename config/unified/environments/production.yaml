@@ -1,0 +1,363 @@
+# Production Environment Configuration Overrides
+# Priority: 30 (medium - environment layer)
+
+# Environment Settings
+environment:
+  name: "production"
+  debug_mode: false
+  auto_reload: false
+  strict_mode: true
+
+# Service Configuration (Production)
+services:
+  gateway:
+    host: "0.0.0.0"
+    port: 8000
+    replicas: 3
+    env:
+      LOG_LEVEL: "INFO"
+      ENVIRONMENT: "production"
+    resources:
+      cpu: "1"
+      memory: "1Gi"
+      
+  agent_forge:
+    host: "0.0.0.0"
+    port: 8003
+    replicas: 2
+    env:
+      REAL_TRAINING_ENABLED: "true"
+      P2P_FOG_ENABLED: "true"
+      GROKFAST_OPTIMIZATION: "true"
+      ENVIRONMENT: "production"
+    resources:
+      cpu: "4"
+      memory: "8Gi"
+      gpu: "1"
+      
+  twin_service:
+    host: "0.0.0.0"
+    port: 8001
+    replicas: 3
+    env:
+      PRIVACY_MODE: "strict"
+      COPPA_COMPLIANT: "true"
+      FERPA_COMPLIANT: "true"
+      GDPR_COMPLIANT: "true"
+      ENVIRONMENT: "production"
+    resources:
+      cpu: "500m"
+      memory: "2Gi"
+      
+  evolution_metrics:
+    host: "0.0.0.0"
+    port: 8081
+    replicas: 2
+    env:
+      METRICS_FLUSH_THRESHOLD: "100"
+      METRICS_RETENTION_DAYS: "90"
+      ENVIRONMENT: "production"
+    resources:
+      cpu: "250m"
+      memory: "512Mi"
+      
+  hyperrag:
+    host: "0.0.0.0"
+    port: 8082
+    replicas: 3
+    env:
+      RAG_CACHE_SIZE: "256"
+      RAG_L1_CACHE_SIZE: "128"
+      RAG_L2_ENABLED: "true"
+      ENVIRONMENT: "production"
+    resources:
+      cpu: "1"
+      memory: "4Gi"
+      
+  p2p_networking:
+    host: "0.0.0.0"
+    port: 4001
+    replicas: 2
+    env:
+      P2P_ENCRYPTION: "true"
+      MESH_MAX_PEERS: "50"
+      ENVIRONMENT: "production"
+    resources:
+      cpu: "500m"
+      memory: "1Gi"
+
+# Database Configuration (Production)
+database:
+  evolution_metrics:
+    type: "postgresql"
+    host: "${POSTGRES_HOST}"
+    port: 5432
+    database: "aivillage_production"
+    user: "${POSTGRES_USER}"
+    password: "${POSTGRES_PASSWORD}"
+    connection_timeout: 30
+    max_connections: 50
+    ssl_mode: "require"
+    
+  digital_twin:
+    type: "postgresql"
+    host: "${POSTGRES_HOST}"
+    port: 5432
+    database: "aivillage_twin_production"
+    user: "${POSTGRES_USER}"
+    password: "${POSTGRES_PASSWORD}"
+    encryption_enabled: true
+    encryption_key: "${DIGITAL_TWIN_ENCRYPTION_KEY}"
+    backup_enabled: true
+    backup_interval_hours: 6
+    
+  rag:
+    type: "qdrant"
+    host: "${QDRANT_HOST}"
+    port: 6333
+    collection_name: "aivillage_production"
+    vector_dimensions: 384
+    api_key: "${QDRANT_API_KEY}"
+    tls_enabled: true
+
+# API Configuration (Production)
+api:
+  cors_enabled: true
+  cors_origins:
+    - "https://aivillage.com"
+    - "https://app.aivillage.com"
+    
+  authentication:
+    enabled: true
+    jwt_secret: "${JWT_SECRET}"
+    expiry_hours: 1
+    refresh_enabled: true
+    
+  rate_limiting:
+    enabled: true
+    global_per_minute: 1000
+    per_user_per_minute: 60
+    burst_limit: 10
+    
+  request_timeout: 60
+  max_request_size: "50MB"
+
+# Logging (Production)
+logging:
+  level: "INFO"
+  console_output: false
+  file_output: true
+  structured_logging: true
+  
+  destinations:
+    - type: "file"
+      path: "/var/log/aivillage/application.log"
+      rotation:
+        size: "100MB"
+        retention_days: 30
+        
+    - type: "elasticsearch"
+      host: "${ELASTICSEARCH_HOST}"
+      index: "aivillage-production"
+      
+    - type: "datadog"
+      api_key: "${DATADOG_API_KEY}"
+      
+  components:
+    gateway: "INFO"
+    agent_forge: "INFO"
+    digital_twin: "WARN"
+    evolution_metrics: "INFO"
+    hyperrag: "INFO"
+    p2p: "WARN"
+    config_service: "INFO"
+
+# Performance (Production)
+performance:
+  memory:
+    max_heap_size: "2Gi"
+    gc_threshold: 0.7
+    
+  concurrency:
+    max_workers: 8
+    max_concurrent_requests: 200
+    
+  caching:
+    enabled: true
+    default_ttl: 3600
+    max_entries: 10000
+    distributed: true
+    redis_cluster: "${REDIS_CLUSTER_ENDPOINT}"
+
+# Security (Production - Strict)
+security:
+  tls:
+    enabled: true
+    min_version: "1.3"
+    cert_path: "/etc/ssl/certs/aivillage.crt"
+    key_path: "/etc/ssl/private/aivillage.key"
+    
+  headers:
+    hsts_enabled: true
+    hsts_max_age: 31536000
+    csp_enabled: true
+    csp_policy: "default-src 'self'; script-src 'self' 'unsafe-inline'"
+    frame_options: "DENY"
+    
+  encryption:
+    enabled: true
+    key_rotation_days: 30
+    
+  audit:
+    enabled: true
+    retention_days: 365
+    log_all_requests: true
+    
+  secrets:
+    vault_enabled: true
+    vault_endpoint: "${VAULT_ENDPOINT}"
+    vault_token: "${VAULT_TOKEN}"
+
+# Monitoring (Production)
+monitoring:
+  metrics:
+    enabled: true
+    collection_interval: 15
+    prometheus_endpoint: "${PROMETHEUS_ENDPOINT}"
+    
+  health_checks:
+    enabled: true
+    interval: 10
+    timeout: 5
+    failure_threshold: 3
+    
+  alerts:
+    enabled: true
+    channels:
+      - type: "slack"
+        webhook: "${SLACK_ALERT_WEBHOOK}"
+      - type: "pagerduty"
+        integration_key: "${PAGERDUTY_INTEGRATION_KEY}"
+        
+  tracing:
+    enabled: true
+    sampling_rate: 0.1
+    jaeger_endpoint: "${JAEGER_ENDPOINT}"
+
+# P2P Networking (Production)
+networking:
+  p2p:
+    encryption_enabled: true
+    max_peers: 100
+    discovery_timeout: 60
+    mesh_name: "aivillage-production"
+    bootstrap_nodes: "${P2P_BOOTSTRAP_NODES}"
+    
+  load_balancing:
+    strategy: "least_connections"
+    health_check_interval: 30
+
+# Feature Flags (Production)
+features:
+  advanced_analytics: true
+  experimental_features: false
+  hot_reload: false
+  debug_endpoints: false
+  performance_monitoring: true
+  security_scanning: true
+
+# External Services (Production)
+external_services:
+  redis:
+    enabled: true
+    cluster_endpoint: "${REDIS_CLUSTER_ENDPOINT}"
+    ssl_enabled: true
+    
+  postgresql:
+    enabled: true
+    primary_host: "${POSTGRES_PRIMARY_HOST}"
+    replica_hosts: "${POSTGRES_REPLICA_HOSTS}"
+    
+  wandb:
+    enabled: true
+    project: "aivillage-production"
+    api_key: "${WANDB_API_KEY}"
+    
+  openai:
+    enabled: true
+    api_key: "${OPENAI_API_KEY}"
+    organization: "${OPENAI_ORG_ID}"
+
+# Backup Configuration (Production)
+backup:
+  enabled: true
+  strategy: "incremental"
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention_days: 90
+  storage:
+    type: "s3"
+    bucket: "${BACKUP_S3_BUCKET}"
+    region: "${AWS_REGION}"
+    encryption: true
+
+# Configuration Management (Production)
+config_management:
+  hot_reload:
+    enabled: false
+    
+  validation:
+    enabled: true
+    strict_mode: true
+    
+  backup:
+    enabled: true
+    interval_hours: 6
+    retention_days: 30
+    
+  deployment:
+    strategy: "blue_green"
+    approval_required: true
+    rollback_enabled: true
+
+# Resource Limits (Production)
+resources:
+  cpu:
+    default_limit: "2"
+    default_request: "500m"
+    
+  memory:
+    default_limit: "4Gi"
+    default_request: "1Gi"
+    
+  storage:
+    default_size: "10Gi"
+    backup_retention: 30
+
+# Scaling Configuration
+scaling:
+  horizontal:
+    enabled: true
+    min_replicas: 2
+    max_replicas: 20
+    target_cpu_utilization: 70
+    target_memory_utilization: 80
+    
+  vertical:
+    enabled: false
+
+# Disaster Recovery
+disaster_recovery:
+  enabled: true
+  backup_regions:
+    - "us-west-2"
+    - "eu-west-1"
+  rto_minutes: 60  # Recovery Time Objective
+  rpo_minutes: 5   # Recovery Point Objective
+  
+# Compliance
+compliance:
+  gdpr_enabled: true
+  hipaa_enabled: false
+  sox_enabled: false
+  data_retention_days: 365
+  audit_trail_enabled: true

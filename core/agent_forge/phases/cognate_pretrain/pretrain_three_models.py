@@ -99,6 +99,7 @@ except ImportError as e:
     class TrainingConfig:
         # Model architecture
         model_size: str = "25M"
+        vocab_size: int = 32000
         hidden_dim: int = 216
         num_layers: int = 11
         num_heads: int = 4
@@ -327,6 +328,7 @@ def create_training_config() -> TrainingConfig:
     config = TrainingConfig(
         # Model size
         model_size="25M",
+        vocab_size=32000,  # Add vocab size
         hidden_dim=216,  # Match refiner_core.py
         num_layers=11,  # Match refiner_core.py
         num_heads=4,  # Match refiner_core.py
@@ -343,7 +345,7 @@ def create_training_config() -> TrainingConfig:
         learning_rate=2e-4,  # 2e-4 with cosine decay
         weight_decay=0.1,
         warmup_steps=2000,  # 2k steps warmup
-        max_steps=10000,  # Quick pretraining for demonstration
+        max_steps=2000,  # Quick validation pretraining
         beta1=0.9,  # AdamW β1
         beta2=0.95,  # AdamW β2
         # GrokFast settings
@@ -402,9 +404,9 @@ def pretrain_single_model(
         except:
             # Create mock batch if dataloader fails
             batch = {
-                "input_ids": torch.randint(0, train_config.vocab_size, (train_config.batch_size, 256)),
-                "labels": torch.randint(0, train_config.vocab_size, (train_config.batch_size, 256)),
-                "attention_mask": torch.ones(train_config.batch_size, 256),
+                "input_ids": torch.randint(0, train_config.vocab_size, (train_config.batch_size, 256), dtype=torch.long),
+                "labels": torch.randint(0, train_config.vocab_size, (train_config.batch_size, 256), dtype=torch.long),
+                "attention_mask": torch.ones(train_config.batch_size, 256, dtype=torch.long),
                 "seq_type": ["short"] * train_config.batch_size,
                 "requires_memory": [False] * train_config.batch_size,
             }
@@ -430,8 +432,8 @@ def pretrain_single_model(
                 f"{model_name}: Step {step}/{train_config.max_steps}, loss={avg_loss:.4f}",
             )
 
-        # Early stopping for demonstration
-        if step >= 1000:  # Just do 1K steps for demo
+        # Early stopping for validation
+        if step >= 500:  # Just do 500 steps for validation
             break
 
     # Save model in EvoMerge-compatible format

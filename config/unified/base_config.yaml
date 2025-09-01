@@ -1,0 +1,232 @@
+# AIVillage Base Configuration
+# Core system defaults that apply across all environments
+# Priority: 10 (lowest - base layer)
+
+# Service Registry
+services:
+  gateway:
+    name: "API Gateway"
+    type: "gateway"
+    protocol: "http"
+    health_check_path: "/health"
+    default_timeout: 30
+    
+  agent_forge:
+    name: "Agent Forge"
+    type: "training"
+    protocol: "http"
+    health_check_path: "/health"
+    default_timeout: 120
+    
+  twin_service:
+    name: "Digital Twin Service"
+    type: "api"
+    protocol: "http" 
+    health_check_path: "/health"
+    default_timeout: 60
+    
+  evolution_metrics:
+    name: "Evolution Metrics"
+    type: "analytics"
+    protocol: "http"
+    health_check_path: "/health"
+    default_timeout: 30
+    
+  hyperrag:
+    name: "HyperRAG Service"
+    type: "rag"
+    protocol: "http"
+    health_check_path: "/health"
+    default_timeout: 90
+    
+  p2p_networking:
+    name: "P2P Networking"
+    type: "networking"
+    protocol: "tcp"
+    health_check_path: "/status"
+    default_timeout: 45
+
+# Database Configuration Defaults
+database:
+  connection_timeout: 30
+  query_timeout: 60
+  max_connections: 20
+  connection_retry_attempts: 3
+  connection_retry_delay: 5
+  
+  evolution_metrics:
+    type: "sqlite"
+    wal_mode: true
+    backup_enabled: false
+    
+  digital_twin:
+    type: "sqlite"  
+    wal_mode: true
+    backup_enabled: false
+    encryption_enabled: false
+    
+  rag:
+    vector_dimensions: 384
+    similarity_threshold: 0.7
+    index_type: "faiss"
+
+# API Configuration Defaults
+api:
+  request_timeout: 30
+  max_request_size: "10MB"
+  cors_enabled: false
+  cors_origins: []
+  
+  authentication:
+    enabled: false
+    default_expiry_hours: 1
+    
+  rate_limiting:
+    enabled: false
+    default_per_minute: 60
+    
+  compression:
+    enabled: true
+    min_size: 1024
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "structured"
+  console_output: true
+  file_rotation:
+    enabled: true
+    size: "10MB"
+    retention_days: 7
+    
+  components:
+    gateway: "INFO"
+    agent_forge: "INFO"
+    digital_twin: "INFO"
+    evolution_metrics: "INFO"
+    hyperrag: "INFO"
+    p2p: "INFO"
+    config_service: "INFO"
+
+# Performance Defaults
+performance:
+  memory:
+    max_heap_size: "512MB"
+    gc_threshold: 0.8
+    
+  concurrency:
+    max_workers: 4
+    max_concurrent_requests: 50
+    
+  caching:
+    enabled: true
+    default_ttl: 300
+    max_entries: 1000
+
+# Security Defaults
+security:
+  tls:
+    enabled: false
+    min_version: "1.2"
+    
+  headers:
+    hsts_enabled: false
+    csp_enabled: false
+    frame_options: "DENY"
+    
+  encryption:
+    algorithm: "AES-256-GCM"
+    key_rotation_days: 90
+    
+  audit:
+    enabled: true
+    retention_days: 30
+
+# Monitoring Defaults
+monitoring:
+  metrics:
+    enabled: true
+    collection_interval: 60
+    
+  health_checks:
+    enabled: true
+    interval: 30
+    timeout: 10
+    
+  alerts:
+    enabled: false
+    
+  tracing:
+    enabled: false
+    sampling_rate: 0.1
+
+# Networking Defaults
+networking:
+  timeouts:
+    connect: 10
+    read: 30
+    write: 30
+    
+  retry:
+    max_attempts: 3
+    backoff_factor: 2
+    
+  p2p:
+    discovery_protocol: "mdns"
+    encryption_enabled: false
+    max_peers: 10
+
+# Feature Flags (Base Defaults)
+features:
+  advanced_analytics: false
+  experimental_features: false
+  performance_optimization: true
+  security_enhancements: true
+  distributed_caching: false
+  hot_reload: true
+
+# Resource Limits
+resources:
+  cpu:
+    default_limit: "500m"
+    default_request: "100m"
+    
+  memory:
+    default_limit: "512Mi"
+    default_request: "128Mi"
+    
+  storage:
+    default_size: "1Gi"
+    backup_retention: 7
+
+# Configuration Management
+config_management:
+  validation:
+    enabled: true
+    strict_mode: false
+    
+  hot_reload:
+    enabled: false
+    debounce_ms: 1000
+    
+  backup:
+    enabled: false
+    interval_hours: 24
+    retention_days: 7
+    
+  versioning:
+    enabled: true
+    max_versions: 10
+
+# Error Handling
+error_handling:
+  default_strategy: "log_and_continue"
+  circuit_breaker:
+    enabled: false
+    failure_threshold: 5
+    timeout: 60
+    
+  retry_policy:
+    max_attempts: 3
+    base_delay: 1
+    max_delay: 30

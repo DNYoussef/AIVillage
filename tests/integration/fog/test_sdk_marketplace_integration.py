@@ -219,7 +219,7 @@ class TestSDKMarketplaceIntegration:
     @pytest.fixture
     def fog_client(self):
         """Create fog client for testing"""
-        return FogClient(base_url="http://localhost:8000", api_key="test-api-key", namespace="test-org/sdk-integration")
+        return FogClient(base_url="http://localhost:8000", api_key="test-api-key"  # pragma: allowlist secret - test API key, namespace="test-org/sdk-integration")
 
     @pytest.mark.asyncio
     async def test_get_price_quote_integration(self, marketplace_backend, fog_client):
@@ -588,7 +588,7 @@ class TestSDKMarketplaceErrorHandling:
 
     @pytest.fixture
     def fog_client(self):
-        return FogClient(base_url="http://localhost:8000", api_key="test-api-key", namespace="test-org/error-handling")
+        return FogClient(base_url="http://localhost:8000", api_key="test-api-key"  # pragma: allowlist secret - test API key, namespace="test-org/error-handling")
 
     @pytest.mark.asyncio
     async def test_price_quote_network_error(self, fog_client):

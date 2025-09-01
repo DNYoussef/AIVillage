@@ -17,7 +17,7 @@ from mcp_servers.hyperag.storage import SQLiteStorage
 
 @pytest_asyncio.fixture
 async def protocol_handler():
-    permission_manager = PermissionManager(jwt_secret="test", enable_audit=False)
+    permission_manager = PermissionManager(jwt_secret="test"  # pragma: allowlist secret - test secret, enable_audit=False)
     storage = SQLiteStorage()
     model_registry = ModelRegistry()
     handler = MCPProtocolHandler(

@@ -1,0 +1,90 @@
+{
+  "timestamp": "2025-09-01T17:32:51.793549",
+  "summary": {
+    "total_tests": 5,
+    "passed": 4,
+    "failed": 0,
+    "warnings": 1,
+    "skipped": 0,
+    "success_rate": 80.0,
+    "total_duration_ms": 75675.55260658264
+  },
+  "results": [
+    {
+      "test_name": "gateway_security_configuration",
+      "status": "PASS",
+      "message": "Gateway security configuration loads successfully",
+      "duration_ms": 8909.852504730225,
+      "details": {
+        "stdout": "HOST:127.0.0.1\nPORT:8001\nCONFIG_SUCCESS"
+      }
+    },
+    {
+      "test_name": "module_import_stability",
+      "status": "PASS",
+      "message": "All 3 core modules import successfully",
+      "duration_ms": 24343.525886535645,
+      "details": {
+        "successful_imports": [
+          "core.agent_forge",
+          "core.rag",
+          "core.monitoring"
+        ],
+        "failed_imports": [],
+        "success_rate": 1.0
+      }
+    },
+    {
+      "test_name": "security_report_analysis",
+      "status": "WARN",
+      "message": "Found 1121 high-severity issues requiring attention",
+      "duration_ms": 1.9946098327636719,
+      "details": {
+        "total_issues": 2457,
+        "high_severity": 1121,
+        "medium_severity": 391,
+        "low_severity": 794,
+        "report_path": "C:\\Users\\17175\\Desktop\\AIVillage\\reports\\security\\security_report.csv"
+      }
+    },
+    {
+      "test_name": "model_files_integrity",
+      "status": "PASS",
+      "message": "All 3 model files are intact",
+      "duration_ms": 45.877933502197266,
+      "details": {
+        "intact_models": [
+          {
+            "name": "Cognate-25M-Real-1",
+            "config_keys": 10,
+            "model_size_mb": 95.73
+          },
+          {
+            "name": "Cognate-25M-Real-2",
+            "config_keys": 10,
+            "model_size_mb": 95.73
+          },
+          {
+            "name": "Cognate-25M-Real-3",
+            "config_keys": 10,
+            "model_size_mb": 95.73
+          }
+        ],
+        "damaged_models": [],
+        "total_models": 3
+      }
+    },
+    {
+      "test_name": "test_suite_execution_health",
+      "status": "PASS",
+      "message": "Test discovery successful: 1456 tests collected, 273 errors in 37.42s",
+      "duration_ms": 42374.30167198181,
+      "details": {
+        "collection_output": "1456 tests collected, 273 errors in 37.42s"
+      }
+    }
+  ],
+  "recommendations": [
+    "Review 1 warnings that may impact production"
+  ]
+}

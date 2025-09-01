@@ -716,14 +716,17 @@ class ObservabilityValidator:
                     )
                 )
 
-            # Test Memcached connectivity
-            import telnetlib
+            # Test Memcached connectivity using socket (more secure than telnet)
+            import socket  # nosec B401 - Using socket instead of telnet for secure connection
 
             try:
-                tn = telnetlib.Telnet("localhost", 11211, timeout=5)
-                tn.write(b"stats\r\n")
-                stats = tn.read_until(b"END\r\n", timeout=5).decode()
-                tn.close()
+                # Use socket connection instead of telnet for better security
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                    sock.settimeout(5)
+                    sock.connect(("localhost", 11211))
+                    sock.send(b"stats\r\n")
+                    stats = sock.recv(4096).decode()
+                    # sock closes automatically with context manager
 
                 if "STAT" in stats:
                     results.append(

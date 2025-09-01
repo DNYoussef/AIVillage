@@ -1,0 +1,419 @@
+TDD London School Migration Report
+==================================================
+
+Total files processed: 103
+Successful migrations: 0
+Failed migrations: 0
+Success rate: 0.0%
+
+File: tests\test_bayesnet.py
+Status: dry_run_completed
+Changes: 9
+
+File: tests\test_compression_pipeline.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\test_evaluator_metrics.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\test_evolution_system.py
+Status: dry_run_completed
+Changes: 19
+
+File: tests\test_expert_vector.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\test_explanation_endpoint.py
+Status: dry_run_completed
+Changes: 6
+
+File: tests\test_geometry_training.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\test_grokfast_opt.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\test_identity.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\test_king_agent.py
+Status: dry_run_completed
+Changes: 7
+
+File: tests\test_king_agent_simple.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\test_layer_sequence.py
+Status: dry_run_completed
+Changes: 6
+
+File: tests\test_message.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\test_named_entity_recognition.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\test_phase_contracts.py
+Status: dry_run_completed
+Changes: 11
+
+File: tests\test_prompt_baking_anchor.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\test_proof_system.py
+Status: dry_run_completed
+Changes: 23
+
+File: tests\test_protocol.py
+Status: dry_run_completed
+Changes: 3
+
+File: tests\test_rag_system_integration.py
+Status: dry_run_completed
+Changes: 7
+
+File: tests\test_sage_research_capabilities.py
+Status: dry_run_completed
+Changes: 3
+
+File: tests\test_self_evolving_system.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\test_self_modeling_eval.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\test_self_modeling_gate.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\test_self_referential_query_processor.py
+Status: dry_run_completed
+Changes: 3
+
+File: tests\test_server.py
+Status: dry_run_completed
+Changes: 7
+
+File: tests\test_server_auth.py
+Status: dry_run_completed
+Changes: 6
+
+File: tests\test_snapshot.py
+Status: dry_run_completed
+Changes: 6
+
+File: tests\test_store_counts.py
+Status: dry_run_completed
+Changes: 3
+
+File: tests\test_svf_ops.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\test_sword_shield.py
+Status: dry_run_completed
+Changes: 7
+
+File: tests\test_task_planning_agent.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\test_twin_explain.py
+Status: dry_run_completed
+Changes: 4
+
+File: tests\test_user_intent_interpreter.py
+Status: dry_run_completed
+Changes: 3
+
+File: tests\test_vector_store_persistence.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\test_vptq_realistic.py
+Status: dry_run_completed
+Changes: 10
+
+File: tests\acceptance\test_scion_preference.py
+Status: dry_run_completed
+Changes: 10
+
+File: tests\analytics\test_base_analytics.py
+Status: dry_run_completed
+Changes: 16
+
+File: tests\analytics\test_performance_benchmarks.py
+Status: dry_run_completed
+Changes: 11
+
+File: tests\consolidated\test_agent_forge_consolidated.py
+Status: dry_run_completed
+Changes: 3
+
+File: tests\consolidated\test_p2p_consolidated.py
+Status: dry_run_completed
+Changes: 3
+
+File: tests\consolidated\test_security_consolidated.py
+Status: dry_run_completed
+Changes: 3
+
+File: tests\constants\test_constants_integration.py
+Status: dry_run_completed
+Changes: 36
+
+File: tests\integration\test_evolution_system.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\production\test_no_http_in_prod.py
+Status: dry_run_completed
+Changes: 8
+
+File: tests\scripts\test_migration_script.py
+Status: dry_run_completed
+Changes: 6
+
+File: tests\security\test_p2p_network_security.py
+Status: dry_run_completed
+Changes: 12
+
+File: tests\security\test_security_comprehensive.py
+Status: dry_run_completed
+Changes: 26
+
+File: tests\unit\test_adas_system.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\unit\test_adas_technique.py
+Status: dry_run_completed
+Changes: 7
+
+File: tests\unit\test_agent_suite.py
+Status: dry_run_completed
+Changes: 14
+
+File: tests\unit\test_bayesnet.py
+Status: dry_run_completed
+Changes: 9
+
+File: tests\unit\test_bitnet_gradual.py
+Status: dry_run_completed
+Changes: 22
+
+File: tests\unit\test_compression_suite.py
+Status: dry_run_completed
+Changes: 12
+
+File: tests\unit\test_evaluator_metrics.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\unit\test_evomerge_enhanced.py
+Status: dry_run_completed
+Changes: 16
+
+File: tests\unit\test_expert_vector.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\unit\test_explanation_endpoint.py
+Status: dry_run_completed
+Changes: 6
+
+File: tests\unit\test_geometry_training.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\unit\test_grokfast_opt.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\unit\test_identity.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\unit\test_king_agent.py
+Status: dry_run_completed
+Changes: 7
+
+File: tests\unit\test_layer_sequence.py
+Status: dry_run_completed
+Changes: 6
+
+File: tests\unit\test_message.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\unit\test_named_entity_recognition.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\unit\test_phase_contracts.py
+Status: dry_run_completed
+Changes: 11
+
+File: tests\unit\test_prompt_baking_anchor.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\unit\test_protocol.py
+Status: dry_run_completed
+Changes: 3
+
+File: tests\unit\test_sage_research_capabilities.py
+Status: dry_run_completed
+Changes: 3
+
+File: tests\unit\test_self_evolving_system.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\unit\test_self_modeling_eval.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\unit\test_self_modeling_gate.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\unit\test_self_referential_query_processor.py
+Status: dry_run_completed
+Changes: 3
+
+File: tests\unit\test_server.py
+Status: dry_run_completed
+Changes: 7
+
+File: tests\unit\test_server_auth.py
+Status: dry_run_completed
+Changes: 6
+
+File: tests\unit\test_snapshot.py
+Status: dry_run_completed
+Changes: 6
+
+File: tests\unit\test_store_counts.py
+Status: dry_run_completed
+Changes: 3
+
+File: tests\unit\test_svf_ops.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\unit\test_sword_shield.py
+Status: dry_run_completed
+Changes: 7
+
+File: tests\unit\test_task_planning_agent.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\unit\test_twin_explain.py
+Status: dry_run_completed
+Changes: 4
+
+File: tests\unit\test_unified_config.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\unit\test_user_intent_interpreter.py
+Status: dry_run_completed
+Changes: 3
+
+File: tests\unit\test_vector_store_persistence.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\unit\test_vptq_realistic.py
+Status: dry_run_completed
+Changes: 10
+
+File: tests\archive\duplicates\test_adas_secure_standalone_duplicate.py
+Status: dry_run_completed
+Changes: 7
+
+File: tests\archive\duplicates\test_adas_system_duplicate.py
+Status: dry_run_completed
+Changes: 5
+
+File: tests\archive\duplicates\test_adas_technique_duplicate.py
+Status: dry_run_completed
+Changes: 7
+
+File: tests\archive\duplicates\test_adas_technique_secure_duplicate.py
+Status: dry_run_completed
+Changes: 7
+
+File: tests\archive\duplicates\test_bitnet_gradual_duplicate.py
+Status: dry_run_completed
+Changes: 22
+
+File: tests\archive\duplicates\test_evomerge_enhanced_duplicate.py
+Status: dry_run_completed
+Changes: 16
+
+File: tests\guards\monitoring\test_continuous_guard_monitoring.py
+Status: dry_run_completed
+Changes: 3
+
+File: tests\security\compliance\test_governance_framework.py
+Status: dry_run_completed
+Changes: 8
+
+File: tests\security\integration\test_security_workflows.py
+Status: dry_run_completed
+Changes: 11
+
+File: tests\security\negative\test_attack_prevention.py
+Status: dry_run_completed
+Changes: 10
+
+File: tests\security\performance\test_security_overhead.py
+Status: dry_run_completed
+Changes: 8
+
+File: tests\security\unit\test_admin_security.py
+Status: dry_run_completed
+Changes: 11
+
+File: tests\security\unit\test_boundary_security.py
+Status: dry_run_completed
+Changes: 9
+
+File: tests\security\unit\test_dependency_auditing.py
+Status: dry_run_completed
+Changes: 12
+
+File: tests\security\unit\test_grokfast_security.py
+Status: dry_run_completed
+Changes: 10
+
+File: tests\security\unit\test_sbom_generation.py
+Status: dry_run_completed
+Changes: 11
+
+File: tests\security\unit\test_security_templates.py
+Status: dry_run_completed
+Changes: 12
+
+File: tests\security\unit\test_vulnerability_reporting.py
+Status: dry_run_completed
+Changes: 11
+
+File: tests\unit\agent_forge\test_agent_forge_smoke.py
+Status: dry_run_completed
+Changes: 3

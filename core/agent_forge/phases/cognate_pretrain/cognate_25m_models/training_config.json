@@ -17,7 +17,7 @@
   "learning_rate": 0.0002,
   "weight_decay": 0.1,
   "warmup_steps": 2000,
-  "max_steps": 10000,
+  "max_steps": 2000,
   "gradient_accumulation_steps": 4,
   "max_grad_norm": 1.0,
   "beta1": 0.9,

@@ -1,0 +1,217 @@
+# Development Environment Configuration Overrides
+# Priority: 30 (medium - environment layer)
+
+# Environment Settings
+environment:
+  name: "development"
+  debug_mode: true
+  auto_reload: true
+  mock_external_services: false
+  
+# Service Ports (Development)
+services:
+  gateway:
+    host: "localhost"
+    port: 8000
+    env:
+      DEBUG: "true"
+      LOG_LEVEL: "DEBUG"
+      
+  agent_forge:
+    host: "localhost"
+    port: 8003
+    env:
+      REAL_TRAINING_ENABLED: "false"
+      DEBUG_MODE: "true"
+      
+  twin_service:
+    host: "localhost"
+    port: 8001
+    env:
+      PRIVACY_MODE: "relaxed"
+      DEBUG: "true"
+      
+  evolution_metrics:
+    host: "localhost"
+    port: 8081
+    env:
+      DEBUG: "true"
+      METRICS_FLUSH_THRESHOLD: "10"
+      
+  hyperrag:
+    host: "localhost"
+    port: 8082
+    env:
+      DEBUG: "true"
+      RAG_CACHE_SIZE: "32"
+      
+  p2p_networking:
+    host: "localhost"
+    port: 4001
+    env:
+      DEBUG: "true"
+      P2P_ENCRYPTION: "false"
+
+# Database Configuration (Development)
+database:
+  evolution_metrics:
+    path: "./data/development/evolution_metrics.db"
+    connection_timeout: 30
+    
+  digital_twin:
+    path: "./data/development/digital_twin.db"
+    encryption_enabled: false
+    privacy_mode: "relaxed"
+    
+  rag:
+    faiss_index_path: "./data/development/faiss_index"
+    chunk_store_path: "./data/development/chunk_store"
+    cache_size: 32
+
+# API Configuration (Development)
+api:
+  cors_enabled: true
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://127.0.0.1:3000"
+    - "http://localhost:8080"
+    
+  authentication:
+    enabled: false
+    
+  rate_limiting:
+    enabled: false
+
+# Logging (Development)
+logging:
+  level: "DEBUG"
+  console_output: true
+  file_output: true
+  file_path: "./logs/development/aivillage.log"
+  
+  components:
+    gateway: "DEBUG"
+    agent_forge: "DEBUG"
+    digital_twin: "DEBUG"
+    evolution_metrics: "DEBUG"
+    hyperrag: "DEBUG"
+    p2p: "DEBUG"
+    config_service: "DEBUG"
+
+# Performance (Development - Relaxed)
+performance:
+  memory:
+    max_heap_size: "256MB"
+    
+  concurrency:
+    max_workers: 2
+    max_concurrent_requests: 10
+    
+  caching:
+    default_ttl: 60
+    max_entries: 100
+
+# Security (Development - Relaxed)
+security:
+  tls:
+    enabled: false
+    
+  headers:
+    hsts_enabled: false
+    csp_enabled: false
+    frame_options: "SAMEORIGIN"
+    
+  audit:
+    enabled: false
+
+# Monitoring (Development)
+monitoring:
+  metrics:
+    collection_interval: 30
+    
+  health_checks:
+    interval: 60
+    
+  alerts:
+    enabled: false
+    
+  tracing:
+    enabled: true
+    sampling_rate: 1.0
+
+# P2P Networking (Development)
+networking:
+  p2p:
+    encryption_enabled: false
+    max_peers: 5
+    discovery_timeout: 30
+    mesh_name: "aivillage-dev"
+
+# Feature Flags (Development)
+features:
+  advanced_analytics: true
+  experimental_features: true
+  hot_reload: true
+  mock_mode: true
+  debug_endpoints: true
+
+# External Services (Development)
+external_services:
+  redis:
+    enabled: false
+    
+  postgresql:
+    enabled: false
+    
+  wandb:
+    enabled: true
+    project: "aivillage-dev"
+    
+  openai:
+    enabled: false
+
+# Development Tools
+dev_tools:
+  auto_reload: true
+  debug_toolbar: true
+  mock_p2p: false
+  seed_data: true
+  fast_startup: true
+  profiling: true
+
+# Configuration Management (Development)
+config_management:
+  hot_reload:
+    enabled: true
+    debounce_ms: 500
+    
+  validation:
+    strict_mode: false
+    
+  backup:
+    enabled: false
+
+# Resource Limits (Development - Minimal)
+resources:
+  cpu:
+    default_limit: "200m"
+    default_request: "50m"
+    
+  memory:
+    default_limit: "256Mi"
+    default_request: "64Mi"
+
+# Development-Specific Paths
+paths:
+  data_directory: "./data/development"
+  log_directory: "./logs/development"
+  config_directory: "./config"
+  temp_directory: "/tmp/aivillage_dev"
+  
+# Testing Configuration
+testing:
+  fast_mode: true
+  mock_external_services: true
+  disable_auth: true
+  in_memory_db: false
+  parallel_tests: false

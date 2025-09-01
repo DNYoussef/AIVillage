@@ -360,7 +360,7 @@ class TestP2PSecurityLayer(BaseP2PTest):
 
         # Mock node credentials
         node_id = "trusted_node_001"
-        shared_secret = "shared_secret_key_12345"
+        shared_secret = "shared_secret_key_12345"  # pragma: allowlist secret - test secret
 
         # Create authentication challenge
         challenge = "auth_challenge_98765"

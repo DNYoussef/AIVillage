@@ -264,7 +264,7 @@ class TestAuthenticationManager:
         user = self.auth_manager.create_user(
             username="testuser",
             email="test@example.com",
-            password="test_user_password_123!",  # pragma: allowlist secret
+            password="test_user_password_123!"  # nosec B106 - test password,  # pragma: allowlist secret
             role=UserRole.DEVELOPER,
             security_level=SecurityLevel.CONFIDENTIAL,
         )
@@ -295,7 +295,7 @@ class TestAuthenticationManager:
         self.auth_manager.create_user(
             username="duplicate",
             email="first@example.com",
-            password="test_duplicate_first_123!",  # pragma: allowlist secret
+            password="test_duplicate_first_123!"  # nosec B106 - test password,  # pragma: allowlist secret
         )
 
         # Try to create user with same username
@@ -303,7 +303,7 @@ class TestAuthenticationManager:
             self.auth_manager.create_user(
                 username="duplicate",
                 email="second@example.com",
-                password="test_duplicate_second_123!",  # pragma: allowlist secret
+                password="test_duplicate_second_123!"  # nosec B106 - test password,  # pragma: allowlist secret
             )
 
     def test_user_creation_weak_password(self):  # pragma: allowlist secret
@@ -312,7 +312,7 @@ class TestAuthenticationManager:
             self.auth_manager.create_user(
                 username="weakpass",
                 email="weak@example.com",
-                password="weak",  # nosec B106 - test password for security testing
+                password="weak"  # nosec B106 - test password,  # nosec B106 - test password for security testing
             )
 
     def test_successful_authentication(self):
@@ -321,13 +321,13 @@ class TestAuthenticationManager:
         self.auth_manager.create_user(
             username="authuser",
             email="auth@example.com",
-            password="test_auth_password_123!",  # pragma: allowlist secret
+            password="test_auth_password_123!"  # nosec B106 - test password,  # pragma: allowlist secret
         )
 
         # Authenticate
         success, user, session_token = self.auth_manager.authenticate(
             username="authuser",
-            password="test_auth_password_123!",  # pragma: allowlist secret
+            password="test_auth_password_123!"  # nosec B106 - test password,  # pragma: allowlist secret
             ip_address="127.0.0.1",
             user_agent="test",
         )
@@ -343,13 +343,13 @@ class TestAuthenticationManager:
         self.auth_manager.create_user(
             username="authuser",
             email="auth@example.com",
-            password="test_auth_password_123!",  # pragma: allowlist secret
+            password="test_auth_password_123!"  # nosec B106 - test password,  # pragma: allowlist secret
         )
 
         # Try wrong password
         success, user, session_token = self.auth_manager.authenticate(
             username="authuser",
-            password="test_wrong_password",  # pragma: allowlist secret
+            password="test_wrong_password"  # nosec B106 - test password,  # pragma: allowlist secret
             ip_address="127.0.0.1",
             user_agent="test",
         )
@@ -362,7 +362,7 @@ class TestAuthenticationManager:
         """Test failed authentication with nonexistent user."""
         success, user, session_token = self.auth_manager.authenticate(
             username="nonexistent",
-            password="test_auth_password_123!",  # pragma: allowlist secret
+            password="test_auth_password_123!"  # nosec B106 - test password,  # pragma: allowlist secret
             ip_address="127.0.0.1",
             user_agent="test",
         )
@@ -377,20 +377,20 @@ class TestAuthenticationManager:
         self.auth_manager.create_user(
             username="locktest",
             email="lock@example.com",
-            password="test_auth_password_123!",  # pragma: allowlist secret
+            password="test_auth_password_123!"  # nosec B106 - test password,  # pragma: allowlist secret
         )  # pragma: allowlist secret
 
         # Fail authentication multiple times
         for i in range(self.config.max_failed_attempts):
             success, user, _ = self.auth_manager.authenticate(
-                username="locktest", password="WrongPassword", ip_address="127.0.0.1"  # pragma: allowlist secret
+                username="locktest", password="WrongPassword"  # nosec B106 - test password, ip_address="127.0.0.1"  # pragma: allowlist secret
             )
             assert success is False
 
         # Account should now be locked
         success, user, _ = self.auth_manager.authenticate(
             username="locktest",
-            password="test_auth_password_123!",  # Correct password  # pragma: allowlist secret
+            password="test_auth_password_123!"  # nosec B106 - test password,  # Correct password  # pragma: allowlist secret
             ip_address="127.0.0.1",
         )
 
@@ -402,12 +402,12 @@ class TestAuthenticationManager:
         self.auth_manager.create_user(
             username="sessionuser",
             email="session@example.com",
-            password="test_auth_password_123!",  # pragma: allowlist secret
+            password="test_auth_password_123!"  # nosec B106 - test password,  # pragma: allowlist secret
         )
 
         success, user, session_token = self.auth_manager.authenticate(
             username="sessionuser",
-            password="test_auth_password_123!",  # pragma: allowlist secret
+            password="test_auth_password_123!"  # nosec B106 - test password,  # pragma: allowlist secret
             ip_address="127.0.0.1",  # pragma: allowlist secret
         )
 
@@ -460,7 +460,7 @@ class TestAuthenticationManager:
         user = self.auth_manager.create_user(
             username="revokeuser",
             email="revoke@example.com",
-            password="test_auth_password_123!",  # pragma: allowlist secret
+            password="test_auth_password_123!"  # nosec B106 - test password,  # pragma: allowlist secret
         )
 
         api_key, api_key_obj = self.auth_manager.create_api_key(
@@ -526,7 +526,7 @@ class TestAuthenticationManager:
         user = self.auth_manager.create_user(
             username="mfaauth",
             email="mfaauth@example.com",
-            password="test_auth_password_123!",  # pragma: allowlist secret
+            password="test_auth_password_123!"  # nosec B106 - test password,  # pragma: allowlist secret
         )
 
         secret = self.auth_manager.enable_mfa(user.user_id)  # pragma: allowlist secret
@@ -537,7 +537,7 @@ class TestAuthenticationManager:
         # Authenticate with MFA
         success, auth_user, session_token = self.auth_manager.authenticate(
             username="mfaauth",
-            password="test_auth_password_123!",  # pragma: allowlist secret
+            password="test_auth_password_123!"  # nosec B106 - test password,  # pragma: allowlist secret
             mfa_code=otp,
             ip_address="127.0.0.1",
         )
@@ -548,7 +548,7 @@ class TestAuthenticationManager:
 
         # Authentication without MFA should fail
         success, auth_user, response = self.auth_manager.authenticate(
-            username="mfaauth", password="test_auth_password_123!", ip_address="127.0.0.1"  # nosec B106 - test password
+            username="mfaauth", password="test_auth_password_123!"  # nosec B106 - test password, ip_address="127.0.0.1"  # nosec B106 - test password
         )
 
         assert success is False
@@ -560,13 +560,13 @@ class TestAuthenticationManager:
         user = self.auth_manager.create_user(
             username="audituser",
             email="audit@example.com",
-            password="test_auth_password_123!",  # pragma: allowlist secret
+            password="test_auth_password_123!"  # nosec B106 - test password,  # pragma: allowlist secret
         )
 
         # Authenticate to generate logs
         self.auth_manager.authenticate(
             username="audituser",
-            password="test_auth_password_123!",  # pragma: allowlist secret
+            password="test_auth_password_123!"  # nosec B106 - test password,  # pragma: allowlist secret
             ip_address="192.168.1.100",
             user_agent="Mozilla/5.0",
         )
@@ -697,7 +697,7 @@ class TestIntegrationScenarios:
         user = self.auth_manager.create_user(
             username="workflow_user",
             email="workflow@example.com",
-            password="test_secure_workflow_123!",  # pragma: allowlist secret
+            password="test_secure_workflow_123!"  # nosec B106 - test password,  # pragma: allowlist secret
             role=UserRole.DEVELOPER,
             security_level=SecurityLevel.CONFIDENTIAL,
         )
@@ -716,7 +716,7 @@ class TestIntegrationScenarios:
         otp = self.auth_manager.mfa_manager.generate_otp(mfa_secret)  # pragma: allowlist secret
         success, auth_user, session_token = self.auth_manager.authenticate(
             username="workflow_user",
-            password="test_secure_workflow_123!",  # pragma: allowlist secret
+            password="test_secure_workflow_123!"  # nosec B106 - test password,  # pragma: allowlist secret
             mfa_code=otp,
             ip_address="10.0.0.1",
             user_agent="WorkflowTest/1.0",
@@ -753,7 +753,7 @@ class TestIntegrationScenarios:
         victim = self.auth_manager.create_user(
             username="victim",
             email="victim@example.com",
-            password="test_victim_password_123!",  # pragma: allowlist secret
+            password="test_victim_password_123!"  # nosec B106 - test password,  # pragma: allowlist secret
             role=UserRole.OPERATOR,
         )
 
@@ -771,7 +771,7 @@ class TestIntegrationScenarios:
         # Even correct password should fail
         success, user, _ = self.auth_manager.authenticate(
             username="victim",
-            password="test_victim_password_123!",  # pragma: allowlist secret
+            password="test_victim_password_123!"  # nosec B106 - test password,  # pragma: allowlist secret
             ip_address="192.168.1.100",  # pragma: allowlist secret
         )
         assert success is False
@@ -823,11 +823,11 @@ if __name__ == "__main__":
         user = auth_mgr.create_user(
             username="testuser",
             email="test@example.com",
-            password="test_auth_password_123!",  # pragma: allowlist secret
+            password="test_auth_password_123!"  # nosec B106 - test password,  # pragma: allowlist secret
         )
 
         success, auth_user, session = auth_mgr.authenticate(
-            username="testuser", password="test_auth_password_123!", ip_address="127.0.0.1"  # pragma: allowlist secret
+            username="testuser", password="test_auth_password_123!"  # nosec B106 - test password, ip_address="127.0.0.1"  # pragma: allowlist secret
         )
 
         print(f"OK User creation and authentication: {success}")

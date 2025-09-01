@@ -1,0 +1,415 @@
+"""
+Comprehensive MCP Server Knowledge Base
+Store critical information about MCP servers for memory coordination and system optimization.
+"""
+
+import json
+from datetime import datetime
+from typing import Dict, List, Optional, Any
+from dataclasses import dataclass, asdict
+from pathlib import Path
+
+@dataclass
+class MCPServerCapability:
+    """Detailed MCP server capability information"""
+    server_name: str
+    primary_function: str
+    key_features: List[str]
+    authentication: List[str]
+    rate_limits: str
+    best_for: List[str]
+    performance_characteristics: Dict[str, Any]
+    integration_patterns: Dict[str, str]
+    limitations: List[str]
+
+class MCPKnowledgeBase:
+    """Centralized knowledge base for MCP server capabilities and integration patterns"""
+    
+    def __init__(self, storage_path: str = "C:/Users/17175/Desktop/AIVillage/config/mcp_knowledge_base.json"):
+        self.storage_path = Path(storage_path)
+        self.knowledge_base = self._load_knowledge_base()
+        self.last_updated = datetime.now()
+    
+    def _load_knowledge_base(self) -> Dict[str, Any]:
+        """Load existing knowledge base or create new one"""
+        if self.storage_path.exists():
+            with open(self.storage_path, 'r') as f:
+                return json.load(f)
+        return self._initialize_knowledge_base()
+    
+    def _initialize_knowledge_base(self) -> Dict[str, Any]:
+        """Initialize comprehensive MCP server knowledge base"""
+        return {
+            "servers": {
+                "github": {
+                    "server_name": "GitHub MCP",
+                    "primary_function": "Repository management and development workflows",
+                    "tools_count": "29+ tools",
+                    "key_features": [
+                        "Repository analysis and search",
+                        "Pull request creation and management", 
+                        "Issue tracking and management",
+                        "Code review automation",
+                        "Branch operations",
+                        "Workflow automation",
+                        "Release management",
+                        "Project board synchronization"
+                    ],
+                    "authentication": ["OAuth tokens", "Personal Access Tokens (PAT)"],
+                    "rate_limits": "GitHub API standard limits (5000 req/hour authenticated)",
+                    "best_for": ["Code development", "CI/CD integration", "Team collaboration"],
+                    "performance_characteristics": {
+                        "speed": "Fast for most operations, depends on repo size",
+                        "concurrent_support": "High - GitHub API handles concurrent requests well",
+                        "scalability": "Excellent"
+                    },
+                    "integration_patterns": {
+                        "with_memory": "Store repository context, code patterns, review feedback",
+                        "with_context7": "Real-time documentation retrieval during development",
+                        "with_sequential_thinking": "Multi-step code analysis and planning"
+                    },
+                    "limitations": ["API rate limits", "Large repo processing time"]
+                },
+                "huggingface": {
+                    "server_name": "HuggingFace MCP",
+                    "primary_function": "ML model operations and AI workflows",
+                    "token_limit": "25,000 tokens per request",
+                    "concurrent_clients": "164+ simultaneous connections",
+                    "key_features": [
+                        "Model inference and generation",
+                        "Text embeddings and similarity",
+                        "Tokenization services",
+                        "Model information retrieval",
+                        "Dataset access",
+                        "Pipeline operations"
+                    ],
+                    "authentication": ["HuggingFace API keys", "Hub tokens"],
+                    "rate_limits": "Varies by model and subscription tier",
+                    "best_for": ["AI/ML development", "Text processing", "Embeddings generation"],
+                    "performance_characteristics": {
+                        "speed": "Fast for small models, slower for large language models",
+                        "concurrent_support": "Excellent - 164+ concurrent clients supported",
+                        "scalability": "High with proper subscription"
+                    },
+                    "integration_patterns": {
+                        "with_memory": "Store model responses, embedding patterns, ML insights",
+                        "with_sequential_thinking": "Complex AI reasoning chains",
+                        "with_github": "ML model integration in repositories"
+                    },
+                    "limitations": ["Token limits", "Model availability", "Subscription tiers affect performance"]
+                },
+                "context7": {
+                    "server_name": "Context7 MCP",
+                    "primary_function": "Real-time documentation retrieval (NOT distributed caching)",
+                    "key_features": [
+                        "Live documentation access",
+                        "Context-aware information retrieval", 
+                        "Real-time updates",
+                        "Documentation indexing",
+                        "Search and filter capabilities"
+                    ],
+                    "authentication": ["API keys", "Session tokens"],
+                    "rate_limits": "Standard API limits",
+                    "best_for": ["Development documentation", "Real-time context", "Knowledge retrieval"],
+                    "performance_characteristics": {
+                        "speed": "Fast retrieval for indexed documentation",
+                        "concurrent_support": "Good for documentation queries",
+                        "scalability": "Moderate"
+                    },
+                    "integration_patterns": {
+                        "with_github": "Retrieve docs while coding",
+                        "with_memory": "Cache frequently accessed documentation patterns",
+                        "with_sequential_thinking": "Documentation-informed decision making"
+                    },
+                    "limitations": ["Depends on documentation availability", "Indexing quality affects results"],
+                    "important_note": "NOT for distributed caching or session persistence - primary function is documentation retrieval"
+                },
+                "markitdown": {
+                    "server_name": "MarkItDown MCP",
+                    "primary_function": "Document conversion to Markdown format",
+                    "supported_formats": ["PDF", "DOCX", "HTML", "Images with OCR", "PowerPoint", "Excel"],
+                    "key_features": [
+                        "High-quality document conversion",
+                        "OCR for image text extraction",
+                        "Preserve formatting and structure",
+                        "Batch processing support",
+                        "Multiple output formats"
+                    ],
+                    "authentication": ["Service API keys"],
+                    "rate_limits": "Depends on document size and complexity",
+                    "best_for": ["Document processing", "Content migration", "Text extraction"],
+                    "performance_characteristics": {
+                        "speed": "Moderate - depends on document size and complexity",
+                        "concurrent_support": "Limited by processing resources",
+                        "scalability": "Moderate"
+                    },
+                    "integration_patterns": {
+                        "with_memory": "Store converted content and processing patterns",
+                        "with_firecrawl": "Process crawled documents",
+                        "with_sequential_thinking": "Multi-step document analysis"
+                    },
+                    "limitations": ["Large file processing time", "OCR accuracy varies", "Complex formatting may be lost"]
+                },
+                "deepwiki": {
+                    "server_name": "DeepWiki MCP",
+                    "primary_function": "GitHub repository documentation access (NOT Wikipedia)",
+                    "key_features": [
+                        "Repository documentation retrieval",
+                        "README and wiki access",
+                        "Documentation search",
+                        "Cross-repository documentation",
+                        "Structured documentation parsing"
+                    ],
+                    "authentication": ["GitHub integration", "Repository access tokens"],
+                    "rate_limits": "GitHub API dependent",
+                    "best_for": ["Repository documentation", "Project research", "Code context"],
+                    "performance_characteristics": {
+                        "speed": "Fast for well-documented repositories",
+                        "concurrent_support": "GitHub API limitations apply",
+                        "scalability": "Good"
+                    },
+                    "integration_patterns": {
+                        "with_github": "Enhanced repository documentation access",
+                        "with_memory": "Store documentation insights and patterns",
+                        "with_context7": "Comprehensive documentation ecosystem"
+                    },
+                    "limitations": ["Repository documentation quality dependent", "GitHub API rate limits"],
+                    "important_note": "Focused on GitHub repo documentation, not general Wikipedia access"
+                },
+                "apify": {
+                    "server_name": "Apify MCP",
+                    "primary_function": "Web scraping and browser automation",
+                    "actors_available": "5000+ pre-built actors",
+                    "rate_limits": "30 requests per second",
+                    "key_features": [
+                        "Web scraping automation",
+                        "Browser automation",
+                        "Data extraction",
+                        "Scheduled runs",
+                        "Proxy support",
+                        "Anti-detection measures"
+                    ],
+                    "authentication": ["Apify API tokens"],
+                    "best_for": ["Web data extraction", "Automated testing", "Content monitoring"],
+                    "performance_characteristics": {
+                        "speed": "Moderate - depends on target site complexity",
+                        "concurrent_support": "Good within rate limits",
+                        "scalability": "Good with proper planning"
+                    },
+                    "integration_patterns": {
+                        "with_firecrawl": "Complementary scraping approaches - Firecrawl for LLM-optimized content",
+                        "with_memory": "Store scraping patterns and extracted data",
+                        "with_sequential_thinking": "Multi-step scraping workflows"
+                    },
+                    "limitations": ["30 req/sec rate limit", "Anti-bot measures", "Site-specific challenges"]
+                },
+                "sequential_thinking": {
+                    "server_name": "Sequential Thinking MCP",
+                    "primary_function": "Multi-step reasoning and planning with branching logic",
+                    "key_features": [
+                        "Step-by-step problem breakdown",
+                        "Decision tree navigation",
+                        "Branching logic support",
+                        "Reasoning chain tracking",
+                        "Revision and backtracking",
+                        "Complex problem decomposition"
+                    ],
+                    "authentication": ["Internal MCP authentication"],
+                    "rate_limits": "Internal processing limits",
+                    "best_for": ["Complex reasoning tasks", "Multi-step planning", "Decision support"],
+                    "performance_characteristics": {
+                        "speed": "Fast for reasoning chains, scales with complexity",
+                        "concurrent_support": "Excellent for parallel reasoning tasks",
+                        "scalability": "Excellent"
+                    },
+                    "integration_patterns": {
+                        "with_memory": "Store reasoning patterns and successful decision chains",
+                        "with_huggingface": "AI-enhanced reasoning workflows",
+                        "with_any_server": "Can enhance any workflow with structured thinking"
+                    },
+                    "limitations": ["Complex reasoning may require significant processing", "Quality depends on prompt design"]
+                },
+                "memory": {
+                    "server_name": "Memory MCP",
+                    "primary_function": "Persistent learning and knowledge storage",
+                    "storage": "SQLite database (.mcp/memory.db)",
+                    "key_features": [
+                        "Cross-session memory persistence",
+                        "Knowledge graph creation",
+                        "Pattern learning",
+                        "Context preservation",
+                        "Searchable knowledge base",
+                        "Relationship mapping"
+                    ],
+                    "authentication": ["Local file system access"],
+                    "rate_limits": "Local storage dependent",
+                    "best_for": ["Learning systems", "Context preservation", "Knowledge building"],
+                    "performance_characteristics": {
+                        "speed": "Very fast - local SQLite operations",
+                        "concurrent_support": "Excellent for read operations, managed writes",
+                        "scalability": "Excellent"
+                    },
+                    "integration_patterns": {
+                        "with_all_servers": "Memory serves as central knowledge repository for all workflows",
+                        "core_integration": "Essential for persistent learning and context across sessions"
+                    },
+                    "limitations": ["Local storage capacity", "SQLite performance characteristics"]
+                },
+                "firecrawl": {
+                    "server_name": "Firecrawl MCP",
+                    "primary_function": "Deep web crawling optimized for LLM processing",
+                    "performance": "50x faster than traditional scraping (vs Apify)",
+                    "key_features": [
+                        "LLM-optimized content extraction",
+                        "Deep crawling capabilities",
+                        "Smart content filtering",
+                        "Structured data output",
+                        "Anti-detection measures",
+                        "Batch processing support"
+                    ],
+                    "authentication": ["Firecrawl API keys"],
+                    "rate_limits": "Higher throughput than Apify",
+                    "best_for": ["LLM training data", "Content research", "Knowledge extraction"],
+                    "performance_characteristics": {
+                        "speed": "Very fast - 50x improvement over traditional scraping",
+                        "concurrent_support": "Excellent - designed for high-throughput",
+                        "scalability": "Excellent"
+                    },
+                    "integration_patterns": {
+                        "with_markitdown": "Crawl then convert documents to markdown",
+                        "with_memory": "Store crawling patterns and extracted knowledge",
+                        "with_apify": "Complementary - Firecrawl for content, Apify for interactions"
+                    },
+                    "limitations": ["API costs", "Site-specific restrictions"]
+                }
+            },
+            "integration_patterns": {
+                "workflow_combinations": {
+                    "development_stack": {
+                        "servers": ["GitHub", "Context7", "Memory"],
+                        "use_case": "Full-stack development with documentation and persistence",
+                        "pattern": "GitHub for code operations, Context7 for real-time docs, Memory for learning"
+                    },
+                    "ml_ai_stack": {
+                        "servers": ["HuggingFace", "Sequential Thinking", "Memory"],
+                        "use_case": "AI/ML development with structured reasoning",
+                        "pattern": "HuggingFace for models, Sequential Thinking for complex logic, Memory for patterns"
+                    },
+                    "research_stack": {
+                        "servers": ["Firecrawl", "MarkItDown", "DeepWiki", "Memory"],
+                        "use_case": "Comprehensive research and knowledge extraction",
+                        "pattern": "Firecrawl for content, MarkItDown for processing, DeepWiki for docs, Memory for storage"
+                    },
+                    "automation_stack": {
+                        "servers": ["Apify", "Firecrawl", "Sequential Thinking"],
+                        "use_case": "Web automation with intelligent decision making",
+                        "pattern": "Firecrawl for content, Apify for interactions, Sequential Thinking for logic"
+                    },
+                    "comprehensive_stack": {
+                        "servers": ["Memory", "Sequential Thinking", "GitHub", "HuggingFace", "Firecrawl"],
+                        "use_case": "Full-capability development with AI, research, and persistence",
+                        "pattern": "Memory as central hub, others for specialized capabilities"
+                    }
+                },
+                "selection_criteria": {
+                    "by_task_type": {
+                        "code_development": ["GitHub", "Context7", "Memory"],
+                        "ai_ml_tasks": ["HuggingFace", "Sequential Thinking", "Memory"],
+                        "content_research": ["Firecrawl", "MarkItDown", "DeepWiki"],
+                        "web_automation": ["Apify", "Firecrawl", "Sequential Thinking"],
+                        "document_processing": ["MarkItDown", "Memory"],
+                        "complex_reasoning": ["Sequential Thinking", "Memory", "HuggingFace"]
+                    },
+                    "performance_considerations": {
+                        "high_speed_required": ["Firecrawl", "Memory", "Context7"],
+                        "high_concurrency": ["HuggingFace", "Sequential Thinking", "Memory"],
+                        "rate_limit_sensitive": ["GitHub", "Apify"],
+                        "processing_intensive": ["MarkItDown", "HuggingFace"]
+                    }
+                }
+            },
+            "best_practices": {
+                "multi_agent_coordination": {
+                    "memory_integration": "Always use Memory MCP as central coordination hub",
+                    "sequential_thinking": "Implement for complex multi-step agent workflows",
+                    "server_selection": "Choose servers based on agent specialization and task requirements",
+                    "concurrent_access": "Design for parallel MCP server usage across agents"
+                },
+                "authentication_management": {
+                    "github": "Use PAT tokens for development, OAuth for user interactions",
+                    "huggingface": "Hub tokens for model access, API keys for inference",
+                    "external_services": "Secure API key storage and rotation",
+                    "local_servers": "Ensure proper file system permissions"
+                },
+                "performance_optimization": {
+                    "server_initialization": "Initialize required MCP servers at workflow start",
+                    "concurrent_usage": "Use servers in parallel when possible",
+                    "caching_strategy": "Leverage Memory MCP for frequently accessed data",
+                    "rate_limit_management": "Implement backoff strategies for rate-limited servers"
+                },
+                "error_handling": {
+                    "server_availability": "Always check server status before operations",
+                    "graceful_degradation": "Have fallback strategies for server failures",
+                    "retry_logic": "Implement exponential backoff for transient failures",
+                    "logging": "Store error patterns in Memory MCP for learning"
+                },
+                "workflow_design": {
+                    "server_orchestration": "Use MCP coordination, Claude Code execution pattern",
+                    "data_flow": "Design clear data flow between MCP servers",
+                    "state_management": "Use Memory MCP for persistent state across operations",
+                    "monitoring": "Track performance and usage patterns"
+                }
+            },
+            "metadata": {
+                "version": "1.0.0",
+                "last_updated": datetime.now().isoformat(),
+                "total_servers": 9,
+                "verified_functional": ["Memory", "Sequential Thinking", "HypeRAG"]
+            }
+        }
+    
+    def save_knowledge_base(self):
+        """Save the knowledge base to persistent storage"""
+        self.storage_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.storage_path, 'w') as f:
+            json.dump(self.knowledge_base, f, indent=2, default=str)
+    
+    def get_server_info(self, server_name: str) -> Optional[Dict[str, Any]]:
+        """Retrieve detailed information about a specific MCP server"""
+        return self.knowledge_base.get("servers", {}).get(server_name.lower())
+    
+    def get_integration_pattern(self, pattern_name: str) -> Optional[Dict[str, Any]]:
+        """Get integration patterns for specific workflows"""
+        return self.knowledge_base.get("integration_patterns", {}).get("workflow_combinations", {}).get(pattern_name)
+    
+    def recommend_servers_for_task(self, task_type: str) -> List[str]:
+        """Recommend optimal MCP servers for a given task type"""
+        selection_criteria = self.knowledge_base.get("integration_patterns", {}).get("selection_criteria", {})
+        return selection_criteria.get("by_task_type", {}).get(task_type, [])
+    
+    def get_best_practices(self, category: str) -> Optional[Dict[str, Any]]:
+        """Retrieve best practices for a specific category"""
+        return self.knowledge_base.get("best_practices", {}).get(category)
+    
+    def add_server_experience(self, server_name: str, experience_data: Dict[str, Any]):
+        """Add real-world experience data to server information"""
+        if "servers" not in self.knowledge_base:
+            self.knowledge_base["servers"] = {}
+        if server_name.lower() not in self.knowledge_base["servers"]:
+            self.knowledge_base["servers"][server_name.lower()] = {}
+        
+        if "experience_data" not in self.knowledge_base["servers"][server_name.lower()]:
+            self.knowledge_base["servers"][server_name.lower()]["experience_data"] = []
+        
+        experience_entry = {
+            "timestamp": datetime.now().isoformat(),
+            "data": experience_data
+        }
+        self.knowledge_base["servers"][server_name.lower()]["experience_data"].append(experience_entry)
+        self.save_knowledge_base()
+
+# Initialize the knowledge base
+if __name__ == "__main__":
+    kb = MCPKnowledgeBase()
+    kb.save_knowledge_base()
+    print("MCP Knowledge Base initialized and saved to:", kb.storage_path)

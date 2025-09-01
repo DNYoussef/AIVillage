@@ -154,8 +154,19 @@ class EnhancedProcessingInterface(ABC, Generic[T, U]):
 
     @abstractmethod
     async def _initialize_processor(self) -> None:
-        """Processor-specific initialization logic."""
-        pass
+        """Processor-specific initialization logic.
+        
+        Subclasses must implement this method to perform any custom initialization
+        required for the specific processor type. This may include loading models,
+        establishing connections, or preparing resources.
+        
+        Raises:
+            NotImplementedError: If not implemented by subclass
+            ProcessorInitializationError: If initialization fails
+        """
+        raise NotImplementedError(
+            f"Processor {self.__class__.__name__} must implement _initialize_processor method"
+        )
 
     async def shutdown(self) -> bool:
         """Gracefully shutdown the processor."""
@@ -189,8 +200,18 @@ class EnhancedProcessingInterface(ABC, Generic[T, U]):
 
     @abstractmethod
     async def _shutdown_processor(self) -> None:
-        """Processor-specific shutdown logic."""
-        pass
+        """Processor-specific shutdown logic.
+        
+        Subclasses must implement this method to perform any custom cleanup
+        required for the specific processor type. This may include closing connections,
+        releasing resources, or saving state.
+        
+        Raises:
+            NotImplementedError: If not implemented by subclass
+        """
+        raise NotImplementedError(
+            f"Processor {self.__class__.__name__} must implement _shutdown_processor method"
+        )
 
     async def _wait_for_active_tasks(self) -> None:
         """Wait for all active tasks to complete."""
@@ -326,8 +347,24 @@ class EnhancedProcessingInterface(ABC, Generic[T, U]):
 
         This replaces the NotImplementedError pattern with a proper abstract method
         that includes all necessary context for robust implementation.
+        
+        Args:
+            input_data: The data to be processed
+            context: Processing context with metadata and configuration
+            progress_tracker: Progress tracking for cancellation and monitoring
+            **kwargs: Additional processor-specific arguments
+            
+        Returns:
+            The processed result of type U
+            
+        Raises:
+            NotImplementedError: If not implemented by subclass
+            ProcessingError: If processing fails
+            asyncio.CancelledError: If processing is cancelled
         """
-        pass
+        raise NotImplementedError(
+            f"Processor {self.__class__.__name__} must implement _process_implementation method"
+        )
 
     async def validate_input(self, input_data: T) -> bool:
         """Validate input data with enhanced error context."""
@@ -339,8 +376,24 @@ class EnhancedProcessingInterface(ABC, Generic[T, U]):
 
     @abstractmethod
     async def _validate_input_implementation(self, input_data: T) -> bool:
-        """Input validation implementation to be overridden by subclasses."""
-        pass
+        """Input validation implementation to be overridden by subclasses.
+        
+        Subclasses must implement this method to validate input data according
+        to their specific requirements and constraints.
+        
+        Args:
+            input_data: The input data to validate
+            
+        Returns:
+            True if the input is valid, False otherwise
+            
+        Raises:
+            NotImplementedError: If not implemented by subclass
+            ValidationError: If validation encounters an error
+        """
+        raise NotImplementedError(
+            f"Processor {self.__class__.__name__} must implement _validate_input_implementation method"
+        )
 
     async def _validate_output(self, output_data: U) -> bool:
         """Validate output data."""

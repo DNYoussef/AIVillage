@@ -59,7 +59,7 @@ class TestCachingPerformanceRegression:
         return CacheConfig(
             redis_sentinels=[("localhost", 26379)],
             redis_master_name="test_master",
-            redis_password="test_password",  # nosec B106 - test password
+            redis_password="test_password"  # nosec B106 - test password,  # nosec B106 - test password
             memcached_servers=["localhost:11211"],
             default_ttl=3600,
             max_retries=3,

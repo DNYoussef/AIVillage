@@ -19,7 +19,7 @@ from typing import Dict, List, Any, Optional
 class AuthenticationMethod(Enum):
     """Authentication methods supported by admin interface."""
 
-    PASSWORD = "password"
+    PASSWORD = "password"  # nosec B106 - test password
     MFA_TOTP = "mfa_totp"
     MFA_SMS = "mfa_sms"
     CERTIFICATE = "certificate"
@@ -368,7 +368,7 @@ class AdminInterfaceSecurityTest(unittest.TestCase):
 
         # Test authentication without MFA token
         auth_result = self.admin_server.authenticate_user(
-            user_id="admin_user", password="secure_admin_password123", source_ip="127.0.0.1"  # pragma: allowlist secret
+            user_id="admin_user", password="secure_admin_password123"  # nosec B106 - test password, source_ip="127.0.0.1"  # pragma: allowlist secret
         )
 
         self.assertFalse(auth_result["authenticated"], "Authentication must fail without MFA when required")
@@ -377,8 +377,8 @@ class AdminInterfaceSecurityTest(unittest.TestCase):
         # Test authentication with valid MFA token
         mfa_auth_result = self.admin_server.authenticate_user(
             user_id="admin_user",
-            password="secure_admin_password123",  # pragma: allowlist secret
-            mfa_token="123456",  # pragma: allowlist secret
+            password="secure_admin_password123"  # nosec B106 - test password,  # pragma: allowlist secret
+            mfa_token="123456"  # pragma: allowlist secret - test token,  # pragma: allowlist secret
             source_ip="127.0.0.1",
         )
 
@@ -400,8 +400,8 @@ class AdminInterfaceSecurityTest(unittest.TestCase):
                 with self.assertRaises(SecurityError) as context:
                     self.admin_server.authenticate_user(
                         user_id="admin_user",
-                        password="secure_admin_password123",  # pragma: allowlist secret
-                        mfa_token="123456",  # pragma: allowlist secret
+                        password="secure_admin_password123"  # nosec B106 - test password,  # pragma: allowlist secret
+                        mfa_token="123456"  # pragma: allowlist secret - test token,  # pragma: allowlist secret
                         source_ip=remote_ip,
                     )
 
@@ -423,8 +423,8 @@ class AdminInterfaceSecurityTest(unittest.TestCase):
         # Create authenticated session
         auth_result = self.admin_server.authenticate_user(
             user_id="admin_user",
-            password="secure_admin_password123",  # pragma: allowlist secret
-            mfa_token="123456",  # pragma: allowlist secret
+            password="secure_admin_password123"  # nosec B106 - test password,  # pragma: allowlist secret
+            mfa_token="123456"  # pragma: allowlist secret - test token,  # pragma: allowlist secret
             source_ip="127.0.0.1",
         )
 
@@ -457,8 +457,8 @@ class AdminInterfaceSecurityTest(unittest.TestCase):
         for i in range(10):
             auth_result = self.admin_server.authenticate_user(
                 user_id=f"test_user_{i}",
-                password="test_password_456",  # pragma: allowlist secret
-                mfa_token="123456",  # pragma: allowlist secret
+                password="test_password_456"  # nosec B106 - test password,  # pragma: allowlist secret
+                mfa_token="123456"  # pragma: allowlist secret - test token,  # pragma: allowlist secret
                 source_ip="127.0.0.1",
             )
 
@@ -492,7 +492,7 @@ class AdminInterfaceSecurityTest(unittest.TestCase):
                 auth_result = self.admin_server.authenticate_user(
                     user_id=user_id,
                     password=self._get_test_password(user_id),
-                    mfa_token="123456",  # pragma: allowlist secret
+                    mfa_token="123456"  # pragma: allowlist secret - test token,  # pragma: allowlist secret
                     source_ip="127.0.0.1",
                 )
 
@@ -569,8 +569,8 @@ class AdminInterfaceSecurityTest(unittest.TestCase):
         for i in range(5):
             auth_result = self.admin_server.authenticate_user(
                 user_id=f"concurrent_user_{i}",
-                password="test_password_456",  # pragma: allowlist secret
-                mfa_token="123456",  # pragma: allowlist secret
+                password="test_password_456"  # nosec B106 - test password,  # pragma: allowlist secret
+                mfa_token="123456"  # pragma: allowlist secret - test token,  # pragma: allowlist secret
                 source_ip="127.0.0.1",
             )
 

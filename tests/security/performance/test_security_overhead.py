@@ -48,8 +48,8 @@ class SecurityPerformanceBenchmark:
             try:
                 result = admin_server.authenticate_user(
                     user_id=f"test_user_{i % 10}",  # Cycle through 10 users
-                    password="test_password_456",  # pragma: allowlist secret
-                    mfa_token="123456",  # pragma: allowlist secret
+                    password="test_password_456"  # nosec B106 - test password,  # pragma: allowlist secret
+                    mfa_token="123456"  # pragma: allowlist secret - test token,  # pragma: allowlist secret
                     source_ip="127.0.0.1",
                 )
 

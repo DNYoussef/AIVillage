@@ -29,7 +29,7 @@ class TestFederatedAuthenticationSystem:
     @pytest.fixture
     def auth_system(self):
         """Create authentication system for testing."""
-        return FederatedAuthenticationSystem(jwt_secret="test_secret_key", enable_mfa=True)
+        return FederatedAuthenticationSystem(jwt_secret="test_secret_key"  # pragma: allowlist secret - test secret, enable_mfa=True)
 
     @pytest.fixture
     def mock_bcrypt(self):
@@ -142,7 +142,7 @@ class TestFederatedAuthenticationSystem:
 
         # When authenticating with password and MFA token
         success, session = await auth_system.authenticate_node(
-            "coordinator_001", "SecurePassword123!", mfa_token="123456"
+            "coordinator_001", "SecurePassword123!", mfa_token="123456"  # pragma: allowlist secret - test token
         )
 
         # Then it should verify password
