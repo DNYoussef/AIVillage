@@ -131,7 +131,7 @@ class ThreatDatabase:
         patterns = {
             "admin_interface_exposure": {
                 "category": ThreatCategory.ELEVATION_OF_PRIVILEGE.value,
-                "indicators": ["0.0.0.0", "bind.*0.0.0.0", "host.*0.0.0.0"],
+                "indicators": ["0.0.0.0", "bind.*0.0.0.0", "host.*0.0.0.0"],  # nosec B104 - Security pattern detection
                 "description": "Admin interface exposed to all network interfaces",
                 "impact": RiskLevel.CRITICAL.value,
                 "likelihood": RiskLevel.HIGH.value,
@@ -279,7 +279,7 @@ class ThreatAnalyzer:
         # Check for network binding issues
         if re.search(r'host.*["\']0\.0\.0\.0["\']', content):
             threat = Threat(
-                id=f"ADM-{hashlib.md5(file_path.encode()).hexdigest()[:8]}-001",
+                id=f"ADM-{hashlib.sha256(file_path.encode()).hexdigest()[:8]}-001",  # Use SHA256 for security
                 category=ThreatCategory.ELEVATION_OF_PRIVILEGE,
                 title="Admin Interface Network Exposure",
                 description=f"Admin interface in {file_path} binds to all network interfaces (0.0.0.0)",
@@ -305,7 +305,7 @@ class ThreatAnalyzer:
         # Check for missing authentication
         if "admin" in content.lower() and not re.search(r'auth|authenticate|login', content, re.IGNORECASE):
             threat = Threat(
-                id=f"ADM-{hashlib.md5(file_path.encode()).hexdigest()[:8]}-002",
+                id=f"ADM-{hashlib.sha256(file_path.encode()).hexdigest()[:8]}-002",  # Use SHA256 for security
                 category=ThreatCategory.SPOOFING,
                 title="Admin Interface Missing Authentication",
                 description=f"Admin interface in {file_path} may lack proper authentication",
@@ -337,7 +337,7 @@ class ThreatAnalyzer:
         # Check for unencrypted communications
         if re.search(r'socket|tcp|udp', content, re.IGNORECASE) and not re.search(r'tls|ssl|encrypt', content, re.IGNORECASE):
             threat = Threat(
-                id=f"P2P-{hashlib.md5(file_path.encode()).hexdigest()[:8]}-001",
+                id=f"P2P-{hashlib.sha256(file_path.encode()).hexdigest()[:8]}-001",  # Use SHA256 for security
                 category=ThreatCategory.INFORMATION_DISCLOSURE,
                 title="P2P Unencrypted Communications",
                 description=f"P2P protocol in {file_path} may use unencrypted communications",
@@ -387,7 +387,7 @@ class ThreatAnalyzer:
                     if package.lower() in vulnerable_packages:
                         if version in vulnerable_packages[package.lower()]:
                             threat = Threat(
-                                id=f"DEP-{hashlib.md5(f'{package}-{version}'.encode()).hexdigest()[:8]}",
+                                id=f"DEP-{hashlib.sha256(f'{package}-{version}'.encode()).hexdigest()[:8]}",  # Use SHA256 for security
                                 category=ThreatCategory.TAMPERING,
                                 title=f"Vulnerable Dependency: {package}",
                                 description=f"Package {package} version {version} has known vulnerabilities",
@@ -420,7 +420,7 @@ class ThreatAnalyzer:
         """Create threat object from pattern match"""
         
         return Threat(
-            id=f"PAT-{hashlib.md5(f'{pattern_name}-{file_path}'.encode()).hexdigest()[:8]}",
+            id=f"PAT-{hashlib.sha256(f'{pattern_name}-{file_path}'.encode()).hexdigest()[:8]}",  # Use SHA256 for security
             category=ThreatCategory(pattern_data["category"]),
             title=pattern_name.replace('_', ' ').title(),
             description=f"{pattern_data['description']} (matched: {matched_indicator})",

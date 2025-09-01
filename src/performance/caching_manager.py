@@ -34,17 +34,22 @@ class CacheConfig:
 
     redis_sentinels: list[tuple] = None
     redis_master_name: str = "mymaster"
-    redis_password: str = "aivillage2024"
+    redis_password: str = None  # Now loaded from environment
     memcached_servers: list[str] = None
     default_ttl: int = 3600
     max_retries: int = 3
     retry_delay: float = 0.1
-
+    
     def __post_init__(self):
         if self.redis_sentinels is None:
             self.redis_sentinels = [("localhost", 26379), ("localhost", 26380), ("localhost", 26381)]
         if self.memcached_servers is None:
             self.memcached_servers = ["localhost:11211"]
+        if self.redis_password is None:
+            import os
+            self.redis_password = os.getenv("REDIS_PASSWORD")
+            if not self.redis_password:
+                raise ValueError("REDIS_PASSWORD environment variable must be set for security")
 
 
 class CacheKey:

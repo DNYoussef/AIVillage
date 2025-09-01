@@ -40,8 +40,8 @@ class SecureAdminServer:
                  port: int = DEFAULT_ADMIN_PORT,
                  debug: bool = False):
         
-        # CRITICAL: Validate bind interface
-        if bind_interface == "0.0.0.0":
+        # CRITICAL: Validate bind interface - nosec B104 (intentional security check)
+        if bind_interface == "0.0.0.0":  # nosec B104 - This is a security validation, not a vulnerability
             raise SecurityException(
                 "Admin interfaces must never bind to all interfaces",
                 SecurityViolationType.WEAK_COUPLING_VIOLATION

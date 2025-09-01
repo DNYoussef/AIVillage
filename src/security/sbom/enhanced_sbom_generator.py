@@ -91,9 +91,9 @@ class Component:
         self.external_references = []
         
     def _generate_bom_ref(self, name: str, version: str) -> str:
-        """Generate unique BOM reference"""
+        """Generate unique BOM reference using SHA256 for security"""
         ref = f"{name}-{version}".replace('/', '-').replace('@', '-')
-        return hashlib.md5(ref.encode()).hexdigest()
+        return hashlib.sha256(ref.encode()).hexdigest()[:16]  # Use SHA256 truncated for uniqueness
     
     def add_hash(self, algorithm: str, value: str):
         """Add hash for integrity verification"""
