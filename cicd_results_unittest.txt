@@ -1,0 +1,76 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.5, pytest-8.4.1, pluggy-1.5.0 -- C:\Python312\python.exe
+cachedir: .pytest_cache
+hypothesis profile 'default'
+Using --randomly-seed=3868173238
+rootdir: C:\Users\17175\Desktop\AIVillage
+plugins: anyio-4.4.0, Faker-18.13.0, hypothesis-6.138.2, asyncio-1.1.0, cov-6.0.0, env-1.1.5, flask-1.3.0, mock-3.14.0, randomly-3.16.0, timeout-2.3.1, xdist-3.6.1
+asyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 2 items / 5 errors
+
+=================================== ERRORS ====================================
+______ ERROR collecting tests/unit/agent_forge/test_agent_forge_smoke.py ______
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\unit\agent_forge\test_agent_forge_smoke.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\unit\agent_forge\test_agent_forge_smoke.py:11: in <module>
+    from agent_forge.core import AgentForge  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'agent_forge.core'
+___________ ERROR collecting tests/unit/core/test_bridge_system.py ____________
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\unit\core\test_bridge_system.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\unit\core\test_bridge_system.py:5: in <module>
+    from packages.core.legacy.compatibility.bridge_system import CompatibilityBridge
+E   ModuleNotFoundError: No module named 'packages.core.legacy.compatibility'
+__ ERROR collecting tests/unit/core/test_continuous_deployment_automation.py __
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\unit\core\test_continuous_deployment_automation.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\unit\core\test_continuous_deployment_automation.py:5: in <module>
+    from packages.core.deployment.continuous_deployment_automation import (
+E   ModuleNotFoundError: No module named 'packages.core.deployment'
+__________ ERROR collecting tests/unit/core/test_evolution_peers.py ___________
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\unit\core\test_evolution_peers.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\unit\core\test_evolution_peers.py:8: in <module>
+    from src.production.communications.p2p.p2p_node import P2PNode
+E   ModuleNotFoundError: No module named 'src.production'
+_______ ERROR collecting tests/unit/core/test_redis_fallback_memory.py ________
+ImportError while importing test module 'C:\Users\17175\Desktop\AIVillage\tests\unit\core\test_redis_fallback_memory.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\unit\core\test_redis_fallback_memory.py:15: in <module>
+    from core.database.redis_manager import RedisFallbackStorage
+E   ModuleNotFoundError: No module named 'core.database'
+============================== warnings summary ===============================
+..\..\AppData\Roaming\Python\Python312\site-packages\transformers\utils\hub.py:128
+  C:\Users\17175\AppData\Roaming\Python\Python312\site-packages\transformers\utils\hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+ERROR tests/unit/agent_forge/test_agent_forge_smoke.py
+ERROR tests/unit/core/test_bridge_system.py
+ERROR tests/unit/core/test_continuous_deployment_automation.py
+ERROR tests/unit/core/test_evolution_peers.py
+ERROR tests/unit/core/test_redis_fallback_memory.py
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 5 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+=================== 1 warning, 5 errors in 63.67s (0:01:03) ===================
