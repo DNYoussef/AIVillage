@@ -153,7 +153,7 @@ class TestCryptographicSecurity(BaseSecurityTest):
 
             return f"{salt}${hashed}"
 
-        password = "test_password_123"
+        password = "test_password_123"  # nosec B106 - test password
         hash1 = mock_hash_password(password)
         hash2 = mock_hash_password(password)
 

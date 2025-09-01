@@ -69,7 +69,7 @@ class TestAuthenticationMonitoringIntegration:
         user = self.auth_manager.create_user(
             username="monitored_user",
             email="monitored@example.com",
-            password="SecurePassword123!",
+            password="SecurePassword123!",  # nosec B106 - test password
             role=UserRole.DEVELOPER,
         )
 
@@ -81,7 +81,7 @@ class TestAuthenticationMonitoringIntegration:
             # Perform authentication
             success, auth_user, session_token = self.auth_manager.authenticate(
                 username="monitored_user",
-                password="SecurePassword123!",
+                password="SecurePassword123!",  # nosec B106 - test password
                 ip_address="10.0.0.1",
                 user_agent="IntegrationTest/1.0",
             )
@@ -126,7 +126,7 @@ class TestAuthenticationMonitoringIntegration:
         self.auth_manager.create_user(
             username="alert_user",
             email="alert@example.com",
-            password="SecurePassword123!",
+            password="SecurePassword123!",  # nosec B106 - test password
         )
 
         # Setup alert rule for failed authentication
@@ -143,7 +143,7 @@ class TestAuthenticationMonitoringIntegration:
         for i in range(5):
             success, user, _ = self.auth_manager.authenticate(
                 username="alert_user",
-                password=f"wrong_password_{i}",
+                password=f"wrong_password_{i}",  # nosec B106 - test password
                 ip_address="192.168.1.100",
             )
 
@@ -166,12 +166,12 @@ class TestAuthenticationMonitoringIntegration:
         user = self.auth_manager.create_user(
             username="session_user",
             email="session@example.com",
-            password="SecurePassword123!",
+            password="SecurePassword123!",  # nosec B106 - test password
         )
 
         success, auth_user, session_token = self.auth_manager.authenticate(
             username="session_user",
-            password="SecurePassword123!",
+            password="SecurePassword123!",  # nosec B106 - test password
             ip_address="10.0.0.1",
         )
 
@@ -232,7 +232,7 @@ class TestAgentCoordinationSecurityIntegration:
         self.auth_manager.create_user(
             username="agent_operator",
             email="operator@example.com",
-            password="SecurePassword123!",
+            password="SecurePassword123!",  # nosec B106 - test password
             role=UserRole.OPERATOR,
             security_level=SecurityLevel.INTERNAL,
         )
@@ -240,7 +240,7 @@ class TestAgentCoordinationSecurityIntegration:
         # Authenticate user
         success, auth_user, session_token = self.auth_manager.authenticate(
             username="agent_operator",
-            password="SecurePassword123!",
+            password="SecurePassword123!",  # nosec B106 - test password
             ip_address="10.0.0.1",
         )
 
@@ -289,7 +289,7 @@ class TestAgentCoordinationSecurityIntegration:
         admin_user = self.auth_manager.create_user(
             username="admin",
             email="admin@example.com",
-            password="AdminPassword123!",
+            password="AdminPassword123!",  # nosec B106 - test password
             role=UserRole.ADMIN,
             security_level=SecurityLevel.TOP_SECRET,
         )
@@ -297,7 +297,7 @@ class TestAgentCoordinationSecurityIntegration:
         viewer_user = self.auth_manager.create_user(
             username="viewer",
             email="viewer@example.com",
-            password="ViewerPassword123!",
+            password="ViewerPassword123!",  # nosec B106 - test password
             role=UserRole.VIEWER,
             security_level=SecurityLevel.PUBLIC,
         )

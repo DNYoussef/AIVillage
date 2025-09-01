@@ -108,7 +108,7 @@ class IAuthenticationService(ABC):
         pass
 
     @abstractmethod
-    async def validate_token(self, token: str, token_type: str = "access_token") -> TokenValidationResult:
+    async def validate_token(self, token: str, token_type: str = "access_token") -> TokenValidationResult:  # nosec B107
         """Validate JWT token."""
         pass
 

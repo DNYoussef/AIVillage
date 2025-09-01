@@ -110,7 +110,7 @@ class EnhancedJWTAuthenticator:
             "mfa_verified": mfa_verified,
         }
 
-    async def verify_token_with_session(self, token: str, token_type: str = "access_token") -> dict[str, Any]:
+    async def verify_token_with_session(self, token: str, token_type: str = "access_token") -> dict[str, Any]:  # nosec B107
         """Verify JWT token and check session validity."""
         import jwt
 

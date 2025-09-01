@@ -128,7 +128,7 @@ class AuthenticationService(IAuthenticationService):
             logger.error(f"Authentication failed: {e}")
             return AuthResult(success=False, error_message="Authentication failed")
 
-    async def validate_token(self, token: str, token_type: str = "access_token") -> TokenValidationResult:
+    async def validate_token(self, token: str, token_type: str = "access_token") -> TokenValidationResult:  # nosec B107
         """Validate JWT token and check session validity."""
         try:
             if not JWT_AVAILABLE:

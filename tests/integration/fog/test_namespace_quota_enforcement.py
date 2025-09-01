@@ -33,7 +33,7 @@ async def rbac_system():
     )
 
     user = await rbac.create_user(
-        username="testuser", email="user@test.com", password="test123", tenant_id=tenant.tenant_id, role=Role.USER
+        username="testuser", email="user@test.com", password="test123", tenant_id=tenant.tenant_id, role=Role.USER  # nosec B106
     )
 
     return rbac, tenant, user
@@ -275,7 +275,7 @@ class TestNamespaceQuotaEnforcement:
         admin = await rbac.create_user(
             username="admin_user",
             email="admin@test.com",
-            password="admin123",
+            password="admin123",  # nosec B106 - test password
             tenant_id=tenant.tenant_id,
             role=Role.ADMIN,
         )
@@ -473,7 +473,7 @@ class TestIntegrationWithRBAC:
         limited_user = await rbac.create_user(
             username="limited",
             email="limited@test.com",
-            password="test123",
+            password="test123",  # nosec B106 - test password
             tenant_id=tenant.tenant_id,
             role=Role.GUEST,  # Guest has limited permissions
         )
@@ -515,7 +515,7 @@ class TestIntegrationWithRBAC:
         )
 
         user2 = await rbac.create_user(
-            username="user2", email="user2@other.com", password="test123", tenant_id=tenant2.tenant_id, role=Role.USER
+            username="user2", email="user2@other.com", password="test123", tenant_id=tenant2.tenant_id, role=Role.USER  # nosec B106
         )
 
         # Set up namespace for tenant1

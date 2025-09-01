@@ -254,7 +254,7 @@ class RedisSessionManager:
 
         await self.redis_client.hset(session_key, mapping=session_dict)
 
-    async def add_token_to_session(self, session_id: str, jti: str, token_type: str = "access"):
+    async def add_token_to_session(self, session_id: str, jti: str, token_type: str = "access"):  # nosec B107
         """Add token to session tracking."""
         session_data = await self.get_session(session_id)
         if not session_data:
