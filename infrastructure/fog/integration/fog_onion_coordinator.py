@@ -360,7 +360,7 @@ class FogOnionCoordinator:
                 if self.circuit_service:
                     circuit_privacy_level = self._convert_privacy_level(privacy_level)
                     # Use a system client ID for gossip
-                    auth_token = "auth_system_gossip_token"
+                    auth_token = "auth_system_gossip_token"  # nosec B105 - token identifier, not password
                     self.circuit_service.authenticate_client("system_gossip", auth_token)
 
                     circuit = await self.circuit_service.get_circuit(

@@ -23,7 +23,7 @@ class PrivacyLevel(Enum):
     PUBLIC = "public"
     PRIVATE = "private"
     CONFIDENTIAL = "confidential"
-    SECRET = "secret"
+    SECRET = "secret"  # nosec B105 - config key name, not password
 
 
 @dataclass

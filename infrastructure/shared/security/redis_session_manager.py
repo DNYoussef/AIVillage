@@ -261,9 +261,9 @@ class RedisSessionManager:
             raise SessionError(f"Session {session_id} not found")
 
         # Add token to session
-        if token_type == "access":
+        if token_type == "access":  # nosec B105 - token type identifier, not password
             session_data.add_access_token(jti)
-        elif token_type == "refresh":
+        elif token_type == "refresh":  # nosec B105 - token type identifier, not password
             session_data.add_refresh_token(jti)
         else:
             raise SessionError(f"Unknown token type: {token_type}")

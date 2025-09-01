@@ -5,7 +5,7 @@ AIVillage Unified Production Gateway Server
 This is the consolidated, production-ready HTTP API gateway that unifies all capabilities
 from across the codebase into a single, high-performance FastAPI application.
 
-Architecture: User Request → API Gateway → Agent Controller → Knowledge System → Response
+Architecture: User Request -> API Gateway -> Agent Controller -> Knowledge System -> Response
 Performance Target: <100ms health check response time
 Security: Complete middleware stack with input validation, rate limiting, and headers
 """
@@ -463,7 +463,7 @@ if config.enable_metrics:
 async def query_endpoint(request: QueryRequest, authenticated: bool = Depends(verify_api_key)) -> dict[str, Any]:
     """
     Primary query endpoint that routes requests through the knowledge system
-    Architecture: Gateway → Agent Controller → Knowledge System
+    Architecture: Gateway -> Agent Controller -> Knowledge System
     """
     start_time = time.time()
 

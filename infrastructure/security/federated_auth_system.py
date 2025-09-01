@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class AuthenticationMethod(Enum):
     """Available authentication methods."""
 
-    PASSWORD = "password"
+    PASSWORD = "password"  # nosec B105 - field name constant, not password
     MULTI_FACTOR = "mfa"
     CERTIFICATE = "certificate"
     ZERO_KNOWLEDGE = "zero_knowledge"

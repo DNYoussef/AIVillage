@@ -42,10 +42,10 @@ class NodeRole(Enum):
 class AuthenticationMethod(Enum):
     """Supported authentication methods"""
 
-    PASSWORD = "password"
+    PASSWORD = "password"  # nosec B105 - field name constant, not password
     CERTIFICATE = "certificate"
     BIOMETRIC = "biometric"
-    HARDWARE_TOKEN = "hardware_token"
+    HARDWARE_TOKEN = "hardware_token"  # nosec B105 - token type identifier, not password
     MULTI_FACTOR = "multi_factor"
 
 

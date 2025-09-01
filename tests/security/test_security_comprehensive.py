@@ -257,7 +257,7 @@ class TestSecureAPIServer(unittest.TestCase):
 
     def test_password_hashing(self):
         """Test secure password hashing."""
-        password = "test_password_123"
+        password = "test_password_123"  # nosec B105 - test password
 
         # Hash password
         salt, hash_value = self.authenticator.hash_password(password)

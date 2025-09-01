@@ -354,7 +354,7 @@ class TestSecurityIntegration:
 
         # Register a node and perform various security-relevant operations
         test_node = "event_test_node"
-        password = "event_test_password!"
+        password = "event_test_password!"  # nosec B105 - test password
 
         # Registration should emit authentication success
         success, _ = await security_manager.register_federated_node(test_node, NodeRole.PARTICIPANT, password)
@@ -457,7 +457,7 @@ class TestSecurityIntegration:
 
         # Perform various operations to generate metrics
         test_node = "metrics_test_node"
-        password = "metrics_test_password!"
+        password = "metrics_test_password!"  # nosec B105 - test password
 
         # Registration
         await security_manager.register_federated_node(test_node, NodeRole.PARTICIPANT, password)

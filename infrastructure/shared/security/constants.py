@@ -84,7 +84,7 @@ class SecurityLevel(Enum):
     INTERNAL = "internal"
     CONFIDENTIAL = "confidential"
     RESTRICTED = "restricted"
-    TOP_SECRET = "top_secret"  # pragma: allowlist secret
+    TOP_SECRET = "top_secret"  # nosec B105 - classification level constant, not password
 
 
 class EncryptionAlgorithm(Enum):
@@ -108,7 +108,7 @@ class HashAlgorithm(Enum):
 class AuthenticationMethod(Enum):
     """Authentication methods."""
 
-    PASSWORD = "password"
+    PASSWORD = "password"  # nosec B105 - field name constant, not password
     API_KEY = "api_key"
     JWT = "jwt"
     OAUTH2 = "oauth2"

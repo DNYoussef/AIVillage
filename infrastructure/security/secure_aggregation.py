@@ -36,7 +36,7 @@ class AggregationMethod(Enum):
     SIMPLE_AVERAGE = "simple_average"
     WEIGHTED_AVERAGE = "weighted_average"
     HOMOMORPHIC = "homomorphic"
-    SECRET_SHARING = "secret_sharing"
+    SECRET_SHARING = "secret_sharing"  # nosec B105 - algorithm name constant, not password
     DIFFERENTIAL_PRIVATE = "differential_private"
     BYZANTINE_ROBUST = "byzantine_robust"
 

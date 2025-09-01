@@ -87,7 +87,7 @@ class TestPasswordHashing(unittest.TestCase):
 
     def test_password_hashing(self):
         """Test password hashing functionality."""
-        password = "test_password_123!@#"
+        password = "test_password_123!@#"  # nosec B105 - test password
 
         # Hash password
         salt, hash_value = self.hash_password(password)
@@ -106,7 +106,7 @@ class TestPasswordHashing(unittest.TestCase):
 
     def test_password_hash_uniqueness(self):
         """Test that same password produces different hashes with different salts."""
-        password = "same_password"
+        password = "same_password"  # nosec B105 - test password
 
         salt1, hash1 = self.hash_password(password)
         salt2, hash2 = self.hash_password(password)

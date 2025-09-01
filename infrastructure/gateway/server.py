@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""⚠️ DEVELOPMENT SERVER ONLY ⚠️.
+"""WARNING: DEVELOPMENT SERVER ONLY WARNING:.
 
 This server is for development and testing purposes only.
 - Set AIVILLAGE_DEV_MODE=true to suppress warnings

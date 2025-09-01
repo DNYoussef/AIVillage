@@ -24,8 +24,8 @@ class SecurityLevel(Enum):
 class AuthenticationMethod(Enum):
     """Available authentication methods."""
 
-    PASSWORD = "password"
-    TOKEN = "token"
+    PASSWORD = "password"  # nosec B105 - field name constant, not password
+    TOKEN = "token"  # nosec B105 - field name constant, not password
     CERTIFICATE = "certificate"
     MFA = "mfa"
     BIOMETRIC = "biometric"
