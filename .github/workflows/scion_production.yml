@@ -49,33 +49,64 @@ jobs:
         run: |
           echo "Running critical security validations..."
 
+          # Initialize gate status
+          SECURITY_GATE_PASSED="false"
+
           # Secret detection (exclude test files)
-          detect-secrets scan --baseline .secrets.baseline --exclude-files 'tests/.*\.py$' || {
-            echo "::error::Secrets detected in production code"
-            exit 1
-          }
+          echo "Step 1: Running detect-secrets scan..."
+          if detect-secrets scan --baseline .secrets.baseline --exclude-files 'tests/.*\.py$'; then
+            echo "[PASS] Secret detection passed"
+            DETECTION_PASSED="true"
+          else
+            echo "[FAIL] Secrets detected in production code"
+            DETECTION_PASSED="false"
+          fi
 
           # Production security validation (accept PASS_WITH_WARNINGS)
+          echo "Step 2: Running production security validation..."
           if [ -f "scripts/validate_secret_sanitization.py" ]; then
             python scripts/validate_secret_sanitization.py --production-ready
             validation_result=$?
-            if [ $validation_result -eq 0 ] || [ $validation_result -eq 1 ]; then
-              echo "[PASS] Security validation completed (exit code: $validation_result)"
+            if [ $validation_result -eq 0 ]; then
+              echo "[PASS] Security validation completed successfully (exit code: $validation_result)"
+              VALIDATION_PASSED="true"
             else
-              echo "::error::Production security validation failed (exit code: $validation_result)"
-              exit 1
+              echo "[FAIL] Production security validation failed (exit code: $validation_result)"
+              VALIDATION_PASSED="false"
             fi
           else
             echo "[INFO] Secret sanitization script not found, using basic validation"
             # Basic validation: check for common security issues (exclude test files)
             if grep -r "password.*=.*['\"]" --include="*.py" core/ infrastructure/ 2>/dev/null | grep -v test | grep -v '/tests/'; then
-              echo "::error::Hardcoded passwords found in production code"
-              exit 1
+              echo "[FAIL] Hardcoded passwords found in production code"
+              VALIDATION_PASSED="false"
+            else
+              echo "[PASS] Basic validation passed"
+              VALIDATION_PASSED="true"
             fi
           fi
 
-          echo "passed=true" >> $GITHUB_OUTPUT
-          echo "[PASS] Security pre-flight passed"
+          # Determine final security gate status
+          echo "Step 3: Determining final security gate status..."
+          if [ "$DETECTION_PASSED" = "true" ] && [ "$VALIDATION_PASSED" = "true" ]; then
+            SECURITY_GATE_PASSED="true"
+            echo "[PASS] Security pre-flight passed - all validations successful"
+          else
+            echo "[FAIL] Security pre-flight failed:"
+            echo "  Detection: $DETECTION_PASSED"
+            echo "  Validation: $VALIDATION_PASSED"
+            # Don't exit 1 here - let the gate decision be made downstream
+          fi
+
+          # ALWAYS set the output regardless of pass/fail
+          echo "passed=$SECURITY_GATE_PASSED" >> $GITHUB_OUTPUT
+          echo "Final security gate status: $SECURITY_GATE_PASSED"
+
+          # Exit with failure only if security gate failed
+          if [ "$SECURITY_GATE_PASSED" = "false" ]; then
+            echo "Security gate failed - exiting with error"
+            exit 1
+          fi
 
       - name: 🚨 Emergency Bypass Validation
         if: github.event.inputs.emergency_bypass == 'true'
