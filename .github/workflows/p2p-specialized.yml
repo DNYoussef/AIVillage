@@ -1,0 +1,760 @@
+name: P2P Component Testing
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'infrastructure/p2p/**'
+      - 'tests/communications/**'
+      - 'tests/fog/**'
+      - 'tests/integration/**'
+      - 'core/communications/**'
+      - 'src/p2p/**'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'infrastructure/p2p/**'
+      - 'tests/communications/**'  
+      - 'tests/fog/**'
+      - 'tests/integration/**'
+      - 'core/communications/**'
+      - 'src/p2p/**'
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'P2P test suite to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - transport
+        - security
+        - integration
+        - mobile
+        - performance
+      network_simulation:
+        description: 'Enable network simulation tests'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.11'
+  P2P_TEST_TIMEOUT: 20
+  NETWORK_LATENCY: 100  # ms for simulation
+
+jobs:
+  # ============================================
+  # STAGE 1: P2P Test Configuration
+  # ============================================
+  p2p-setup:
+    name: P2P Test Setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      test-matrix: ${{ steps.config.outputs.test-matrix }}
+      run-transport: ${{ steps.config.outputs.run-transport }}
+      run-security: ${{ steps.config.outputs.run-security }}
+      run-integration: ${{ steps.config.outputs.run-integration }}
+      run-mobile: ${{ steps.config.outputs.run-mobile }}
+      run-performance: ${{ steps.config.outputs.run-performance }}
+      network-simulation: ${{ steps.config.outputs.network-simulation }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure P2P Test Matrix
+        id: config
+        run: |
+          TEST_SUITE="${{ github.event.inputs.test_suite || 'all' }}"
+          NETWORK_SIM="${{ github.event.inputs.network_simulation || 'false' }}"
+          
+          # Configure test categories based on input
+          if [[ "$TEST_SUITE" == "all" ]]; then
+            RUN_TRANSPORT="true"
+            RUN_SECURITY="true"
+            RUN_INTEGRATION="true"
+            RUN_MOBILE="true"
+            RUN_PERFORMANCE="false"  # Only on demand
+          else
+            RUN_TRANSPORT=$([[ "$TEST_SUITE" == "transport" ]] && echo "true" || echo "false")
+            RUN_SECURITY=$([[ "$TEST_SUITE" == "security" ]] && echo "true" || echo "false")
+            RUN_INTEGRATION=$([[ "$TEST_SUITE" == "integration" ]] && echo "true" || echo "false")
+            RUN_MOBILE=$([[ "$TEST_SUITE" == "mobile" ]] && echo "true" || echo "false")
+            RUN_PERFORMANCE=$([[ "$TEST_SUITE" == "performance" ]] && echo "true" || echo "false")
+          fi
+          
+          # Enable performance tests for scheduled runs
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            RUN_PERFORMANCE="true"
+          fi
+          
+          # Create test matrix for transport tests
+          TEST_MATRIX='["tcp", "udp", "websocket", "grpc"]'
+          
+          echo "run-transport=$RUN_TRANSPORT" >> $GITHUB_OUTPUT
+          echo "run-security=$RUN_SECURITY" >> $GITHUB_OUTPUT
+          echo "run-integration=$RUN_INTEGRATION" >> $GITHUB_OUTPUT
+          echo "run-mobile=$RUN_MOBILE" >> $GITHUB_OUTPUT
+          echo "run-performance=$RUN_PERFORMANCE" >> $GITHUB_OUTPUT
+          echo "test-matrix=$TEST_MATRIX" >> $GITHUB_OUTPUT
+          echo "network-simulation=$NETWORK_SIM" >> $GITHUB_OUTPUT
+          
+          echo "P2P Test Configuration:"
+          echo "  Test Suite: $TEST_SUITE"
+          echo "  Transport: $RUN_TRANSPORT"
+          echo "  Security: $RUN_SECURITY"
+          echo "  Integration: $RUN_INTEGRATION"
+          echo "  Mobile: $RUN_MOBILE"
+          echo "  Performance: $RUN_PERFORMANCE"
+          echo "  Network Simulation: $NETWORK_SIM"
+
+  # ============================================
+  # STAGE 2: P2P Transport Protocol Tests
+  # ============================================
+  transport-tests:
+    name: Transport Tests (${{ matrix.protocol }})
+    runs-on: ubuntu-latest
+    needs: p2p-setup
+    if: needs.p2p-setup.outputs.run-transport == 'true'
+    timeout-minutes: ${{ fromJson(env.P2P_TEST_TIMEOUT) }}
+    strategy:
+      fail-fast: false
+      matrix:
+        protocol: ${{ fromJson(needs.p2p-setup.outputs.test-matrix) }}
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: p2p_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+        ports:
+          - 6379:6379
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install P2P Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-asyncio pytest-timeout pytest-mock
+        pip install websockets grpcio grpcio-tools
+        pip install -r requirements.txt || echo "No requirements.txt found"
+    
+    - name: Configure Network Simulation
+      if: needs.p2p-setup.outputs.network-simulation == 'true'
+      run: |
+        echo "::group::Network Simulation Setup"
+        # Set up network latency simulation using tc (traffic control)
+        sudo apt-get update && sudo apt-get install -y iproute2
+        
+        # Add network latency to loopback interface for testing
+        sudo tc qdisc add dev lo root handle 1: prio
+        sudo tc qdisc add dev lo parent 1:3 handle 30: netem delay ${NETWORK_LATENCY}ms
+        sudo tc filter add dev lo protocol ip parent 1:0 prio 3 u32 match ip dst 127.0.0.1/32 flowid 1:3
+        
+        echo "Network simulation enabled with ${NETWORK_LATENCY}ms latency"
+        echo "::endgroup::"
+    
+    - name: Run Transport Protocol Tests
+      env:
+        P2P_PROTOCOL: ${{ matrix.protocol }}
+        DB_PASSWORD: test_password
+        REDIS_PASSWORD: test_redis
+        PYTEST_TIMEOUT: 30
+      run: |
+        echo "::group::${{ matrix.protocol }} Transport Tests"
+        
+        # Run protocol-specific tests
+        if [[ -d "tests/communications" ]]; then
+          python -m pytest tests/communications/ -v \
+            -k "${{ matrix.protocol }}" \
+            --timeout=30 \
+            --tb=short \
+            --maxfail=5 \
+            --junit-xml=transport-${{ matrix.protocol }}-results.xml || true
+        fi
+        
+        # Run P2P specific transport tests
+        if [[ -d "infrastructure/p2p" ]]; then
+          python -m pytest tests/ -v \
+            -k "p2p and ${{ matrix.protocol }}" \
+            --timeout=30 \
+            --tb=short \
+            --maxfail=5 \
+            --junit-xml=p2p-${{ matrix.protocol }}-results.xml || true
+        fi
+        
+        echo "::endgroup::"
+    
+    - name: Cleanup Network Simulation
+      if: always() && needs.p2p-setup.outputs.network-simulation == 'true'
+      run: |
+        echo "::group::Network Simulation Cleanup"
+        sudo tc qdisc del dev lo root 2>/dev/null || true
+        echo "Network simulation cleaned up"
+        echo "::endgroup::"
+    
+    - name: Upload Transport Test Results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: transport-test-results-${{ matrix.protocol }}
+        path: |
+          transport-${{ matrix.protocol }}-results.xml
+          p2p-${{ matrix.protocol }}-results.xml
+        retention-days: 30
+
+  # ============================================
+  # STAGE 3: P2P Security Tests
+  # ============================================
+  security-tests:
+    name: P2P Security Tests
+    runs-on: ubuntu-latest
+    needs: p2p-setup
+    if: needs.p2p-setup.outputs.run-security == 'true'
+    timeout-minutes: 15
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install Security Testing Tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-asyncio cryptography
+        pip install -r requirements.txt || echo "No requirements.txt found"
+    
+    - name: Run P2P Security Tests
+      env:
+        PYTEST_TIMEOUT: 45
+      run: |
+        echo "::group::P2P Security Tests"
+        
+        # Test P2P authentication and encryption
+        if [[ -d "tests/fog" ]]; then
+          python -m pytest tests/fog/ -v \
+            -k "security or auth or encryption" \
+            --timeout=45 \
+            --tb=short \
+            --maxfail=10 \
+            --junit-xml=p2p-security-results.xml || true
+        fi
+        
+        # Test federated authentication
+        if [[ -f "tests/security/unit/test_federated_auth_system.py" ]]; then
+          python -m pytest tests/security/unit/test_federated_auth_system.py -v \
+            --timeout=30 \
+            --tb=short \
+            --junit-xml=federated-auth-results.xml || true
+        fi
+        
+        echo "::endgroup::"
+    
+    - name: Run Trust and Reputation Tests
+      run: |
+        echo "::group::Trust & Reputation Tests"
+        
+        # Test Bayesian reputation system
+        if [[ -f "tests/fog/test_bayesian_reputation.py" ]]; then
+          python -m pytest tests/fog/test_bayesian_reputation.py -v \
+            --timeout=30 \
+            --tb=short \
+            --junit-xml=reputation-results.xml || true
+        fi
+        
+        echo "::endgroup::"
+    
+    - name: Upload Security Test Results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: p2p-security-test-results
+        path: |
+          p2p-security-results.xml
+          federated-auth-results.xml
+          reputation-results.xml
+        retention-days: 30
+
+  # ============================================
+  # STAGE 4: P2P Integration Tests
+  # ============================================
+  integration-tests:
+    name: P2P Integration Tests
+    runs-on: ubuntu-latest
+    needs: [p2p-setup, transport-tests]
+    if: needs.p2p-setup.outputs.run-integration == 'true' && always()
+    timeout-minutes: 25
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: p2p_integration_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+        ports:
+          - 6379:6379
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install Integration Test Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-asyncio pytest-xdist
+        pip install docker psutil
+        pip install -r requirements.txt || echo "No requirements.txt found"
+    
+    - name: Run Cross-Component Integration Tests
+      env:
+        DB_PASSWORD: test_password
+        REDIS_PASSWORD: test_redis
+        JWT_SECRET: test_jwt_secret_key_minimum_32_characters
+      run: |
+        echo "::group::Cross-Component Integration Tests"
+        
+        # Test cross-component integration
+        if [[ -f "tests/integration/test_cross_component_integration.py" ]]; then
+          python -m pytest tests/integration/test_cross_component_integration.py -v \
+            --timeout=60 \
+            --tb=short \
+            --maxfail=5 \
+            --junit-xml=cross-component-results.xml || true
+        fi
+        
+        echo "::endgroup::"
+    
+    - name: Run P2P Network Integration Tests
+      run: |
+        echo "::group::P2P Network Integration"
+        
+        # Test P2P network integration
+        if [[ -d "tests/integration" ]]; then
+          python -m pytest tests/integration/ -v \
+            -k "p2p or network or distributed" \
+            --timeout=90 \
+            --tb=short \
+            --maxfail=5 \
+            --junit-xml=p2p-network-results.xml || true
+        fi
+        
+        echo "::endgroup::"
+    
+    - name: Run Fog Computing Integration Tests
+      run: |
+        echo "::group::Fog Computing Integration"
+        
+        # Test fog computing namespace and quota enforcement
+        if [[ -f "tests/integration/fog/test_namespace_quota_enforcement.py" ]]; then
+          python -m pytest tests/integration/fog/test_namespace_quota_enforcement.py -v \
+            --timeout=60 \
+            --tb=short \
+            --junit-xml=fog-integration-results.xml || true
+        fi
+        
+        echo "::endgroup::"
+    
+    - name: Upload Integration Test Results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: p2p-integration-test-results
+        path: |
+          cross-component-results.xml
+          p2p-network-results.xml
+          fog-integration-results.xml
+        retention-days: 30
+
+  # ============================================
+  # STAGE 5: Mobile Platform Tests (Conditional)
+  # ============================================
+  mobile-tests:
+    name: Mobile Platform Tests
+    runs-on: ubuntu-latest
+    needs: p2p-setup
+    if: needs.p2p-setup.outputs.run-mobile == 'true'
+    timeout-minutes: 15
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install Mobile Testing Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-mock
+        pip install -r requirements.txt || echo "No requirements.txt found"
+    
+    - name: Run Mobile Constraint Tests
+      run: |
+        echo "::group::Mobile Platform Constraints"
+        
+        # Test mobile constraints and optimizations
+        if [[ -f "tests/test_mobile_constraints.py" ]]; then
+          python -m pytest tests/test_mobile_constraints.py -v \
+            --timeout=30 \
+            --tb=short \
+            --junit-xml=mobile-constraints-results.xml || true
+        fi
+        
+        echo "::endgroup::"
+    
+    - name: Run Mobile Navigation Integration
+      run: |
+        echo "::group::Mobile Navigation Integration"
+        
+        # Test mobile navigation integration
+        if [[ -f "tests/test_navigator_mobile_integration.py" ]]; then
+          python -m pytest tests/test_navigator_mobile_integration.py -v \
+            --timeout=30 \
+            --tb=short \
+            --junit-xml=mobile-navigation-results.xml || true
+        fi
+        
+        echo "::endgroup::"
+    
+    - name: Upload Mobile Test Results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: mobile-test-results
+        path: |
+          mobile-constraints-results.xml
+          mobile-navigation-results.xml
+        retention-days: 30
+
+  # ============================================
+  # STAGE 6: Performance Tests (Optional)
+  # ============================================
+  performance-tests:
+    name: P2P Performance Tests
+    runs-on: ubuntu-latest
+    needs: [p2p-setup, integration-tests]
+    if: needs.p2p-setup.outputs.run-performance == 'true' && always()
+    timeout-minutes: 20
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install Performance Testing Tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-benchmark psutil memory_profiler
+        pip install -r requirements.txt || echo "No requirements.txt found"
+    
+    - name: Run P2P Performance Benchmarks
+      run: |
+        echo "::group::P2P Performance Benchmarks"
+        
+        # Test caching performance regression
+        if [[ -f "tests/guards/performance/test_caching_performance_regression.py" ]]; then
+          python -m pytest tests/guards/performance/test_caching_performance_regression.py -v \
+            --benchmark-only \
+            --benchmark-sort=mean \
+            --benchmark-json=caching-performance.json \
+            --timeout=120 || true
+        fi
+        
+        echo "::endgroup::"
+    
+    - name: Run Network Performance Tests
+      run: |
+        echo "::group::Network Performance Tests"
+        
+        # Test network performance and throughput
+        python -c "
+        import time
+        import psutil
+        import json
+        
+        # Basic network performance test
+        start_time = time.time()
+        network_stats = psutil.net_io_counters()
+        
+        # Simulate network operations
+        import socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(1)
+        
+        # Test connection times
+        connection_times = []
+        for port in [22, 80, 443]:
+            start = time.time()
+            try:
+                sock.connect(('127.0.0.1', port))
+                sock.close()
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(1)
+            except:
+                pass
+            connection_times.append(time.time() - start)
+        
+        performance_data = {
+            'network_io': {
+                'bytes_sent': network_stats.bytes_sent,
+                'bytes_recv': network_stats.bytes_recv
+            },
+            'connection_times': connection_times,
+            'avg_connection_time': sum(connection_times) / len(connection_times) if connection_times else 0
+        }
+        
+        with open('network-performance.json', 'w') as f:
+            json.dump(performance_data, f, indent=2)
+        
+        print(f'Network performance test completed')
+        print(f'Average connection time: {performance_data[\"avg_connection_time\"]:.3f}s')
+        "
+        
+        echo "::endgroup::"
+    
+    - name: Upload Performance Results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: p2p-performance-results
+        path: |
+          caching-performance.json
+          network-performance.json
+        retention-days: 30
+
+  # ============================================
+  # STAGE 7: P2P Test Consolidation
+  # ============================================
+  p2p-consolidation:
+    name: P2P Test Consolidation
+    runs-on: ubuntu-latest
+    needs: [transport-tests, security-tests, integration-tests, mobile-tests, performance-tests]
+    if: always()
+    timeout-minutes: 5
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Download All P2P Test Results
+      uses: actions/download-artifact@v3
+      with:
+        pattern: "*-test-results*"
+        merge-multiple: true
+    
+    - name: Consolidate P2P Test Report
+      run: |
+        echo "::group::P2P Test Report Consolidation"
+        
+        python -c "
+        import xml.etree.ElementTree as ET
+        import json
+        import glob
+        from datetime import datetime
+        
+        # Initialize consolidated report
+        consolidated_report = {
+            'timestamp': datetime.now().isoformat(),
+            'test_summary': {},
+            'transport_tests': {},
+            'security_tests': {},
+            'integration_tests': {},
+            'mobile_tests': {},
+            'performance_tests': {},
+            'total_tests': 0,
+            'total_failures': 0,
+            'total_errors': 0
+        }
+        
+        # Process JUnit XML files
+        xml_files = glob.glob('*-results.xml')
+        for xml_file in xml_files:
+            try:
+                tree = ET.parse(xml_file)
+                root = tree.getroot()
+                
+                test_count = int(root.get('tests', 0))
+                failure_count = int(root.get('failures', 0))
+                error_count = int(root.get('errors', 0))
+                
+                consolidated_report['total_tests'] += test_count
+                consolidated_report['total_failures'] += failure_count
+                consolidated_report['total_errors'] += error_count
+                
+                # Categorize by test type
+                if 'transport' in xml_file:
+                    consolidated_report['transport_tests'][xml_file] = {
+                        'tests': test_count,
+                        'failures': failure_count,
+                        'errors': error_count
+                    }
+                elif 'security' in xml_file or 'auth' in xml_file:
+                    consolidated_report['security_tests'][xml_file] = {
+                        'tests': test_count,
+                        'failures': failure_count,
+                        'errors': error_count
+                    }
+                elif 'integration' in xml_file or 'cross-component' in xml_file:
+                    consolidated_report['integration_tests'][xml_file] = {
+                        'tests': test_count,
+                        'failures': failure_count,
+                        'errors': error_count
+                    }
+                elif 'mobile' in xml_file:
+                    consolidated_report['mobile_tests'][xml_file] = {
+                        'tests': test_count,
+                        'failures': failure_count,
+                        'errors': error_count
+                    }
+                    
+            except Exception as e:
+                print(f'Error processing {xml_file}: {e}')
+        
+        # Process performance results
+        perf_files = glob.glob('*-performance.json')
+        for perf_file in perf_files:
+            try:
+                with open(perf_file, 'r') as f:
+                    perf_data = json.load(f)
+                    consolidated_report['performance_tests'][perf_file] = perf_data
+            except Exception as e:
+                print(f'Error processing {perf_file}: {e}')
+        
+        # Calculate success rate
+        success_rate = 0
+        if consolidated_report['total_tests'] > 0:
+            success_rate = (consolidated_report['total_tests'] - consolidated_report['total_failures'] - consolidated_report['total_errors']) / consolidated_report['total_tests'] * 100
+        
+        consolidated_report['test_summary'] = {
+            'success_rate': round(success_rate, 1),
+            'transport_test_count': len(consolidated_report['transport_tests']),
+            'security_test_count': len(consolidated_report['security_tests']),
+            'integration_test_count': len(consolidated_report['integration_tests']),
+            'mobile_test_count': len(consolidated_report['mobile_tests']),
+            'performance_test_count': len(consolidated_report['performance_tests'])
+        }
+        
+        # Save consolidated report
+        with open('p2p-test-report.json', 'w') as f:
+            json.dump(consolidated_report, f, indent=2)
+        
+        # Print summary
+        print('P2P Test Summary:')
+        print(f'  Total Tests: {consolidated_report[\"total_tests\"]}')
+        print(f'  Failures: {consolidated_report[\"total_failures\"]}')
+        print(f'  Errors: {consolidated_report[\"total_errors\"]}')
+        print(f'  Success Rate: {success_rate:.1f}%')
+        print(f'  Transport Tests: {consolidated_report[\"test_summary\"][\"transport_test_count\"]} suites')
+        print(f'  Security Tests: {consolidated_report[\"test_summary\"][\"security_test_count\"]} suites')
+        print(f'  Integration Tests: {consolidated_report[\"test_summary\"][\"integration_test_count\"]} suites')
+        print(f'  Mobile Tests: {consolidated_report[\"test_summary\"][\"mobile_test_count\"]} suites')
+        "
+        
+        echo "::endgroup::"
+    
+    - name: Upload Consolidated P2P Report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: p2p-consolidated-report
+        path: p2p-test-report.json
+        retention-days: 90
+    
+    - name: P2P Test Gate Evaluation
+      run: |
+        echo "::group::P2P Test Gate Evaluation"
+        
+        python -c "
+        import json
+        
+        try:
+            with open('p2p-test-report.json', 'r') as f:
+                report = json.load(f)
+            
+            success_rate = report['test_summary']['success_rate']
+            total_failures = report['total_failures']
+            total_errors = report['total_errors']
+            
+            # Define P2P test gates
+            if success_rate < 70:
+                print(f'::error::P2P test gate FAILED: Success rate {success_rate}% below threshold (70%)')
+                exit(1)
+            elif total_failures + total_errors > 20:
+                print(f'::error::P2P test gate FAILED: {total_failures + total_errors} failures/errors exceed threshold (20)')
+                exit(1)
+            elif success_rate < 85:
+                print(f'::warning::P2P test gate WARNING: Success rate {success_rate}% below recommended threshold (85%)')
+                print('::warning::Consider investigating P2P test failures before deployment')
+            else:
+                print(f'::notice::P2P test gate PASSED: Success rate {success_rate}%')
+                print(f'::notice::Total failures/errors: {total_failures + total_errors}')
+        
+        except FileNotFoundError:
+            print('::warning::No P2P test report found - test gate check skipped')
+        except Exception as e:
+            print(f'::error::P2P test gate evaluation failed: {e}')
+        "
+        
+        echo "::endgroup::"

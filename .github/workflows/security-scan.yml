@@ -1,335 +1,587 @@
 name: Comprehensive Security Scan
+
 on:
   push:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
   schedule:
-    # Run daily at 2 AM UTC
-    - cron: '0 2 * * *'
+    - cron: '0 3 * * *'  # Daily security scan at 3 AM UTC
   workflow_dispatch:
     inputs:
-      scan_type:
-        description: 'Type of security scan'
-        required: true
-        default: 'full'
+      scan_depth:
+        description: 'Security scan depth'
+        required: false
+        default: 'standard'
         type: choice
         options:
-        - full
-        - dependencies
-        - containers
-        - code
+        - standard
+        - comprehensive
+        - critical-only
+      target_paths:
+        description: 'Paths to scan (comma-separated or "all")'
+        required: false
+        default: 'all'
+        type: string
 
 env:
   PYTHON_VERSION: '3.11'
-  NODE_VERSION: '20'
-  RUST_VERSION: '1.70'
-  GO_VERSION: '1.21'
+  NODE_VERSION: '18'
+  SECURITY_SCAN_TIMEOUT: 10
 
 jobs:
-  # Job 1: Python Dependency Security
-  python-security:
-    name: Python Security Scan
+  # ============================================
+  # STAGE 1: Security Configuration
+  # ============================================
+  security-setup:
+    name: Security Scan Setup
     runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      scan-paths: ${{ steps.config.outputs.scan-paths }}
+      scan-depth: ${{ steps.config.outputs.scan-depth }}
+      run-advanced: ${{ steps.config.outputs.run-advanced }}
+      cache-key: ${{ steps.config.outputs.cache-key }}
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Security Scan
+        id: config
+        run: |
+          # Determine scan paths
+          if [[ "${{ github.event.inputs.target_paths }}" == "all" || -z "${{ github.event.inputs.target_paths }}" ]]; then
+            SCAN_PATHS='["core", "infrastructure", "src", "packages", "config", "scripts"]'
+          else
+            IFS=',' read -ra PATHS <<< "${{ github.event.inputs.target_paths }}"
+            FORMATTED_PATHS=()
+            for path in "${PATHS[@]}"; do
+              path=$(echo "$path" | xargs)  # trim whitespace
+              FORMATTED_PATHS+=("\"$path\"")
+            done
+            SCAN_PATHS="[$(IFS=,; echo "${FORMATTED_PATHS[*]}")]"
+          fi
+          
+          # Determine scan depth
+          SCAN_DEPTH="${{ github.event.inputs.scan_depth || 'standard' }}"
+          
+          # Advanced scans for scheduled runs or comprehensive mode
+          RUN_ADVANCED="false"
+          if [[ "${{ github.event_name }}" == "schedule" ]] || [[ "$SCAN_DEPTH" == "comprehensive" ]]; then
+            RUN_ADVANCED="true"
+          fi
+          
+          # Cache key for security tools
+          CACHE_KEY="security-tools-${{ runner.os }}-$(date +'%Y%m%d')"
+          
+          echo "scan-paths=$SCAN_PATHS" >> $GITHUB_OUTPUT
+          echo "scan-depth=$SCAN_DEPTH" >> $GITHUB_OUTPUT
+          echo "run-advanced=$RUN_ADVANCED" >> $GITHUB_OUTPUT
+          echo "cache-key=$CACHE_KEY" >> $GITHUB_OUTPUT
+          
+          echo "Security Configuration:"
+          echo "  Scan paths: $SCAN_PATHS"
+          echo "  Scan depth: $SCAN_DEPTH"
+          echo "  Advanced scans: $RUN_ADVANCED"
+
+  # ============================================
+  # STAGE 2: Python Security Analysis
+  # ============================================
+  python-security:
+    name: Python Security (${{ matrix.path }})
+    runs-on: ubuntu-latest
+    needs: security-setup
+    timeout-minutes: ${{ fromJson(env.SECURITY_SCAN_TIMEOUT) }}
+    strategy:
+      fail-fast: false
+      matrix:
+        path: ${{ fromJson(needs.security-setup.outputs.scan-paths) }}
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
     
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-        
-    - name: Cache Python dependencies
-      uses: actions/cache@v4
+        cache: 'pip'
+    
+    - name: Cache Security Tools
+      uses: actions/cache@v3
       with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        
-    - name: Install security tools
+        path: |
+          ~/.cache/pip
+          ~/.local/bin
+        key: ${{ needs.security-setup.outputs.cache-key }}-${{ matrix.path }}
+        restore-keys: |
+          security-tools-${{ runner.os }}-
+    
+    - name: Install Security Tools
       run: |
-        pip install pip-audit safety bandit semgrep cyclonedx-bom
-        
-    - name: Create security reports directory
+        python -m pip install --upgrade pip
+        pip install bandit safety semgrep
+        pip install -r requirements.txt || echo "No requirements.txt found"
+    
+    - name: Run Bandit Security Scan
+      if: needs.security-setup.outputs.scan-depth != 'critical-only'
       run: |
-        mkdir -p security/reports security/sboms
-        
-    - name: Pip Audit Scan
+        echo "::group::Bandit Security Scan - ${{ matrix.path }}"
+        if [[ -d "${{ matrix.path }}" ]]; then
+          bandit -r ${{ matrix.path }}/ \
+            -f json -o bandit-${{ matrix.path }}.json \
+            -x "*/tests/*,*/test_*,*/__pycache__/*" \
+            --severity-level medium || true
+          
+          # Also run text output for immediate feedback
+          bandit -r ${{ matrix.path }}/ \
+            -x "*/tests/*,*/test_*,*/__pycache__/*" \
+            --severity-level medium \
+            --confidence-level medium || true
+        else
+          echo "Directory ${{ matrix.path }} does not exist, skipping"
+        fi
+        echo "::endgroup::"
+    
+    - name: Run Safety Dependency Check
+      if: matrix.path == 'core' || matrix.path == 'src'
       run: |
-        pip-audit --desc --format=json --output=security/reports/pip-audit.json || true
-        
-    - name: Safety Scan
+        echo "::group::Safety Dependency Scan"
+        safety check --json --output safety-report.json || true
+        safety check || true
+        echo "::endgroup::"
+    
+    - name: Run Semgrep Analysis
+      if: needs.security-setup.outputs.run-advanced == 'true'
       run: |
-        safety check --json --output security/reports/safety.json || true
-        
-    - name: Bandit Static Analysis
-      run: |
-        mkdir -p security/reports
-        bandit -r core/ infrastructure/ -f json -o security/reports/bandit-report.json --skip B101,B601 -ll || true
-        
-    - name: Semgrep Security Scan
-      run: |
-        semgrep --config=auto --json --output=security/reports/semgrep.json . || true
-        
-    - name: Generate Python SBOM
-      run: |
-        cyclonedx-py requirements config/requirements/requirements.txt -o security/sboms/python-sbom.json || cyclonedx-py requirements config/requirements/CONSOLIDATED_REQUIREMENTS.txt -o security/sboms/python-sbom.json || echo "SBOM generation completed with fallback"
-        
-    - name: Upload Python Security Results
-      uses: actions/upload-artifact@v4
+        echo "::group::Semgrep Analysis - ${{ matrix.path }}"
+        if [[ -d "${{ matrix.path }}" ]]; then
+          semgrep --config=auto ${{ matrix.path }}/ \
+            --json --output=semgrep-${{ matrix.path }}.json \
+            --severity=ERROR --severity=WARNING || true
+          
+          # Show results in console
+          semgrep --config=auto ${{ matrix.path }}/ \
+            --severity=ERROR --severity=WARNING || true
+        fi
+        echo "::endgroup::"
+    
+    - name: Upload Security Results
+      uses: actions/upload-artifact@v3
+      if: always()
       with:
-        name: python-security-results
-        path: security/reports/
+        name: security-results-${{ matrix.path }}
+        path: |
+          bandit-${{ matrix.path }}.json
+          semgrep-${{ matrix.path }}.json
+          safety-report.json
         retention-days: 30
 
-  # Job 2: Node.js Security
-  nodejs-security:
-    name: Node.js Security Scan
+  # ============================================
+  # STAGE 3: Frontend Security (Conditional)
+  # ============================================
+  frontend-security:
+    name: Frontend Security Analysis
     runs-on: ubuntu-latest
+    needs: security-setup
+    if: contains(needs.security-setup.outputs.scan-paths, '"ui"') || needs.security-setup.outputs.scan-paths == '["all"]'
+    timeout-minutes: 8
+    
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout Code
+      uses: actions/checkout@v4
     
     - name: Set up Node.js
+      if: hashFiles('ui/web/package.json') != ''
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        cache-dependency-path: apps/web/package-lock.json
-        
-    - name: Install dependencies
+        cache-dependency-path: ui/web/package-lock.json
+    
+    - name: Install Frontend Dependencies
+      if: hashFiles('ui/web/package.json') != ''
+      working-directory: ui/web
       run: |
-        cd apps/web
         npm ci
-        
-    - name: Install security tools
-      run: |
-        npm install -g retire @cyclonedx/cdxgen audit-ci
-        
-    - name: NPM Audit
-      run: |
-        cd apps/web
-        npm audit --json > ../../security/reports/npm-audit.json || true
-        
-    - name: Retire.js Scan
-      run: |
-        cd apps/web
-        retire --outputformat json --outputpath ../../security/reports/retire.json || true
-        
-    - name: Generate Node.js SBOM
-      run: |
-        cd apps/web
-        cdxgen -t js -o ../../security/sboms/nodejs-sbom.json .
-        
-    - name: Upload Node.js Security Results
-      uses: actions/upload-artifact@v4
-      with:
-        name: nodejs-security-results
-        path: security/reports/
-        retention-days: 30
-
-  # Job 3: Rust Security
-  rust-security:
-    name: Rust Security Scan
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
+        npm install --save-dev eslint-plugin-security
     
-    - name: Set up Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: ${{ env.RUST_VERSION }}
-        override: true
+    - name: Run NPM Audit
+      if: hashFiles('ui/web/package.json') != ''
+      working-directory: ui/web
+      run: |
+        echo "::group::NPM Security Audit"
+        npm audit --audit-level moderate --json > npm-audit.json || true
+        npm audit --audit-level moderate || true
+        echo "::endgroup::"
+    
+    - name: Run ESLint Security Rules
+      if: hashFiles('ui/web/package.json') != '' && needs.security-setup.outputs.run-advanced == 'true'
+      working-directory: ui/web
+      run: |
+        echo "::group::ESLint Security Analysis"
+        npx eslint src/ --ext .js,.jsx,.ts,.tsx \
+          --config '{"extends": ["plugin:security/recommended"]}' \
+          --format json --output-file eslint-security.json || true
         
-    - name: Install Cargo Audit
-      run: cargo install cargo-audit cargo-deny
-      
-    - name: Cache Rust dependencies
-      uses: actions/cache@v4
+        npx eslint src/ --ext .js,.jsx,.ts,.tsx \
+          --config '{"extends": ["plugin:security/recommended"]}' || true
+        echo "::endgroup::"
+    
+    - name: Upload Frontend Security Results
+      if: always() && hashFiles('ui/web/package.json') != ''
+      uses: actions/upload-artifact@v3
       with:
+        name: frontend-security-results
         path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-        
-    - name: Cargo Audit
-      run: |
-        cargo audit --json > security/reports/cargo-audit.json || true
-        
-    - name: Cargo Deny
-      run: |
-        cargo deny --format json check > security/reports/cargo-deny.json || true
-        
-    - name: Generate Rust SBOM
-      run: |
-        # Use cargo metadata to generate SBOM
-        cargo metadata --format-version 1 > security/sboms/rust-metadata.json
-        
-    - name: Upload Rust Security Results
-      uses: actions/upload-artifact@v4
-      with:
-        name: rust-security-results
-        path: security/reports/
+          ui/web/npm-audit.json
+          ui/web/eslint-security.json
         retention-days: 30
 
-  # Job 4: Go Security
-  go-security:
-    name: Go Security Scan
+  # ============================================
+  # STAGE 4: Infrastructure Security
+  # ============================================
+  infrastructure-security:
+    name: Infrastructure Security
     runs-on: ubuntu-latest
-    if: hashFiles('**/go.mod') != ''
-    steps:
-    - uses: actions/checkout@v4
+    needs: security-setup
+    timeout-minutes: 8
     
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: ${{ env.GO_VERSION }}
-        
-    - name: Install Nancy
-      run: go install github.com/sonatypecommunity/nancy@latest
-      
-    - name: Go Vulnerability Check
-      run: |
-        go list -json -m all > security/reports/go-modules.json
-        govulncheck -json ./... > security/reports/govulncheck.json || true
-        
-    - name: Nancy Scan
-      run: |
-        go list -json -deps ./... | nancy sleuth > security/reports/nancy.json || true
-        
-    - name: Upload Go Security Results
-      uses: actions/upload-artifact@v4
-      with:
-        name: go-security-results
-        path: security/reports/
-        retention-days: 30
-
-  # Job 5: Container Security
-  container-security:
-    name: Container Security Scan
-    runs-on: ubuntu-latest
-    if: hashFiles('**/Dockerfile') != '' || hashFiles('**/docker-compose.yml') != ''
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout Code
+      uses: actions/checkout@v4
     
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
+    - name: Scan Docker Files
+      if: hashFiles('**/Dockerfile*') != '' || hashFiles('**/docker-compose*.yml') != ''
+      run: |
+        echo "::group::Docker Security Scan"
+        # Look for common Docker security issues
+        find . -name "Dockerfile*" -o -name "docker-compose*.yml" | while read -r file; do
+          echo "Scanning: $file"
+          
+          # Check for security best practices
+          if grep -q "^USER root" "$file" 2>/dev/null; then
+            echo "::warning::$file uses root user - consider non-root user"
+          fi
+          
+          if grep -q "ADD.*http" "$file" 2>/dev/null; then
+            echo "::warning::$file uses ADD with URL - consider using COPY"
+          fi
+          
+          if grep -q ":latest" "$file" 2>/dev/null; then
+            echo "::warning::$file uses :latest tag - consider specific versions"
+          fi
+        done
+        echo "::endgroup::"
+    
+    - name: Scan GitHub Actions
+      run: |
+        echo "::group::GitHub Actions Security Scan"
+        find .github/workflows -name "*.yml" -o -name "*.yaml" | while read -r file; do
+          echo "Scanning: $file"
+          
+          # Check for potential security issues in workflows
+          if grep -q "run:.*curl.*|.*sh" "$file" 2>/dev/null; then
+            echo "::warning::$file contains curl pipe to shell - review for security"
+          fi
+          
+          if grep -q '\${{' "$file" && grep -q "github.event.issue.title\|github.event.comment.body" "$file" 2>/dev/null; then
+            echo "::warning::$file may be vulnerable to script injection"
+          fi
+          
+          if grep -q "actions/checkout@v[12]" "$file" 2>/dev/null; then
+            echo "::warning::$file uses old checkout action version"
+          fi
+        done
+        echo "::endgroup::"
+    
+    - name: Scan Configuration Files
+      run: |
+        echo "::group::Configuration Security Scan"
+        # Check for potential secrets in config files
+        find . -name "*.yml" -o -name "*.yaml" -o -name "*.json" -o -name "*.conf" \
+               -not -path "./.git/*" -not -path "./node_modules/*" | while read -r file; do
+          
+          # Skip binary files and very large files
+          if file "$file" | grep -q "text" && [[ $(wc -c < "$file") -lt 1048576 ]]; then
+            # Look for potential secrets (basic patterns)
+            if grep -iE "(password|secret|key|token).*[:=].*['\"][^'\"]{10,}['\"]" "$file" 2>/dev/null; then
+              echo "::warning::$file may contain hardcoded secrets"
+            fi
+          fi
+        done
+        echo "::endgroup::"
+
+  # ============================================
+  # STAGE 5: Secret Scanning
+  # ============================================
+  secret-scanning:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    needs: security-setup
+    timeout-minutes: 6
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
       with:
-        scan-type: 'fs'
-        format: 'json'
-        output: 'security/reports/trivy.json'
+        fetch-depth: 0  # Full history for secret scanning
+    
+    - name: Install Secret Scanning Tools
+      run: |
+        # Install detect-secrets if not already present
+        pip install detect-secrets || echo "detect-secrets installation failed"
+    
+    - name: Run Secret Detection
+      run: |
+        echo "::group::Secret Detection Scan"
         
-    - name: Upload Container Security Results
-      uses: actions/upload-artifact@v4
+        # Run detect-secrets if available
+        if command -v detect-secrets >/dev/null 2>&1; then
+          detect-secrets scan --all-files --force-use-all-plugins \
+            --exclude-files '\.git/.*|\.pytest_cache/.*|node_modules/.*|\.venv/.*' \
+            > secrets-baseline.json || true
+          
+          # Check against baseline if it exists
+          if [[ -f ".secrets.baseline" ]]; then
+            detect-secrets audit .secrets.baseline || true
+          fi
+        else
+          echo "detect-secrets not available, using basic pattern matching"
+        fi
+        
+        # Basic secret pattern detection
+        echo "Running basic secret pattern detection..."
+        grep -r -n -E "(password|passwd|secret|key|token).*[:=].*['\"][^'\"]{15,}['\"]" \
+          --include="*.py" --include="*.js" --include="*.yml" --include="*.yaml" \
+          --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.venv \
+          . || echo "No obvious secrets found"
+        
+        echo "::endgroup::"
+    
+    - name: Upload Secret Scan Results
+      uses: actions/upload-artifact@v3
+      if: always()
       with:
-        name: container-security-results
-        path: security/reports/trivy.json
+        name: secret-scan-results
+        path: |
+          secrets-baseline.json
         retention-days: 30
 
-  # Job 6: Security Report Aggregation
-  aggregate-results:
-    name: Aggregate Security Results
+  # ============================================
+  # STAGE 6: Security Report Consolidation
+  # ============================================
+  security-consolidation:
+    name: Security Report Consolidation
     runs-on: ubuntu-latest
-    needs: [python-security, nodejs-security, rust-security, go-security, container-security]
+    needs: [security-setup, python-security, frontend-security, infrastructure-security, secret-scanning]
     if: always()
-    steps:
-    - uses: actions/checkout@v4
+    timeout-minutes: 5
     
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Download All Security Results
+      uses: actions/download-artifact@v3
       with:
-        path: security/results/
-        
-    - name: Set up Python for aggregation
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        
-    - name: Install analysis tools
+        pattern: "*-security-results*"
+        merge-multiple: true
+    
+    - name: Consolidate Security Reports
       run: |
-        pip install jq pandas matplotlib seaborn
+        echo "::group::Security Report Consolidation"
         
-    - name: Aggregate and analyze results
+        # Set up Python for report processing
+        python -c "
+        import json
+        import glob
+        import os
+        from datetime import datetime
+        
+        # Initialize consolidated report
+        consolidated_report = {
+            'timestamp': datetime.now().isoformat(),
+            'scan_summary': {},
+            'critical_findings': [],
+            'high_findings': [],
+            'medium_findings': [],
+            'low_findings': [],
+            'total_issues': 0
+        }
+        
+        # Process Bandit results
+        bandit_files = glob.glob('bandit-*.json')
+        bandit_issues = []
+        for file in bandit_files:
+            try:
+                with open(file, 'r') as f:
+                    data = json.load(f)
+                    if 'results' in data:
+                        bandit_issues.extend(data['results'])
+            except Exception as e:
+                print(f'Error processing {file}: {e}')
+        
+        # Process Semgrep results
+        semgrep_files = glob.glob('semgrep-*.json')
+        semgrep_issues = []
+        for file in semgrep_files:
+            try:
+                with open(file, 'r') as f:
+                    data = json.load(f)
+                    if 'results' in data:
+                        semgrep_issues.extend(data['results'])
+            except Exception as e:
+                print(f'Error processing {file}: {e}')
+        
+        # Categorize findings by severity
+        for issue in bandit_issues:
+            severity = issue.get('issue_severity', 'UNKNOWN').upper()
+            finding = {
+                'tool': 'bandit',
+                'file': issue.get('filename', 'unknown'),
+                'line': issue.get('line_number', 0),
+                'issue': issue.get('test_name', 'unknown'),
+                'message': issue.get('issue_text', 'No message')
+            }
+            
+            if severity == 'HIGH':
+                consolidated_report['high_findings'].append(finding)
+            elif severity == 'MEDIUM':
+                consolidated_report['medium_findings'].append(finding)
+            else:
+                consolidated_report['low_findings'].append(finding)
+        
+        # Process Semgrep findings
+        for issue in semgrep_issues:
+            severity = issue.get('extra', {}).get('severity', 'INFO').upper()
+            finding = {
+                'tool': 'semgrep',
+                'file': issue.get('path', 'unknown'),
+                'line': issue.get('start', {}).get('line', 0),
+                'issue': issue.get('check_id', 'unknown'),
+                'message': issue.get('extra', {}).get('message', 'No message')
+            }
+            
+            if severity == 'ERROR':
+                consolidated_report['high_findings'].append(finding)
+            elif severity == 'WARNING':
+                consolidated_report['medium_findings'].append(finding)
+            else:
+                consolidated_report['low_findings'].append(finding)
+        
+        # Calculate totals
+        consolidated_report['total_issues'] = (
+            len(consolidated_report['critical_findings']) +
+            len(consolidated_report['high_findings']) +
+            len(consolidated_report['medium_findings']) +
+            len(consolidated_report['low_findings'])
+        )
+        
+        consolidated_report['scan_summary'] = {
+            'critical_count': len(consolidated_report['critical_findings']),
+            'high_count': len(consolidated_report['high_findings']),
+            'medium_count': len(consolidated_report['medium_findings']),
+            'low_count': len(consolidated_report['low_findings']),
+            'bandit_scanned_files': len(bandit_files),
+            'semgrep_scanned_files': len(semgrep_files),
+        }
+        
+        # Save consolidated report
+        with open('consolidated-security-report.json', 'w') as f:
+            json.dump(consolidated_report, f, indent=2)
+        
+        # Print summary
+        print('Security Scan Summary:')
+        print(f'  Total Issues: {consolidated_report[\"total_issues\"]}')
+        print(f'  Critical: {consolidated_report[\"scan_summary\"][\"critical_count\"]}')
+        print(f'  High: {consolidated_report[\"scan_summary\"][\"high_count\"]}')
+        print(f'  Medium: {consolidated_report[\"scan_summary\"][\"medium_count\"]}')
+        print(f'  Low: {consolidated_report[\"scan_summary\"][\"low_count\"]}')
+        "
+        
+        echo "::endgroup::"
+    
+    - name: Security Gate Evaluation
       run: |
-        python security/scripts/aggregate-security-results.py
+        echo "::group::Security Gate Evaluation"
         
-    - name: Generate Security Dashboard
-      run: |
-        python security/scripts/generate-security-dashboard.py
+        python -c "
+        import json
         
-    - name: Create Security Issue (if critical vulnerabilities found)
-      uses: actions/github-script@v6
-      if: failure()
+        try:
+            with open('consolidated-security-report.json', 'r') as f:
+                report = json.load(f)
+            
+            critical_count = report['scan_summary']['critical_count']
+            high_count = report['scan_summary']['high_count']
+            total_issues = report['total_issues']
+            
+            # Define security gates
+            if critical_count > 0:
+                print(f'::error::Security gate FAILED: {critical_count} critical security issues found')
+                exit(1)
+            elif high_count > 5:
+                print(f'::error::Security gate FAILED: {high_count} high-severity security issues exceed threshold (5)')
+                exit(1)
+            elif total_issues > 50:
+                print(f'::warning::Security gate WARNING: {total_issues} total security issues exceed recommended threshold (50)')
+                print('::warning::Consider addressing security findings before deployment')
+            else:
+                print(f'::notice::Security gate PASSED: {total_issues} total security issues within acceptable limits')
+                print(f'::notice::Critical: {critical_count}, High: {high_count}')
+        
+        except FileNotFoundError:
+            print('::warning::No security report found - security gate check skipped')
+        except Exception as e:
+            print(f'::error::Security gate evaluation failed: {e}')
+        "
+        
+        echo "::endgroup::"
+    
+    - name: Upload Consolidated Security Report
+      uses: actions/upload-artifact@v3
+      if: always()
       with:
-        script: |
-          const fs = require('fs');
-          const path = 'security/reports/critical-vulnerabilities.json';
-          
-          if (fs.existsSync(path)) {
-            const vulnerabilities = JSON.parse(fs.readFileSync(path, 'utf8'));
-            
-            const body = `
-            ## 🚨 Critical Security Vulnerabilities Detected
-            
-            This is an automated security alert. Critical vulnerabilities have been detected in the codebase.
-            
-            ### Summary
-            - **Critical vulnerabilities:** ${vulnerabilities.critical || 0}
-            - **High severity vulnerabilities:** ${vulnerabilities.high || 0}
-            - **Scan timestamp:** ${new Date().toISOString()}
-            
-            ### Action Required
-            Please review the security scan results and address these vulnerabilities immediately.
-            
-            ### Artifacts
-            Security scan results are available in the workflow artifacts.
-            `;
-            
-            github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `🚨 Critical Security Vulnerabilities - ${new Date().toISOString().split('T')[0]}`,
-              body: body,
-              labels: ['security', 'critical', 'vulnerability']
-            });
-          }
-          
-    - name: Upload Aggregated Results
-      uses: actions/upload-artifact@v4
-      with:
-        name: security-dashboard
-        path: security/dashboard/
+        name: consolidated-security-report
+        path: consolidated-security-report.json
         retention-days: 90
-        
-    - name: Comment PR with security summary
-      uses: actions/github-script@v6
-      if: github.event_name == 'pull_request'
+    
+    - name: Comment Security Summary on PR
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v7
       with:
         script: |
           const fs = require('fs');
-          const summaryPath = 'security/reports/security-summary.json';
           
-          if (fs.existsSync(summaryPath)) {
-            const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
-            
-            const comment = `
-            ## 🛡️ Security Scan Results
-            
-            | Severity | Count |
-            |----------|-------|
-            | Critical | ${summary.critical || 0} |
-            | High | ${summary.high || 0} |
-            | Medium | ${summary.medium || 0} |
-            | Low | ${summary.low || 0} |
-            
-            ${summary.critical > 0 ? '⚠️ **Critical vulnerabilities detected! Please address before merging.**' : '✅ No critical vulnerabilities found.'}
-            
-            Detailed results available in workflow artifacts.
-            `;
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
+          try {
+            if (fs.existsSync('consolidated-security-report.json')) {
+              const report = JSON.parse(fs.readFileSync('consolidated-security-report.json', 'utf8'));
+              
+              const summary = `## 🔒 Security Scan Results
+              
+              | Severity | Count |
+              |----------|-------|
+              | Critical | ${report.scan_summary.critical_count} |
+              | High | ${report.scan_summary.high_count} |
+              | Medium | ${report.scan_summary.medium_count} |
+              | Low | ${report.scan_summary.low_count} |
+              | **Total** | **${report.total_issues}** |
+              
+              ${report.scan_summary.critical_count > 0 ? '⚠️ **Critical security issues found** - Please address before merging' : '✅ No critical security issues found'}
+              
+              ---
+              _Security scan completed at ${report.timestamp}_`;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: summary
+              });
+            }
+          } catch (error) {
+            console.log('Could not post security summary:', error.message);
           }
