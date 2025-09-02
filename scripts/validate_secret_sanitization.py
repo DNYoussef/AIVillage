@@ -197,7 +197,7 @@ class SecretSanitizationValidator:
             r".*\)\s*#.*pragma.*allowlist.*secret",  # Closing with pragma
         ]
 
-    def validate_file(self, file_path: Path) -> dict:
+    def validate_file(self, file_path: Path, timeout_seconds: int = 30) -> dict:
         """Validate a single file for secret sanitization."""
         result = {
             "file": str(file_path.relative_to(self.base_path)),
@@ -211,11 +211,32 @@ class SecretSanitizationValidator:
             return result
 
         try:
-            with open(file_path, encoding="utf-8") as f:
-                lines = f.readlines()
-                result["line_count"] = len(lines)
+            import signal
+            import platform
+            
+            def timeout_handler(signum, frame):
+                raise TimeoutError(f"File validation timed out after {timeout_seconds}s")
+                
+            # Set timeout for file processing (Unix only)
+            timeout_enabled = False
+            if platform.system() != 'Windows' and hasattr(signal, 'SIGALRM'):
+                try:
+                    signal.signal(signal.SIGALRM, timeout_handler)
+                    signal.alarm(timeout_seconds)
+                    timeout_enabled = True
+                except (AttributeError, OSError):
+                    pass  # Timeout not available
+            
+            try:
+                with open(file_path, encoding="utf-8") as f:
+                    lines = f.readlines()
+                    result["line_count"] = len(lines)
 
-            for line_num, line in enumerate(lines, 1):
+                # Process lines with periodic timeout checks
+                for line_num, line in enumerate(lines, 1):
+                    # Reset alarm for each batch of lines (Unix only)
+                    if timeout_enabled and line_num % 1000 == 0:
+                        signal.alarm(timeout_seconds)
                 # Check for unsafe secret patterns across all severity levels
                 for severity, patterns in self.security_patterns.items():
                     for pattern_tuple in patterns:
@@ -259,7 +280,13 @@ class SecretSanitizationValidator:
                                     "message": "Has pragma comment but secret doesn't match expected patterns",
                                 }
                             )
-
+            finally:
+                # Clear the alarm (Unix only)
+                if timeout_enabled:
+                    signal.alarm(0)
+                
+        except TimeoutError as e:
+            result["issues"].append(f"File validation timeout: {str(e)}")
         except Exception as e:
             result["issues"].append(f"Error reading file: {str(e)}")
 

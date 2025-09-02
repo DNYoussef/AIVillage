@@ -13,7 +13,7 @@ GOLINT=golangci-lint
 # Build parameters
 BINARY_NAME=scion_sidecar
 BINARY_UNIX=$(BINARY_NAME)_unix
-PROTO_DIR=../../../../proto
+PROTO_DIR := $(shell realpath ../../../../proto 2>/dev/null || echo "../../../../proto")
 PKG_DIR=pkg/gateway
 
 # Version information
@@ -49,13 +49,21 @@ deps-update: ## Update dependencies
 ## Protobuf
 proto: ## Generate protobuf files
 	@echo "Generating protobuf files..."
+	@echo "Proto directory: $(PROTO_DIR)"
 	@mkdir -p $(PKG_DIR)
+	@if [ ! -f "$(PROTO_DIR)/betanet_gateway.proto" ]; then \
+		echo "ERROR: Proto file not found at $(PROTO_DIR)/betanet_gateway.proto"; \
+		echo "Checking alternative paths..."; \
+		find . -name "betanet_gateway.proto" -type f 2>/dev/null || echo "No proto files found"; \
+		exit 1; \
+	fi
 	protoc --proto_path=$(PROTO_DIR) \
 		--go_out=$(PKG_DIR) \
 		--go_opt=paths=source_relative \
 		--go-grpc_out=$(PKG_DIR) \
 		--go-grpc_opt=paths=source_relative \
 		$(PROTO_DIR)/betanet_gateway.proto
+	@echo "Protobuf generation completed successfully"
 
 proto-install: ## Install protobuf tools
 	$(GOGET) google.golang.org/protobuf/cmd/protoc-gen-go@latest

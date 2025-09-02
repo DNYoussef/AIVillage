@@ -1,101 +1,139 @@
 syntax = "proto3";
 
-package betanet.gateway;
+package betanet.gateway.v1;
 
-// BetaNet Gateway Service Definition
-service BetanetGateway {
-    // Send SCION packet through the gateway
-    rpc SendScionPacket(SendScionPacketRequest) returns (SendScionPacketResponse);
+option go_package = "github.com/aivillage/scion-sidecar/pkg/gateway";
+
+import "google/protobuf/timestamp.proto";
+
+// BetaNet Gateway Service
+service BetaNetGateway {
+    // Create a new secure tunnel
+    rpc CreateTunnel(CreateTunnelRequest) returns (CreateTunnelResponse);
     
-    // Receive SCION packet from the gateway
-    rpc RecvScionPacket(RecvScionPacketRequest) returns (RecvScionPacketResponse);
+    // List active tunnels
+    rpc ListTunnels(ListTunnelsRequest) returns (ListTunnelsResponse);
     
-    // Register a new path
-    rpc RegisterPath(RegisterPathRequest) returns (RegisterPathResponse);
+    // Delete a tunnel
+    rpc DeleteTunnel(DeleteTunnelRequest) returns (DeleteTunnelResponse);
     
-    // Query available paths
-    rpc QueryPaths(QueryPathsRequest) returns (QueryPathsResponse);
+    // Get tunnel status
+    rpc GetTunnelStatus(GetTunnelStatusRequest) returns (GetTunnelStatusResponse);
     
     // Health check
-    rpc Health(HealthRequest) returns (HealthResponse);
-    
-    // Get statistics
-    rpc Stats(StatsRequest) returns (StatsResponse);
-    
-    // Validate sequence
-    rpc ValidateSequence(ValidateSequenceRequest) returns (ValidateSequenceResponse);
+    rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
 }
 
-// Request/Response messages
-message SendScionPacketRequest {
-    bytes packet_data = 1;
-    string destination = 2;
-    uint32 sequence = 3;
+// Messages
+
+message CreateTunnelRequest {
+    string source_ia = 1;        // Source ISD-AS
+    string destination_ia = 2;   // Destination ISD-AS
+    string destination_host = 3; // Destination host address
+    int32 destination_port = 4;  // Destination port
+    TunnelOptions options = 5;   // Tunnel configuration options
 }
 
-message SendScionPacketResponse {
-    bool success = 1;
-    string message = 2;
-    uint32 packet_id = 3;
+message CreateTunnelResponse {
+    string tunnel_id = 1;        // Unique tunnel identifier
+    int32 local_port = 2;        // Local port for tunnel access
+    TunnelStatus status = 3;     // Initial tunnel status
 }
 
-message RecvScionPacketRequest {
-    uint32 timeout_ms = 1;
+message ListTunnelsRequest {
+    string filter = 1;           // Optional filter criteria
+    int32 page_size = 2;         // Number of results per page
+    string page_token = 3;       // Token for pagination
 }
 
-message RecvScionPacketResponse {
-    bytes packet_data = 1;
-    string source = 2;
-    uint64 timestamp = 3;
+message ListTunnelsResponse {
+    repeated TunnelInfo tunnels = 1;  // List of tunnel information
+    string next_page_token = 2;       // Token for next page
+    int32 total_count = 3;            // Total number of tunnels
 }
 
-message RegisterPathRequest {
-    string path_id = 1;
-    repeated string hops = 2;
+message DeleteTunnelRequest {
+    string tunnel_id = 1;        // Tunnel ID to delete
 }
 
-message RegisterPathResponse {
-    bool success = 1;
-    string message = 2;
+message DeleteTunnelResponse {
+    bool success = 1;            // Deletion success status
+    string message = 2;          // Status message
 }
 
-message QueryPathsRequest {
-    string destination = 1;
+message GetTunnelStatusRequest {
+    string tunnel_id = 1;        // Tunnel ID to query
 }
 
-message QueryPathsResponse {
-    repeated PathInfo paths = 1;
+message GetTunnelStatusResponse {
+    TunnelInfo tunnel_info = 1;  // Complete tunnel information
 }
 
-message PathInfo {
-    string path_id = 1;
-    repeated string hops = 2;
-    uint32 latency_ms = 3;
-    double reliability = 4;
+message HealthCheckRequest {
+    string service = 1;          // Optional service name to check
 }
 
-message HealthRequest {}
-
-message HealthResponse {
-    bool healthy = 1;
-    string status = 2;
+message HealthCheckResponse {
+    HealthStatus status = 1;     // Overall health status
+    string message = 2;          // Status message
+    repeated ServiceHealth services = 3; // Individual service health
 }
 
-message StatsRequest {}
+// Data Types
 
-message StatsResponse {
-    uint64 packets_sent = 1;
-    uint64 packets_received = 2;
-    uint64 bytes_transferred = 3;
-    uint32 active_paths = 4;
+message TunnelInfo {
+    string tunnel_id = 1;        // Unique tunnel identifier
+    string source_ia = 2;        // Source ISD-AS
+    string destination_ia = 3;   // Destination ISD-AS
+    string destination_host = 4; // Destination host
+    int32 destination_port = 5;  // Destination port
+    int32 local_port = 6;        // Local tunnel port
+    TunnelStatus status = 7;     // Current status
+    google.protobuf.Timestamp created_at = 8;  // Creation timestamp
+    google.protobuf.Timestamp updated_at = 9;  // Last update timestamp
+    TunnelMetrics metrics = 10;  // Usage metrics
+    TunnelOptions options = 11;  // Configuration options
 }
 
-message ValidateSequenceRequest {
-    uint32 sequence = 1;
-    string source = 2;
+message TunnelOptions {
+    int32 timeout_seconds = 1;   // Connection timeout
+    int32 retry_attempts = 2;    // Maximum retry attempts
+    bool compression_enabled = 3; // Enable compression
+    string encryption_method = 4; // Encryption method
+    map<string, string> metadata = 5; // Additional metadata
 }
 
-message ValidateSequenceResponse {
-    bool valid = 1;
-    string message = 2;
+message TunnelMetrics {
+    int64 bytes_sent = 1;        // Total bytes sent
+    int64 bytes_received = 2;    // Total bytes received
+    int64 packets_sent = 3;      // Total packets sent
+    int64 packets_received = 4;  // Total packets received
+    int64 connection_count = 5;  // Number of connections
+    double latency_ms = 6;       // Average latency in milliseconds
+    int64 errors = 7;            // Error count
+}
+
+message ServiceHealth {
+    string service_name = 1;     // Service name
+    HealthStatus status = 2;     // Service health status
+    string message = 3;          // Status details
+    google.protobuf.Timestamp last_check = 4; // Last health check
+}
+
+// Enums
+
+enum TunnelStatus {
+    TUNNEL_STATUS_UNSPECIFIED = 0;
+    TUNNEL_STATUS_CREATING = 1;
+    TUNNEL_STATUS_ACTIVE = 2;
+    TUNNEL_STATUS_INACTIVE = 3;
+    TUNNEL_STATUS_ERROR = 4;
+    TUNNEL_STATUS_DELETING = 5;
+}
+
+enum HealthStatus {
+    HEALTH_STATUS_UNSPECIFIED = 0;
+    HEALTH_STATUS_SERVING = 1;
+    HEALTH_STATUS_NOT_SERVING = 2;
+    HEALTH_STATUS_UNKNOWN = 3;
 }

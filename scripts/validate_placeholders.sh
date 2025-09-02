@@ -60,7 +60,10 @@ FILES_TO_CHECK=$(find . -type f \( \
   ! -path "./build/*" \
   ! -path "./dist/*" \
   ! -path "./*/build/*" \
-  ! -path "./*/dist/*")
+  ! -path "./*/dist/*" \
+  ! -name "*.generated.*" \
+  ! -name "*_pb.go" \
+  ! -name "*_grpc.pb.go")
 
 VIOLATIONS_FOUND=false
 
@@ -89,9 +92,26 @@ for pattern in "${PLACEHOLDER_PATTERNS[@]}"; do
          [[ "$file" =~ tools/ ]] || \
          [[ "$file" =~ \.example$ ]] || \
          [[ "$file" =~ \.template$ ]] || \
-         [[ "$file" =~ \.bak$ ]]; then
+         [[ "$file" =~ \.bak$ ]] || \
+         [[ "$file" =~ _pb\.go$ ]] || \
+         [[ "$file" =~ _grpc\.pb\.go$ ]] || \
+         [[ "$file" =~ \.generated\. ]]; then
         echo "[INFO] Skipping non-production file: $file"
         continue
+      fi
+      
+      # Check for legitimate technical terms that should be excluded
+      if echo "$file" | grep -q "$pattern"; then
+        # Check for legitimate gRPC stub usage or similar technical terms
+        if [[ "$pattern" =~ "stub" ]] && grep -q -E "(grpc.*stub|stub.*service|service.*stub|rpc.*stub)" "$file"; then
+          echo "[INFO] Skipping legitimate gRPC stub usage in: $file"
+          continue
+        fi
+        # Check for legitimate mock usage in interface definitions
+        if [[ "$pattern" =~ "mock" ]] && grep -q -E "(interface.*mock|mock.*interface|type.*mock)" "$file"; then
+          echo "[INFO] Skipping legitimate mock interface in: $file"
+          continue
+        fi
       fi
       echo "[FAIL] Found placeholder pattern '$pattern' in production code: $file"
       grep -n -i "$pattern" "$file" 2>/dev/null || true
