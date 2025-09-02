@@ -36,11 +36,11 @@ class ProductionValidator:
         ]
         
         for test_name, test_func in validation_tests:
-            print(f"\n🔍 Running {test_name}...")
+            print(f"\n[INFO] Running {test_name}...")
             try:
                 result = await test_func()
                 self.results[test_name] = result
-                status = "✅ PASS" if result.get("status") == "passed" else "❌ FAIL"
+                status = "[PASS]" if result.get("status") == "passed" else "[FAIL]"
                 print(f"{status} {test_name}: {result.get('message', 'Completed')}")
             except Exception as e:
                 self.results[test_name] = {
@@ -48,7 +48,7 @@ class ProductionValidator:
                     "message": f"Exception: {str(e)}",
                     "error": str(e)
                 }
-                print(f"❌ FAIL {test_name}: {str(e)}")
+                print(f"[FAIL] {test_name}: {str(e)}")
         
         # Generate summary
         summary = self.generate_summary()
@@ -370,7 +370,7 @@ class ProductionValidator:
         with open(results_file, "w") as f:
             json.dump(summary, f, indent=2)
         
-        print(f"\n📊 Results saved to: {results_file}")
+        print(f"\n[RESULTS] Results saved to: {results_file}")
         
         # Print summary
         print("\n" + "=" * 60)
@@ -383,7 +383,7 @@ class ProductionValidator:
         if summary["recommendations"]:
             print("\nRecommendations:")
             for rec in summary["recommendations"]:
-                print(f"  • {rec}")
+                print(f"  - {rec}")
 
 
 async def main():
@@ -394,10 +394,10 @@ async def main():
     # Exit with appropriate code
     success_rate = summary["validation_summary"]["success_rate"]
     if success_rate >= 80:
-        print(f"\n✅ Validation PASSED ({success_rate}%)")
+        print(f"\n[SUCCESS] Validation PASSED ({success_rate}%)")
         sys.exit(0)
     else:
-        print(f"\n❌ Validation FAILED ({success_rate}%)")
+        print(f"\n[FAILED] Validation FAILED ({success_rate}%)")
         sys.exit(1)
 
 
