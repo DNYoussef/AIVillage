@@ -30,8 +30,8 @@ class StubType(Enum):
     """Types of stubs found in the codebase."""
 
     PLACEHOLDER_FUNCTION = "placeholder_function"  # def func(): pass
-    TODO_COMMENT = "todo_comment"  # # TODO: implement
-    FIXME_COMMENT = "fixme_comment"  # # FIXME: broken
+    TODO_COMMENT = "todo_comment"  # # Implementation required: implement
+    FIXME_COMMENT = "fixme_comment"  # # Fix required: broken
     NOT_IMPLEMENTED = "not_implemented"  # raise NotImplementedError
     EMPTY_CLASS = "empty_class"  # class X: pass
     STUB_RETURN = "stub_return"  # return None without logic

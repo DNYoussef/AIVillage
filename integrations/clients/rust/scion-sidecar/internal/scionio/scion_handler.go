@@ -282,7 +282,7 @@ func (h *ScionIOHandler) SendPacket(ctx context.Context, rawPacket []byte, dstIA
 	log.WithFields(log.Fields{
 		"dst_ia":    dstIA,
 		"dst_addr":  dstAddr,
-		"bytes":     n,
+		"bytes":     len(rawPacket),
 		"duration":  time.Since(start),
 	}).Debug("SCION packet sent")
 

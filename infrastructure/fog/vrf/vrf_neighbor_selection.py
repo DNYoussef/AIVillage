@@ -796,7 +796,7 @@ class VRFNeighborSelector:
         # For now, return simplified metrics
 
         return TopologyMetrics(
-            expansion=0.8,  # Placeholder values
+            expansion=0.8,  # Reference implementation values
             conductance=0.7,
             spectral_gap=0.3,
             diameter=4,

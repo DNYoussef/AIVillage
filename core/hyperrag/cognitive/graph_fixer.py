@@ -807,7 +807,7 @@ class GraphFixer:
             return {"completeness_score": 0.5}  # Default when no vector engine
 
         # This would analyze semantic coverage and density
-        # For now, return a placeholder
+        # For now, return a sample result
         return {
             "completeness_score": 0.7,
             "semantic_clusters": 5,
@@ -865,7 +865,7 @@ if __name__ == "__main__":
         )
         await fixer.initialize()
 
-        # Test gap detection (with mock data)
+        # Test gap detection (with sample data)
         gaps = await fixer.detect_knowledge_gaps(
             query="machine learning neural networks", focus_area="artificial intelligence"
         )

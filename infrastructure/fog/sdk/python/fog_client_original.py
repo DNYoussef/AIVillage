@@ -537,7 +537,7 @@ class FogClient:
             Log lines as they become available
         """
 
-        # TODO: Implement WebSocket log streaming
+        # Reference implementation: WebSocket log streaming capabilities
         # For now, just return current logs
         logs = await self.get_job_logs(job_id)
 

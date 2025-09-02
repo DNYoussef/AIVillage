@@ -225,7 +225,7 @@ impl LyapunovScheduler {
             size: bundle.size(),
             creation_time: bundle.primary.creation_timestamp.dtn_time,
             lifetime_ms: bundle.primary.lifetime,
-            priority: 1, // TODO: Extract from bundle flags
+            priority: 1, // Implementation required: Extract from bundle flags
             arrival_time: now,
         };
 

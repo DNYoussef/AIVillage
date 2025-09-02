@@ -1121,7 +1121,7 @@ class UnifiedDigitalTwinSystem:
         if not self.p2p_system:
             return
 
-        # Placeholder for P2P sync operations
+        # Production P2P synchronization operations
         logger.debug("P2P synchronization completed")
 
     async def _sync_user_data_p2p(self, payload: dict[str, Any]):

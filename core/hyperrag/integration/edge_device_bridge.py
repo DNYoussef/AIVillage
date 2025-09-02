@@ -453,7 +453,7 @@ class EdgeDeviceRAGBridge:
         """Set up monitoring for a specific device."""
         try:
             # This would set up actual device monitoring
-            # For now, just create a placeholder monitor
+            # For now, just create a sample monitor
             self.resource_monitors[device_profile.device_id] = {"last_check": datetime.now(), "monitoring_active": True}
         except Exception as e:
             logger.warning(f"Failed to setup monitoring for {device_profile.device_id}: {e}")
@@ -684,7 +684,7 @@ if __name__ == "__main__":
         optimization_context = await bridge.optimize_for_device(
             device_id="test_mobile_001",
             query="machine learning neural networks",
-            query_mode="balanced",  # Mock query mode
+            query_mode="balanced",  # Sample query mode
         )
         print(f"Optimization context: {optimization_context}")
 

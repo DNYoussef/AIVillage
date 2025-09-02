@@ -21,12 +21,46 @@ pub mod rebroadcast;
 // Re-exports
 pub use ble::BleCla;
 
-/// Placeholder implementation - will be expanded based on requirements
-pub struct BitChatCla;
+/// BitChat BLE Convergence Layer Adapter implementation
+pub struct BitChatCla {
+    ble_adapter: ble::BleCla,
+    fec_enabled: bool,
+    fragmentation_mtu: usize,
+    friendship_enabled: bool,
+    rebroadcast_config: rebroadcast::RebroadcastConfig,
+}
 
 impl BitChatCla {
     pub fn new() -> Self {
-        Self
+        Self {
+            ble_adapter: ble::BleCla::new(),
+            fec_enabled: true,
+            fragmentation_mtu: 100, // BLE MTU limit
+            friendship_enabled: true,
+            rebroadcast_config: rebroadcast::RebroadcastConfig::default(),
+        }
+    }
+
+    pub fn with_config(
+        fec_enabled: bool,
+        fragmentation_mtu: usize,
+        friendship_enabled: bool,
+    ) -> Self {
+        Self {
+            ble_adapter: ble::BleCla::new(),
+            fec_enabled,
+            fragmentation_mtu,
+            friendship_enabled,
+            rebroadcast_config: rebroadcast::RebroadcastConfig::default(),
+        }
+    }
+
+    pub fn configure_rebroadcast(&mut self, config: rebroadcast::RebroadcastConfig) {
+        self.rebroadcast_config = config;
+    }
+
+    pub fn get_adapter(&self) -> &ble::BleCla {
+        &self.ble_adapter
     }
 }
 

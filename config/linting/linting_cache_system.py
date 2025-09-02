@@ -685,7 +685,7 @@ class UnifiedCacheManager:
         try:
             if service:
                 # Clear only keys for specific service (implementation depends on backend)
-                logger.warning(f"Service-specific clear not implemented for {self.backend_type}")
+                logger.warning(f"Service-specific clear feature disabled for {self.backend_type}")
                 return False
             else:
                 return await self.active_backend.clear()
@@ -836,7 +836,7 @@ class LintingCacheService:
         """Invalidate all cache entries for a specific tool"""
         # This is a simplified implementation
         # In production, would need pattern matching support
-        logger.info(f"Cache invalidation for tool {tool} requested (not implemented)")
+        logger.info(f"Cache invalidation for tool {tool} requested (feature disabled)")
         return True
 
 

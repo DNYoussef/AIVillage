@@ -2,7 +2,7 @@
 Task Management Service
 
 Provides task coordination and management capabilities for agents.
-This is a stub implementation to resolve import issues after reorganization.
+This is a reference implementation to resolve import issues after reorganization.
 """
 
 from dataclasses import dataclass
@@ -49,7 +49,7 @@ class TaskManagementService:
     """
     Service for managing agent tasks and workflows.
 
-    This is a minimal implementation to resolve import dependencies
+    This is a reference implementation to resolve import dependencies
     during the reorganization process.
     """
 

@@ -262,7 +262,7 @@ class JobsAPI:
                 # Store job (in production: persist to database)
                 self._jobs[job.job_id] = job
 
-                # TODO: Submit to scheduler for placement
+                # Implementation required: Submit to scheduler for placement
                 # placement_result = await self._schedule_job(job)
                 # job.assigned_nodes = placement_result.assigned_nodes
                 # job.placement_score = placement_result.score
@@ -296,7 +296,7 @@ class JobsAPI:
         )
         async def get_job(
             job_id: str,
-            # TODO: Add RBAC dependency
+            # Implementation required: Add RBAC dependency
             # current_user: User = Security(get_current_user, scopes=["fog.jobs.read"])
         ) -> JobStatusResponse:
             """Get job status and details"""
@@ -305,7 +305,7 @@ class JobsAPI:
             if not job:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id} not found")
 
-            # TODO: Verify user has access to this job's namespace
+            # Implementation required: Verify user has access to this job's namespace
 
             return job.to_response()
 
@@ -315,7 +315,7 @@ class JobsAPI:
         async def get_job_logs(
             job_id: str,
             follow: bool = False,
-            # TODO: Add RBAC dependency
+            # Implementation required: Add RBAC dependency
             # current_user: User = Security(get_current_user, scopes=["fog.jobs.read"])
         ):
             """Stream job logs"""
@@ -324,7 +324,7 @@ class JobsAPI:
             if not job:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id} not found")
 
-            # TODO: Stream logs from BetaNet transport
+            # Implementation required: Stream logs from BetaNet transport
             # For now, return mock logs
             return {
                 "job_id": job_id,
@@ -335,7 +335,7 @@ class JobsAPI:
         @self.router.delete("/{job_id}", summary="Cancel job", description="Cancel a running or queued job")
         async def cancel_job(
             job_id: str,
-            # TODO: Add RBAC dependency
+            # Implementation required: Add RBAC dependency
             # current_user: User = Security(get_current_user, scopes=["fog.jobs.delete"])
         ):
             """Cancel job execution"""
@@ -349,7 +349,7 @@ class JobsAPI:
                     status_code=status.HTTP_400_BAD_REQUEST, detail=f"Cannot cancel job in {job.status.value} state"
                 )
 
-            # TODO: Send cancellation over BetaNet to assigned nodes
+            # Implementation required: Send cancellation over BetaNet to assigned nodes
             job.status = JobStatus.CANCELLED
             job.completed_at = datetime.now(UTC)
 
@@ -367,7 +367,7 @@ class JobsAPI:
             namespace: str | None = None,
             status: JobStatus | None = None,
             limit: int = 100,
-            # TODO: Add RBAC dependency
+            # Implementation required: Add RBAC dependency
             # current_user: User = Security(get_current_user, scopes=["fog.jobs.read"])
         ) -> list[JobStatusResponse]:
             """List jobs with optional filtering"""
@@ -376,7 +376,7 @@ class JobsAPI:
 
             # Filter by namespace
             if namespace:
-                # TODO: Verify user has access to namespace
+                # Implementation required: Verify user has access to namespace
                 jobs = [job for job in jobs if job.spec and job.spec.namespace == namespace]
 
             # Filter by status

@@ -11,7 +11,7 @@ archaeological findings from branch analysis including emergency response system
 performance optimizations discovered in historical development branches.
 
 Key Archaeological Integrations:
-- Emergency triage system from codex/audit-critical-stub-implementations
+- Emergency triage system from codex/critical-implementation-audit
 - Tensor memory optimization from codex/cleanup-tensor-id-in-receive_tensor
 - Connection optimization patterns from multiple performance branches
 - Distributed processing insights from codex/implement-distributed-inference-system
@@ -269,7 +269,7 @@ class PooledConnection:
             logger.warning(f"Tensor cleanup failed on connection {self.connection_id}: {e}")
 
     async def _check_emergency_conditions(self, error: Exception):
-        """Archaeological Enhancement: Emergency triage system from codex/audit-critical-stub-implementations."""
+        """Archaeological Enhancement: Emergency triage system from codex/critical-implementation-audit."""
         current_time = time.time()
 
         # Check if we should evaluate emergency conditions
@@ -669,7 +669,7 @@ class ConnectionPoolManager:
 
 
 class EmergencyTriageSystem:
-    """Archaeological Enhancement: Emergency triage system from codex/audit-critical-stub-implementations."""
+    """Archaeological Enhancement: Emergency triage system from codex/critical-implementation-audit."""
 
     def __init__(self, config: PoolConfig):
         self.config = config

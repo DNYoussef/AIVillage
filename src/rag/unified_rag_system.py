@@ -257,7 +257,7 @@ class MCPIntegrationLayer:
         try:
             # In production would call actual MCP server
             logger.debug(f"Retrieving from Memory MCP: {key}")
-            return None  # Placeholder
+            return None  # Feature disabled
         except Exception as e:
             logger.error(f"Memory retrieval failed: {e}")
             return None
@@ -283,7 +283,7 @@ class MCPIntegrationLayer:
         try:
             # In production would call actual Context7 MCP
             logger.debug(f"Retrieving cached query: {query_hash}")
-            return None  # Placeholder
+            return None  # Feature disabled
         except Exception as e:
             logger.error(f"Cache retrieval failed: {e}")
             return None
@@ -296,7 +296,7 @@ class MCPIntegrationLayer:
         try:
             # In production would call actual HuggingFace MCP
             logger.debug(f"Generating embeddings for {len(texts)} texts")
-            # Return placeholder embeddings
+            # Return reference embeddings
             return [self._generate_simple_embedding(text) for text in texts]
         except Exception as e:
             logger.error(f"Embedding generation failed: {e}")

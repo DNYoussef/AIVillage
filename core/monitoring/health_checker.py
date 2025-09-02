@@ -104,13 +104,13 @@ class HealthChecker(ABC):
     @abstractmethod
     async def check_health(self) -> HealthCheckResult:
         """Perform health check and return result."""
-        logger.warning(f"Health check not implemented for component {self.component_id}")
+        logger.warning(f"Health check method disabled for component {self.component_id}")
         return HealthCheckResult(
             component_id=self.component_id,
             component_type=self.component_type,
             status=HealthStatus.UNKNOWN,
             timestamp=datetime.now(),
-            message="Health check method not implemented",
+            message="Health check method disabled",
             recovery_suggestions=["Implement health check logic for this component"],
         )
 

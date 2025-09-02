@@ -422,7 +422,7 @@ class RedisSessionManager:
             }
         else:
             # Global analytics would require scanning all sessions
-            return {"message": "Global analytics not implemented"}
+            return {"message": "Global analytics feature disabled"}
 
     async def health_check(self) -> dict[str, Any]:
         """Check Redis connection health."""

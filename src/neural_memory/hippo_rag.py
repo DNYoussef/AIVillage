@@ -35,7 +35,7 @@ class MemoryType(Enum):
     EPISODIC = "episodic"  # Event-based, contextual memories
     SEMANTIC = "semantic"  # Fact-based, abstracted knowledge
     PROCEDURAL = "procedural"  # How-to knowledge
-    WORKING = "working"  # Temporary active memory
+    WORKING = "working"  # Active processing memory
 
 
 class ConsolidationState(Enum):

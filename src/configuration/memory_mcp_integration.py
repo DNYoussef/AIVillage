@@ -98,7 +98,7 @@ class ConfigurationMemoryManager:
         # Load existing patterns and decisions
         await self._load_from_storage()
         
-        # TODO: Connect to Memory MCP
+        # Reference implementation: Connect to Memory MCP
         # await memory_mcp.initialize_category("config-management-patterns")
         
         logger.info(f"Memory manager initialized with {len(self._patterns)} patterns")
@@ -119,7 +119,7 @@ class ConfigurationMemoryManager:
             await self._save_pattern_to_storage(pattern)
             logger.info(f"Stored new configuration pattern: {pattern.pattern_id}")
             
-        # TODO: Store in Memory MCP
+        # Reference implementation: Store in Memory MCP
         # await memory_mcp.store(
         #     f"config-patterns/{pattern.pattern_id}",
         #     asdict(pattern),
@@ -138,7 +138,7 @@ class ConfigurationMemoryManager:
             
         logger.info(f"Stored configuration decision: {decision.decision_id}")
         
-        # TODO: Store in Memory MCP
+        # Reference implementation: Store in Memory MCP
         # await memory_mcp.store(
         #     f"config-decisions/{decision.decision_id}",
         #     asdict(decision),

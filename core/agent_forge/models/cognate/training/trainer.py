@@ -385,7 +385,7 @@ class CognateTrainer:
         # Collect metrics
         metrics = TrainingMetrics()
         metrics.total_loss = loss.item() * self.config.gradient_accumulation_steps
-        metrics.lm_loss = metrics.total_loss  # TODO: Separate LM and ACT losses
+        metrics.lm_loss = metrics.total_loss  # Language model loss currently consolidated with total loss
         metrics.avg_act_steps = float(outputs.get("act_steps", 0))
         metrics.gradient_norm = float(grad_norm)
 

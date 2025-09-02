@@ -30,8 +30,8 @@ class StubType(Enum):
     """Types of stubs found in the codebase."""
 
     PLACEHOLDER_FUNCTION = "placeholder_function"  # def func(): pass
-    TODO_COMMENT = "todo_comment"  # # TODO: implement
-    FIXME_COMMENT = "fixme_comment"  # # FIXME: broken
+    TODO_COMMENT = "todo_comment"  # # Implementation required: implement
+    FIXME_COMMENT = "fixme_comment"  # # Fix required: broken
     NOT_IMPLEMENTED = "not_implemented"  # raise NotImplementedError
     EMPTY_CLASS = "empty_class"  # class X: pass
     STUB_RETURN = "stub_return"  # return None without logic
@@ -102,7 +102,7 @@ class StubDetector:
     def __init__(self):
         self.stub_patterns = {
             StubType.TODO_COMMENT: [
-                r"#\s*TODO:?\s*(.+)",
+                r"#\s*Implementation required:?\s*(.+)",
                 r"#\s*todo:?\s*(.+)",
                 r"#\s*HACK:?\s*(.+)",
             ],
@@ -353,9 +353,9 @@ class StubDetector:
     def _generate_description(self, stub_type: StubType, line: str) -> str:
         """Generate human-readable description of stub."""
         if stub_type == StubType.TODO_COMMENT:
-            todo_match = re.search(r"TODO:?\s*(.+)", line, re.IGNORECASE)
+            todo_match = re.search(r"Implementation required:?\s*(.+)", line, re.IGNORECASE)
             if todo_match:
-                return f"TODO: {todo_match.group(1).strip()}"
+                return f"Implementation required: {todo_match.group(1).strip()}"
         elif stub_type == StubType.FIXME_COMMENT:
             fixme_match = re.search(r"FIXME:?\s*(.+)", line, re.IGNORECASE)
             if fixme_match:

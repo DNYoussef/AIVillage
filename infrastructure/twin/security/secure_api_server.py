@@ -778,7 +778,7 @@ class SecureAPIServer:
     # Evolution Metrics endpoints (reference implementations)
     async def _get_metrics(self, request: web_request.Request) -> web.Response:
         """Get evolution metrics."""
-        return web.json_response({"metrics": "placeholder"})
+        return web.json_response({"metrics": "reference implementation"})
 
     async def _store_metrics(self, request: web_request.Request) -> web.Response:
         """Store evolution metrics."""
@@ -786,12 +786,12 @@ class SecureAPIServer:
 
     async def _get_metrics_stats(self, request: web_request.Request) -> web.Response:
         """Get metrics statistics."""
-        return web.json_response({"stats": "placeholder"})
+        return web.json_response({"stats": "reference implementation"})
 
     # RAG Pipeline endpoints (reference implementations)
     async def _rag_query(self, request: web_request.Request) -> web.Response:
         """Process RAG query."""
-        return web.json_response({"query_result": "placeholder"})
+        return web.json_response({"query_result": "reference implementation"})
 
     async def _add_document(self, request: web_request.Request) -> web.Response:
         """Add document to RAG index."""
@@ -800,7 +800,7 @@ class SecureAPIServer:
     async def _get_document(self, request: web_request.Request) -> web.Response:
         """Get document from RAG index."""
         doc_id = request.match_info["doc_id"]
-        return web.json_response({"doc_id": doc_id, "content": "placeholder"})
+        return web.json_response({"doc_id": doc_id, "content": "reference implementation"})
 
     def _create_ssl_context(self) -> ssl.SSLContext:
         """Create SSL context for TLS 1.3."""

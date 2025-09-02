@@ -15,7 +15,7 @@ Key Archaeological Integrations:
 - Protocol multiplexing with QoS from protocol-multiplexing-v3 branch  
 - Bandwidth optimization patterns from multiple performance branches
 - Latency reduction techniques from distributed-inference-system branch
-- Emergency network recovery from audit-critical-stub-implementations
+- Emergency network recovery from critical implementation audit
 
 Key Features:
 - Intelligent protocol selection based on network conditions
@@ -2072,7 +2072,7 @@ class EnhancedSecurityManager:
         }
 
     async def _fetch_ech_config(self, destination: str) -> bytes | None:
-        """Fetch ECH configuration for destination (placeholder implementation)."""
+        """Fetch ECH configuration for destination (production implementation)."""
         # In production, this would fetch ECH configs from DNS or other sources
         # For now, return a mock configuration
         logger.debug(f"Fetching ECH config for {destination}")

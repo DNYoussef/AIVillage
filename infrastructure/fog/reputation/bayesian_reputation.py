@@ -337,7 +337,7 @@ class BayesianReputationEngine:
         uncertainty_penalty = score.uncertainty
         adjusted_trust = base_trust * (1 - uncertainty_penalty)
 
-        # TODO: Add transitive trust if requesting_node provided
+        # Implementation required: Add transitive trust if requesting_node provided
         # This would require maintaining a trust graph
 
         return max(0.0, min(1.0, adjusted_trust))

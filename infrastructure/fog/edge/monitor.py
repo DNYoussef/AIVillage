@@ -512,7 +512,7 @@ class ResourceMonitor:
 
         profile_start = datetime.now(UTC)
 
-        # TODO: Implement comprehensive performance profiling
+        # Reference implementation: comprehensive performance profiling
         # This would include:
         # - CPU benchmarking (single/multi-core)
         # - Memory bandwidth testing

@@ -413,7 +413,7 @@ class Context7MCPIntegration:
                 "ttl": ttl
             }
             
-        # TODO: Integrate with actual Context7 MCP
+        # Reference implementation: Integrate with actual Context7 MCP
         # await context7.session.store(f"config/{key}", config, session_id=session_id)
         
         return success
@@ -445,7 +445,7 @@ class Context7MCPIntegration:
         
         results = {}
         
-        # TODO: Implement actual region-aware replication via Context7 MCP
+        # Reference implementation: Implement region-aware replication via Context7 MCP
         # For now, simulate with node selection
         for region in regions:
             region_nodes = [node for node in self.cache_manager.nodes 

@@ -422,7 +422,7 @@ class AdminAPI:
         )
         async def get_node(
             node_id: str,
-            # TODO: Add RBAC dependency
+            # Implementation required: Add RBAC dependency
         ) -> NodeStatusResponse:
             """Get fog node details"""
 
@@ -430,7 +430,7 @@ class AdminAPI:
             if not node:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Node {node_id} not found")
 
-            # TODO: Verify user has access to node's namespace
+            # Implementation required: Verify user has access to node's namespace
 
             # Update mock utilization data
             node.cpu_utilization = 35.2
@@ -451,7 +451,7 @@ class AdminAPI:
         async def update_node_capacity(
             node_id: str,
             capacity_update: CapacityUpdate,
-            # TODO: Add node operator RBAC dependency
+            # Implementation required: Add node operator RBAC dependency
         ) -> NodeStatusResponse:
             """Update node capacity and capabilities"""
 
@@ -459,7 +459,7 @@ class AdminAPI:
             if not node:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Node {node_id} not found")
 
-            # TODO: Verify user is node operator or admin
+            # Implementation required: Verify user is node operator or admin
 
             # Update capabilities
             node.capabilities = capacity_update.capabilities
@@ -469,14 +469,14 @@ class AdminAPI:
             if capacity_update.maintenance_mode:
                 if node.status == NodeStatus.ACTIVE:
                     node.status = NodeStatus.MAINTENANCE
-                    # TODO: Drain running workloads
+                    # Implementation required: Drain running workloads
                     logger.info(f"Node {node_id} entering maintenance mode")
             else:
                 if node.status == NodeStatus.MAINTENANCE:
                     node.status = NodeStatus.ACTIVE
                     logger.info(f"Node {node_id} exiting maintenance mode")
 
-            # TODO: Notify scheduler of capacity changes
+            # Implementation required: Notify scheduler of capacity changes
             # await self._notify_scheduler_node_updated(node)
 
             return node.to_response()
@@ -486,7 +486,7 @@ class AdminAPI:
         )
         async def deregister_node(
             node_id: str,
-            # TODO: Add node operator RBAC dependency
+            # Implementation required: Add node operator RBAC dependency
         ):
             """Deregister fog node"""
 
@@ -494,16 +494,16 @@ class AdminAPI:
             if not node:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Node {node_id} not found")
 
-            # TODO: Verify user is node operator or admin
+            # Implementation required: Verify user is node operator or admin
 
             # Mark node as decommissioned
             node.status = NodeStatus.DECOMMISSIONED
             node.updated_at = datetime.now(UTC)
 
-            # TODO: Drain all running workloads
+            # Implementation required: Drain all running workloads
             # await self._drain_node_workloads(node)
 
-            # TODO: Notify scheduler to stop scheduling to this node
+            # Implementation required: Notify scheduler to stop scheduling to this node
             # await self._notify_scheduler_node_removed(node)
 
             logger.info(f"Deregistered fog node {node_id}")
@@ -521,7 +521,7 @@ class AdminAPI:
             status: NodeStatus | None = None,
             region: str | None = None,
             limit: int = 100,
-            # TODO: Add RBAC dependency
+            # Implementation required: Add RBAC dependency
         ) -> list[NodeStatusResponse]:
             """List fog nodes with optional filtering"""
 
@@ -552,7 +552,7 @@ class AdminAPI:
         async def node_heartbeat(
             node_id: str,
             heartbeat_data: dict[str, Any],
-            # TODO: Add node authentication
+            # Implementation required: Add node authentication
         ):
             """Process node heartbeat and metrics"""
 
@@ -560,7 +560,7 @@ class AdminAPI:
             if not node:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Node {node_id} not found")
 
-            # TODO: Verify heartbeat signature with node's public key
+            # Implementation required: Verify heartbeat signature with node's public key
 
             # Update node metrics
             node.last_seen = datetime.now(UTC)
@@ -722,17 +722,17 @@ class AdminAPI:
 
     async def _notify_scheduler_node_updated(self, node: FogNode):
         """Notify scheduler of node capacity changes"""
-        # TODO: Integrate with scheduler
+        # Implementation required: Integrate with scheduler
         pass
 
     async def _notify_scheduler_node_removed(self, node: FogNode):
         """Notify scheduler to stop using node"""
-        # TODO: Integrate with scheduler
+        # Implementation required: Integrate with scheduler
         pass
 
     async def _drain_node_workloads(self, node: FogNode):
         """Gracefully drain all workloads from node"""
-        # TODO: Implement workload draining
+        # Implementation required: Implement workload draining
         pass
 
     def _calculate_cluster_capacity(self) -> ClusterCapacity:

@@ -15,7 +15,7 @@ Key Archaeological Integrations:
 - Comprehensive system analysis and component discovery
 - Distributed processing patterns from codex/implement-distributed-inference-system
 - Predictive optimization using historical performance data
-- Emergency triage integration from audit-critical-stub-implementations
+- Emergency triage integration from critical implementation audit
 - Tensor optimization insights from cleanup-tensor-id-in-receive_tensor
 
 Key Features:

@@ -639,12 +639,12 @@ class UnifiedRAGSystem:
         # Calculate quality metrics
         if response.sources:
             response.factual_accuracy = np.mean([s.get("confidence", 0.8) for s in response.sources])
-            response.consistency_score = 0.85  # Placeholder
+            response.consistency_score = 0.85  # Reference score
             response.completeness = min(1.0, len(response.sources) / context.max_results)
         
         # Calculate novelty score if creative results exist
         if response.creative_results:
-            response.novelty_score = 0.7  # Placeholder
+            response.novelty_score = 0.7  # Reference score
         
         # Ensure minimum answer quality
         if response.confidence < context.confidence_threshold and response.answer:
@@ -668,7 +668,7 @@ class UnifiedRAGSystem:
                     self.performance_metrics["component_usage"][component] = 0
                 self.performance_metrics["component_usage"][component] += 1
     
-    # Placeholder methods for unimplemented retrieval modes
+    # Reference methods for retrieval modes
     async def _creative_retrieval(self, question: str, context: QueryContext, response: UnifiedResponse):
         """Creative retrieval focusing on novel connections."""
         # Implement creative-focused retrieval

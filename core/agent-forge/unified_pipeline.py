@@ -409,13 +409,13 @@ class UnifiedPipeline:
         Create initial model for pipeline start.
 
         With Cognate phase enabled, returns None to let Cognate create the model.
-        Otherwise creates a dummy model for backward compatibility.
+        Otherwise creates a reference model for backward compatibility.
         """
         if self.config.enable_cognate:
             self.logger.info("Cognate phase enabled - will create model from base models")
             return None  # Cognate phase will handle model creation
 
-        # Fallback: create dummy model if Cognate is disabled
+        # Fallback: create reference model if Cognate is disabled
         self.logger.info("Creating fallback initial model for pipeline")
 
         # Create a simple transformer-like model as starting point

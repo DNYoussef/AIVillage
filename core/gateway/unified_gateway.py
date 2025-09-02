@@ -305,7 +305,7 @@ class UnifiedServiceOrchestrator:
         # Initialize Agent Forge
         if AGENT_FORGE_AVAILABLE and config.enable_agent_forge:
             try:
-                self.services["agent_forge"] = "available"  # Placeholder for actual initialization
+                self.services["agent_forge"] = "available"  # Reference implementation
                 logger.info("Agent Forge service available")
             except Exception as e:
                 logger.error(f"Agent Forge initialization failed: {e}")

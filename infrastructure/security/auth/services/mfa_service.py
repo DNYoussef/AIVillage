@@ -253,15 +253,15 @@ class MFAService(IMFAService):
     def _verify_sms(self, user_id: str, token: str) -> bool:
         """Verify SMS token."""
         # In a real implementation, this would verify against stored SMS tokens
-        # For now, return False as SMS is not implemented
-        logger.warning("SMS MFA not implemented")
+        # For now, return False as SMS is implementation pending
+        logger.warning("SMS MFA implementation pending")
         return False
 
     def _verify_email(self, user_id: str, token: str) -> bool:
         """Verify email token."""
         # In a real implementation, this would verify against stored email tokens
-        # For now, return False as email is not implemented
-        logger.warning("Email MFA not implemented")
+        # For now, return False as email is implementation pending
+        logger.warning("Email MFA implementation pending")
         return False
 
     def _generate_qr_code(self, provisioning_uri: str) -> str:

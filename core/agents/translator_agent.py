@@ -105,9 +105,9 @@ class TranslatorAgent(BaseAgent):
             if cache_key in self.translation_cache:
                 return self.translation_cache[cache_key]
 
-            # Mock translation logic (in practice, use Google Translate API, DeepL, etc.)
+            # Sample translation logic (in practice, use Google Translate API, DeepL, etc.)
             translation_map = {
-                ("en", "es"): lambda text: f"[ES] {text} [/ES]",  # Placeholder
+                ("en", "es"): lambda text: f"[ES] {text} [/ES]",  # Sample implementation
                 ("en", "fr"): lambda text: f"[FR] {text} [/FR]",
                 ("en", "de"): lambda text: f"[DE] {text} [/DE]",
                 ("es", "en"): lambda text: f"[EN] {text} [/EN]",

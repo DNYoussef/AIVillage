@@ -685,7 +685,7 @@ class CreativityEngine:
             # Blend pairs of concepts
             for i, concept1 in enumerate(starting_concepts):
                 for concept2 in starting_concepts[i + 1 :]:
-                    # Calculate semantic distance (mock implementation)
+                    # Calculate semantic distance (sample implementation)
                     semantic_distance = 0.7  # Would use vector similarity in real implementation
 
                     if semantic_distance > 0.5:  # Sufficiently distant for creative blending
@@ -717,7 +717,7 @@ class CreativityEngine:
             # Simple analogy generation (would be more sophisticated in production)
             for i, concept1 in enumerate(starting_concepts):
                 for concept2 in starting_concepts[i + 1 :]:
-                    # Create a mock analogy
+                    # Create a sample analogy
                     analogy = CreativeAnalogy(
                         source_domain=concept1,
                         target_domain=concept2,
@@ -906,14 +906,14 @@ if __name__ == "__main__":
         await engine.initialize()
 
         # Test insight discovery
-        mock_retrieved_info = [
-            type("MockInfo", (), {"content": "machine learning algorithms", "source": "vector"}),
-            type("MockInfo", (), {"content": "neural network architectures", "source": "graph"}),
+        sample_retrieved_info = [
+            type("SampleInfo", (), {"content": "machine learning algorithms", "source": "vector"}),
+            type("SampleInfo", (), {"content": "neural network architectures", "source": "graph"}),
         ]
 
         result = await engine.discover_insights(
             query="artificial intelligence creativity",
-            retrieved_info=mock_retrieved_info,
+            retrieved_info=sample_retrieved_info,
             focus_concepts=["AI", "creativity", "innovation"],
             creativity_level=0.8,
         )

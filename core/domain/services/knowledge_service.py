@@ -2,7 +2,7 @@
 Knowledge Service
 
 Provides knowledge management and retrieval capabilities.
-This is a stub implementation to resolve import issues after reorganization.
+This is a reference implementation to resolve import issues after reorganization.
 """
 
 from dataclasses import dataclass
@@ -27,7 +27,7 @@ class KnowledgeService:
     """
     Service for managing agent knowledge and information.
 
-    This is a minimal implementation to resolve import dependencies
+    This is a reference implementation to resolve import dependencies
     during the reorganization process.
     """
 

@@ -155,7 +155,7 @@ class MCPServerCoordinator:
                 
                 # Handle decryption if needed
                 if encrypted:
-                    # TODO: Implement encryption/decryption
+                    # Reference implementation: Implement encryption/decryption
                     pass
                 
                 # Try to parse JSON, return as string if it fails

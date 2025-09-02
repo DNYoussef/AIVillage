@@ -167,7 +167,7 @@ I'm your AI tutor, and I love helping students discover new things. What's on yo
                         id=f"{category}_{variant_name}",
                         template=template,
                         description=f"{variant_name.title()} {category} prompt",
-                        language="en",  # TODO: Multi-language support
+                        language="en",  # Implementation required: Multi-language support
                         category=category,
                         parameters={},
                         performance_metrics={"avg_score": 0.5, "sample_count": 0},

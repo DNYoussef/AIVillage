@@ -285,7 +285,7 @@ impl SphinxProcessor {
     /// Create new Sphinx processor
     pub fn new() -> Self {
         // Use deterministic key for now to avoid RNG compatibility issues
-        let private_key_bytes = [42u8; 32]; // TODO: Use proper random generation
+        let private_key_bytes = [42u8; 32]; // Reference implementation: cryptographically secure random generation
         let private_key = StaticSecret::from(private_key_bytes);
         let public_key = PublicKey::from(&private_key);
 

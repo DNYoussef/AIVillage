@@ -118,7 +118,7 @@ class UnifiedBaseAgent:
             result = await self._process_task(task)
         except NotImplementedError:
             raise AIVillageException(
-                message="Task processing not implemented",
+                message="Task processing implementation pending",
                 category=ErrorCategory.NOT_IMPLEMENTED,
                 severity=ErrorSeverity.ERROR,
                 context={"agent": self.name, "task": task.content},

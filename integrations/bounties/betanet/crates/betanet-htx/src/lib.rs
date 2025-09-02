@@ -385,7 +385,7 @@ impl HtxSession {
             if noise.is_initiator {
                 let fragments = noise.create_message_1()?;
                 // For simplicity, return the first fragment's data
-                // TODO: Implement proper fragment handling
+                // Reference implementation: proper fragment handling
                 return Ok(fragments.first().map(|f| f.data.clone()));
             }
         }

@@ -32,13 +32,13 @@ services:
       retries: 3
       start_period: 40s
 
-  # Mock downstream services for development
+  # Reference downstream services for development
   twin:
     image: mockserver/mockserver:5.15.0
     ports:
       - "8001:1080"
     environment:
-      MOCKSERVER_INITIALIZATION_JSON_PATH: /config/twin-mock.json
+      MOCKSERVER_INITIALIZATION_JSON_PATH: /config/twin-reference.json
     volumes:
       - ./mocks:/config
     networks:
@@ -49,7 +49,7 @@ services:
     ports:
       - "8002:1080"
     environment:
-      MOCKSERVER_INITIALIZATION_JSON_PATH: /config/agent-controller-mock.json
+      MOCKSERVER_INITIALIZATION_JSON_PATH: /config/agent-controller-reference.json
     volumes:
       - ./mocks:/config
     networks:
@@ -60,7 +60,7 @@ services:
     ports:
       - "8003:1080"
     environment:
-      MOCKSERVER_INITIALIZATION_JSON_PATH: /config/knowledge-system-mock.json
+      MOCKSERVER_INITIALIZATION_JSON_PATH: /config/knowledge-system-reference.json
     volumes:
       - ./mocks:/config
     networks:

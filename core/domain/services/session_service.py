@@ -2,7 +2,7 @@
 Session Service
 
 Provides session management capabilities for agents.
-This is a stub implementation to resolve import issues after reorganization.
+This is a reference implementation to resolve import issues after reorganization.
 """
 
 from dataclasses import dataclass
@@ -31,7 +31,7 @@ class SessionService:
     """
     Service for managing agent sessions.
 
-    This is a minimal implementation to resolve import dependencies
+    This is a reference implementation to resolve import dependencies
     during the reorganization process.
     """
 

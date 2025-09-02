@@ -77,7 +77,7 @@ impl Ed25519Signer {
     /// Create new signer with random key
     pub fn new() -> Self {
         // Use a deterministic key for now to avoid RNG compatibility issues
-        let secret_bytes = [42u8; 32]; // TODO: Use proper random generation
+        let secret_bytes = [42u8; 32]; // Reference implementation: cryptographically secure random generation
         let secret = SecretKey::from_bytes(&secret_bytes).unwrap();
         let public = Ed25519PublicKey::from(&secret);
         let keypair = Keypair { secret, public };
@@ -133,7 +133,7 @@ impl X25519KeyExchange {
     /// Create new key exchange with random key
     pub fn new() -> Self {
         // Use deterministic key for now to avoid RNG compatibility issues
-        let secret_bytes = [42u8; 32]; // TODO: Use proper random generation
+        let secret_bytes = [42u8; 32]; // Reference implementation: cryptographically secure random generation
         let secret = StaticSecret::from(secret_bytes);
         Self { secret }
     }

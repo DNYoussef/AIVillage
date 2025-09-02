@@ -709,7 +709,7 @@ class EnclaveExecutor:
         # This would implement actual hardware TEE creation
         # For now, fall back to software isolation
         logger.warning(
-            f"Hardware TEE {capability.tee_type.value} not implemented, " "falling back to software isolation"
+            f"Hardware TEE {capability.tee_type.value} implementation pending, " "falling back to software isolation"
         )
 
         context.tee_type = TEEType.SOFTWARE_ISOLATION
@@ -734,7 +734,7 @@ class EnclaveExecutor:
         """Initialize hardware TEE backends"""
         # Placeholder for hardware backend initialization
         # In production, this would initialize AMD SEV-SNP, Intel TDX, etc.
-        logger.debug("Hardware TEE backends not implemented, using software isolation")
+        logger.debug("Hardware TEE backends implementation pending, using software isolation")
 
     def get_executor_status(self) -> dict[str, Any]:
         """Get executor status"""

@@ -89,7 +89,7 @@ class DistributedConfigCache:
             self._local_cache[key] = config
             self._cache_timestamps[key] = datetime.now()
             
-        # TODO: Integrate with Context7 MCP for distributed caching
+        # Reference implementation: Integrate with Context7 MCP for distributed caching
         # await context7.cache.set(f"config/{key}", config, ttl=ttl)
         # await context7.distributed.replicate(f"config/{key}", config, nodes=["primary", "replica"])
         
@@ -108,7 +108,7 @@ class DistributedConfigCache:
                     del self._local_cache[key]
                     del self._cache_timestamps[key]
                     
-        # TODO: Try distributed cache via Context7 MCP
+        # Reference implementation: Try distributed cache via Context7 MCP
         # try:
         #     return await context7.cache.get(f"config/{key}")
         # except KeyError:
@@ -122,7 +122,7 @@ class DistributedConfigCache:
             self._local_cache.pop(key, None)
             self._cache_timestamps.pop(key, None)
             
-        # TODO: Invalidate distributed cache
+        # Reference implementation: Invalidate distributed cache
         # await context7.cache.delete(f"config/{key}")
         logger.info(f"Invalidated cache for key: {key}")
 
@@ -185,7 +185,7 @@ class UnifiedConfigurationManager:
         await self._setup_file_watchers()
         
         # Store configuration decisions in Memory MCP
-        # TODO: Integrate with Memory MCP
+        # Reference implementation: Integrate with Memory MCP
         # await memory_mcp.store("config-management/initialization", {
         #     "timestamp": datetime.now().isoformat(),
         #     "discovered_configs": len(self.hierarchy.layers),
@@ -348,14 +348,14 @@ class UnifiedConfigurationManager:
         await self._discover_configurations()
         
         # Invalidate all caches
-        # TODO: Use Context7 MCP for distributed cache invalidation
+        # Reference implementation: Use Context7 MCP for distributed cache invalidation
         # await context7.cache.flush_pattern("config/*")
         
         logger.info("Configuration reloaded successfully")
         
     async def _setup_file_watchers(self):
         """Setup file watchers for hot reload"""
-        # TODO: Implement file watching for automatic configuration reload
+        # Reference implementation: Implement file watching for automatic configuration reload
         # This would integrate with the system's file monitoring capabilities
         logger.info("File watchers setup completed")
         

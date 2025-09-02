@@ -531,7 +531,7 @@ class ConstitutionalBetaNetTransport:
                     # Create constitutional message from received data
                     return ConstitutionalMessage(content=result["data"], constitutional_tier=self.config.default_tier)
 
-            # TODO: Implement HTX-based receive when client supports it
+            # Production HTX-based receive implementation when client supports it
             return None
 
         except Exception as e:

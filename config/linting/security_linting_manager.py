@@ -800,7 +800,7 @@ class SecurityLintingManager:
         try:
             # This would run tools like Checkov, Terrascan, etc.
             # For now, return empty result as these tools may not be installed
-            iac_results["checkov"] = self._create_empty_scan_result("checkov", "iac", "IaC scanning not implemented")
+            iac_results["checkov"] = self._create_empty_scan_result("checkov", "iac", "IaC scanning feature disabled")
         except Exception as e:
             logger.error(f"IaC scanning failed: {e}")
         

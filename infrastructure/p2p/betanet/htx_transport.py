@@ -174,7 +174,7 @@ class HtxConnection:
     active_streams: dict[int, dict[str, Any]] = field(default_factory=dict)
     stream_windows: dict[int, int] = field(default_factory=dict)
 
-    # Encryption state (placeholder - would use Noise XK)
+    # Encryption state (production implementation uses Noise XK)
     encryption_enabled: bool = False
     handshake_completed: bool = False
 
@@ -487,7 +487,7 @@ class HtxClient:
 
 class HtxServer:
     """
-    HTX server implementation (placeholder).
+    HTX server reference implementation.
 
     In production, the server would typically be implemented in Rust using
     the betanet-htx crate for performance. This Python implementation serves

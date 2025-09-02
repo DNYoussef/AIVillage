@@ -253,7 +253,7 @@ class SocialAgent(BaseAgent):
                         "high" if len(interactions) > 50 else "medium" if len(interactions) > 20 else "low"
                     ),
                     "toxicity_level": "low" if avg_sentiment > 0.5 else "moderate",
-                    "diversity_score": 0.8,  # Placeholder for actual diversity analysis
+                    "diversity_score": 0.8,  # Reference implementation for diversity analysis
                 },
                 "recommendations": [
                     (

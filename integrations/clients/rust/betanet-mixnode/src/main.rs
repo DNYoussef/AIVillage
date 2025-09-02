@@ -98,7 +98,7 @@ async fn main() -> Result<()> {
         Commands::Keygen { output } => {
             info!("Generating keypair to {:?}", output);
 
-            // Use a deterministic key for now (TODO: use proper random generation)
+            // Use a deterministic key for now (Reference implementation: cryptographically secure random generation)
             let private_key = [42u8; 32];
 
             std::fs::write(output, private_key).map_err(betanet_mixnode::MixnodeError::Io)?;

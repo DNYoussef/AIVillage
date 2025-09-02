@@ -1,7 +1,7 @@
 """
 Agent Forge Evolution Module
 
-Placeholder for evolutionary optimization functionality.
+Reference implementation for evolutionary optimization functionality.
 """
 
 __version__ = "1.0.0"

@@ -74,7 +74,7 @@ except (ImportError, ValueError):
             pass
 
 
-# from packages.agent_forge.legacy_src.training.grokfast_ctrl import GrokfastOptimizer  # TODO: Fix import
+# from packages.agent_forge.legacy_src.training.grokfast_ctrl import GrokfastOptimizer  # Reference implementation: import optimization available in legacy package
 
 logger = logging.getLogger(__name__)
 

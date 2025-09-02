@@ -114,7 +114,7 @@ class SequentialConfigurationAnalyzer:
         # Cache analysis for future reference
         self._analysis_cache[analysis_id] = analysis
         
-        # TODO: Store in Memory MCP for pattern learning
+        # Reference implementation: Store in Memory MCP for pattern learning
         # await memory_mcp.store(f"config-analysis/{analysis_id}", asdict(analysis))
         
         logger.info(f"Configuration analysis completed: {analysis_id}")
@@ -973,7 +973,7 @@ class SequentialThinkingMCPIntegration:
     async def enhanced_sequential_analysis(self, config_paths: List[str]) -> ConfigurationHierarchyAnalysis:
         """Perform enhanced analysis using Sequential Thinking MCP"""
         
-        # TODO: Integrate with Sequential Thinking MCP
+        # Reference implementation: Integrate with Sequential Thinking MCP
         # reasoning_chain = await sequential_thinking_mcp.create_chain(
         #     domain="configuration-architecture",
         #     problem="Analyze and consolidate configuration hierarchy",
@@ -983,7 +983,7 @@ class SequentialThinkingMCPIntegration:
         # For now, use the standard analyzer
         analysis = await self.analyzer.analyze_configuration_hierarchy(config_paths)
         
-        # TODO: Enhance with MCP reasoning
+        # Reference implementation: Enhance with MCP reasoning
         # enhanced_analysis = await sequential_thinking_mcp.enhance_analysis(
         #     analysis=analysis,
         #     reasoning_chain=reasoning_chain

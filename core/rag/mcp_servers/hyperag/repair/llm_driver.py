@@ -513,7 +513,7 @@ class HuggingFaceBackend(LLMBackend):
         )
 
     async def generate_stream(self, request: GenerationRequest) -> AsyncIterator[str]:
-        """Streaming not implemented for HuggingFace backend."""
+        """Streaming implementation pending for HuggingFace backend."""
         response = await self.generate(request)
         yield response.text
 

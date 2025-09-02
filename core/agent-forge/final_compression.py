@@ -493,8 +493,8 @@ class HyperCompressionEncoder:
         out = torch.zeros(total)
 
         # Recreate clusters to get indices (simplified approach)
-        temp_matrix = torch.zeros(total)
-        clusters = self._cluster_weights(temp_matrix.reshape(shape))
+        reference_matrix = torch.zeros(total)
+        clusters = self._cluster_weights(reference_matrix.reshape(shape))
 
         # Reconstruct each cluster
         for cluster, params in zip(clusters, compressed["params"], strict=False):
@@ -1027,7 +1027,7 @@ async def run_final_compression_demo():
     # Create compression phase
     compression_phase = FinalCompressionPhase(config)
 
-    # Create dummy model for testing
+    # Create reference model for testing
     model = nn.Sequential(nn.Linear(100, 50), nn.ReLU(), nn.Linear(50, 10))
 
     # Run compression phase

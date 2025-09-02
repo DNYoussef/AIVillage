@@ -557,7 +557,7 @@ class ConfigurationValidationSystem:
             if isinstance(value, str):
                 # Check if key indicates a secret and value looks hardcoded
                 if any(sensitive in key.lower() for sensitive in sensitive_keys):
-                    # Skip if value is a placeholder or environment variable
+                    # Skip if value is a template variable or environment variable
                     if not (value.startswith("${") or value.startswith("$") or 
                            value in ["", "TODO", "CHANGEME", "your-secret-here"]):
                         return f"{path}.{key}" if path else key

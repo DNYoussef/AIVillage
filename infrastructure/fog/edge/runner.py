@@ -862,7 +862,7 @@ class ExecutionFabric:
         result = ExecutionResult(
             execution_id=str(uuid4()),
             status=ExecutionStatus.FAILED,
-            error_message="Native execution not implemented for security reasons",
+            error_message="Native execution implementation pending for security reasons",
         )
 
         logger.warning("Native execution requested but blocked for security")

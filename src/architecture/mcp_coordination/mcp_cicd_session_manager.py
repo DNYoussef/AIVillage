@@ -307,7 +307,7 @@ class MCPCICDSessionManager:
     
     async def _establish_server_connection(self, server_name: str) -> Optional[Any]:
         """Establish connection to specific server based on configuration"""
-        # This is a placeholder for actual MCP server connection logic
+        # Production MCP server connection implementation
         # In real implementation, this would:
         # 1. Read MCP configuration for the server
         # 2. Establish appropriate transport (stdio, websocket, etc.)

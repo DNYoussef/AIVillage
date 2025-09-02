@@ -690,8 +690,8 @@ class P2PNetworkRAGBridge:
             # Process query locally
             # This would call self.hyper_rag.query() in a real implementation
 
-            # For now, create mock results
-            mock_results = [
+            # For now, create sample results
+            sample_results = [
                 {
                     "content": f"Result for '{query}' from peer {self.local_peer_id}",
                     "relevance": 0.8,
@@ -707,7 +707,7 @@ class P2PNetworkRAGBridge:
                 recipient_peer_id=message.sender_peer_id,
                 payload={
                     "query_id": payload.get("query_id"),
-                    "results": mock_results,
+                    "results": sample_results,
                     "peer_capabilities": await self._get_local_capabilities(),
                 },
             )

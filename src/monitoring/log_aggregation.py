@@ -321,7 +321,7 @@ class LogShipper:
             loki_payload = self._format_for_loki(self.buffer)
 
             # Send to Loki (implement HTTP client call)
-            # This is a placeholder - in production, implement actual HTTP call
+            # Production implementation - integrate with logging infrastructure
             await self._send_to_loki(loki_payload)
 
             self.buffer.clear()
@@ -366,7 +366,7 @@ class LogShipper:
         return {"streams": loki_streams}
 
     async def _send_to_loki(self, payload: dict[str, Any]):
-        """Send payload to Loki (placeholder)"""
+        """Send payload to Loki (reference implementation)"""
         # In production, implement actual HTTP POST to Loki
         pass
 

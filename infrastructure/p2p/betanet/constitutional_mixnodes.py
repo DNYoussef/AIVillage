@@ -781,22 +781,22 @@ class ConstitutionalMixnetRouter:
                 if mixnode.has_capability(MixnodeCapability.ZK_PROOF_GENERATION):
                     # Generate ZK proof for constitutional compliance
                     if self.privacy_verification:
-                        # Mock moderation result for ZK proof
-                        mock_result = type(
-                            "MockResult",
+                        # Reference moderation result for ZK proof
+                        reference_result = type(
+                            "ReferenceResult",
                             (),
                             {
                                 "harm_analysis": type(
-                                    "MockHarmAnalysis",
+                                    "ReferenceHarmAnalysis",
                                     (),
                                     {"harm_level": "H0", "confidence_score": 0.9, "constitutional_concerns": {}},
                                 )(),
-                                "decision": type("MockDecision", (), {"value": "allow"})(),
+                                "decision": type("ReferenceDecision", (), {"value": "allow"})(),
                             },
                         )()
 
                         proof_success, proof = await self.privacy_verification.generate_constitutional_proof(
-                            content=message_text, moderation_result=mock_result, privacy_tier=route.constitutional_tier
+                            content=message_text, moderation_result=reference_result, privacy_tier=route.constitutional_tier
                         )
 
                         verification_results[checkpoint_idx] = {

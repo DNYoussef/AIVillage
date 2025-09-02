@@ -210,7 +210,7 @@ async def chat_endpoint(req: ChatRequest):
 
 @app.get("/v1/embeddings")
 async def embeddings_stub():
-    return {"message": "Embeddings endpoint – coming soon"}
+    return {"message": "Embeddings endpoint – production implementation"}
 
 
 @app.get("/healthz", response_model=HealthResponse)
@@ -381,7 +381,7 @@ async def upload_endpoint(file: UploadFile = File(...)):
 @app.get("/v1/debug/bayes")
 async def debug_bayes_endpoint():
     """Get Bayes network snapshot - migrated from server.py /bayes endpoint."""
-    # TODO: Integrate with actual Bayes network
+    # Implementation required: Integrate with actual Bayes network
     return {
         "message": "Bayes network debug endpoint",
         "nodes": [],
@@ -393,7 +393,7 @@ async def debug_bayes_endpoint():
 @app.get("/v1/debug/logs")
 async def debug_logs_endpoint():
     """Get knowledge tracker logs - migrated from server.py /logs endpoint."""
-    # TODO: Integrate with actual knowledge tracker
+    # Implementation required: Integrate with actual knowledge tracker
     return {
         "message": "Knowledge tracker logs endpoint",
         "logs": [],

@@ -479,7 +479,7 @@ class UnifiedPipeline:
             self.logger.info("Cognate phase enabled - will create model from base models")
             return None  # Cognate phase will handle model creation
 
-        # Fallback: create dummy model if Cognate is disabled
+        # Fallback: create reference model if Cognate is disabled
         self.logger.info("Creating fallback initial model for pipeline")
 
         model = nn.Sequential(nn.Linear(768, 768), nn.ReLU(), nn.Linear(768, 768))

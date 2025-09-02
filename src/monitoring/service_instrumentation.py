@@ -279,7 +279,7 @@ class EdgeComputingInstrumentation:
             self.device_temperature.add(temperature, {"device_id": device_id})
 
     def _get_energy_reading(self) -> float:
-        """Get current energy reading (placeholder)"""
+        """Get current energy reading (reference implementation)"""
         # In real implementation, this would read from device sensors
         return 0.0
 

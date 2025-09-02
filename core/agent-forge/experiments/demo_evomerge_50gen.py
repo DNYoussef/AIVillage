@@ -30,31 +30,31 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class MockModel:
-    """Mock model for demonstration purposes."""
+class DemoModel:
+    """Demo model for demonstration purposes."""
 
     def __init__(self, name: str, fitness_scores: dict = None):
         self.name = name
-        self.config = {"model_type": "mock", "name": name}
+        self.config = {"model_type": "demo", "name": name}
         self.fitness_scores = fitness_scores or {}
         self.parameters = random.randint(15000000, 17000000)  # ~16M parameters like HRRM
 
     def save_pretrained(self, path):
-        """Mock save function."""
+        """Demo save function."""
         Path(path).mkdir(parents=True, exist_ok=True)
         with open(Path(path) / "config.json", "w") as f:
             json.dump(self.config, f)
-        logger.info(f"Mock model saved to {path}")
+        logger.info(f"Demo model saved to {path}")
 
 
-class MockEvaluator:
-    """Mock evaluator for demonstration."""
+class DemoEvaluator:
+    """Demo evaluator for demonstration."""
 
     def __init__(self):
         self.domains = ["code", "math", "multilingual", "structured_data"]
 
     async def evaluate(self, model, tokenizer=None):
-        """Mock evaluation with realistic score variations."""
+        """Demo evaluation with realistic score variations."""
         scores = {}
 
         # Simulate realistic performance scores with some randomness
@@ -69,12 +69,12 @@ class MockEvaluator:
         return scores
 
 
-class MockMergeOperators:
-    """Mock merge operators for demonstration."""
+class DemoMergeOperators:
+    """Demo merge operators for demonstration."""
 
     @staticmethod
     def linear_merge(models, weights=None):
-        """Mock linear merge."""
+        """Demo linear merge."""
         if not models:
             return None
         # Create new model with combined fitness
@@ -83,42 +83,42 @@ class MockMergeOperators:
             scores = [m.fitness_scores.get(domain, 0.5) for m in models if hasattr(m, "fitness_scores")]
             combined_fitness[domain] = np.mean(scores) if scores else 0.5
 
-        result = MockModel(f"linear_merge_{len(models)}_models")
+        result = DemoModel(f"linear_merge_{len(models)}_models")
         result.fitness_scores = combined_fitness
         return result
 
     @staticmethod
     def slerp_merge(model1, model2, t=0.5):
-        """Mock SLERP merge."""
+        """Demo SLERP merge."""
         combined_fitness = {}
         for domain in ["code", "math", "multilingual", "structured_data"]:
             score1 = model1.fitness_scores.get(domain, 0.5)
             score2 = model2.fitness_scores.get(domain, 0.5)
             combined_fitness[domain] = score1 * (1 - t) + score2 * t
 
-        result = MockModel(f"slerp_merge_{model1.name}_{model2.name}")
+        result = DemoModel(f"slerp_merge_{model1.name}_{model2.name}")
         result.fitness_scores = combined_fitness
         return result
 
     @staticmethod
     def ties_merge(models):
-        """Mock TIES merge."""
-        return MockMergeOperators.linear_merge(models)
+        """Demo TIES merge."""
+        return DemoMergeOperators.linear_merge(models)
 
     @staticmethod
     def dare_merge(models):
-        """Mock DARE merge."""
-        return MockMergeOperators.linear_merge(models)
+        """Demo DARE merge."""
+        return DemoMergeOperators.linear_merge(models)
 
     @staticmethod
     def frankenmerge(models):
-        """Mock Frankenmerge."""
-        return MockMergeOperators.linear_merge(models)
+        """Demo Frankenmerge."""
+        return DemoMergeOperators.linear_merge(models)
 
     @staticmethod
     def dfs_merge(models):
-        """Mock DFS merge."""
-        return MockMergeOperators.linear_merge(models)
+        """Demo DFS merge."""
+        return DemoMergeOperators.linear_merge(models)
 
 
 class MergeCandidate:
@@ -151,15 +151,15 @@ async def demo_50_generation_evomerge():
     output_dir = Path("demo_evomerge_output")
     output_dir.mkdir(exist_ok=True)
 
-    merge_ops = MockMergeOperators()
-    evaluator = MockEvaluator()
+    merge_ops = DemoMergeOperators()
+    evaluator = DemoEvaluator()
 
     # Create initial 3 core models (mock HRRM models)
     logger.info("[SEED] Creating initial 3 core HRRM models...")
     core_models = [
-        MockModel("hrrm_planner", {"code": 0.7, "math": 0.6, "multilingual": 0.5, "structured_data": 0.8}),
-        MockModel("hrrm_reasoner", {"code": 0.6, "math": 0.8, "multilingual": 0.6, "structured_data": 0.7}),
-        MockModel("hrrm_memory", {"code": 0.5, "math": 0.7, "multilingual": 0.8, "structured_data": 0.6}),
+        DemoModel("hrrm_planner", {"code": 0.7, "math": 0.6, "multilingual": 0.5, "structured_data": 0.8}),
+        DemoModel("hrrm_reasoner", {"code": 0.6, "math": 0.8, "multilingual": 0.6, "structured_data": 0.7}),
+        DemoModel("hrrm_memory", {"code": 0.5, "math": 0.7, "multilingual": 0.8, "structured_data": 0.6}),
     ]
 
     # Generate initial population using all 8 merge technique combinations
@@ -263,7 +263,7 @@ async def demo_50_generation_evomerge():
 
                 # Create winner child
                 model_path = output_dir / f"gen{gen+1}_winner{winner_idx}_child{child_idx}"
-                child_model = MockModel(f"gen{gen+1}_winner{winner_idx}_child{child_idx}")
+                child_model = DemoModel(f"gen{gen+1}_winner{winner_idx}_child{child_idx}")
                 child_model.fitness_scores = child_fitness
                 child_model.save_pretrained(model_path)
 
@@ -302,7 +302,7 @@ async def demo_50_generation_evomerge():
 
             # Create loser child
             model_path = output_dir / f"gen{gen+1}_loser_group{group_idx}"
-            child_model = MockModel(f"gen{gen+1}_loser_group{group_idx}")
+            child_model = DemoModel(f"gen{gen+1}_loser_group{group_idx}")
             child_model.fitness_scores = combined_fitness
             child_model.save_pretrained(model_path)
 

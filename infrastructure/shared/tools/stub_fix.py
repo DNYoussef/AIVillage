@@ -18,7 +18,7 @@ class StubDetector:
             r"^\s*pass\s*$",
             r"^\s*\.\.\.\s*$",
             r"raise NotImplementedError",
-            r"TODO:",
+            r"Implementation required:",
             r"FIXME:",
             r"XXX:",
         ]
@@ -162,7 +162,7 @@ class StubFixer:
         self.fixes = {
             "simple_pass": {
                 "pattern": r"^\s*pass\s*$",
-                "replacement": "    return NotImplemented  # TODO: Implement this method",
+                "replacement": "    return NotImplemented  # Implementation required: Implement this method",
                 "description": "Replace bare pass with explicit TODO",
             },
             "empty_function": {

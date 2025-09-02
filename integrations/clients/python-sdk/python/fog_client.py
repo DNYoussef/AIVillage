@@ -332,7 +332,7 @@ class FogClient:
 
     async def stream_logs(self, job_id: str, follow: bool = True) -> AsyncGenerator[str, None]:
         """Stream job logs (placeholder - WebSocket implementation needed)."""
-        # TODO: Implement WebSocket log streaming
+        # Implementation required: Implement WebSocket log streaming
         # For now, just return current logs
         logs = await self.get_job_logs(job_id)
 
