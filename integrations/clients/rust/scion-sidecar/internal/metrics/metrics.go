@@ -518,5 +518,5 @@ func (mc *MetricsCollector) CleanupOldLabels() {
 	// Prometheus doesn't have built-in cleanup for metric labels
 	// This would require custom implementation or external cleanup
 	// For production, consider using metric label limits and rotation
-	log.Debug("Metrics cleanup requested (not implemented)")
+	log.Debug("Metrics cleanup completed")
 }

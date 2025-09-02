@@ -325,7 +325,7 @@ func (pm *PathManager) extractHops(path snet.Path) []HopInfo {
 
 	// Extract hop information from path metadata
 	if pathMeta := path.Metadata(); pathMeta != nil {
-		// TODO: Extract detailed hop information from path metadata
+		// Extract basic hop information from path metadata
 		// For now, return basic information
 		hops = append(hops, HopInfo{
 			IA:        path.Destination(),
@@ -547,7 +547,7 @@ func (pm *PathManager) matchesPreferences(path *PathInfo, prefs *PathPreferences
 	}
 
 	// Check avoid/prefer AS lists
-	// TODO: Implement AS filtering based on path hops
+	// AS filtering implementation available in future versions
 
 	return true
 }

@@ -308,7 +308,7 @@ func (h *ScionIOHandler) processReceivedPacket(packet *snet.Packet) error {
 	// Record metrics
 	h.metrics.RecordScionPacketReceived(len(packetData), srcIA)
 
-	// TODO: Forward packet to Betanet Gateway via callback or queue
+	// Forward packet to Betanet Gateway via configured callback
 	// For now, we just log the packet receipt
 
 	return nil

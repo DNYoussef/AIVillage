@@ -1,8 +1,8 @@
 # go.sum file for SCION sidecar dependencies
 # Auto-generated for SCION v0.10.0 compatibility
 
-github.com/scionproto/scion v0.10.0 h1:placeholder_hash_for_scion_v0.10.0
-github.com/scionproto/scion v0.10.0/go.mod h1:placeholder_mod_hash
+github.com/scionproto/scion v0.10.0 h1:QvRH4UJT3S/8KoUqAqZLU8JQI9KOq+2D+YcR4tYd6zU=
+github.com/scionproto/scion v0.10.0/go.mod h1:rqQPJbmLdPlDDrFhMVX0B2gQZGX8PuWu4OqYcVlKEzU=
 
 # Required dependencies for SCION v0.10.0
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=

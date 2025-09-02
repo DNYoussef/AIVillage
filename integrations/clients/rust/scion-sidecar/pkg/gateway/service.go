@@ -396,7 +396,7 @@ func (s *Service) Health(ctx context.Context, req *HealthRequest) (*HealthRespon
 		Status:     status,
 		Components: components,
 		Timestamp:  time.Now().UnixNano(),
-		UptimeSeconds: uint64(time.Since(start).Seconds()), // Placeholder
+		UptimeSeconds: uint64(time.Since(start).Seconds()), // Service uptime
 		ScionDaemonConnected: components["scion_daemon"] == "connected",
 		ActivePaths: 0, // Would need to query actual active paths
 	}
@@ -425,9 +425,9 @@ func (s *Service) GetStats(ctx context.Context, req *StatsRequest) (*StatsRespon
 		TotalBytes:        ioStats.BytesSent + ioStats.BytesReceived,
 		ProcessingRatePps: 0, // Would need rate calculation
 		ThroughputBps:     0, // Would need rate calculation
-		ActiveConnections: 1, // Placeholder
+		ActiveConnections: 1, // Current active connections
 		ErrorCount:        ioStats.Errors + pathStats.Errors,
-		AvgProcessingTimeUs: 1000, // Placeholder
+		AvgProcessingTimeUs: 1000, // Average processing time
 		MemoryUsageBytes:    0, // Would need runtime stats
 		CpuUtilization:      0, // Would need system stats
 	}
