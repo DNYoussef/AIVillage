@@ -222,7 +222,7 @@ jobs:
         echo "::endgroup::"
     
     - name: Upload Transport Test Results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: transport-test-results-${{ matrix.protocol }}
@@ -298,7 +298,7 @@ jobs:
         echo "::endgroup::"
     
     - name: Upload Security Test Results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: p2p-security-test-results
@@ -409,7 +409,7 @@ jobs:
         echo "::endgroup::"
     
     - name: Upload Integration Test Results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: p2p-integration-test-results
@@ -474,7 +474,7 @@ jobs:
         echo "::endgroup::"
     
     - name: Upload Mobile Test Results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: mobile-test-results
@@ -575,7 +575,7 @@ jobs:
         echo "::endgroup::"
     
     - name: Upload Performance Results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: p2p-performance-results
@@ -715,7 +715,7 @@ jobs:
         echo "::endgroup::"
     
     - name: Upload Consolidated P2P Report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: p2p-consolidated-report

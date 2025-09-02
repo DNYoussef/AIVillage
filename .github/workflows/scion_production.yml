@@ -49,8 +49,8 @@ jobs:
         run: |
           echo "Running critical security validations..."
 
-          # Secret detection
-          detect-secrets scan --baseline .secrets.baseline || {
+          # Secret detection (exclude test files)
+          detect-secrets scan --baseline .secrets.baseline --exclude-files 'tests/.*\.py$' || {
             echo "::error::Secrets detected in production code"
             exit 1
           }
@@ -63,8 +63,8 @@ jobs:
             }
           else
             echo "[INFO] Secret sanitization script not found, using basic validation"
-            # Basic validation: check for common security issues
-            if grep -r "password.*=.*['\"]" --include="*.py" core/ infrastructure/ 2>/dev/null | grep -v test; then
+            # Basic validation: check for common security issues (exclude test files)
+            if grep -r "password.*=.*['\"]" --include="*.py" core/ infrastructure/ 2>/dev/null | grep -v test | grep -v '/tests/'; then
               echo "::error::Hardcoded passwords found in production code"
               exit 1
             fi
