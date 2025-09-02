@@ -109,7 +109,7 @@ jobs:
                   echo "[INFO] Skipping legitimate stub utility: $file"
                   continue
                 fi
-                echo "❌ Found placeholder pattern '$pattern' in production code: $file"
+                echo "[FAIL] Found placeholder pattern '$pattern' in production code: $file"
                 grep -n -i "$pattern" "$file" 2>/dev/null || true
                 VIOLATIONS_FOUND=true
               fi
@@ -118,12 +118,12 @@ jobs:
 
           if [ "$VIOLATIONS_FOUND" = true ]; then
             echo ""
-            echo "❌ PLACEHOLDER VALIDATION FAILED"
+            echo "[FAIL] PLACEHOLDER VALIDATION FAILED"
             echo "Production code contains placeholder patterns that must be removed."
             echo "Please implement all functionality before merging."
             exit 1
           else
-            echo "✅ PLACEHOLDER VALIDATION PASSED"
+            echo "[PASS] PLACEHOLDER VALIDATION PASSED"
             echo "No placeholder patterns found in production code."
           fi
 
@@ -134,7 +134,7 @@ jobs:
           PROTO_FILE="proto/betanet_gateway.proto"
 
           if [ ! -f "$PROTO_FILE" ]; then
-            echo "❌ Proto file not found: $PROTO_FILE"
+            echo "[FAIL] Proto file not found: $PROTO_FILE"
             exit 1
           fi
 
@@ -151,12 +151,12 @@ jobs:
 
           for method in "${REQUIRED_METHODS[@]}"; do
             if ! grep -q "rpc $method" "$PROTO_FILE"; then
-              echo "❌ Required gRPC method '$method' not found in $PROTO_FILE"
+              echo "[FAIL] Required gRPC method '$method' not found in $PROTO_FILE"
               exit 1
             fi
           done
 
-          echo "✅ All required gRPC methods found in proto definition"
+          echo "[PASS] All required gRPC methods found in proto definition"
 
   # Go SCION Sidecar Build and Test
   scion-sidecar:
@@ -215,10 +215,10 @@ jobs:
           echo "Test coverage: $COVERAGE%"
 
           if (( $(echo "$COVERAGE < 80" | bc -l) )); then
-            echo "❌ Test coverage below 80%: $COVERAGE%"
+            echo "[FAIL] Test coverage below 80%: $COVERAGE%"
             exit 1
           else
-            echo "✅ Test coverage meets requirement: $COVERAGE%"
+            echo "[PASS] Test coverage meets requirement: $COVERAGE%"
           fi
 
       - name: Build binary
@@ -611,20 +611,20 @@ jobs:
 
             # Validate targets
             if (( $(echo "$THROUGHPUT >= 500000" | bc -l) )); then
-              echo "✅ Throughput target met: $THROUGHPUT >= 500,000"
+              echo "[PASS] Throughput target met: $THROUGHPUT >= 500,000"
             else
-              echo "❌ Throughput target missed: $THROUGHPUT < 500,000"
+              echo "[FAIL] Throughput target missed: $THROUGHPUT < 500,000"
               exit 1
             fi
 
             if (( $(echo "$P95_LATENCY <= 750" | bc -l) )); then
-              echo "✅ Latency target met: $P95_LATENCY <= 750ms"
+              echo "[PASS] Latency target met: $P95_LATENCY <= 750ms"
             else
-              echo "❌ Latency target missed: $P95_LATENCY > 750ms"
+              echo "[FAIL] Latency target missed: $P95_LATENCY > 750ms"
               exit 1
             fi
           else
-            echo "❌ Load test results not found"
+            echo "[FAIL] Load test results not found"
             exit 1
           fi
 
@@ -689,19 +689,19 @@ jobs:
       - name: Notify success
         if: needs.scion-sidecar.result == 'success' && needs.betanet-gateway.result == 'success' && needs.python-integration.result == 'success' && needs.e2e-tests.result == 'success'
         run: |
-          echo "✅ SCION Gateway CI Pipeline Completed Successfully"
+          echo "[PASS] SCION Gateway CI Pipeline Completed Successfully"
           echo "All components built, tested, and validated:"
-          echo "  • Go SCION Sidecar: ✅ Built and tested"
-          echo "  • Rust Betanet Gateway: ✅ Built and tested"
-          echo "  • Python Integration: ✅ Tested and validated"
-          echo "  • E2E Tests: ✅ All scenarios passed"
-          echo "  • No placeholders detected: ✅ Production ready"
+          echo "  - Go SCION Sidecar: [PASS] Built and tested"
+          echo "  - Rust Betanet Gateway: [PASS] Built and tested"
+          echo "  - Python Integration: [PASS] Tested and validated"
+          echo "  - E2E Tests: [PASS] All scenarios passed"
+          echo "  - No placeholders detected: [PASS] Production ready"
           echo ""
           echo "🎉 Ready for deployment!"
 
       - name: Notify failure
         if: failure()
         run: |
-          echo "❌ SCION Gateway CI Pipeline Failed"
+          echo "[FAIL] SCION Gateway CI Pipeline Failed"
           echo "Check the failed jobs above for details."
           exit 1

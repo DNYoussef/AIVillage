@@ -1,0 +1,228 @@
+# AIVillage Consolidated Requirements - Final Version
+# Last Updated: 2025-08-05
+# This file consolidates all requirements from various files into a single source of truth
+# Install with: pip install -r requirements_consolidated_final.txt
+
+# ============================================================================
+# CORE DEPENDENCIES - Essential for base functionality
+# ============================================================================
+
+# Web Framework & API
+fastapi>=0.112.0
+uvicorn[standard]>=0.30.6
+gunicorn>=23.0.0
+aiofiles>=23.2.1
+python-multipart>=0.0.9
+
+# Data Models & Validation
+pydantic>=2.8.2
+pydantic-settings>=2.4.0
+annotated-types>=0.7.0
+
+# Async & Networking
+aiohttp>=3.12.14
+httpx>=0.27.0
+websockets>=12.0
+asyncio-mqtt>=0.16.1
+httptools>=0.6.1
+uvloop>=0.20.0; platform_system != 'Windows'
+
+# Database & Storage
+sqlalchemy>=2.0.31
+alembic>=1.13.2
+psycopg2-binary>=2.9.9
+redis>=5.0.8
+aiosqlite>=0.20.0
+neo4j>=5.3.0
+qdrant-client>=1.11.1
+
+# ============================================================================
+# AI/ML DEPENDENCIES
+# ============================================================================
+
+# PyTorch Ecosystem
+
+
+# Transformers & NLP
+transformers>=4.44.0
+tokenizers>=0.19.1
+accelerate>=0.30.3
+bitsandbytes>=0.43.1
+datasets>=2.20.0
+huggingface-hub>=0.24.5
+sentence-transformers>=3.0.1
+peft>=0.12.0
+anthropic>=0.28.0
+openai==1.99.6
+tiktoken==0.11.0
+
+# Vector Search & Embeddings
+faiss-cpu>=1.8.0
+chromadb>=0.5.7
+
+# Scientific Computing
+numpy>=1.26.4,<2.0.0
+scipy>=1.14.0
+pandas>=2.2.2
+scikit-learn>=1.5.1
+
+# ============================================================================
+# VISUALIZATION & MONITORING
+# ============================================================================
+
+# Plotting
+matplotlib>=3.9.1
+seaborn>=0.13.2
+plotly==6.2.0
+bokeh>=3.5.2
+
+# Monitoring & Logging
+prometheus-client>=0.20.0
+structlog>=24.4.0
+sentry-sdk>=2.13.0
+wandb==0.21.1
+grafana-api>=1.0.3
+
+# ============================================================================
+# SECURITY DEPENDENCIES
+# ============================================================================
+
+# Cryptography & Auth
+cryptography>=43.0.1
+PyJWT>=2.9.0
+bcrypt>=4.2.0
+Authlib>=1.3.1
+passlib[bcrypt]>=1.7.4
+python-jose[cryptography]>=3.3.0
+pyotp>=2.9.0
+
+# Security Scanning
+pip-audit>=2.7.3
+safety>=3.2.7
+bandit>=1.7.7
+
+# ============================================================================
+# P2P & MESH NETWORKING (Sprint 6 Infrastructure)
+# ============================================================================
+
+# Compression & Serialization
+bitarray>=3.6.0
+lz4>=4.4.4
+
+# Blockchain & Wallet
+bittensor-wallet>=4.0.0
+
+# Note: Platform-specific P2P dependencies
+libp2p>=0.2.9
+# bluetooth-mesh>=0.9.1  # Uncomment if Bluetooth mesh needed
+zeroconf==0.147.0
+
+# ============================================================================
+# UTILITIES
+# ============================================================================
+
+# System & Process
+psutil>=5.9.8
+python-dotenv>=1.0.0
+click>=8.1.7
+colorama>=0.4.6
+
+# Web Utilities
+Jinja2>=3.1.4
+Werkzeug>=3.0.6
+bleach>=6.1.0
+requests>=2.32.3
+urllib3>=2.2.2
+Babel>=2.15.0
+twilio==9.7.0
+googletrans==4.0.2
+# Image & Media Processing
+pillow>=10.4.0
+opencv-python>=4.10.0
+imageio>=2.34.2
+scikit-image>=0.24.0
+librosa>=0.10.2
+sounddevice>=0.5.0
+soundfile>=0.12.1
+
+# ============================================================================
+# DEVELOPMENT DEPENDENCIES
+# ============================================================================
+
+# Testing
+pytest>=8.3.2
+pytest-asyncio>=0.23.8
+pytest-cov>=5.0.0
+pytest-xdist>=3.6.1
+pytest-mock>=3.14.0
+pytest-timeout>=2.3.1
+pytest-benchmark>=4.0.0
+pytest-randomly>=3.15.0
+pytest-env>=1.1.3
+hypothesis>=6.111.0
+
+# Code Quality
+black>=24.8.0
+ruff>=0.6.1
+mypy>=1.11.1
+isort>=5.13.2
+flake8>=7.1.1
+pycodestyle>=2.12.1
+pre-commit>=3.8.0
+coverage>=7.6.1
+
+# Development Tools
+ipython>=8.26.0
+jupyter>=1.0.0
+jupyterlab>=4.2.4
+memray>=1.13.4; platform_system != 'Windows'
+
+# Documentation
+sphinx>=7.4.7
+sphinx-rtd-theme>=2.0.0
+
+# ============================================================================
+# EXPERIMENTAL DEPENDENCIES
+# ============================================================================
+
+# Advanced AI/ML
+mcts>=1.0.0
+llama-cpp-python>=0.2.89
+
+# LangChain Ecosystem
+langchain>=0.2.16
+langchain-community>=0.2.16
+
+# UI/UX Experimental
+streamlit>=1.37.1
+gradio>=4.44.0
+
+# Research Tools
+arxiv>=2.1.0
+
+# ============================================================================
+# PLATFORM-SPECIFIC NOTES
+# ============================================================================
+
+# Mobile Development (optional, platform-specific)
+# pyjnius>=1.6.1  # For Android development
+# pyobjc-core>=10.1  # For iOS/macOS development
+
+# Windows-specific exclusions handled by environment markers above
+# Some packages like uvloop and triton are not available on Windows
+
+# ============================================================================
+# INSTALLATION COMMANDS
+# ============================================================================
+
+# Basic installation:
+# pip install -r requirements_consolidated_final.txt
+
+# For development:
+# pip install -r requirements_consolidated_final.txt --extra-index-url https://download.pytorch.org/whl/cpu
+
+# For production with GPU:
+# pip install -r requirements_consolidated_final.txt --extra-index-url https://download.pytorch.org/whl/cu118
+
+# For experimental features:
+# pip install -r requirements_consolidated_final.txt --all-extras

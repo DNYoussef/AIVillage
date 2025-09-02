@@ -71,7 +71,7 @@ jobs:
           fi
 
           echo "passed=true" >> $GITHUB_OUTPUT
-          echo "✅ Security pre-flight passed"
+          echo "[PASS] Security pre-flight passed"
 
       - name: 🚨 Emergency Bypass Validation
         if: github.event.inputs.emergency_bypass == 'true'
@@ -84,7 +84,7 @@ jobs:
             exit 1
           fi
 
-          echo "⚠️ Emergency bypass validated - proceeding with deployment"
+          echo "[WARNING] Emergency bypass validated - proceeding with deployment"
 
   # ============================================
   # STAGE 2: Enhanced Production Build
@@ -315,7 +315,7 @@ jobs:
           # Dependency security check
           safety check --json --output safety-report.json || echo "Safety completed with warnings"
 
-          echo "✅ Security scanning completed"
+          echo "[PASS] Security scanning completed"
 
       - name: Check for forbidden terms
         run: |
@@ -335,7 +335,7 @@ jobs:
               echo "::error::Insecure feature flag compiled"
               exit 1
             else
-              echo "✅ Insecure feature blocked"
+              echo "[PASS] Insecure feature blocked"
             fi
           fi
 
@@ -378,9 +378,9 @@ jobs:
           echo "" >> compliance-reports/security-report.md
 
           if [[ "${{ needs.scion-prod.result }}" == "success" ]]; then
-            echo "✅ **Overall Status:** PASSED - Safe for production deployment" >> compliance-reports/security-report.md
+            echo "[PASS] **Overall Status:** PASSED - Safe for production deployment" >> compliance-reports/security-report.md
           else
-            echo "❌ **Overall Status:** FAILED - Deployment blocked" >> compliance-reports/security-report.md
+            echo "[FAIL] **Overall Status:** FAILED - Deployment blocked" >> compliance-reports/security-report.md
           fi
 
       - name: Upload Compliance Report
@@ -409,11 +409,11 @@ jobs:
           emergency_bypass="${{ needs.security-preflight.outputs.emergency-bypass }}"
 
           if [[ "$emergency_bypass" == "true" ]]; then
-            echo "⚠️ Emergency bypass in effect - deployment proceeding with elevated monitoring"
+            echo "[WARNING] Emergency bypass in effect - deployment proceeding with elevated monitoring"
           elif [[ "$security_passed" == "true" && "$build_passed" == "success" ]]; then
-            echo "✅ All gates passed - deployment authorized"
+            echo "[PASS] All gates passed - deployment authorized"
           else
-            echo "❌ Deployment gate failed:"
+            echo "[FAIL] Deployment gate failed:"
             echo "  Security Gate: $security_passed"
             echo "  Build Status: $build_passed"
             echo "BLOCKING PRODUCTION DEPLOYMENT"

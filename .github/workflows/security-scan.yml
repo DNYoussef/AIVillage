@@ -570,7 +570,7 @@ jobs:
               | Low | ${report.scan_summary.low_count} |
               | **Total** | **${report.total_issues}** |
               
-              ${report.scan_summary.critical_count > 0 ? '⚠️ **Critical security issues found** - Please address before merging' : '✅ No critical security issues found'}
+              ${report.scan_summary.critical_count > 0 ? '[WARNING] **Critical security issues found** - Please address before merging' : '[PASS] No critical security issues found'}
               
               ---
               _Security scan completed at ${report.timestamp}_`;

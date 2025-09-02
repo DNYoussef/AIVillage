@@ -1,0 +1,403 @@
+[project]
+name = "aivillage"
+version = "0.5.1"  # Updated to test TOML validation hook
+description = "Self-improving multi-agent system with evolutionary capabilities"
+authors = [
+    {name = "AIVillage Team", email = "team@aivillage.dev"}
+]
+maintainers = [
+    {name = "AIVillage Team", email = "team@aivillage.dev"}
+]
+requires-python = ">=3.9"
+readme = "docs/README.md"
+license = {file = "LICENSE"}
+keywords = ["ai", "multi-agent", "evolutionary", "machine-learning", "transformers"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    # Core Web Framework
+    "fastapi>=0.112.0",
+    "uvicorn[standard]>=0.30.6",
+    "pydantic>=2.8.2",
+    "pydantic-settings>=2.4.0",
+    "python-multipart>=0.0.9",
+    "aiofiles>=23.2.1",
+    "aiohttp>=3.12.14",
+    "httpx>=0.27.0",
+    "websockets>=12.0",
+
+    # Database & Storage
+    "sqlalchemy>=2.0.31",
+    "alembic>=1.13.2",
+    "psycopg2-binary>=2.9.9",
+    "redis>=5.0.8",
+    "aiosqlite>=0.20.0",
+    "neo4j>=5.3.0",
+    "qdrant-client>=1.11.1",
+
+    # AI/ML Core Stack
+    "torch>=2.4.0",
+    "torchvision>=0.19.0",
+    "torchaudio>=2.4.0",
+    "transformers>=4.44.0",
+    "tokenizers>=0.19.1",
+    "accelerate>=0.30.3",
+    "bitsandbytes>=0.43.1",
+    "datasets>=2.20.0",
+    "huggingface-hub>=0.24.5",
+
+    # AI/ML Extensions
+    "sentence-transformers>=3.0.1",
+    "faiss-cpu>=1.8.0",
+    "triton>=2.3.0; platform_machine != 'arm64' and platform_system != 'Windows'",
+    "xformers>=0.0.26; platform_machine != 'arm64' and platform_system != 'Windows'",
+    "peft>=0.12.0",
+
+    # Data Science & Analysis
+    "numpy>=1.26.4,<2.0.0",
+    "scipy>=1.14.0",
+    "pandas>=2.2.2",
+    "scikit-learn>=1.5.1",
+    "matplotlib>=3.9.1",
+    "seaborn>=0.13.2",
+    "plotly>=5.23.0",
+
+    # Security & Authentication
+    "cryptography>=43.0.1",
+    "PyJWT>=2.9.0",
+    "bcrypt>=4.2.0",
+    "Authlib>=1.3.1",
+
+    # Web Security & Templates
+    "Jinja2>=3.1.4",
+    "Werkzeug>=3.0.6",
+    "bleach>=6.1.0",
+    "pillow>=10.4.0",
+
+    # HTTP & Networking
+    "requests>=2.32.3",
+    "urllib3>=2.2.2",
+    "certifi>=2024.7.4",
+
+    # Configuration & Utilities
+    "python-dotenv>=1.0.1",
+    "PyYAML>=6.0.2",
+    "click>=8.1.7",
+    "tqdm>=4.66.5",
+    "rich>=13.7.1",
+
+    # Performance & Serialization
+    "orjson>=3.10.6",
+    "msgpack>=1.0.8",
+    "lz4>=4.3.3",
+    "zstandard>=0.23.0",
+    "psutil>=6.0.0",
+
+    # AI Services Integration
+    "openai>=1.40.1",
+    "anthropic>=0.28.0",
+    "ollama>=0.3.2",
+
+    # Text Processing & NLP
+    "nltk>=3.8.1",
+    "langdetect>=1.0.9",
+    "beautifulsoup4>=4.12.3",
+    "textstat>=0.7.4",
+
+    # Graph & Network Processing
+    "networkx>=3.3",
+    "community>=1.0.0b1",
+
+    # System Integration
+    "plyer>=2.1.0",
+    "fsspec>=2024.6.1",
+
+    # Compatibility & Type Support
+    "typing-extensions>=4.12.2",
+    "packaging>=24.1",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.10.0",
+    "torch>=2.0.0",  # For compression tests
+    "numpy>=1.24.0",
+]
+
+dev = [
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+
+p2p = [
+    # P2P Transport Dependencies - CPU-optimized wheels
+    "cryptography>=42,<44",
+    "pynacl>=1.5",
+    "pybluez>=0.24",
+    "aioquic>=1.2",
+    "h2>=4.1",
+    "lz4>=4.3.2",
+    "aiohttp>=3.9.0",
+    "netifaces>=0.11.0",
+    "msgpack>=1.0.5",
+    "aiofiles>=23.1.0",
+    "uvloop>=0.17.0; platform_system!='Windows'",
+]
+[project.urls]
+Homepage = "https://github.com/aivillage/aivillage"
+Documentation = "https://aivillage.readthedocs.io/"
+Repository = "https://github.com/aivillage/aivillage.git"
+"Bug Tracker" = "https://github.com/aivillage/aivillage/issues"
+Changelog = "https://github.com/aivillage/aivillage/blob/main/CHANGELOG.md"
+
+[project.scripts]
+aivillage = "core.cli:main"
+aivillage-server = "bin.server:main"
+aivillage-main = "bin.main:main"
+forge = "core.agent_forge.cli:main"
+village-dashboard = "core.dashboard:main"
+reliability-metrics = "core.cli:reliability_metrics"
+latency-metrics = "core.cli:latency_metrics"
+
+[build-system]
+requires = ["setuptools>=75.0.0", "wheel>=0.44.0"]
+build-backend = "setuptools.build_meta"
+
+# Simplified Code Quality Configuration (compatible with ruff 0.0.263)
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+fix = true
+
+# Core rule set - focus on essential rules that work reliably
+select = [
+    "E",    # pycodestyle errors (critical)
+    "F",    # Pyflakes (logical errors, undefined names)
+    "I",    # isort import sorting
+    "UP",   # pyupgrade (Python version upgrades)
+]
+
+# Ignore problematic rules for old ruff version
+ignore = [
+    "E501",    # Line too long (handled by black formatter)
+    "PLR0912", # Too many branches (complex code structure)
+    "PLR2004", # Magic value comparison (context-dependent)
+    "SIM105",  # Use contextlib.suppress (manual fix only)
+    "S112",    # Try-except-continue (compatibility bridge pattern)
+]
+
+# Unified exclude patterns (replaces multiple different configs)
+exclude = [
+    ".*",                    # Hidden files and directories
+    "__pycache__",
+    "build", "dist", "target",  # Build artifacts
+    "*.egg-info",
+    "venv*", "*env*", "ENV",    # Virtual environments (all variants)
+    "archived", "deprecated", "experimental",  # Project-specific exclusions
+    "tmp*", "*tmp*", "*_tmp",   # Temporary directories
+    "wandb*", "logs", "cache",  # Generated content
+    "new_env",                  # Project-specific environment
+    "models--*", "download_env", # Model and download directories
+    ".git", ".mypy_cache", ".ruff_cache", ".pytest_cache",  # Tool caches
+]
+
+[tool.ruff.per-file-ignores]
+# Test files have relaxed rules
+"tests/**/*.py" = [
+    "D",       # pydocstyle (no docstrings required in tests)
+    "ANN",     # flake8-annotations (no type hints required in tests)
+    "S",       # flake8-bandit (security rules relaxed for tests)
+    "PLR2004", # Magic value used in comparison (common in tests)
+    "PLR0913", # Too many arguments (test functions can be complex)
+]
+# Stub files and configuration
+"stubs/**/*.py" = [
+    "D", "ANN", "ARG001", "ERA001",  # Stubs are often incomplete
+]
+"**/conftest.py" = ["D", "ANN"]
+"setup.py" = ["D", "ANN"]
+# Temporary and experimental code
+"tmp*/**/*.py" = ["ALL"]  # Skip all rules for temporary code
+"experimental/**/*.py" = ["D", "PLR", "S"]  # Relaxed rules for experimental code
+
+[tool.ruff.pydocstyle]
+convention = "google"
+
+[tool.ruff.isort]
+known-first-party = ["agents", "communications", "core", "agent_forge", "utils", "ingestion", "src"]
+force-sort-within-sections = true
+split-on-trailing-comma = true
+
+[tool.black]
+line-length = 120
+target-version = ['py312']  # Match actual Python version
+include = '\.pyi?$'
+# Use same exclude patterns as ruff for consistency
+extend-exclude = '''
+/(
+    \..*              # Hidden files/directories
+  | __pycache__
+  | build | dist | target
+  | .*\.egg-info
+  | venv.* | .*env.* | ENV
+  | archived | deprecated | experimental
+  | tmp.* | .*tmp.* | .*_tmp
+  | wandb.* | logs | cache
+  | new_env
+  | models--.* | download_env
+)/
+'''
+
+[tool.mypy]
+python_version = "3.12"
+files = ["packages", "src"]
+ignore_missing_imports = true
+warn_return_any = false
+warn_unused_configs = false
+strict = false
+show_error_codes = true
+exclude = [
+    "deprecated/",
+    "experimental/",
+    "tmp.*",
+    ".*tmp.*",
+    ".*_tmp/",
+    "new_env/",
+    "wandb.*/",
+    "logs/",
+    "cache/",
+    "AIVillage/",  # Avoid conflict with src/
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "tests.*",
+    "stubs.*",
+    "langroid.*",
+    "qdrant_client.*",
+    "neo4j.*",
+    "faiss.*",
+    "chromadb.*",
+    "ollama.*",
+    "bitsandbytes.*",
+    "transformers.*",
+    "accelerate.*",
+    "peft.*",
+    "triton.*",
+    "xformers.*",
+    "sentence_transformers.*",
+    "gym.*",
+    "mcts.*",
+    "llama_cpp.*",
+    "grokfast",
+    "sleep_and_dream.*",
+]
+ignore_missing_imports = true
+ignore_errors = true
+
+[tool.bandit]
+exclude_dirs = ["tests", "stubs", "models", "download_env"]
+skips = ["B101", "B601"]  # Skip assert_used and shell_injection for tests
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "tests/*",
+    "stubs/*",
+    "models/*",
+    "download_env/*",
+    "experimental/*",
+    "scripts/*",
+    ".claude/*",
+    ".cache/*",
+    "tmp/*",
+    "tmp_*/*",
+    "**/__pycache__/*",
+    "src/agent_forge/*",
+    "src/software/*",
+    "src/architecture/*",
+    "src/servers/*",
+    "src/services/*",
+    "src/transport/*",
+    "src/security/*",
+    "src/monitoring/*",
+    "src/ingestion/*",
+    "src/android/*",
+    "src/mcp_servers/*",
+    "src/federation/*",
+    "src/agents/*",
+    "setup.py",
+    "conftest.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+# Unified pytest configuration (consolidating config/pytest.ini and tests/pytest.ini)
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+pythonpath = [
+    ".",
+    "src",
+    "packages"
+]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--strict-config",
+    "--tb=short",
+    "--continue-on-collection-errors",
+    "--maxfail=10",
+    "--showlocals"
+]
+norecursedirs = ["experimental", "deprecated", "archive", "build", "dist"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+    "ignore::UserWarning:torch.*"
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    "compression: marks tests as compression tests",
+    "mobile: marks tests as mobile constraint tests",
+    "validation: marks tests as validation tests",
+    "security: marks tests as security tests",
+    "e2e: marks tests as end-to-end tests",
+    "benchmark: marks tests as benchmark tests"
+]
+timeout = 300
+asyncio_mode = "auto"
