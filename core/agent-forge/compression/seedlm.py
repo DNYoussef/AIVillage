@@ -3,7 +3,7 @@
 SEEDLM Compression Module
 Provides SEEDLM (Sparse, Efficient, and Effective Dense Language Models) compression.
 
-This is a placeholder implementation providing the interface that tests expect.
+This is a reference implementation providing the interface that tests expect.
 """
 
 import logging

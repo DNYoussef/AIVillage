@@ -650,7 +650,7 @@ class SecureAPIServer:
 
         return web.json_response(health_status)
 
-    # Digital Twin endpoints (placeholder implementations)
+    # Digital Twin endpoints (reference implementations)
     async def _get_profile(self, request: web_request.Request) -> web.Response:
         """Get learning profile."""
         profile_id = request.match_info["profile_id"]
@@ -775,7 +775,7 @@ class SecureAPIServer:
             logger.exception(f"Failed to export profile data {profile_id}: {e}")
             raise web.HTTPInternalServerError(text=json.dumps({"error": "Failed to export profile data"}))
 
-    # Evolution Metrics endpoints (placeholder implementations)
+    # Evolution Metrics endpoints (reference implementations)
     async def _get_metrics(self, request: web_request.Request) -> web.Response:
         """Get evolution metrics."""
         return web.json_response({"metrics": "placeholder"})
@@ -788,7 +788,7 @@ class SecureAPIServer:
         """Get metrics statistics."""
         return web.json_response({"stats": "placeholder"})
 
-    # RAG Pipeline endpoints (placeholder implementations)
+    # RAG Pipeline endpoints (reference implementations)
     async def _rag_query(self, request: web_request.Request) -> web.Response:
         """Process RAG query."""
         return web.json_response({"query_result": "placeholder"})

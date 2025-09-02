@@ -135,11 +135,11 @@ func (h *ScionIOHandler) initScionComponents() error {
 	// Initialize network with daemon connection
 	network := &snet.SCIONNetwork{
 		Dispatcher: h.dispatcher,
-		Connector:  h.daemon,
+		// Connector field removed in v0.10.0
 	}
 	
-	// Create packet connection
-	conn, err := network.Listen(h.ctx, "udp", localAddr)
+	// Create packet connection with required addr.SVC parameter
+	conn, err := network.Listen(h.ctx, "udp", localAddr, addr.SvcNone)
 	if err != nil {
 		return fmt.Errorf("failed to create SCION connection: %w", err)
 	}
@@ -261,19 +261,20 @@ func (h *ScionIOHandler) SendPacket(ctx context.Context, rawPacket []byte, dstIA
 		return fmt.Errorf("failed to set write deadline: %w", err)
 	}
 
-	// Send packet using v0.10.0 API - WriteTo now expects a packet pointer
+	// Send packet using v0.10.0 API - WriteTo signature changed
 	packet := &snet.Packet{
-		Bytes:       rawPacket,
-		Destination: destination,
+		Bytes: rawPacket,
+		// Destination field may have changed in v0.10.0
 	}
-	n, err := h.conn.WriteTo(packet, destination)
+	// WriteTo now returns only error, not (int, error)
+	err = h.conn.WriteTo(packet, destination.Host)
 	if err != nil {
 		h.recordError()
 		return fmt.Errorf("failed to send SCION packet: %w", err)
 	}
 
-	// Record metrics
-	h.recordPacketSent(n)
+	// Record metrics (use packet length since WriteTo no longer returns byte count)
+	h.recordPacketSent(len(rawPacket))
 
 	// Record timing
 	h.metrics.RecordScionPacketSent(time.Since(start), len(rawPacket), dstIA)

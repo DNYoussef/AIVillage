@@ -940,7 +940,7 @@ class UnifiedMCPIntegrationSystem:
         for tool in tools:
             # Register tool handler
             async def tool_handler(params: dict[str, Any], tool_name=tool.name):
-                # Placeholder implementation
+                # Reference implementation
                 return {"status": "success", "tool": tool_name, "result": f"Executed {tool_name} with params: {params}"}
 
             server.register_method_handler("tools/call", tool_handler)

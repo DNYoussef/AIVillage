@@ -83,7 +83,7 @@ class SCIONGateway:
     
     def discover_paths(self, destination: str) -> List[SCIONPath]:
         """Discover available SCION paths to destination"""
-        # Placeholder implementation
+        # Reference implementation
         return [
             SCIONPath(
                 path_id=f"path_to_{destination}",

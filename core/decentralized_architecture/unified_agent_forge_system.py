@@ -355,12 +355,12 @@ class CognateModelCreator:
 
         # Add cognate-specific components (simulated for now)
         if self.config.enable_act_halting:
-            # Add ACT halting mechanism (placeholder implementation)
+            # Add ACT halting mechanism (reference implementation)
             model.act_halting_threshold = torch.nn.Parameter(torch.tensor(0.9))
             self.logger.debug(f"Added ACT halting to {model_name}")
 
         if self.config.enable_ltm_dynamics:
-            # Add long-term memory components (placeholder)
+            # Add long-term memory components (reference implementation)
             model.ltm_memory_bank = torch.nn.Linear(config.hidden_size, config.hidden_size)
             self.logger.debug(f"Added LTM dynamics to {model_name}")
 

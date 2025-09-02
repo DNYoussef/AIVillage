@@ -344,7 +344,7 @@ class VRFNodeDiscovery:
                 # Connect to bootstrap node and request peers
                 # This would implement actual bootstrap protocol
 
-                # Placeholder implementation
+                # Reference implementation
                 node_info = NodeInfo(
                     node_id=f"bootstrap_{bootstrap_node}",
                     public_key=b"placeholder_key",

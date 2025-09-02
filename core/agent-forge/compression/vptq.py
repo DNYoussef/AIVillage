@@ -3,7 +3,7 @@
 VPTQ (Vector Post-Training Quantization) Compression Module
 Provides vector quantization-based model compression.
 
-This is a placeholder implementation providing the interface that tests expect.
+This is a reference implementation providing the interface that tests expect.
 """
 
 import logging

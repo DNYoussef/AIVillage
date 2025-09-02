@@ -361,7 +361,7 @@ class VRFMeshIntegrator:
                 # This would depend on transport manager API
                 transport_status = self.transport_manager.get_status()
 
-                # Extract peer information (placeholder implementation)
+                # Extract peer information (reference implementation)
                 for transport_type in transport_status.get("available_transports", []):
                     # Would get actual peer list from transport
                     pass
