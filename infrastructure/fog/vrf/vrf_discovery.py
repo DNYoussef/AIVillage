@@ -9,16 +9,17 @@ Enhances fog node discovery with VRF-based secure selection:
 """
 
 import asyncio
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 import hashlib
 import logging
 import time
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any
 
-from .vrf_neighbor_selection import VRFNeighborSelector, NodeInfo, VRFProof
-from ..quorum.quorum_manager import QuorumManager
 from ..edge.beacon import EdgeBeacon
+from ..quorum.quorum_manager import QuorumManager
+from .vrf_neighbor_selection import NodeInfo, VRFNeighborSelector, VRFProof
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ class DiscoveryConfig:
     """Configuration for VRF discovery system."""
 
     # Bootstrap configuration
-    bootstrap_nodes: List[str] = field(default_factory=list)
+    bootstrap_nodes: list[str] = field(default_factory=list)
     bootstrap_timeout: float = 30.0
     min_bootstrap_success: int = 2
 
@@ -76,11 +77,11 @@ class DiscoveryResult:
     """Result of a discovery operation."""
 
     method: DiscoveryMethod
-    discovered_nodes: List[NodeInfo]
-    vrf_proof: Optional[VRFProof] = None
+    discovered_nodes: list[NodeInfo]
+    vrf_proof: VRFProof | None = None
     timestamp: float = field(default_factory=time.time)
     verification_passed: bool = True
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class VRFNodeDiscovery:
@@ -95,9 +96,9 @@ class VRFNodeDiscovery:
         self,
         node_id: str,
         vrf_selector: VRFNeighborSelector,
-        quorum_manager: Optional[QuorumManager] = None,
-        edge_beacon: Optional[EdgeBeacon] = None,
-        config: Optional[DiscoveryConfig] = None,
+        quorum_manager: QuorumManager | None = None,
+        edge_beacon: EdgeBeacon | None = None,
+        config: DiscoveryConfig | None = None,
         **kwargs,
     ):
         self.node_id = node_id
@@ -107,9 +108,9 @@ class VRFNodeDiscovery:
         self.config = config or DiscoveryConfig()
 
         # Discovery state
-        self.active_discoveries: Dict[DiscoveryMethod, asyncio.Task] = {}
-        self.discovery_cache: Dict[str, NodeInfo] = {}
-        self.discovery_history: List[DiscoveryResult] = []
+        self.active_discoveries: dict[DiscoveryMethod, asyncio.Task] = {}
+        self.discovery_cache: dict[str, NodeInfo] = {}
+        self.discovery_history: list[DiscoveryResult] = []
 
         # VRF discovery state
         self.current_discovery_seed = b""
@@ -117,7 +118,7 @@ class VRFNodeDiscovery:
         self.discovery_epoch = 0
 
         # Method handlers
-        self.discovery_handlers: Dict[DiscoveryMethod, Callable] = {
+        self.discovery_handlers: dict[DiscoveryMethod, Callable] = {
             DiscoveryMethod.BOOTSTRAP: self._discover_bootstrap,
             DiscoveryMethod.BEACON: self._discover_beacon,
             DiscoveryMethod.QUORUM: self._discover_quorum,
@@ -127,7 +128,7 @@ class VRFNodeDiscovery:
         }
 
         # Callbacks
-        self.discovery_callbacks: List[Callable[[DiscoveryResult], None]] = []
+        self.discovery_callbacks: list[Callable[[DiscoveryResult], None]] = []
 
         # Metrics
         self.metrics = {
@@ -141,8 +142,8 @@ class VRFNodeDiscovery:
         }
 
         # Background tasks
-        self._discovery_coordinator_task: Optional[asyncio.Task] = None
-        self._cache_cleanup_task: Optional[asyncio.Task] = None
+        self._discovery_coordinator_task: asyncio.Task | None = None
+        self._cache_cleanup_task: asyncio.Task | None = None
 
         logger.info(f"VRF node discovery initialized for {node_id}")
 
@@ -196,8 +197,8 @@ class VRFNodeDiscovery:
         logger.info("VRF node discovery stopped")
 
     async def discover_nodes(
-        self, methods: Optional[List[DiscoveryMethod]] = None, force_verification: bool = True
-    ) -> List[NodeInfo]:
+        self, methods: list[DiscoveryMethod] | None = None, force_verification: bool = True
+    ) -> list[NodeInfo]:
         """
         Discover nodes using specified methods with VRF verification.
 
@@ -265,7 +266,7 @@ class VRFNodeDiscovery:
         logger.info(f"Discovered {len(verified_nodes)} verified nodes using {len(methods)} methods")
         return verified_nodes
 
-    async def lookup_node(self, node_id: str) -> Optional[NodeInfo]:
+    async def lookup_node(self, node_id: str) -> NodeInfo | None:
         """Lookup specific node information."""
         # Check cache first
         if node_id in self.discovery_cache:
@@ -286,7 +287,7 @@ class VRFNodeDiscovery:
 
         return None
 
-    async def verify_discovery_proof(self, proof: VRFProof, discovered_nodes: List[str]) -> bool:
+    async def verify_discovery_proof(self, proof: VRFProof, discovered_nodes: list[str]) -> bool:
         """Verify a discovery proof from another node."""
         try:
             # Verify the VRF proof itself
@@ -334,7 +335,7 @@ class VRFNodeDiscovery:
             logger.error(f"Discovery method {method.value} failed: {e}")
             return DiscoveryResult(method=method, discovered_nodes=[], verification_passed=False, error_message=str(e))
 
-    async def _discover_bootstrap(self) -> List[NodeInfo]:
+    async def _discover_bootstrap(self) -> list[NodeInfo]:
         """Discover nodes via bootstrap."""
         discovered = []
 
@@ -357,7 +358,7 @@ class VRFNodeDiscovery:
 
         return discovered
 
-    async def _discover_beacon(self) -> List[NodeInfo]:
+    async def _discover_beacon(self) -> list[NodeInfo]:
         """Discover nodes via edge beacon."""
         discovered = []
 
@@ -385,7 +386,7 @@ class VRFNodeDiscovery:
 
         return discovered
 
-    async def _discover_quorum(self) -> List[NodeInfo]:
+    async def _discover_quorum(self) -> list[NodeInfo]:
         """Discover nodes via quorum manager."""
         discovered = []
 
@@ -414,7 +415,7 @@ class VRFNodeDiscovery:
 
         return discovered
 
-    async def _discover_dht(self) -> List[NodeInfo]:
+    async def _discover_dht(self) -> list[NodeInfo]:
         """Discover nodes via DHT lookup."""
         discovered = []
 
@@ -444,7 +445,7 @@ class VRFNodeDiscovery:
 
         return discovered
 
-    async def _discover_multicast(self) -> List[NodeInfo]:
+    async def _discover_multicast(self) -> list[NodeInfo]:
         """Discover nodes via local multicast."""
         discovered = []
 
@@ -460,7 +461,7 @@ class VRFNodeDiscovery:
 
         return discovered
 
-    async def _discover_gossip(self) -> List[NodeInfo]:
+    async def _discover_gossip(self) -> list[NodeInfo]:
         """Discover nodes via gossip protocol."""
         discovered = []
 
@@ -476,7 +477,7 @@ class VRFNodeDiscovery:
 
         return discovered
 
-    def _create_discovery_input(self, method: DiscoveryMethod, nodes: List[NodeInfo]) -> bytes:
+    def _create_discovery_input(self, method: DiscoveryMethod, nodes: list[NodeInfo]) -> bytes:
         """Create VRF input for discovery verification."""
         h = hashlib.sha256()
         h.update(self.current_discovery_seed)
@@ -491,7 +492,7 @@ class VRFNodeDiscovery:
         return h.digest()
 
     async def _verify_discovery_selection(
-        self, method: DiscoveryMethod, nodes: List[NodeInfo], vrf_proof: VRFProof
+        self, method: DiscoveryMethod, nodes: list[NodeInfo], vrf_proof: VRFProof
     ) -> bool:
         """Verify that discovery selection is valid."""
         try:
@@ -503,13 +504,13 @@ class VRFNodeDiscovery:
             logger.error(f"Discovery verification failed: {e}")
             return False
 
-    async def _simulate_discovery_selection(self, vrf_output: bytes) -> List[str]:
+    async def _simulate_discovery_selection(self, vrf_output: bytes) -> list[str]:
         """Simulate discovery selection for verification."""
         # Use VRF output to deterministically select nodes
         # This would implement the same logic as actual discovery
         return []
 
-    def _deduplicate_nodes(self, nodes: List[NodeInfo]) -> List[NodeInfo]:
+    def _deduplicate_nodes(self, nodes: list[NodeInfo]) -> list[NodeInfo]:
         """Remove duplicate nodes from discovery results."""
         seen = set()
         unique_nodes = []
@@ -521,7 +522,7 @@ class VRFNodeDiscovery:
 
         return unique_nodes
 
-    async def _verify_discovered_nodes(self, nodes: List[NodeInfo]) -> List[NodeInfo]:
+    async def _verify_discovered_nodes(self, nodes: list[NodeInfo]) -> list[NodeInfo]:
         """Verify discovered nodes using VRF selection."""
         verified_nodes = []
 
@@ -547,7 +548,7 @@ class VRFNodeDiscovery:
         # Additional validation would go here
         return True
 
-    def _generate_discovery_keys(self) -> List[bytes]:
+    def _generate_discovery_keys(self) -> list[bytes]:
         """Generate VRF-based keys for DHT discovery."""
         keys = []
 
@@ -644,11 +645,11 @@ class VRFNodeDiscovery:
         """Register callback for discovery events."""
         self.discovery_callbacks.append(callback)
 
-    def get_cached_nodes(self) -> List[NodeInfo]:
+    def get_cached_nodes(self) -> list[NodeInfo]:
         """Get all cached discovered nodes."""
         return list(self.discovery_cache.values())
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get discovery system status."""
         return {
             "discovery_epoch": self.discovery_epoch,

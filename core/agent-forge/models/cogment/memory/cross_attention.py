@@ -10,8 +10,6 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Tuple
-
 
 
 class CrossAttentionReader(nn.Module):
@@ -70,8 +68,8 @@ class CrossAttentionReader(nn.Module):
         query_states: torch.Tensor,  # [B, N, query_dim]
         memory_keys: torch.Tensor,  # [M, memory_dim]
         memory_values: torch.Tensor,  # [M, memory_dim]
-        key_mask: Optional[torch.Tensor] = None,  # [M] mask for valid slots
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        key_mask: torch.Tensor | None = None,  # [M] mask for valid slots
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Perform cross-attention memory read.
 
@@ -112,8 +110,8 @@ class CrossAttentionReader(nn.Module):
         query_states: torch.Tensor,
         memory_keys: torch.Tensor,
         memory_values: torch.Tensor,
-        key_mask: Optional[torch.Tensor] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        key_mask: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Select top-k slots independently for each query position."""
         B, N, _ = query_states.shape
         M, _ = memory_keys.shape
@@ -152,8 +150,8 @@ class CrossAttentionReader(nn.Module):
         query_states: torch.Tensor,
         memory_keys: torch.Tensor,
         memory_values: torch.Tensor,
-        key_mask: Optional[torch.Tensor] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        key_mask: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Select top-k slots using mean query (faster for inference)."""
         B, N, _ = query_states.shape
         M, _ = memory_keys.shape
@@ -196,7 +194,7 @@ class CrossAttentionReader(nn.Module):
         query_states: torch.Tensor,  # [B, N, query_dim]
         selected_keys: torch.Tensor,  # [B, N, K, memory_dim]
         selected_values: torch.Tensor,  # [B, N, K, memory_dim]
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Perform multi-head cross-attention over selected memory slots."""
         B, N, _ = query_states.shape
         _, _, K, _ = selected_keys.shape

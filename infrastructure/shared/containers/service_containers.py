@@ -4,9 +4,10 @@ Provides clean dependency injection for fog and graph services.
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional, Type, TypeVar, Callable
+from collections.abc import Callable
 import inspect
 import logging
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -17,28 +18,28 @@ class ServiceContainer:
     """Dependency injection container for services."""
 
     def __init__(self):
-        self._services: Dict[str, Any] = {}
-        self._singletons: Dict[str, Any] = {}
-        self._factories: Dict[str, Callable] = {}
-        self._configurations: Dict[str, Dict[str, Any]] = {}
+        self._services: dict[str, Any] = {}
+        self._singletons: dict[str, Any] = {}
+        self._factories: dict[str, Callable] = {}
+        self._configurations: dict[str, dict[str, Any]] = {}
 
-    def register_singleton(self, service_type: Type[T], implementation: Type[T]) -> None:
+    def register_singleton(self, service_type: type[T], implementation: type[T]) -> None:
         """Register a singleton service."""
         self._singletons[service_type.__name__] = implementation
 
-    def register_transient(self, service_type: Type[T], implementation: Type[T]) -> None:
+    def register_transient(self, service_type: type[T], implementation: type[T]) -> None:
         """Register a transient service."""
         self._services[service_type.__name__] = implementation
 
-    def register_factory(self, service_type: Type[T], factory: Callable[..., T]) -> None:
+    def register_factory(self, service_type: type[T], factory: Callable[..., T]) -> None:
         """Register a factory function."""
         self._factories[service_type.__name__] = factory
 
-    def register_configuration(self, service_name: str, config: Dict[str, Any]) -> None:
+    def register_configuration(self, service_name: str, config: dict[str, Any]) -> None:
         """Register configuration for a service."""
         self._configurations[service_name] = config
 
-    def resolve(self, service_type: Type[T]) -> T:
+    def resolve(self, service_type: type[T]) -> T:
         """Resolve a service instance."""
         service_name = service_type.__name__
 
@@ -58,7 +59,7 @@ class ServiceContainer:
 
         raise ValueError(f"Service {service_name} not registered")
 
-    def _create_instance(self, service_class: Type[T]) -> T:
+    def _create_instance(self, service_class: type[T]) -> T:
         """Create service instance with dependency injection."""
         # Get constructor parameters
         signature = inspect.signature(service_class.__init__)
@@ -136,18 +137,18 @@ class ServiceRegistry:
     """Global service registry for service discovery."""
 
     def __init__(self):
-        self._registry: Dict[str, Dict[str, Any]] = {}
+        self._registry: dict[str, dict[str, Any]] = {}
 
-    async def register(self, service_name: str, service_info: Dict[str, Any]) -> None:
+    async def register(self, service_name: str, service_info: dict[str, Any]) -> None:
         """Register a service."""
         self._registry[service_name] = {**service_info, "registered_at": asyncio.get_event_loop().time()}
         logger.info(f"Service registered: {service_name}")
 
-    async def discover(self, service_name: str) -> Optional[Dict[str, Any]]:
+    async def discover(self, service_name: str) -> dict[str, Any] | None:
         """Discover a service."""
         return self._registry.get(service_name)
 
-    async def list_services(self) -> List[Dict[str, Any]]:
+    async def list_services(self) -> list[dict[str, Any]]:
         """List all registered services."""
         return list(self._registry.values())
 
@@ -162,10 +163,10 @@ class ConfigurationManager:
     """Centralized configuration management."""
 
     def __init__(self):
-        self._configurations: Dict[str, Dict[str, Any]] = {}
-        self._watchers: Dict[str, List[Callable]] = {}
+        self._configurations: dict[str, dict[str, Any]] = {}
+        self._watchers: dict[str, list[Callable]] = {}
 
-    def set_configuration(self, service_name: str, config: Dict[str, Any]) -> None:
+    def set_configuration(self, service_name: str, config: dict[str, Any]) -> None:
         """Set configuration for a service."""
         old_config = self._configurations.get(service_name, {})
         self._configurations[service_name] = config
@@ -174,17 +175,17 @@ class ConfigurationManager:
         if old_config != config:
             self._notify_watchers(service_name, config)
 
-    def get_configuration(self, service_name: str) -> Dict[str, Any]:
+    def get_configuration(self, service_name: str) -> dict[str, Any]:
         """Get configuration for a service."""
         return self._configurations.get(service_name, {})
 
-    def watch_configuration(self, service_name: str, callback: Callable[[Dict[str, Any]], None]) -> None:
+    def watch_configuration(self, service_name: str, callback: Callable[[dict[str, Any]], None]) -> None:
         """Watch for configuration changes."""
         if service_name not in self._watchers:
             self._watchers[service_name] = []
         self._watchers[service_name].append(callback)
 
-    def _notify_watchers(self, service_name: str, config: Dict[str, Any]) -> None:
+    def _notify_watchers(self, service_name: str, config: dict[str, Any]) -> None:
         """Notify configuration watchers."""
         if service_name in self._watchers:
             for callback in self._watchers[service_name]:

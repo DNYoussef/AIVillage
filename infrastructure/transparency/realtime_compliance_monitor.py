@@ -4,21 +4,23 @@ Advanced monitoring and alerting for constitutional violations and system health
 """
 
 import asyncio
-import time
-import logging
-from typing import Dict, List, Optional, Any, Callable
-from dataclasses import dataclass, asdict
-from enum import Enum
 from collections import deque
-import threading
+from collections.abc import Callable
+from dataclasses import asdict, dataclass
+from enum import Enum
+import logging
 import statistics
+import threading
+import time
+from typing import Any
+
+from .constitutional_logging import ConstitutionalDecisionLogger
+from .cryptographic_verification import ConstitutionalCryptographicVerifier
+from .governance_audit import GovernanceAuditTrail
 
 # Import transparency system components
 from .merkle_audit import ConstitutionalMerkleAudit
-from .constitutional_logging import ConstitutionalDecisionLogger
 from .privacy_preserving_audit import PrivacyPreservingAuditSystem
-from .governance_audit import GovernanceAuditTrail
-from .cryptographic_verification import ConstitutionalCryptographicVerifier
 
 
 class ComplianceStatus(Enum):
@@ -75,9 +77,9 @@ class ComplianceAlert:
     current_value: float
     threshold_value: float
     message: str
-    affected_components: List[str]
-    recommended_actions: List[str]
-    alert_context: Dict[str, Any]
+    affected_components: list[str]
+    recommended_actions: list[str]
+    alert_context: dict[str, Any]
 
 
 @dataclass
@@ -92,8 +94,8 @@ class SystemHealthSnapshot:
     privacy_preservation_rate: float
     audit_completeness: float
     cryptographic_health: float
-    component_status: Dict[str, str]
-    performance_metrics: Dict[str, float]
+    component_status: dict[str, str]
+    performance_metrics: dict[str, float]
 
 
 class RealTimeComplianceMonitor:
@@ -125,17 +127,17 @@ class RealTimeComplianceMonitor:
         self.monitoring_thread = None
 
         # Compliance thresholds
-        self.compliance_thresholds: Dict[MonitoringMetric, ComplianceThreshold] = {}
+        self.compliance_thresholds: dict[MonitoringMetric, ComplianceThreshold] = {}
         self._initialize_default_thresholds()
 
         # Alert management
-        self.active_alerts: Dict[str, ComplianceAlert] = {}
+        self.active_alerts: dict[str, ComplianceAlert] = {}
         self.alert_history: deque = deque(maxlen=1000)
-        self.alert_callbacks: List[Callable[[ComplianceAlert], None]] = []
+        self.alert_callbacks: list[Callable[[ComplianceAlert], None]] = []
 
         # Health monitoring
         self.health_snapshots: deque = deque(maxlen=288)  # 24 hours at 5-minute intervals
-        self.current_health_status: Optional[SystemHealthSnapshot] = None
+        self.current_health_status: SystemHealthSnapshot | None = None
 
         # Performance tracking
         self.performance_metrics = {
@@ -148,7 +150,7 @@ class RealTimeComplianceMonitor:
         }
 
         # Metric calculations
-        self.metric_calculators: Dict[MonitoringMetric, Callable[[], float]] = {
+        self.metric_calculators: dict[MonitoringMetric, Callable[[], float]] = {
             MonitoringMetric.COMPLIANCE_RATE: self._calculate_compliance_rate,
             MonitoringMetric.VIOLATION_FREQUENCY: self._calculate_violation_frequency,
             MonitoringMetric.DEMOCRATIC_PARTICIPATION: self._calculate_democratic_participation,
@@ -489,7 +491,7 @@ class RealTimeComplianceMonitor:
         else:
             return f"WARNING: {metric_name} at {current_value:.2f}, below warning threshold of {threshold.warning_threshold}"
 
-    def _identify_affected_components(self, metric: MonitoringMetric) -> List[str]:
+    def _identify_affected_components(self, metric: MonitoringMetric) -> list[str]:
         """Identify system components affected by metric threshold breach"""
         component_mappings = {
             MonitoringMetric.COMPLIANCE_RATE: ["merkle_audit", "decision_logger"],
@@ -504,7 +506,7 @@ class RealTimeComplianceMonitor:
 
         return component_mappings.get(metric, ["unknown"])
 
-    def _generate_recommended_actions(self, metric: MonitoringMetric, status: ComplianceStatus) -> List[str]:
+    def _generate_recommended_actions(self, metric: MonitoringMetric, status: ComplianceStatus) -> list[str]:
         """Generate recommended actions based on metric and status"""
         actions = {
             MonitoringMetric.COMPLIANCE_RATE: [
@@ -792,7 +794,7 @@ class RealTimeComplianceMonitor:
             self.logger.error(f"Error calculating system load: {e}")
             return 0.0
 
-    def _find_related_alerts(self, metric: MonitoringMetric) -> List[str]:
+    def _find_related_alerts(self, metric: MonitoringMetric) -> list[str]:
         """Find alerts related to specific metric"""
         try:
             related_metrics = {
@@ -926,22 +928,22 @@ class RealTimeComplianceMonitor:
         if callback in self.alert_callbacks:
             self.alert_callbacks.remove(callback)
 
-    def get_current_system_health(self) -> Optional[SystemHealthSnapshot]:
+    def get_current_system_health(self) -> SystemHealthSnapshot | None:
         """Get current system health snapshot"""
         with self._lock:
             return self.current_health_status
 
-    def get_active_alerts(self) -> List[ComplianceAlert]:
+    def get_active_alerts(self) -> list[ComplianceAlert]:
         """Get all active compliance alerts"""
         with self._lock:
             return list(self.active_alerts.values())
 
-    def get_alert_history(self, limit: int = 100) -> List[ComplianceAlert]:
+    def get_alert_history(self, limit: int = 100) -> list[ComplianceAlert]:
         """Get recent alert history"""
         with self._lock:
             return list(self.alert_history)[-limit:]
 
-    def get_monitoring_metrics(self) -> Dict[str, Any]:
+    def get_monitoring_metrics(self) -> dict[str, Any]:
         """Get comprehensive monitoring metrics"""
         with self._lock:
             current_health = self.current_health_status
@@ -1020,11 +1022,11 @@ if __name__ == "__main__":
 
     async def test_compliance_monitoring():
         # Import required components (would be initialized elsewhere)
-        from .merkle_audit import ConstitutionalMerkleAudit
         from .constitutional_logging import ConstitutionalDecisionLogger
-        from .privacy_preserving_audit import PrivacyPreservingAuditSystem
-        from .governance_audit import GovernanceAuditTrail
         from .cryptographic_verification import ConstitutionalCryptographicVerifier
+        from .governance_audit import GovernanceAuditTrail
+        from .merkle_audit import ConstitutionalMerkleAudit
+        from .privacy_preserving_audit import PrivacyPreservingAuditSystem
 
         # Initialize components
         merkle_audit = ConstitutionalMerkleAudit()

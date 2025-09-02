@@ -13,19 +13,18 @@ Key Features:
 """
 
 import asyncio
-import json
-import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
 import hashlib
-import numpy as np
+import logging
+from pathlib import Path
+from typing import Any
+
+import networkx as nx
 
 # Core dependencies
 from sentence_transformers import SentenceTransformer
-import networkx as nx
 from sklearn.metrics.pairwise import cosine_similarity
 
 logger = logging.getLogger(__name__)
@@ -55,13 +54,13 @@ class RAGQuery:
     """Unified RAG query structure"""
     text: str
     mode: QueryMode = QueryMode.BALANCED
-    context_tags: List[ContextTag] = field(default_factory=list)
+    context_tags: list[ContextTag] = field(default_factory=list)
     max_results: int = 10
     confidence_threshold: float = 0.7
     creative_depth: int = 3
     missing_node_analysis: bool = False
-    temporal_window: Optional[Tuple[datetime, datetime]] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    temporal_window: tuple[datetime, datetime] | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 @dataclass
 class RAGResult:
@@ -69,13 +68,13 @@ class RAGResult:
     content: str
     source: str
     confidence: float
-    context_tags: List[ContextTag]
-    reasoning_chain: List[str] = field(default_factory=list)
-    missing_nodes: List[str] = field(default_factory=list)
-    creative_connections: List[Dict[str, Any]] = field(default_factory=list)
-    bayesian_probability: Optional[float] = None
-    hippo_memory_score: Optional[float] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    context_tags: list[ContextTag]
+    reasoning_chain: list[str] = field(default_factory=list)
+    missing_nodes: list[str] = field(default_factory=list)
+    creative_connections: list[dict[str, Any]] = field(default_factory=list)
+    bayesian_probability: float | None = None
+    hippo_memory_score: float | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 class AdvancedIngestionEngine:
     """Multi-format document ingestion with semantic chunking"""
@@ -84,7 +83,7 @@ class AdvancedIngestionEngine:
         self.markitdown = markitdown_mcp
         self.supported_formats = ['.pdf', '.docx', '.html', '.md', '.txt']
         
-    async def ingest_document(self, file_path: Path, metadata: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+    async def ingest_document(self, file_path: Path, metadata: dict[str, Any] = None) -> list[dict[str, Any]]:
         """Ingest document with semantic chunking and dual context tagging"""
         if file_path.suffix not in self.supported_formats:
             raise ValueError(f"Unsupported format: {file_path.suffix}")
@@ -113,7 +112,7 @@ class AdvancedIngestionEngine:
             
         return processed_chunks
     
-    def _semantic_chunk(self, content: str, file_path: Path) -> List[str]:
+    def _semantic_chunk(self, content: str, file_path: Path) -> list[str]:
         """Semantic chunking based on content structure"""
         # Basic semantic chunking (can be enhanced with NLP)
         paragraphs = content.split('\n\n')
@@ -133,7 +132,7 @@ class AdvancedIngestionEngine:
             
         return chunks
     
-    def _generate_context_tags(self, content: str) -> List[ContextTag]:
+    def _generate_context_tags(self, content: str) -> list[ContextTag]:
         """Generate context tags based on content analysis"""
         tags = [ContextTag.CONTENT_CONTEXT]  # Always include content context
         
@@ -160,7 +159,7 @@ class HippoRAGMemory:
         self.entity_graph = nx.Graph()
         self.memory_consolidation_threshold = 5  # Consolidate after 5 retrievals
         
-    async def store_episode(self, content: str, context: Dict[str, Any]) -> str:
+    async def store_episode(self, content: str, context: dict[str, Any]) -> str:
         """Store episodic memory with entity linking"""
         episode_id = hashlib.md5(f"{content}_{datetime.utcnow()}".encode()).hexdigest()[:12]
         
@@ -198,7 +197,7 @@ class HippoRAGMemory:
             
         return episode_id
     
-    async def retrieve_episodes(self, query: str, max_episodes: int = 5) -> List[Dict[str, Any]]:
+    async def retrieve_episodes(self, query: str, max_episodes: int = 5) -> list[dict[str, Any]]:
         """Retrieve relevant episodes with consolidation"""
         query_entities = self._extract_entities(query)
         
@@ -226,7 +225,7 @@ class HippoRAGMemory:
             
         return top_episodes
     
-    def _extract_entities(self, text: str) -> List[str]:
+    def _extract_entities(self, text: str) -> list[str]:
         """Simple entity extraction (can be enhanced with NER)"""
         # Basic entity extraction using capitalization patterns
         words = text.split()
@@ -238,7 +237,7 @@ class HippoRAGMemory:
                 
         return list(set(entities))
     
-    def _calculate_episode_relevance(self, query: str, query_entities: List[str], episode: Dict[str, Any]) -> float:
+    def _calculate_episode_relevance(self, query: str, query_entities: list[str], episode: dict[str, Any]) -> float:
         """Calculate episode relevance score"""
         # Entity overlap score
         episode_entities = set(episode['entities'])
@@ -265,7 +264,7 @@ class DualContextVectorRAG:
         self.semantic_embeddings = {}
         self.documents = {}
         
-    async def add_document(self, doc_id: str, content: str, context_tags: List[ContextTag], metadata: Dict[str, Any] = None):
+    async def add_document(self, doc_id: str, content: str, context_tags: list[ContextTag], metadata: dict[str, Any] = None):
         """Add document with dual context embeddings"""
         # Content context embedding
         content_embedding = self.embedder.encode([content])[0]
@@ -282,7 +281,7 @@ class DualContextVectorRAG:
             'metadata': metadata or {}
         }
         
-    async def search(self, query: str, context_tags: List[ContextTag] = None, max_results: int = 10) -> List[Tuple[str, float]]:
+    async def search(self, query: str, context_tags: list[ContextTag] = None, max_results: int = 10) -> list[tuple[str, float]]:
         """Search with dual context consideration"""
         if not self.content_embeddings:
             return []
@@ -318,7 +317,7 @@ class DualContextVectorRAG:
         results.sort(key=lambda x: x[1], reverse=True)
         return results[:max_results]
     
-    def _enhance_with_context_tags(self, content: str, context_tags: List[ContextTag]) -> str:
+    def _enhance_with_context_tags(self, content: str, context_tags: list[ContextTag]) -> str:
         """Enhance content with context tag information"""
         tag_descriptions = {
             ContextTag.CONTENT_CONTEXT: "direct content",
@@ -347,8 +346,6 @@ class BayesianKnowledgeGraph:
         
     async def add_knowledge(self, subject: str, predicate: str, object_: str, confidence: float, source: str):
         """Add knowledge with Bayesian probability"""
-        triple = (subject, predicate, object_)
-        triple_id = f"{subject}_{predicate}_{object_}"
         
         # Add to graph
         if not self.knowledge_graph.has_node(subject):
@@ -368,7 +365,7 @@ class BayesianKnowledgeGraph:
             # Initial trust score
             self.trust_scores[source] = confidence
             
-    async def query_knowledge(self, subject: str, predicate: str = None, reasoning_depth: int = 3) -> List[Dict[str, Any]]:
+    async def query_knowledge(self, subject: str, predicate: str = None, reasoning_depth: int = 3) -> list[dict[str, Any]]:
         """Query knowledge with multi-hop reasoning"""
         results = []
         
@@ -397,7 +394,7 @@ class BayesianKnowledgeGraph:
             
         return results
     
-    async def _multi_hop_reasoning(self, start_node: str, target_predicate: str, max_depth: int) -> List[Dict[str, Any]]:
+    async def _multi_hop_reasoning(self, start_node: str, target_predicate: str, max_depth: int) -> list[dict[str, Any]]:
         """Multi-hop reasoning with path confidence calculation"""
         results = []
         visited_paths = set()
@@ -454,7 +451,7 @@ class CreativeGraphSearch:
         self.concept_graph = nx.Graph()
         self.creativity_weight = 0.3  # Balance between relevance and creativity
         
-    async def add_concept(self, concept: str, related_concepts: List[str], weights: List[float] = None):
+    async def add_concept(self, concept: str, related_concepts: list[str], weights: list[float] = None):
         """Add concept with creative connections"""
         if not self.concept_graph.has_node(concept):
             self.concept_graph.add_node(concept)
@@ -466,7 +463,7 @@ class CreativeGraphSearch:
             weight = weights[i] if weights and i < len(weights) else 1.0
             self.concept_graph.add_edge(concept, related_concept, weight=weight)
     
-    async def creative_search(self, seed_concepts: List[str], depth: int = 3, creativity_bias: float = 0.5) -> List[Dict[str, Any]]:
+    async def creative_search(self, seed_concepts: list[str], depth: int = 3, creativity_bias: float = 0.5) -> list[dict[str, Any]]:
         """Creative search with novelty bias"""
         if not seed_concepts:
             return []
@@ -508,7 +505,7 @@ class CreativeGraphSearch:
         creative_results.sort(key=lambda x: x['combined_score'], reverse=True)
         return creative_results
     
-    def _find_creative_paths(self, start_node: str, max_depth: int, creativity_bias: float) -> List[List[str]]:
+    def _find_creative_paths(self, start_node: str, max_depth: int, creativity_bias: float) -> list[list[str]]:
         """Find creative paths with novelty preference"""
         paths = []
         
@@ -532,7 +529,7 @@ class CreativeGraphSearch:
         dfs_creative(start_node, [start_node], 0)
         return paths
     
-    def _calculate_creativity_score(self, path: List[str]) -> float:
+    def _calculate_creativity_score(self, path: list[str]) -> float:
         """Calculate creativity score based on path novelty"""
         if len(path) < 2:
             return 0.0
@@ -551,7 +548,7 @@ class CreativeGraphSearch:
             
         return total_novelty / (path_length - 1)
     
-    def _calculate_relevance_score(self, path: List[str], seed_concept: str) -> float:
+    def _calculate_relevance_score(self, path: list[str], seed_concept: str) -> float:
         """Calculate relevance to original concept"""
         if not path or path[0] != seed_concept:
             return 0.0
@@ -566,7 +563,7 @@ class CreativeGraphSearch:
             
         return relevance
     
-    def _identify_novel_connections(self, path: List[str]) -> List[Dict[str, Any]]:
+    def _identify_novel_connections(self, path: list[str]) -> list[dict[str, Any]]:
         """Identify potentially novel connections in the path"""
         novel_connections = []
         
@@ -593,7 +590,7 @@ class MissingNodeDetector:
         self.deepwiki = deepwiki_mcp
         self.knowledge_patterns = {}
         
-    async def analyze_missing_nodes(self, knowledge_graph: nx.Graph, query_context: str = None) -> List[Dict[str, Any]]:
+    async def analyze_missing_nodes(self, knowledge_graph: nx.Graph, query_context: str = None) -> list[dict[str, Any]]:
         """Analyze knowledge graph for missing nodes"""
         missing_nodes = []
         
@@ -615,7 +612,7 @@ class MissingNodeDetector:
         
         return unique_missing
     
-    async def _pattern_based_detection(self, graph: nx.Graph) -> List[Dict[str, Any]]:
+    async def _pattern_based_detection(self, graph: nx.Graph) -> list[dict[str, Any]]:
         """Detect missing nodes based on learned patterns"""
         missing_patterns = []
         
@@ -641,7 +638,7 @@ class MissingNodeDetector:
         
         return missing_patterns
     
-    async def _structural_analysis(self, graph: nx.Graph) -> List[Dict[str, Any]]:
+    async def _structural_analysis(self, graph: nx.Graph) -> list[dict[str, Any]]:
         """Structural analysis for missing nodes"""
         structural_missing = []
         
@@ -671,7 +668,7 @@ class MissingNodeDetector:
         
         return structural_missing
     
-    async def _query_driven_analysis(self, graph: nx.Graph, query_context: str) -> List[Dict[str, Any]]:
+    async def _query_driven_analysis(self, graph: nx.Graph, query_context: str) -> list[dict[str, Any]]:
         """Query-driven missing node analysis"""
         query_missing = []
         
@@ -723,10 +720,9 @@ class MissingNodeDetector:
         
         return query_missing
     
-    async def _predict_intermediate_node(self, context: str, node1: str, node2: str) -> Optional[str]:
+    async def _predict_intermediate_node(self, context: str, node1: str, node2: str) -> str | None:
         """Predict intermediate node between two concepts"""
         # Simple prediction based on common patterns
-        common_words = {'and', 'or', 'through', 'via', 'using', 'with', 'by', 'for'}
         
         # Generate potential intermediate concepts
         concepts = [node1.split()[-1], node2.split()[-1], context.split()[-1]]
@@ -734,7 +730,7 @@ class MissingNodeDetector:
         
         return potential_intermediate if len(potential_intermediate) < 50 else None
     
-    async def _generate_bridging_concept(self, concept1: str, concept2: str, context: str) -> Optional[str]:
+    async def _generate_bridging_concept(self, concept1: str, concept2: str, context: str) -> str | None:
         """Generate a concept that bridges two existing concepts"""
         # Simple bridging concept generation
         words1 = set(concept1.lower().split())
@@ -753,7 +749,7 @@ class MissingNodeDetector:
         
         return f"{concept1}-bridge-{concept2}"
     
-    def _deduplicate_and_rank(self, missing_nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _deduplicate_and_rank(self, missing_nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Remove duplicates and rank by confidence"""
         unique_nodes = {}
         
@@ -769,7 +765,7 @@ class MissingNodeDetector:
 class UnifiedRAGSystem:
     """Main unified RAG system orchestrating all components"""
     
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: dict[str, Any] = None):
         self.config = config or {}
         
         # Initialize MCP connections (would be actual MCP clients in production)
@@ -1062,7 +1058,7 @@ class UnifiedRAGSystem:
             context_tags=[]
         )
     
-    def _generate_creative_content(self, creative_result: Dict[str, Any]) -> str:
+    def _generate_creative_content(self, creative_result: dict[str, Any]) -> str:
         """Generate content from creative search results"""
         path = creative_result['path']
         connections = creative_result.get('novel_connections', [])
@@ -1078,7 +1074,7 @@ class UnifiedRAGSystem:
         content += f"\nCreativity score: {creative_result['creativity_score']:.3f}"
         return content
     
-    def _generate_analytical_content(self, knowledge_results: List[Dict[str, Any]]) -> str:
+    def _generate_analytical_content(self, knowledge_results: list[dict[str, Any]]) -> str:
         """Generate content from Bayesian knowledge graph results"""
         if not knowledge_results:
             return "No analytical insights available"
@@ -1093,7 +1089,7 @@ class UnifiedRAGSystem:
         
         return content
     
-    def _generate_missing_nodes_content(self, missing_nodes: List[Dict[str, Any]]) -> str:
+    def _generate_missing_nodes_content(self, missing_nodes: list[dict[str, Any]]) -> str:
         """Generate content describing missing nodes"""
         if not missing_nodes:
             return "No knowledge gaps detected"
@@ -1114,7 +1110,7 @@ class UnifiedRAGSystem:
         
         return content
     
-    def _combine_comprehensive_results(self, results: List[RAGResult]) -> str:
+    def _combine_comprehensive_results(self, results: list[RAGResult]) -> str:
         """Combine results from comprehensive query"""
         content = "Comprehensive Analysis Results:\n\n"
         
@@ -1124,7 +1120,7 @@ class UnifiedRAGSystem:
         
         return content
     
-    async def ingest_document(self, file_path: Path, metadata: Dict[str, Any] = None) -> bool:
+    async def ingest_document(self, file_path: Path, metadata: dict[str, Any] = None) -> bool:
         """Ingest document into all appropriate systems"""
         try:
             # Process document
@@ -1164,7 +1160,7 @@ class UnifiedRAGSystem:
         logger.info(f"Added knowledge: {subject} {predicate} {object_} (confidence: {confidence})")
 
 # Factory function for easy instantiation
-def create_unified_rag_system(config: Dict[str, Any] = None) -> UnifiedRAGSystem:
+def create_unified_rag_system(config: dict[str, Any] = None) -> UnifiedRAGSystem:
     """Create a unified RAG system with default configuration"""
     default_config = {
         'embedder_model': 'all-MiniLM-L6-v2',

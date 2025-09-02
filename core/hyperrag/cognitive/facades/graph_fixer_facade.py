@@ -10,16 +10,16 @@ benefiting from the improved service architecture.
 """
 
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
-from ..graph_fixer import DetectedGap, ProposedNode, ProposedRelationship, GapAnalysisResult
+from ..graph_fixer import DetectedGap, GapAnalysisResult, ProposedNode, ProposedRelationship
 from ..interfaces.base_service import ServiceConfig
-from ..services.gap_detection_service import GapDetectionService
-from ..services.node_proposal_service import NodeProposalService
-from ..services.relationship_analyzer_service import RelationshipAnalyzerService
 from ..services.confidence_calculator_service import ConfidenceCalculatorService
+from ..services.gap_detection_service import GapDetectionService
 from ..services.graph_analytics_service import GraphAnalyticsService
 from ..services.knowledge_validator_service import KnowledgeValidatorService
+from ..services.node_proposal_service import NodeProposalService
+from ..services.relationship_analyzer_service import RelationshipAnalyzerService
 
 
 class GraphFixerFacade:
@@ -111,8 +111,8 @@ class GraphFixerFacade:
             raise
 
     async def detect_knowledge_gaps(
-        self, query: Optional[str] = None, retrieved_info: Optional[List[Any]] = None, focus_area: Optional[str] = None
-    ) -> List[DetectedGap]:
+        self, query: str | None = None, retrieved_info: list[Any] | None = None, focus_area: str | None = None
+    ) -> list[DetectedGap]:
         """
         Detect knowledge gaps in the graph (original API compatibility).
 
@@ -138,8 +138,8 @@ class GraphFixerFacade:
             return []
 
     async def propose_solutions(
-        self, gaps: List[DetectedGap], max_proposals: Optional[int] = None
-    ) -> Tuple[List[ProposedNode], List[ProposedRelationship]]:
+        self, gaps: list[DetectedGap], max_proposals: int | None = None
+    ) -> tuple[list[ProposedNode], list[ProposedRelationship]]:
         """
         Propose solutions for detected gaps (original API compatibility).
 
@@ -172,7 +172,7 @@ class GraphFixerFacade:
             return [], []
 
     async def validate_proposal(
-        self, proposal: Union[ProposedNode, ProposedRelationship], validation_feedback: str, is_accepted: bool
+        self, proposal: ProposedNode | ProposedRelationship, validation_feedback: str, is_accepted: bool
     ) -> bool:
         """
         Validate a proposal (original API compatibility).
@@ -204,7 +204,7 @@ class GraphFixerFacade:
             print(f"Proposal validation failed: {e}")
             return False
 
-    async def analyze_graph_completeness(self) -> Dict[str, Any]:
+    async def analyze_graph_completeness(self) -> dict[str, Any]:
         """
         Analyze graph completeness (original API compatibility).
 
@@ -221,7 +221,7 @@ class GraphFixerFacade:
             print(f"Graph completeness analysis failed: {e}")
             return {"error": str(e)}
 
-    async def get_gap_statistics(self) -> Dict[str, Any]:
+    async def get_gap_statistics(self) -> dict[str, Any]:
         """
         Get gap statistics (original API compatibility).
 
@@ -258,7 +258,7 @@ class GraphFixerFacade:
             return {"error": str(e)}
 
     async def perform_comprehensive_analysis(
-        self, query: Optional[str] = None, retrieved_info: Optional[List[Any]] = None, focus_area: Optional[str] = None
+        self, query: str | None = None, retrieved_info: list[Any] | None = None, focus_area: str | None = None
     ) -> GapAnalysisResult:
         """
         Perform comprehensive gap analysis (enhanced API).
@@ -328,9 +328,9 @@ class GraphFixerFacade:
 
     async def _enhance_proposals_with_confidence(
         self,
-        proposed_nodes: List[ProposedNode],
-        proposed_relationships: List[ProposedRelationship],
-        gaps: List[DetectedGap],
+        proposed_nodes: list[ProposedNode],
+        proposed_relationships: list[ProposedRelationship],
+        gaps: list[DetectedGap],
     ):
         """Enhance proposals with refined confidence scores."""
         try:
@@ -358,7 +358,7 @@ class GraphFixerFacade:
         except Exception as e:
             print(f"Confidence enhancement failed: {e}")
 
-    async def _validate_proposals(self, proposals: List[Union[ProposedNode, ProposedRelationship]]):
+    async def _validate_proposals(self, proposals: list[ProposedNode | ProposedRelationship]):
         """Validate proposals and update their validation status."""
         try:
             validation_results = await self.knowledge_validator.validate_consistency(proposals)

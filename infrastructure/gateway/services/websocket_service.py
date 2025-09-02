@@ -7,13 +7,14 @@ to provide a clean, reusable WebSocket management system.
 """
 
 import asyncio
+from collections import defaultdict
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from enum import Enum
 import json
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Callable
-from enum import Enum
-from dataclasses import dataclass
-from collections import defaultdict
+from typing import Any
 import uuid
 
 from fastapi import WebSocket
@@ -70,12 +71,12 @@ class WebSocketMessage:
     """Standardized WebSocket message structure."""
 
     type: MessageType
-    data: Dict[str, Any]
+    data: dict[str, Any]
     timestamp: str
-    connection_id: Optional[str] = None
-    target_connections: Optional[List[str]] = None
+    connection_id: str | None = None
+    target_connections: list[str] | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "type": self.type.value,
@@ -94,9 +95,9 @@ class ConnectionInfo:
     websocket: WebSocket
     state: ConnectionState
     connected_at: datetime
-    last_ping: Optional[datetime]
-    subscription_topics: Set[str]
-    metadata: Dict[str, Any]
+    last_ping: datetime | None
+    subscription_topics: set[str]
+    metadata: dict[str, Any]
 
     def is_alive(self) -> bool:
         """Check if connection is considered alive."""
@@ -120,14 +121,14 @@ class WebSocketService:
     """
 
     def __init__(self, ping_interval: int = 30, cleanup_interval: int = 60):
-        self.connections: Dict[str, ConnectionInfo] = {}
-        self.topic_subscriptions: Dict[str, Set[str]] = defaultdict(set)
-        self.event_handlers: Dict[MessageType, List[Callable]] = defaultdict(list)
+        self.connections: dict[str, ConnectionInfo] = {}
+        self.topic_subscriptions: dict[str, set[str]] = defaultdict(set)
+        self.event_handlers: dict[MessageType, list[Callable]] = defaultdict(list)
         self.ping_interval = ping_interval
         self.cleanup_interval = cleanup_interval
         self._running = False
-        self._cleanup_task: Optional[asyncio.Task] = None
-        self._ping_task: Optional[asyncio.Task] = None
+        self._cleanup_task: asyncio.Task | None = None
+        self._ping_task: asyncio.Task | None = None
 
         logger.info("WebSocketService initialized")
 
@@ -156,7 +157,7 @@ class WebSocketService:
 
         logger.info("WebSocketService stopped")
 
-    async def connect(self, websocket: WebSocket, metadata: Optional[Dict[str, Any]] = None) -> str:
+    async def connect(self, websocket: WebSocket, metadata: dict[str, Any] | None = None) -> str:
         """
         Accept a new WebSocket connection.
 
@@ -268,7 +269,7 @@ class WebSocketService:
         logger.debug(f"Connection {connection_id} unsubscribed from topic: {topic}")
         return True
 
-    async def broadcast(self, message: WebSocketMessage, topic: Optional[str] = None):
+    async def broadcast(self, message: WebSocketMessage, topic: str | None = None):
         """
         Broadcast a message to all connections or topic subscribers.
 
@@ -358,7 +359,7 @@ class WebSocketService:
         except Exception as e:
             logger.error(f"Error handling message from {connection_id}: {e}")
 
-    async def _handle_ping(self, connection_id: str, data: Dict[str, Any]):
+    async def _handle_ping(self, connection_id: str, data: dict[str, Any]):
         """Handle ping message."""
         await self.send_to_connection(
             connection_id,
@@ -369,7 +370,7 @@ class WebSocketService:
             ),
         )
 
-    async def _handle_subscribe(self, connection_id: str, data: Dict[str, Any]):
+    async def _handle_subscribe(self, connection_id: str, data: dict[str, Any]):
         """Handle subscription request."""
         topic = data.get("topic")
         if topic:
@@ -383,7 +384,7 @@ class WebSocketService:
                 ),
             )
 
-    async def _handle_unsubscribe(self, connection_id: str, data: Dict[str, Any]):
+    async def _handle_unsubscribe(self, connection_id: str, data: dict[str, Any]):
         """Handle unsubscription request."""
         topic = data.get("topic")
         if topic:
@@ -405,11 +406,11 @@ class WebSocketService:
         """Get the number of active connections."""
         return len([c for c in self.connections.values() if c.state == ConnectionState.CONNECTED])
 
-    def get_connection_info(self, connection_id: str) -> Optional[ConnectionInfo]:
+    def get_connection_info(self, connection_id: str) -> ConnectionInfo | None:
         """Get information about a specific connection."""
         return self.connections.get(connection_id)
 
-    def get_topic_subscribers(self, topic: str) -> Set[str]:
+    def get_topic_subscribers(self, topic: str) -> set[str]:
         """Get connection IDs subscribed to a topic."""
         return self.topic_subscriptions.get(topic, set()).copy()
 

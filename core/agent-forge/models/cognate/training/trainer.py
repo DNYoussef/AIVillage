@@ -8,21 +8,21 @@ memory system training, and comprehensive metrics tracking.
 """
 
 from dataclasses import dataclass
-from pathlib import Path
 import json
 import logging
+from pathlib import Path
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 import torch
+from torch.amp import GradScaler, autocast
+import torch.distributed as dist
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
-from torch.amp import autocast, GradScaler
-import torch.distributed as dist
 
-from ..config.cognate_config import TrainingConfig
 from ..cognate_model import CognateModel
+from ..config.cognate_config import TrainingConfig
 from .grokfast_optimizer import GrokFastOptimizer
 
 logger = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ class TrainingMetrics:
     gradient_norm: float = 0.0
     learning_rate: float = 0.0
 
-    def to_dict(self) -> Dict[str, float]:
+    def to_dict(self) -> dict[str, float]:
         """Convert metrics to dictionary."""
         return {
             "total_loss": self.total_loss,
@@ -124,10 +124,10 @@ class CognateTrainer:
         self,
         model: CognateModel,
         config: CognateTrainingConfig,
-        train_dataset: Optional[Dataset] = None,
-        eval_dataset: Optional[Dataset] = None,
+        train_dataset: Dataset | None = None,
+        eval_dataset: Dataset | None = None,
         output_dir: str = "./cognate_training_output",
-        resume_from_checkpoint: Optional[str] = None,
+        resume_from_checkpoint: str | None = None,
     ):
         self.model = model
         self.config = config
@@ -214,7 +214,7 @@ class CognateTrainer:
             # No scheduler
             return None
 
-    def train(self) -> Dict[str, Any]:
+    def train(self) -> dict[str, Any]:
         """
         Main training loop.
 
@@ -314,7 +314,7 @@ class CognateTrainer:
             "final_metrics": metrics.to_dict(),
         }
 
-    def _training_step(self, batch: Dict[str, torch.Tensor]) -> TrainingMetrics:
+    def _training_step(self, batch: dict[str, torch.Tensor]) -> TrainingMetrics:
         """Perform a single training step."""
         step_start = time.time()
 

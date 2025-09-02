@@ -9,11 +9,11 @@ a clean foundation that other fog services depend on.
 """
 
 import asyncio
+from datetime import UTC, datetime
 import json
 import logging
-from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Protocol, Set
+from typing import Any, Protocol
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +29,11 @@ class ComponentProtocol(Protocol):
         """Stop the component gracefully."""
         ...
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Get component health status."""
         ...
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get component statistics."""
         ...
 
@@ -50,26 +50,26 @@ class ComponentRegistry:
     """Registry for fog computing components with dependency management."""
 
     def __init__(self):
-        self._components: Dict[str, ComponentProtocol] = {}
-        self._dependencies: Dict[str, List[ServiceDependency]] = {}
-        self._initialization_order: List[str] = []
-        self._started_components: Set[str] = set()
+        self._components: dict[str, ComponentProtocol] = {}
+        self._dependencies: dict[str, list[ServiceDependency]] = {}
+        self._initialization_order: list[str] = []
+        self._started_components: set[str] = set()
 
     def register_component(
         self,
         name: str,
         component: ComponentProtocol,
-        dependencies: Optional[List[ServiceDependency]] = None,
+        dependencies: list[ServiceDependency] | None = None,
     ) -> None:
         """Register a component with its dependencies."""
         self._components[name] = component
         self._dependencies[name] = dependencies or []
 
-    def get_component(self, name: str) -> Optional[ComponentProtocol]:
+    def get_component(self, name: str) -> ComponentProtocol | None:
         """Get a component by name."""
         return self._components.get(name)
 
-    def get_initialization_order(self) -> List[str]:
+    def get_initialization_order(self) -> list[str]:
         """Get the order in which components should be initialized."""
         if not self._initialization_order:
             self._calculate_initialization_order()
@@ -115,7 +115,7 @@ class ComponentRegistry:
         """Check if a component is started."""
         return component_name in self._started_components
 
-    def get_started_components(self) -> Set[str]:
+    def get_started_components(self) -> set[str]:
         """Get set of started components."""
         return self._started_components.copy()
 
@@ -131,7 +131,7 @@ class FogOrchestrationService:
     def __init__(
         self,
         node_id: str,
-        config_path: Optional[Path] = None,
+        config_path: Path | None = None,
         enable_health_monitoring: bool = True,
     ):
         self.node_id = node_id
@@ -140,25 +140,25 @@ class FogOrchestrationService:
 
         # Core orchestration state
         self.is_running = False
-        self.startup_time: Optional[datetime] = None
-        self.shutdown_time: Optional[datetime] = None
+        self.startup_time: datetime | None = None
+        self.shutdown_time: datetime | None = None
 
         # Component management
         self.registry = ComponentRegistry()
-        self.background_tasks: Set[asyncio.Task] = set()
+        self.background_tasks: set[asyncio.Task] = set()
 
         # Configuration and health monitoring
-        self.config: Dict[str, Any] = self._load_config()
-        self.health_status: Dict[str, Any] = {}
-        self.system_stats: Dict[str, Any] = {}
+        self.config: dict[str, Any] = self._load_config()
+        self.health_status: dict[str, Any] = {}
+        self.system_stats: dict[str, Any] = {}
 
         # Event coordination
-        self._event_handlers: Dict[str, List[callable]] = {}
+        self._event_handlers: dict[str, list[callable]] = {}
         self._coordination_lock = asyncio.Lock()
 
         logger.info(f"FogOrchestrationService initialized for node {node_id}")
 
-    def _load_config(self) -> Dict[str, Any]:
+    def _load_config(self) -> dict[str, Any]:
         """Load system configuration from file or defaults."""
         default_config = {
             "orchestration": {
@@ -345,7 +345,7 @@ class FogOrchestrationService:
             await self._stop_component(component_name)
             self.registry.mark_stopped(component_name)
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Get comprehensive system health status."""
         health_result = {
             "orchestration_service": {
@@ -393,7 +393,7 @@ class FogOrchestrationService:
         self.health_status = health_result
         return health_result
 
-    async def get_system_stats(self) -> Dict[str, Any]:
+    async def get_system_stats(self) -> dict[str, Any]:
         """Get comprehensive system statistics."""
         stats = {
             "orchestration": {
@@ -468,7 +468,7 @@ class FogOrchestrationService:
         self,
         name: str,
         component: ComponentProtocol,
-        dependencies: Optional[List[ServiceDependency]] = None,
+        dependencies: list[ServiceDependency] | None = None,
     ) -> None:
         """Register a component with the orchestration service."""
         self.registry.register_component(name, component, dependencies)
@@ -480,7 +480,7 @@ class FogOrchestrationService:
             self._event_handlers[event_type] = []
         self._event_handlers[event_type].append(handler)
 
-    async def _emit_event(self, event_type: str, data: Dict[str, Any]) -> None:
+    async def _emit_event(self, event_type: str, data: dict[str, Any]) -> None:
         """Emit a system event to registered handlers."""
         if event_type in self._event_handlers:
             for handler in self._event_handlers[event_type]:
@@ -540,7 +540,7 @@ class FogOrchestrationService:
                     logger.warning(f"Detected failed component: {component_name}, attempting restart")
                     await self.restart_service(component_name)
 
-    def _get_memory_usage(self) -> Dict[str, Any]:
+    def _get_memory_usage(self) -> dict[str, Any]:
         """Get basic memory usage information."""
         try:
             import psutil

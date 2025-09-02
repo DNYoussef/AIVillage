@@ -26,10 +26,10 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from enum import Enum
-import logging
-from typing import Any, Dict, List, Optional, Set
-import uuid
 import json
+import logging
+from typing import Any
+import uuid
 
 from .tier_mapping import ConstitutionalTier
 
@@ -105,23 +105,23 @@ class HarmDetection:
     """Result of harm detection analysis"""
 
     detection_id: str
-    harm_categories: List[HarmCategory]
+    harm_categories: list[HarmCategory]
     severity: HarmSeverity
     confidence_score: Decimal
 
     # Detection details
     detected_content: str = ""
     detection_method: str = "automated"
-    evidence: Dict[str, Any] = field(default_factory=dict)
+    evidence: dict[str, Any] = field(default_factory=dict)
 
     # Context
     user_id: str = ""
     workload_id: str = ""
-    tier: Optional[ConstitutionalTier] = None
+    tier: ConstitutionalTier | None = None
 
     # Timestamps
     detected_at: datetime = field(default_factory=lambda: datetime.now(UTC))
-    resolved_at: Optional[datetime] = None
+    resolved_at: datetime | None = None
 
     def calculate_risk_score(self) -> Decimal:
         """Calculate overall risk score from harm detection"""
@@ -147,22 +147,22 @@ class PolicyDecision:
 
     decision_id: str
     decision_type: PolicyDecisionType
-    actions: List[GovernanceAction]
+    actions: list[GovernanceAction]
 
     # Decision context
     workload_id: str
     user_id: str
     tier: ConstitutionalTier
-    harm_detections: List[HarmDetection] = field(default_factory=list)
+    harm_detections: list[HarmDetection] = field(default_factory=list)
 
     # Decision rationale
     reasoning: str = ""
     confidence: Decimal = Decimal("0.0")
-    constitutional_basis: List[str] = field(default_factory=list)
+    constitutional_basis: list[str] = field(default_factory=list)
 
     # Execution details
-    actions_taken: Dict[str, bool] = field(default_factory=dict)
-    enforcement_timestamp: Optional[datetime] = None
+    actions_taken: dict[str, bool] = field(default_factory=dict)
+    enforcement_timestamp: datetime | None = None
 
     # Appeals and review
     appealable: bool = False
@@ -171,7 +171,7 @@ class PolicyDecision:
 
     # Timestamps
     decision_timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
-    appeal_deadline: Optional[datetime] = None
+    appeal_deadline: datetime | None = None
 
     def __post_init__(self):
         """Set appeal deadline if decision is appealable"""
@@ -188,8 +188,8 @@ class ConstitutionalConstraint:
     description: str
 
     # Enforcement details
-    applicable_tiers: Set[ConstitutionalTier]
-    harm_categories_targeted: Set[HarmCategory]
+    applicable_tiers: set[ConstitutionalTier]
+    harm_categories_targeted: set[HarmCategory]
     enforcement_threshold: Decimal
 
     # Implementation
@@ -198,7 +198,7 @@ class ConstitutionalConstraint:
 
     # Metadata
     constitutional_article: str = ""  # Reference to constitutional article
-    precedent_cases: List[str] = field(default_factory=list)
+    precedent_cases: list[str] = field(default_factory=list)
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     active: bool = True
 
@@ -212,7 +212,7 @@ class ViewpointFirewall:
     description: str
 
     # Bias detection
-    protected_attributes: Set[str] = field(
+    protected_attributes: set[str] = field(
         default_factory=lambda: {
             "race",
             "gender",
@@ -227,7 +227,7 @@ class ViewpointFirewall:
     )
 
     bias_detection_threshold: Decimal = Decimal("0.7")
-    intervention_strategies: List[str] = field(
+    intervention_strategies: list[str] = field(
         default_factory=lambda: [
             "content_diversification",
             "perspective_balancing",
@@ -237,7 +237,7 @@ class ViewpointFirewall:
     )
 
     # Configuration
-    applicable_tiers: Set[ConstitutionalTier] = field(
+    applicable_tiers: set[ConstitutionalTier] = field(
         default_factory=lambda: {ConstitutionalTier.SILVER, ConstitutionalTier.GOLD}
     )
 
@@ -268,9 +268,9 @@ class ConstitutionalGovernanceEngine:
         self.viewpoint_firewalls = self._initialize_viewpoint_firewalls()
 
         # State tracking
-        self.active_decisions: Dict[str, PolicyDecision] = {}
-        self.harm_detection_history: List[HarmDetection] = []
-        self.appeal_queue: List[Dict[str, Any]] = []
+        self.active_decisions: dict[str, PolicyDecision] = {}
+        self.harm_detection_history: list[HarmDetection] = []
+        self.appeal_queue: list[dict[str, Any]] = []
 
         # Configuration
         self.config = {
@@ -289,7 +289,7 @@ class ConstitutionalGovernanceEngine:
 
         logger.info("Constitutional governance engine initialized")
 
-    def _initialize_harm_detectors(self) -> Dict[HarmCategory, Dict[str, Any]]:
+    def _initialize_harm_detectors(self) -> dict[HarmCategory, dict[str, Any]]:
         """Initialize harm detection configurations"""
 
         return {
@@ -329,7 +329,7 @@ class ConstitutionalGovernanceEngine:
             },
         }
 
-    def _initialize_constitutional_constraints(self) -> List[ConstitutionalConstraint]:
+    def _initialize_constitutional_constraints(self) -> list[ConstitutionalConstraint]:
         """Initialize constitutional constraints"""
 
         return [
@@ -390,7 +390,7 @@ class ConstitutionalGovernanceEngine:
             ),
         ]
 
-    def _initialize_viewpoint_firewalls(self) -> List[ViewpointFirewall]:
+    def _initialize_viewpoint_firewalls(self) -> list[ViewpointFirewall]:
         """Initialize viewpoint firewalls for bias prevention"""
 
         return [
@@ -432,7 +432,7 @@ class ConstitutionalGovernanceEngine:
             ),
         ]
 
-    async def evaluate_workload(self, workload_id: str, user_id: str, content: Dict[str, Any]) -> PolicyDecision:
+    async def evaluate_workload(self, workload_id: str, user_id: str, content: dict[str, Any]) -> PolicyDecision:
         """Evaluate workload against constitutional requirements"""
 
         # Get user's constitutional tier
@@ -469,8 +469,8 @@ class ConstitutionalGovernanceEngine:
         return decision
 
     async def _detect_harms(
-        self, content: Dict[str, Any], tier: ConstitutionalTier, workload_id: str, user_id: str
-    ) -> List[HarmDetection]:
+        self, content: dict[str, Any], tier: ConstitutionalTier, workload_id: str, user_id: str
+    ) -> list[HarmDetection]:
         """Detect potential harms in content using comprehensive taxonomy"""
 
         detections = []
@@ -489,13 +489,13 @@ class ConstitutionalGovernanceEngine:
     async def _check_harm_category(
         self,
         content_text: str,
-        full_content: Dict[str, Any],
+        full_content: dict[str, Any],
         category: HarmCategory,
-        config: Dict[str, Any],
+        config: dict[str, Any],
         tier: ConstitutionalTier,
         workload_id: str,
         user_id: str,
-    ) -> Optional[HarmDetection]:
+    ) -> HarmDetection | None:
         """Check specific harm category"""
 
         # Keyword-based detection (simplified - production would use ML models)
@@ -547,8 +547,8 @@ class ConstitutionalGovernanceEngine:
         return detection
 
     async def _check_constitutional_constraints(
-        self, content: Dict[str, Any], tier: ConstitutionalTier, harm_detections: List[HarmDetection]
-    ) -> List[ConstitutionalConstraint]:
+        self, content: dict[str, Any], tier: ConstitutionalTier, harm_detections: list[HarmDetection]
+    ) -> list[ConstitutionalConstraint]:
         """Check content against applicable constitutional constraints"""
 
         violations = []
@@ -580,8 +580,8 @@ class ConstitutionalGovernanceEngine:
         return violations
 
     async def _apply_viewpoint_firewall(
-        self, content: Dict[str, Any], tier: ConstitutionalTier
-    ) -> List[Dict[str, Any]]:
+        self, content: dict[str, Any], tier: ConstitutionalTier
+    ) -> list[dict[str, Any]]:
         """Apply viewpoint firewall to detect and prevent bias amplification"""
 
         issues = []
@@ -610,7 +610,7 @@ class ConstitutionalGovernanceEngine:
 
         return issues
 
-    async def _detect_bias(self, content: str, protected_attributes: Set[str]) -> Decimal:
+    async def _detect_bias(self, content: str, protected_attributes: set[str]) -> Decimal:
         """Detect bias in content (simplified implementation)"""
 
         # Simplified bias detection based on keyword patterns
@@ -643,9 +643,9 @@ class ConstitutionalGovernanceEngine:
         workload_id: str,
         user_id: str,
         tier: ConstitutionalTier,
-        harm_detections: List[HarmDetection],
-        constraint_violations: List[ConstitutionalConstraint],
-        viewpoint_issues: List[Dict[str, Any]],
+        harm_detections: list[HarmDetection],
+        constraint_violations: list[ConstitutionalConstraint],
+        viewpoint_issues: list[dict[str, Any]],
     ) -> PolicyDecision:
         """Make policy decision based on harm analysis and constitutional constraints"""
 
@@ -807,7 +807,7 @@ class ConstitutionalGovernanceEngine:
         # Add to human review queue (would integrate with actual review system)
         logger.info(f"Added escalation {escalation['escalation_id']} to human review queue")
 
-    def _summarize_harms(self, detections: List[HarmDetection]) -> Dict[str, Any]:
+    def _summarize_harms(self, detections: list[HarmDetection]) -> dict[str, Any]:
         """Create summary of detected harms for human reviewers"""
 
         if not detections:
@@ -835,7 +835,7 @@ class ConstitutionalGovernanceEngine:
             "average_confidence": float(total_confidence / len(detections)),
         }
 
-    async def process_appeal(self, decision_id: str, user_id: str, appeal_reason: str) -> Dict[str, Any]:
+    async def process_appeal(self, decision_id: str, user_id: str, appeal_reason: str) -> dict[str, Any]:
         """Process appeal for governance decision"""
 
         if decision_id not in self.active_decisions:
@@ -871,7 +871,7 @@ class ConstitutionalGovernanceEngine:
             "estimated_review_time": "3-5 business days",
         }
 
-    async def get_governance_statistics(self) -> Dict[str, Any]:
+    async def get_governance_statistics(self) -> dict[str, Any]:
         """Get comprehensive governance statistics"""
 
         total_decisions = len(self.active_decisions)
@@ -933,7 +933,7 @@ async def create_governance_engine(tier_manager=None) -> ConstitutionalGovernanc
     return engine
 
 
-def get_constitutional_constraints_for_tier(tier: ConstitutionalTier) -> List[Dict[str, Any]]:
+def get_constitutional_constraints_for_tier(tier: ConstitutionalTier) -> list[dict[str, Any]]:
     """Get constitutional constraints applicable to a specific tier"""
 
     engine = ConstitutionalGovernanceEngine()

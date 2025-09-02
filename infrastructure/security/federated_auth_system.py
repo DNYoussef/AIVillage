@@ -6,20 +6,20 @@ Comprehensive multi-factor authentication system for federated learning particip
 Integrates with existing RBAC system and provides secure node authentication.
 """
 
+from dataclasses import dataclass, field
+from enum import Enum
 import hashlib
 import logging
 import secrets
 import time
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict, Optional, Set, Tuple
+from typing import Any
 import uuid
 
 import bcrypt
-import pyotp
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.backends import default_backend
+import pyotp
 
 logger = logging.getLogger(__name__)
 
@@ -62,13 +62,13 @@ class NodeIdentity:
     node_id: str
     public_key: bytes
     role: NodeRole
-    capabilities: Dict[str, Any] = field(default_factory=dict)
+    capabilities: dict[str, Any] = field(default_factory=dict)
     reputation_score: float = 0.5
     trust_level: str = "basic"
     created_at: float = field(default_factory=time.time)
     last_active: float = field(default_factory=time.time)
-    authentication_methods: Set[AuthenticationMethod] = field(default_factory=set)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    authentication_methods: set[AuthenticationMethod] = field(default_factory=set)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -93,13 +93,13 @@ class AuthenticationSession:
     session_id: str
     node_id: str
     role: NodeRole
-    authenticated_methods: Set[AuthenticationMethod] = field(default_factory=set)
-    permissions: Set[str] = field(default_factory=set)
+    authenticated_methods: set[AuthenticationMethod] = field(default_factory=set)
+    permissions: set[str] = field(default_factory=set)
     created_at: float = field(default_factory=time.time)
     expires_at: float = field(default_factory=lambda: time.time() + 3600)  # 1 hour
     last_activity: float = field(default_factory=time.time)
     is_active: bool = True
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class FederatedAuthenticationSystem:
@@ -116,16 +116,16 @@ class FederatedAuthenticationSystem:
     - Challenge-response protocols
     """
 
-    def __init__(self, jwt_secret: Optional[str] = None, enable_mfa: bool = True):
+    def __init__(self, jwt_secret: str | None = None, enable_mfa: bool = True):
         """Initialize the federated authentication system."""
         self.jwt_secret = jwt_secret or secrets.token_urlsafe(32)
         self.enable_mfa = enable_mfa
 
         # Storage
-        self.node_identities: Dict[str, NodeIdentity] = {}
-        self.active_challenges: Dict[str, AuthenticationChallenge] = {}
-        self.active_sessions: Dict[str, AuthenticationSession] = {}
-        self.revoked_tokens: Set[str] = set()
+        self.node_identities: dict[str, NodeIdentity] = {}
+        self.active_challenges: dict[str, AuthenticationChallenge] = {}
+        self.active_sessions: dict[str, AuthenticationSession] = {}
+        self.revoked_tokens: set[str] = set()
 
         # Security configuration
         self.password_policy = {
@@ -164,7 +164,7 @@ class FederatedAuthenticationSystem:
         node_id: str,
         role: NodeRole,
         password: str,
-        capabilities: Optional[Dict[str, Any]] = None,
+        capabilities: dict[str, Any] | None = None,
         enable_certificate_auth: bool = True,
     ) -> NodeIdentity:
         """Register a new federated learning node."""
@@ -223,10 +223,10 @@ class FederatedAuthenticationSystem:
         self,
         node_id: str,
         password: str,
-        mfa_token: Optional[str] = None,
-        certificate: Optional[bytes] = None,
-        challenge_response: Optional[Dict[str, Any]] = None,
-    ) -> Tuple[bool, Optional[AuthenticationSession]]:
+        mfa_token: str | None = None,
+        certificate: bytes | None = None,
+        challenge_response: dict[str, Any] | None = None,
+    ) -> tuple[bool, AuthenticationSession | None]:
         """
         Authenticate a federated learning node with multiple methods.
         """
@@ -296,7 +296,7 @@ class FederatedAuthenticationSystem:
 
     async def create_authentication_challenge(
         self, node_id: str, method: AuthenticationMethod = AuthenticationMethod.ZERO_KNOWLEDGE
-    ) -> Optional[AuthenticationChallenge]:
+    ) -> AuthenticationChallenge | None:
         """Create an authentication challenge for a node."""
 
         identity = self.node_identities.get(node_id)
@@ -330,7 +330,7 @@ class FederatedAuthenticationSystem:
         logger.info(f"Created {method.value} challenge for node {node_id}")
         return challenge
 
-    async def validate_session(self, session_id: str) -> Tuple[bool, Optional[AuthenticationSession]]:
+    async def validate_session(self, session_id: str) -> tuple[bool, AuthenticationSession | None]:
         """Validate an authentication session."""
 
         session = self.active_sessions.get(session_id)
@@ -384,7 +384,7 @@ class FederatedAuthenticationSystem:
         logger.info(f"Node {node_id} reputation updated to {identity.reputation_score:.3f}")
         return True
 
-    async def get_node_permissions(self, node_id: str) -> Set[str]:
+    async def get_node_permissions(self, node_id: str) -> set[str]:
         """Get permissions for a node based on role and trust level."""
 
         identity = self.node_identities.get(node_id)
@@ -468,7 +468,7 @@ class FederatedAuthenticationSystem:
             logger.error(f"Certificate verification error: {e}")
             return False
 
-    async def _verify_challenge_response(self, node_id: str, challenge_response: Dict[str, Any]) -> bool:
+    async def _verify_challenge_response(self, node_id: str, challenge_response: dict[str, Any]) -> bool:
         """Verify challenge response."""
         challenge_id = challenge_response.get("challenge_id")
         response = challenge_response.get("response")
@@ -502,7 +502,7 @@ class FederatedAuthenticationSystem:
         commitment = hashlib.sha256(challenge_data + identity.public_key + b"zk_proof").hexdigest()
         return commitment
 
-    def _get_required_auth_methods(self, role: NodeRole) -> Set[AuthenticationMethod]:
+    def _get_required_auth_methods(self, role: NodeRole) -> set[AuthenticationMethod]:
         """Get required authentication methods for a role."""
         base_requirements = {AuthenticationMethod.PASSWORD}
 
@@ -513,7 +513,7 @@ class FederatedAuthenticationSystem:
         return base_requirements
 
     async def _create_session(
-        self, identity: NodeIdentity, authenticated_methods: Set[AuthenticationMethod]
+        self, identity: NodeIdentity, authenticated_methods: set[AuthenticationMethod]
     ) -> AuthenticationSession:
         """Create an authentication session."""
         session_id = str(uuid.uuid4())
@@ -561,7 +561,7 @@ class FederatedAuthenticationSystem:
 
     # Statistics and monitoring
 
-    def get_auth_stats(self) -> Dict[str, Any]:
+    def get_auth_stats(self) -> dict[str, Any]:
         """Get authentication system statistics."""
         return {
             **self.auth_stats,
@@ -574,7 +574,7 @@ class FederatedAuthenticationSystem:
             ),
         }
 
-    def get_node_info(self, node_id: str) -> Optional[Dict[str, Any]]:
+    def get_node_info(self, node_id: str) -> dict[str, Any] | None:
         """Get node information (excluding sensitive data)."""
         identity = self.node_identities.get(node_id)
         if not identity:
@@ -591,7 +591,7 @@ class FederatedAuthenticationSystem:
             "last_active": identity.last_active,
         }
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Perform health check on authentication system."""
         current_time = time.time()
 

@@ -10,19 +10,17 @@ This module provides comprehensive performance regression detection with statist
 analysis, trend detection, and automated rollback capabilities for evolved models.
 """
 
-import logging
-import numpy as np
-import json
+from collections import defaultdict, deque
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Tuple, Any, Optional, Callable
-from datetime import datetime, timedelta
-import statistics
-from collections import deque, defaultdict
+import logging
+from typing import Any
+import warnings
+
+import numpy as np
 import scipy.stats as stats
 from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import StandardScaler
-import warnings
 
 warnings.filterwarnings('ignore', category=RuntimeWarning)
 
@@ -52,12 +50,12 @@ class PerformanceMetric:
     name: str
     current_value: float
     historical_values: deque = field(default_factory=lambda: deque(maxlen=100))
-    baseline_value: Optional[float] = None
+    baseline_value: float | None = None
     target_direction: str = "maximize"  # maximize, minimize, or target
-    target_value: Optional[float] = None
+    target_value: float | None = None
     tolerance: float = 0.05  # 5% tolerance by default
     
-    def add_value(self, value: float, timestamp: Optional[datetime] = None) -> None:
+    def add_value(self, value: float, timestamp: datetime | None = None) -> None:
         """Add a new value to the historical data."""
         self.historical_values.append({
             'value': value,
@@ -65,13 +63,13 @@ class PerformanceMetric:
         })
         self.current_value = value
     
-    def get_recent_values(self, count: int = 10) -> List[float]:
+    def get_recent_values(self, count: int = 10) -> list[float]:
         """Get the most recent values."""
         if count >= len(self.historical_values):
             return [item['value'] for item in self.historical_values]
         return [item['value'] for item in list(self.historical_values)[-count:]]
     
-    def get_baseline_comparison(self) -> Optional[float]:
+    def get_baseline_comparison(self) -> float | None:
         """Get relative change from baseline."""
         if self.baseline_value is None:
             return None
@@ -94,9 +92,9 @@ class RegressionAlert:
     deviation: float
     confidence: float
     timestamp: datetime
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     resolved: bool = False
-    resolution_timestamp: Optional[datetime] = None
+    resolution_timestamp: datetime | None = None
 
 
 class StatisticalRegressionDetector:
@@ -111,9 +109,9 @@ class StatisticalRegressionDetector:
     
     def t_test_regression(
         self, 
-        baseline_values: List[float], 
-        current_values: List[float]
-    ) -> Tuple[bool, float, Dict[str, Any]]:
+        baseline_values: list[float], 
+        current_values: list[float]
+    ) -> tuple[bool, float, dict[str, Any]]:
         """
         Perform t-test to detect significant performance change.
         
@@ -150,9 +148,9 @@ class StatisticalRegressionDetector:
     
     def mann_whitney_test(
         self, 
-        baseline_values: List[float], 
-        current_values: List[float]
-    ) -> Tuple[bool, float, Dict[str, Any]]:
+        baseline_values: list[float], 
+        current_values: list[float]
+    ) -> tuple[bool, float, dict[str, Any]]:
         """
         Perform Mann-Whitney U test (non-parametric alternative to t-test).
         """
@@ -185,9 +183,9 @@ class StatisticalRegressionDetector:
     
     def kolmogorov_smirnov_test(
         self, 
-        baseline_values: List[float], 
-        current_values: List[float]
-    ) -> Tuple[bool, float, Dict[str, Any]]:
+        baseline_values: list[float], 
+        current_values: list[float]
+    ) -> tuple[bool, float, dict[str, Any]]:
         """
         Perform Kolmogorov-Smirnov test for distribution comparison.
         """
@@ -224,7 +222,7 @@ class TrendAnalysisDetector:
     def __init__(self, min_trend_points: int = 5):
         self.min_trend_points = min_trend_points
     
-    def linear_trend_analysis(self, values: List[float]) -> Tuple[bool, float, Dict[str, Any]]:
+    def linear_trend_analysis(self, values: list[float]) -> tuple[bool, float, dict[str, Any]]:
         """
         Analyze linear trend in performance values.
         
@@ -277,9 +275,9 @@ class TrendAnalysisDetector:
     
     def exponential_smoothing_trend(
         self, 
-        values: List[float], 
+        values: list[float], 
         alpha: float = 0.3
-    ) -> Tuple[bool, float, Dict[str, Any]]:
+    ) -> tuple[bool, float, dict[str, Any]]:
         """
         Detect trend using exponential smoothing.
         """
@@ -318,9 +316,9 @@ class TrendAnalysisDetector:
     
     def cusum_change_detection(
         self, 
-        values: List[float], 
-        reference_mean: Optional[float] = None
-    ) -> Tuple[bool, int, Dict[str, Any]]:
+        values: list[float], 
+        reference_mean: float | None = None
+    ) -> tuple[bool, int, dict[str, Any]]:
         """
         CUSUM (Cumulative Sum) change point detection.
         
@@ -391,7 +389,7 @@ class AnomalyDetector:
     def __init__(self, contamination: float = 0.1):
         self.contamination = contamination
     
-    def isolation_forest_detection(self, values: List[float]) -> Tuple[bool, List[bool], Dict[str, Any]]:
+    def isolation_forest_detection(self, values: list[float]) -> tuple[bool, list[bool], dict[str, Any]]:
         """
         Use Isolation Forest for anomaly detection.
         """
@@ -433,7 +431,7 @@ class AnomalyDetector:
         except Exception as e:
             return False, [False] * len(values), {"error": str(e)}
     
-    def _simple_anomaly_detection(self, values: List[float]) -> Tuple[bool, List[bool], Dict[str, Any]]:
+    def _simple_anomaly_detection(self, values: list[float]) -> tuple[bool, list[bool], dict[str, Any]]:
         """
         Simple anomaly detection using z-score.
         """
@@ -503,7 +501,7 @@ class ComprehensiveRegressionDetector:
     def register_metric(
         self, 
         name: str, 
-        baseline_value: Optional[float] = None,
+        baseline_value: float | None = None,
         target_direction: str = "maximize",
         tolerance: float = 0.05
     ) -> None:
@@ -529,9 +527,9 @@ class ComprehensiveRegressionDetector:
     def detect_regression(
         self, 
         metric_name: str,
-        recent_values: Optional[List[float]] = None,
-        baseline_values: Optional[List[float]] = None
-    ) -> Tuple[bool, List[RegressionAlert]]:
+        recent_values: list[float] | None = None,
+        baseline_values: list[float] | None = None
+    ) -> tuple[bool, list[RegressionAlert]]:
         """
         Comprehensive regression detection for a metric.
         
@@ -593,8 +591,8 @@ class ComprehensiveRegressionDetector:
     def _threshold_based_detection(
         self, 
         metric: PerformanceMetric, 
-        recent_values: List[float]
-    ) -> Optional[RegressionAlert]:
+        recent_values: list[float]
+    ) -> RegressionAlert | None:
         """Threshold-based regression detection."""
         if metric.baseline_value is None:
             return None
@@ -636,9 +634,9 @@ class ComprehensiveRegressionDetector:
     def _statistical_detection(
         self, 
         metric: PerformanceMetric, 
-        baseline_values: List[float], 
-        recent_values: List[float]
-    ) -> List[RegressionAlert]:
+        baseline_values: list[float], 
+        recent_values: list[float]
+    ) -> list[RegressionAlert]:
         """Statistical regression detection."""
         alerts = []
         
@@ -691,8 +689,8 @@ class ComprehensiveRegressionDetector:
     def _trend_based_detection(
         self, 
         metric: PerformanceMetric, 
-        recent_values: List[float]
-    ) -> Optional[RegressionAlert]:
+        recent_values: list[float]
+    ) -> RegressionAlert | None:
         """Trend-based regression detection."""
         is_declining, slope, metadata = self.trend_detector.linear_trend_analysis(recent_values)
         
@@ -718,8 +716,8 @@ class ComprehensiveRegressionDetector:
     def _anomaly_based_detection(
         self, 
         metric: PerformanceMetric, 
-        recent_values: List[float]
-    ) -> Optional[RegressionAlert]:
+        recent_values: list[float]
+    ) -> RegressionAlert | None:
         """Anomaly-based regression detection."""
         has_anomalies, anomaly_flags, metadata = self.anomaly_detector.isolation_forest_detection(recent_values)
         
@@ -757,7 +755,7 @@ class ComprehensiveRegressionDetector:
         else:
             return RegressionSeverity.CRITICAL
     
-    def get_metric_summary(self, metric_name: str) -> Optional[Dict[str, Any]]:
+    def get_metric_summary(self, metric_name: str) -> dict[str, Any] | None:
         """Get comprehensive summary of a metric."""
         if metric_name not in self.metrics_registry:
             return None
@@ -812,7 +810,7 @@ class ComprehensiveRegressionDetector:
             'tolerance': metric.tolerance
         }
     
-    def get_system_health(self) -> Dict[str, Any]:
+    def get_system_health(self) -> dict[str, Any]:
         """Get overall system health regarding regressions."""
         total_metrics = len(self.metrics_registry)
         active_alerts = [alert for alert in self.alerts_history if not alert.resolved]
@@ -844,7 +842,7 @@ class ComprehensiveRegressionDetector:
 
 
 # Archaeological enhancement: Global regression detector instance
-_global_regression_detector: Optional[ComprehensiveRegressionDetector] = None
+_global_regression_detector: ComprehensiveRegressionDetector | None = None
 
 def get_regression_detector() -> ComprehensiveRegressionDetector:
     """Get or create global regression detector instance."""

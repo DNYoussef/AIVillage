@@ -3,11 +3,11 @@ AI Village Infrastructure Gateway Services
 """
 
 from .websocket_service import (
-    WebSocketService,
-    WebSocketMessage,
     ConnectionInfo,
     ConnectionState,
     MessageType,
+    WebSocketMessage,
+    WebSocketService,
     websocket_service,
 )
 

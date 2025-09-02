@@ -9,7 +9,6 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Tuple
 
 
 class MemoryDecay(nn.Module):
@@ -82,7 +81,7 @@ def normalize_memory_slots(slots: torch.Tensor, dim: int = -1) -> torch.Tensor:
 
 def topk_memory_selection(
     query: torch.Tensor, memory_keys: torch.Tensor, k: int, temperature: float = 1.0
-) -> Tuple[torch.Tensor, torch.Tensor]:
+) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Select top-k memory slots based on similarity to query.
 

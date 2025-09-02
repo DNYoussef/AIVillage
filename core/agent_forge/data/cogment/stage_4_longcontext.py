@@ -10,12 +10,12 @@ Extended context processing and generation:
 Purpose: Test LTM functionality and long-sequence reasoning capabilities.
 """
 
+from dataclasses import dataclass
 import logging
 import random
-from dataclasses import dataclass
-from typing import Dict, List, Any, Optional
+from typing import Any
 
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 try:
     from datasets import load_dataset
@@ -38,11 +38,11 @@ class LongContextConfig:
     # Context length settings
     min_context_length: int = 1024
     max_context_length: int = 8192  # Reasonable limit for training
-    target_lengths: List[int] = None  # [1024, 2048, 4096]
+    target_lengths: list[int] = None  # [1024, 2048, 4096]
 
     # Dataset limits
-    longbench_limit: Optional[int] = 1000
-    scrolls_limit: Optional[int] = 500
+    longbench_limit: int | None = 1000
+    scrolls_limit: int | None = 500
     synthetic_limit: int = 200
 
     # Processing settings
@@ -68,7 +68,7 @@ class LongBenchProcessor:
     def __init__(self, config: LongContextConfig):
         self.config = config
 
-    def load_longbench_data(self) -> List[Dict[str, Any]]:
+    def load_longbench_data(self) -> list[dict[str, Any]]:
         """Load LongBench dataset."""
         if not self.config.use_longbench or load_dataset is None:
             return self._generate_synthetic_longbench()
@@ -102,13 +102,13 @@ class LongBenchProcessor:
             logger.error(f"Failed to load LongBench: {e}")
             return self._generate_synthetic_longbench()
 
-    def _load_longbench_task(self, task_name: str, dataset_name: str) -> List[Dict[str, Any]]:
+    def _load_longbench_task(self, task_name: str, dataset_name: str) -> list[dict[str, Any]]:
         """Load a specific LongBench task."""
         # This would typically load from HuggingFace or local files
         # For now, generate synthetic data based on task type
         return self._generate_task_specific_samples(task_name)
 
-    def _generate_task_specific_samples(self, task_name: str, num_samples: int = 50) -> List[Dict[str, Any]]:
+    def _generate_task_specific_samples(self, task_name: str, num_samples: int = 50) -> list[dict[str, Any]]:
         """Generate samples for specific LongBench tasks."""
         samples = []
         random.seed(self.config.seed)
@@ -128,7 +128,7 @@ class LongBenchProcessor:
 
         return samples
 
-    def _generate_narrative_qa_sample(self, idx: int) -> Dict[str, Any]:
+    def _generate_narrative_qa_sample(self, idx: int) -> dict[str, Any]:
         """Generate NarrativeQA-style sample."""
         # Generate a story excerpt
         story_templates = [
@@ -176,7 +176,7 @@ class LongBenchProcessor:
             "metadata": {"context_length": len(story), "question_type": "reading_comprehension", "synthetic": True},
         }
 
-    def _generate_qasper_sample(self, idx: int) -> Dict[str, Any]:
+    def _generate_qasper_sample(self, idx: int) -> dict[str, Any]:
         """Generate QASPER-style sample (scientific paper QA)."""
         # Generate scientific paper excerpt
         paper_sections = [
@@ -220,7 +220,7 @@ class LongBenchProcessor:
             },
         }
 
-    def _generate_multifieldqa_sample(self, idx: int) -> Dict[str, Any]:
+    def _generate_multifieldqa_sample(self, idx: int) -> dict[str, Any]:
         """Generate MultiFieldQA-style sample."""
         # Generate multi-domain content
         domains = ["technology", "history", "science", "literature"]
@@ -254,7 +254,7 @@ class LongBenchProcessor:
             "metadata": {"context_length": len(content), "domain": selected_domain, "synthetic": True},
         }
 
-    def _generate_generic_long_sample(self, idx: int) -> Dict[str, Any]:
+    def _generate_generic_long_sample(self, idx: int) -> dict[str, Any]:
         """Generate generic long-context sample."""
         # Create long document
         topics = ["climate change", "space exploration", "artificial intelligence", "renewable energy"]
@@ -279,7 +279,7 @@ class LongBenchProcessor:
             "metadata": {"context_length": len(content), "topic": topic, "synthetic": True},
         }
 
-    def _generate_synthetic_longbench(self) -> List[Dict[str, Any]]:
+    def _generate_synthetic_longbench(self) -> list[dict[str, Any]]:
         """Generate synthetic LongBench-style data."""
         logger.info("Generating synthetic LongBench samples...")
 
@@ -300,7 +300,7 @@ class ScrollsProcessor:
     def __init__(self, config: LongContextConfig):
         self.config = config
 
-    def load_scrolls_data(self) -> List[Dict[str, Any]]:
+    def load_scrolls_data(self) -> list[dict[str, Any]]:
         """Load SCROLLS dataset."""
         if not self.config.use_scrolls or load_dataset is None:
             return self._generate_synthetic_scrolls()
@@ -329,12 +329,12 @@ class ScrollsProcessor:
             logger.error(f"Failed to load SCROLLS: {e}")
             return self._generate_synthetic_scrolls()
 
-    def _load_scrolls_task(self, task_name: str) -> List[Dict[str, Any]]:
+    def _load_scrolls_task(self, task_name: str) -> list[dict[str, Any]]:
         """Load specific SCROLLS task."""
         # Generate synthetic data for each task type
         return self._generate_scrolls_task_samples(task_name)
 
-    def _generate_scrolls_task_samples(self, task_name: str, num_samples: int = 40) -> List[Dict[str, Any]]:
+    def _generate_scrolls_task_samples(self, task_name: str, num_samples: int = 40) -> list[dict[str, Any]]:
         """Generate samples for specific SCROLLS tasks."""
         samples = []
         random.seed(self.config.seed)
@@ -352,7 +352,7 @@ class ScrollsProcessor:
 
         return samples
 
-    def _generate_qmsum_sample(self, idx: int) -> Dict[str, Any]:
+    def _generate_qmsum_sample(self, idx: int) -> dict[str, Any]:
         """Generate QMSum-style sample (meeting summarization)."""
         # Generate meeting transcript
         speakers = ["Alice", "Bob", "Carol", "David"]
@@ -397,7 +397,7 @@ class ScrollsProcessor:
             },
         }
 
-    def _generate_quality_sample(self, idx: int) -> Dict[str, Any]:
+    def _generate_quality_sample(self, idx: int) -> dict[str, Any]:
         """Generate QuALITY-style sample (long-form QA)."""
         # Generate long narrative
         story_themes = ["adventure", "mystery", "romance", "science fiction"]
@@ -430,7 +430,7 @@ class ScrollsProcessor:
             "metadata": {"context_length": len(story), "theme": theme, "synthetic": True},
         }
 
-    def _generate_generic_scrolls_sample(self, idx: int) -> Dict[str, Any]:
+    def _generate_generic_scrolls_sample(self, idx: int) -> dict[str, Any]:
         """Generate generic SCROLLS-style sample."""
         document_types = ["report", "article", "essay", "review"]
         doc_type = random.choice(document_types)
@@ -456,7 +456,7 @@ class ScrollsProcessor:
             "metadata": {"context_length": len(content), "document_type": doc_type, "synthetic": True},
         }
 
-    def _generate_synthetic_scrolls(self) -> List[Dict[str, Any]]:
+    def _generate_synthetic_scrolls(self) -> list[dict[str, Any]]:
         """Generate synthetic SCROLLS data."""
         logger.info("Generating synthetic SCROLLS samples...")
 
@@ -473,7 +473,7 @@ class ScrollsProcessor:
 class LongContextDataset(Dataset):
     """Complete long-context dataset for Stage 4."""
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: dict[str, Any] = None):
         self.config = LongContextConfig(**(config or {}))
 
         # Initialize processors
@@ -492,7 +492,7 @@ class LongContextDataset(Dataset):
 
         logger.info(f"Long-context dataset initialized with {len(self.samples)} samples")
 
-    def _load_all_samples(self) -> List[Dict[str, Any]]:
+    def _load_all_samples(self) -> list[dict[str, Any]]:
         """Load samples from all sources."""
         all_samples = []
 
@@ -507,7 +507,7 @@ class LongContextDataset(Dataset):
         logger.info(f"Loaded {len(all_samples)} total long-context samples")
         return all_samples
 
-    def _filter_by_context_length(self) -> List[Dict[str, Any]]:
+    def _filter_by_context_length(self) -> list[dict[str, Any]]:
         """Filter samples by context length requirements."""
         filtered_samples = []
 
@@ -523,14 +523,14 @@ class LongContextDataset(Dataset):
     def __len__(self) -> int:
         return len(self.samples)
 
-    def __getitem__(self, idx: int) -> Dict[str, Any]:
+    def __getitem__(self, idx: int) -> dict[str, Any]:
         return self.samples[idx]
 
     def get_data_loader(self, batch_size: int = 2, shuffle: bool = True) -> DataLoader:
         """Get DataLoader for this dataset."""
         return DataLoader(self, batch_size=batch_size, shuffle=shuffle, collate_fn=self._collate_fn)
 
-    def _collate_fn(self, batch: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _collate_fn(self, batch: list[dict[str, Any]]) -> dict[str, Any]:
         """Collate function for batching."""
         return {
             "inputs": [item["input"] for item in batch],
@@ -540,7 +540,7 @@ class LongContextDataset(Dataset):
             "metadata": [item["metadata"] for item in batch],
         }
 
-    def get_context_length_distribution(self) -> Dict[str, int]:
+    def get_context_length_distribution(self) -> dict[str, int]:
         """Get distribution of context lengths."""
         distribution = {}
 
@@ -561,7 +561,7 @@ class LongContextDataset(Dataset):
 
         return distribution
 
-    def get_task_distribution(self) -> Dict[str, int]:
+    def get_task_distribution(self) -> dict[str, int]:
         """Get distribution by task type."""
         distribution = {}
 
@@ -606,7 +606,7 @@ class LongContextDataset(Dataset):
         return success_rate > 0.6  # 60% minimum for long-context
 
 
-def create_long_context_dataset(config: Dict[str, Any] = None) -> LongContextDataset:
+def create_long_context_dataset(config: dict[str, Any] = None) -> LongContextDataset:
     """Factory function to create long-context dataset."""
     dataset = LongContextDataset(config)
 

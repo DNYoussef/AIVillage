@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
-from typing import Tuple, Optional
 
 
 class ACTHalting(nn.Module):
@@ -24,8 +23,8 @@ class ACTHalting(nn.Module):
         self,
         halt_probs: torch.Tensor,  # [B, T, 1] - halting probabilities at each step
         outputs: torch.Tensor,  # [B, T, ...] - outputs at each step
-        step_weights: Optional[torch.Tensor] = None,  # [B, T] - optional step weights
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        step_weights: torch.Tensor | None = None,  # [B, T] - optional step weights
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Apply ACT halting with weighted averaging.
 
@@ -108,7 +107,7 @@ class ACTLoss(nn.Module):
         self,
         task_loss: torch.Tensor,  # [B] or scalar - primary task loss
         ponder_cost: torch.Tensor,  # [B] - average computation steps
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Compute combined loss with ponder cost regularization.
 

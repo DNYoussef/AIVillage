@@ -8,11 +8,11 @@ Provides seamless integration with transport managers and mesh protocols.
 import asyncio
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from .vrf_neighbor_selection import VRFNeighborSelector, NodeInfo
-from .topology_manager import TopologyManager
 from ..reputation.bayesian_reputation import BayesianReputationEngine
+from .topology_manager import TopologyManager
+from .vrf_neighbor_selection import NodeInfo, VRFNeighborSelector
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class VRFIntegrationManager:
     - Topology health monitoring and healing
     """
 
-    def __init__(self, node_id: str, reputation_engine: Optional[BayesianReputationEngine] = None, **kwargs):
+    def __init__(self, node_id: str, reputation_engine: BayesianReputationEngine | None = None, **kwargs):
         self.node_id = node_id
 
         # Core components
@@ -39,8 +39,8 @@ class VRFIntegrationManager:
         self.reputation_engine = reputation_engine
 
         # Connection management
-        self.active_connections: Dict[str, Any] = {}
-        self.connection_metrics: Dict[str, Dict[str, float]] = {}
+        self.active_connections: dict[str, Any] = {}
+        self.connection_metrics: dict[str, dict[str, float]] = {}
 
         # Configuration
         self.config = {
@@ -50,8 +50,8 @@ class VRFIntegrationManager:
         }
 
         # Monitoring tasks
-        self._health_monitor_task: Optional[asyncio.Task] = None
-        self._metrics_task: Optional[asyncio.Task] = None
+        self._health_monitor_task: asyncio.Task | None = None
+        self._metrics_task: asyncio.Task | None = None
 
         self.logger = logging.getLogger(__name__)
 
@@ -118,7 +118,7 @@ class VRFIntegrationManager:
             self.logger.error(f"Failed to add node {node_info.node_id}: {e}")
             return False
 
-    async def get_optimal_neighbors(self, count: Optional[int] = None) -> List[str]:
+    async def get_optimal_neighbors(self, count: int | None = None) -> list[str]:
         """Get optimal neighbors using VRF selection."""
         try:
             neighbors = await self.vrf_selector.select_neighbors()
@@ -138,7 +138,7 @@ class VRFIntegrationManager:
             self.logger.error(f"Failed to get optimal neighbors: {e}")
             return []
 
-    def get_integration_status(self) -> Dict[str, Any]:
+    def get_integration_status(self) -> dict[str, Any]:
         """Get integration system status."""
         vrf_status = self.vrf_selector.get_status()
         topology_status = self.topology_manager.get_topology_status()

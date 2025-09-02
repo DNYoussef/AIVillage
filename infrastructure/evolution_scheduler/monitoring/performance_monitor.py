@@ -8,17 +8,17 @@ Integration: Seamless integration with existing monitoring infrastructure
 """
 
 import asyncio
-import time
-import logging
-import json
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, asdict
 from collections import defaultdict, deque
-import psutil
-import threading
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
+import json
+import logging
 from statistics import mean, stdev
-import numpy as np
+import threading
+import time
+from typing import Any
+
+import psutil
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +29,9 @@ class PerformanceMetric:
     value: float
     timestamp: datetime
     unit: str
-    tags: Dict[str, str] = None
+    tags: dict[str, str] = None
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "value": self.value,
@@ -52,7 +52,7 @@ class SystemResources:
     network_bytes_recv: int
     timestamp: datetime
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 class PerformanceMonitor:
@@ -67,15 +67,15 @@ class PerformanceMonitor:
         self.max_history = max_history
         
         # Metric storage
-        self.metrics_history: Dict[str, deque] = defaultdict(lambda: deque(maxlen=max_history))
+        self.metrics_history: dict[str, deque] = defaultdict(lambda: deque(maxlen=max_history))
         self.resource_history: deque = deque(maxlen=max_history)
         
         # Performance tracking
-        self.task_performance: Dict[str, Dict[str, Any]] = {}
+        self.task_performance: dict[str, dict[str, Any]] = {}
         
         # Monitoring state
         self.monitoring_active = False
-        self.monitoring_thread: Optional[threading.Thread] = None
+        self.monitoring_thread: threading.Thread | None = None
         
         # Alert thresholds
         self.alert_thresholds = {
@@ -150,7 +150,7 @@ class PerformanceMonitor:
             timestamp=datetime.now()
         )
     
-    def record_metric(self, name: str, value: float, unit: str = "", tags: Optional[Dict[str, str]] = None):
+    def record_metric(self, name: str, value: float, unit: str = "", tags: dict[str, str] | None = None):
         """Record a custom performance metric."""
         metric = PerformanceMetric(
             name=name,
@@ -281,7 +281,7 @@ class PerformanceMonitor:
             task_perf["alerts"].append(alert)
             logger.warning(f"Task duration alert: {alert}")
     
-    def _generate_task_performance_summary(self, task_id: str) -> Dict[str, Any]:
+    def _generate_task_performance_summary(self, task_id: str) -> dict[str, Any]:
         """Generate comprehensive performance summary for completed task."""
         task_perf = self.task_performance[task_id]
         
@@ -327,7 +327,7 @@ class PerformanceMonitor:
             "success": task_perf["success"]
         }
     
-    def _calculate_convergence_rate(self, fitness_history: List[float]) -> float:
+    def _calculate_convergence_rate(self, fitness_history: list[float]) -> float:
         """Calculate fitness convergence rate."""
         if len(fitness_history) < 2:
             return 0.0
@@ -341,7 +341,7 @@ class PerformanceMonitor:
         
         return mean(improvements) if improvements else 0.0
     
-    def _calculate_resource_efficiency(self, cpu_values: List[float], memory_values: List[float]) -> float:
+    def _calculate_resource_efficiency(self, cpu_values: list[float], memory_values: list[float]) -> float:
         """Calculate resource efficiency score (0-1)."""
         if not cpu_values or not memory_values:
             return 0.0
@@ -356,7 +356,7 @@ class PerformanceMonitor:
         
         return max(0.0, min(1.0, balance_score * utilization_score))
     
-    def _notify_emergency_triage(self, alert: Dict[str, Any]):
+    def _notify_emergency_triage(self, alert: dict[str, Any]):
         """Notify emergency triage system of performance alerts."""
         try:
             # Integration with Phase 1 Emergency Triage System
@@ -379,11 +379,11 @@ class PerformanceMonitor:
         except Exception as e:
             logger.error(f"Failed to notify emergency triage: {e}")
     
-    async def get_performance_dashboard_data(self) -> Dict[str, Any]:
+    async def get_performance_dashboard_data(self) -> dict[str, Any]:
         """Get comprehensive performance dashboard data."""
         now = datetime.now()
         hour_ago = now - timedelta(hours=1)
-        day_ago = now - timedelta(days=1)
+        now - timedelta(days=1)
         
         # Recent system resources
         recent_resources = [
@@ -424,7 +424,7 @@ class PerformanceMonitor:
             "recommendations": await self._generate_performance_recommendations()
         }
     
-    def _get_resource_utilization_summary(self, resources: List[SystemResources]) -> Dict[str, Any]:
+    def _get_resource_utilization_summary(self, resources: list[SystemResources]) -> dict[str, Any]:
         """Generate resource utilization summary."""
         if not resources:
             return {"error": "No recent resource data"}
@@ -451,7 +451,7 @@ class PerformanceMonitor:
             }
         }
     
-    async def _calculate_performance_trends(self) -> Dict[str, Any]:
+    async def _calculate_performance_trends(self) -> dict[str, Any]:
         """Calculate performance trends across metrics."""
         trends = {}
         
@@ -488,7 +488,7 @@ class PerformanceMonitor:
                     count += 1
         return count
     
-    async def _generate_performance_recommendations(self) -> List[Dict[str, Any]]:
+    async def _generate_performance_recommendations(self) -> list[dict[str, Any]]:
         """Generate performance optimization recommendations."""
         recommendations = []
         
@@ -535,7 +535,7 @@ class PerformanceMonitor:
         
         return recommendations
     
-    def _analyze_algorithm_performance(self) -> Dict[str, Dict[str, Any]]:
+    def _analyze_algorithm_performance(self) -> dict[str, dict[str, Any]]:
         """Analyze performance by algorithm type."""
         algorithm_stats = defaultdict(list)
         
@@ -578,7 +578,7 @@ class PerformanceMonitor:
         else:
             raise ValueError(f"Unsupported export format: {format_type}")
     
-    async def _generate_overall_performance_summary(self) -> Dict[str, Any]:
+    async def _generate_overall_performance_summary(self) -> dict[str, Any]:
         """Generate overall system performance summary."""
         total_tasks = len(self.task_performance)
         successful_tasks = sum(1 for perf in self.task_performance.values() if perf.get("success", False))
@@ -639,11 +639,11 @@ async def start_global_monitoring():
     """Start global performance monitoring for evolution scheduler."""
     global_performance_monitor.start_monitoring()
 
-async def get_performance_dashboard() -> Dict[str, Any]:
+async def get_performance_dashboard() -> dict[str, Any]:
     """Get performance dashboard data for external interfaces."""
     return await global_performance_monitor.get_performance_dashboard_data()
 
-async def record_evolution_metric(name: str, value: float, unit: str = "", tags: Optional[Dict[str, str]] = None):
+async def record_evolution_metric(name: str, value: float, unit: str = "", tags: dict[str, str] | None = None):
     """Record evolution-related performance metric."""
     global_performance_monitor.record_metric(name, value, unit, tags)
 

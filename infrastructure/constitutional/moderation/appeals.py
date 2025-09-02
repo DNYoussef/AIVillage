@@ -3,11 +3,11 @@ Constitutional Appeals System
 Manages constitutional appeals process with community oversight and due process protections
 """
 
-import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Any
+import logging
+from typing import Any
 from uuid import uuid4
 
 logger = logging.getLogger(__name__)
@@ -57,7 +57,7 @@ class AppealSubmission:
     user_tier: str
     appeal_type: AppealType
     constitutional_grounds: str
-    evidence_provided: Dict[str, Any]
+    evidence_provided: dict[str, Any]
     user_statement: str
     submitted_at: datetime
     expedited_request: bool = False
@@ -69,24 +69,24 @@ class AppealCase:
 
     appeal_id: str
     submission: AppealSubmission
-    original_moderation: Dict[str, Any]
+    original_moderation: dict[str, Any]
     status: AppealStatus
-    assigned_reviewers: List[str] = field(default_factory=list)
+    assigned_reviewers: list[str] = field(default_factory=list)
 
     # Review process
-    automated_review_result: Optional[Dict[str, Any]] = None
-    constitutional_review_result: Optional[Dict[str, Any]] = None
-    community_review_result: Optional[Dict[str, Any]] = None
+    automated_review_result: dict[str, Any] | None = None
+    constitutional_review_result: dict[str, Any] | None = None
+    community_review_result: dict[str, Any] | None = None
 
     # Decision
-    final_decision: Optional[str] = None
+    final_decision: str | None = None
     decision_rationale: str = ""
-    constitutional_analysis: Dict[str, Any] = field(default_factory=dict)
-    remedial_actions: List[str] = field(default_factory=list)
+    constitutional_analysis: dict[str, Any] = field(default_factory=dict)
+    remedial_actions: list[str] = field(default_factory=list)
 
     # Metadata
-    review_deadline: Optional[datetime] = None
-    resolved_at: Optional[datetime] = None
+    review_deadline: datetime | None = None
+    resolved_at: datetime | None = None
     community_oversight_involved: bool = False
 
 
@@ -99,7 +99,7 @@ class CommunityReviewer:
     constitutional_knowledge_score: float
     review_history: int
     bias_score: float
-    specialties: List[str]
+    specialties: list[str]
     active_cases: int
     max_capacity: int
 
@@ -111,9 +111,9 @@ class AppealsManager:
     """
 
     def __init__(self):
-        self.active_appeals: Dict[str, AppealCase] = {}
-        self.community_reviewers: Dict[str, CommunityReviewer] = {}
-        self.constitutional_experts: Dict[str, Dict[str, Any]] = {}
+        self.active_appeals: dict[str, AppealCase] = {}
+        self.community_reviewers: dict[str, CommunityReviewer] = {}
+        self.constitutional_experts: dict[str, dict[str, Any]] = {}
 
         # Appeal processing SLAs
         self.appeal_slas = {
@@ -222,8 +222,8 @@ class AppealsManager:
             self.community_reviewers[reviewer_data["reviewer_id"]] = reviewer
 
     async def process_appeal(
-        self, content_id: str, appeal_reason: str, user_tier: str, additional_context: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
+        self, content_id: str, appeal_reason: str, user_tier: str, additional_context: dict[str, Any] = None
+    ) -> dict[str, Any]:
         """
         Process constitutional appeal for moderation decision
 
@@ -297,7 +297,7 @@ class AppealsManager:
             logger.error(f"Failed to process appeal for content {content_id}: {str(e)}")
             return {"appeal_submitted": False, "error": str(e), "fallback_process_available": True}
 
-    async def _determine_appeal_type(self, appeal_reason: str, context: Dict[str, Any]) -> AppealType:
+    async def _determine_appeal_type(self, appeal_reason: str, context: dict[str, Any]) -> AppealType:
         """Determine the type of constitutional appeal based on user's reason"""
 
         reason_lower = appeal_reason.lower()
@@ -336,7 +336,7 @@ class AppealsManager:
         # Default to due process if unclear
         return AppealType.DUE_PROCESS
 
-    async def _retrieve_original_moderation(self, content_id: str) -> Dict[str, Any]:
+    async def _retrieve_original_moderation(self, content_id: str) -> dict[str, Any]:
         """Retrieve original moderation decision for appeal review"""
         # This would query the moderation database in production
         return {
@@ -524,8 +524,8 @@ class AppealsManager:
         logger.info(f"Constitutional review completed for appeal {appeal_case.appeal_id} by {expert_id}")
 
     async def _perform_constitutional_analysis(
-        self, appeal_case: AppealCase, expert_specialties: List[str]
-    ) -> Dict[str, Any]:
+        self, appeal_case: AppealCase, expert_specialties: list[str]
+    ) -> dict[str, Any]:
         """Perform detailed constitutional analysis of the appeal"""
 
         appeal_type = appeal_case.submission.appeal_type
@@ -598,7 +598,7 @@ class AppealsManager:
         protected_indicators = ["political", "religious", "artistic", "scientific", "social commentary"]
         return any(indicator in user_grounds.lower() for indicator in protected_indicators)
 
-    def _analyze_government_interest(self, original_moderation: Dict[str, Any]) -> str:
+    def _analyze_government_interest(self, original_moderation: dict[str, Any]) -> str:
         """Analyze the government interest in restriction"""
         harm_level = original_moderation.get("harm_level", "H1")
         if harm_level == "H3":
@@ -608,12 +608,12 @@ class AppealsManager:
         else:
             return "minimal"
 
-    def _analyze_narrow_tailoring(self, original_moderation: Dict[str, Any]) -> bool:
+    def _analyze_narrow_tailoring(self, original_moderation: dict[str, Any]) -> bool:
         """Analyze if restriction is narrowly tailored"""
         confidence = original_moderation.get("confidence", 0)
         return confidence >= 0.8  # High confidence suggests narrow tailoring
 
-    def _identify_alternatives(self, decision: str) -> List[str]:
+    def _identify_alternatives(self, decision: str) -> list[str]:
         """Identify less restrictive alternatives"""
         alternatives = []
         if decision == "block":
@@ -624,7 +624,7 @@ class AppealsManager:
             alternatives.append("warning")
         return alternatives
 
-    def _analyze_proportionality(self, original_moderation: Dict[str, Any]) -> bool:
+    def _analyze_proportionality(self, original_moderation: dict[str, Any]) -> bool:
         """Analyze proportionality of response"""
         harm_level = original_moderation.get("harm_level", "H1")
         decision = original_moderation.get("decision", "allow")
@@ -650,7 +650,7 @@ class AppealsManager:
         bias_indicators = ["bias", "unfair", "discriminat", "target"]
         return not any(indicator in user_grounds for indicator in bias_indicators)
 
-    def _generate_expert_rationale(self, analysis: Dict[str, Any], appeal_case: AppealCase) -> str:
+    def _generate_expert_rationale(self, analysis: dict[str, Any], appeal_case: AppealCase) -> str:
         """Generate expert rationale for constitutional decision"""
 
         rationale_parts = []
@@ -674,7 +674,7 @@ class AppealsManager:
 
         return " | ".join(rationale_parts)
 
-    async def _conduct_community_review(self, appeal_case: AppealCase, reviewer_ids: List[str]):
+    async def _conduct_community_review(self, appeal_case: AppealCase, reviewer_ids: list[str]):
         """Conduct community review process"""
 
         # Simulate community review votes
@@ -773,7 +773,7 @@ class AppealsManager:
 
         logger.info(f"Appeal {appeal_case.appeal_id} finalized: {appeal_case.final_decision}")
 
-    async def _generate_constitutional_summary(self, appeal_case: AppealCase) -> Dict[str, Any]:
+    async def _generate_constitutional_summary(self, appeal_case: AppealCase) -> dict[str, Any]:
         """Generate comprehensive constitutional analysis summary"""
 
         summary = {
@@ -800,7 +800,7 @@ class AppealsManager:
 
         return summary
 
-    async def _determine_remedial_actions(self, appeal_case: AppealCase) -> List[str]:
+    async def _determine_remedial_actions(self, appeal_case: AppealCase) -> list[str]:
         """Determine remedial actions for granted appeals"""
 
         actions = []
@@ -849,7 +849,7 @@ class AppealsManager:
 
         return base_requirement
 
-    async def get_appeal_status(self, appeal_id: str) -> Optional[Dict[str, Any]]:
+    async def get_appeal_status(self, appeal_id: str) -> dict[str, Any] | None:
         """Get current status of appeal"""
 
         if appeal_id not in self.active_appeals:
@@ -870,7 +870,7 @@ class AppealsManager:
             "resolved_at": appeal_case.resolved_at.isoformat() if appeal_case.resolved_at else None,
         }
 
-    async def get_appeals_metrics(self) -> Dict[str, Any]:
+    async def get_appeals_metrics(self) -> dict[str, Any]:
         """Get appeals system performance metrics"""
 
         all_appeals = list(self.active_appeals.values())

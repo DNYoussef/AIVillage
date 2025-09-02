@@ -11,13 +11,13 @@ from torch.utils.data import DataLoader, TensorDataset
 # Import Cogment components
 from ..core.config import CogmentConfig
 from ..core.model import Cogment
+from .curriculum import CurriculumStage, FourStageCurriculum
+from .evaluator import StageEvaluator
+from .grokfast_integration import GrokFastConfig
+from .losses import CogmentLoss
 
 # Import training system
-from .trainer import CogmentTrainer, TrainingConfig, MultiOptimizerConfig
-from .grokfast_integration import GrokFastConfig
-from .curriculum import FourStageCurriculum, CurriculumStage
-from .losses import CogmentLoss
-from .evaluator import StageEvaluator
+from .trainer import CogmentTrainer, MultiOptimizerConfig, TrainingConfig
 
 
 def create_example_training_setup():

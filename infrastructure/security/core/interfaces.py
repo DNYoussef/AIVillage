@@ -8,7 +8,7 @@ import abc
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Protocol
 
 
 class SecurityLevel(Enum):
@@ -46,17 +46,17 @@ class SecurityContext:
 
     user_id: str
     session_id: str
-    tenant_id: Optional[str] = None
-    roles: List[str] = field(default_factory=list)
-    permissions: List[str] = field(default_factory=list)
-    authentication_method: Optional[AuthenticationMethod] = None
+    tenant_id: str | None = None
+    roles: list[str] = field(default_factory=list)
+    permissions: list[str] = field(default_factory=list)
+    authentication_method: AuthenticationMethod | None = None
     security_level: SecurityLevel = SecurityLevel.STANDARD
-    device_info: Dict[str, Any] = field(default_factory=dict)
+    device_info: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.utcnow)
     last_activity: datetime = field(default_factory=datetime.utcnow)
     is_authenticated: bool = False
     mfa_verified: bool = False
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -65,11 +65,11 @@ class SecurityResult:
 
     success: bool
     message: str
-    error_code: Optional[str] = None
-    data: Dict[str, Any] = field(default_factory=dict)
+    error_code: str | None = None
+    data: dict[str, Any] = field(default_factory=dict)
     security_level: SecurityLevel = SecurityLevel.STANDARD
     requires_mfa: bool = False
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class ISecurityConfig(Protocol):
@@ -81,17 +81,17 @@ class ISecurityConfig(Protocol):
         ...
 
     @abc.abstractmethod
-    def get_encryption_config(self) -> Dict[str, Any]:
+    def get_encryption_config(self) -> dict[str, Any]:
         """Get encryption configuration."""
         ...
 
     @abc.abstractmethod
-    def get_authentication_config(self) -> Dict[str, Any]:
+    def get_authentication_config(self) -> dict[str, Any]:
         """Get authentication configuration."""
         ...
 
     @abc.abstractmethod
-    def get_authorization_config(self) -> Dict[str, Any]:
+    def get_authorization_config(self) -> dict[str, Any]:
         """Get authorization configuration."""
         ...
 
@@ -105,7 +105,7 @@ class IAuthenticationProvider(Protocol):
     """Interface for authentication providers."""
 
     @abc.abstractmethod
-    async def authenticate(self, credentials: Dict[str, Any], context: Dict[str, Any]) -> SecurityResult:
+    async def authenticate(self, credentials: dict[str, Any], context: dict[str, Any]) -> SecurityResult:
         """Authenticate user with provided credentials."""
         ...
 
@@ -125,7 +125,7 @@ class IAuthenticationProvider(Protocol):
         ...
 
     @abc.abstractmethod
-    async def create_session(self, user_id: str, device_info: Dict[str, Any]) -> SecurityResult:
+    async def create_session(self, user_id: str, device_info: dict[str, Any]) -> SecurityResult:
         """Create new session."""
         ...
 
@@ -144,12 +144,12 @@ class IAuthorizationProvider(Protocol):
         ...
 
     @abc.abstractmethod
-    async def get_user_roles(self, user_id: str) -> List[str]:
+    async def get_user_roles(self, user_id: str) -> list[str]:
         """Get user roles."""
         ...
 
     @abc.abstractmethod
-    async def get_role_permissions(self, role: str) -> List[str]:
+    async def get_role_permissions(self, role: str) -> list[str]:
         """Get permissions for role."""
         ...
 
@@ -169,25 +169,25 @@ class ICryptographicService(Protocol):
 
     @abc.abstractmethod
     async def encrypt(
-        self, data: bytes, key_id: Optional[str] = None, context: Optional[Dict[str, Any]] = None
+        self, data: bytes, key_id: str | None = None, context: dict[str, Any] | None = None
     ) -> bytes:
         """Encrypt data."""
         ...
 
     @abc.abstractmethod
     async def decrypt(
-        self, encrypted_data: bytes, key_id: Optional[str] = None, context: Optional[Dict[str, Any]] = None
+        self, encrypted_data: bytes, key_id: str | None = None, context: dict[str, Any] | None = None
     ) -> bytes:
         """Decrypt data."""
         ...
 
     @abc.abstractmethod
-    async def sign(self, data: bytes, key_id: Optional[str] = None) -> bytes:
+    async def sign(self, data: bytes, key_id: str | None = None) -> bytes:
         """Sign data."""
         ...
 
     @abc.abstractmethod
-    async def verify_signature(self, data: bytes, signature: bytes, public_key: Optional[bytes] = None) -> bool:
+    async def verify_signature(self, data: bytes, signature: bytes, public_key: bytes | None = None) -> bool:
         """Verify signature."""
         ...
 
@@ -206,17 +206,17 @@ class ISecurityMiddleware(Protocol):
     """Interface for security middleware."""
 
     @abc.abstractmethod
-    async def process_request(self, request_data: Dict[str, Any], context: SecurityContext) -> SecurityResult:
+    async def process_request(self, request_data: dict[str, Any], context: SecurityContext) -> SecurityResult:
         """Process incoming request through security filters."""
         ...
 
     @abc.abstractmethod
-    async def process_response(self, response_data: Dict[str, Any], context: SecurityContext) -> SecurityResult:
+    async def process_response(self, response_data: dict[str, Any], context: SecurityContext) -> SecurityResult:
         """Process outgoing response through security filters."""
         ...
 
     @abc.abstractmethod
-    async def handle_security_event(self, event_type: str, event_data: Dict[str, Any]) -> SecurityResult:
+    async def handle_security_event(self, event_type: str, event_data: dict[str, Any]) -> SecurityResult:
         """Handle security events."""
         ...
 
@@ -230,14 +230,14 @@ class ISecurityMonitor(Protocol):
         event_type: str,
         severity: str,
         description: str,
-        context: Optional[SecurityContext] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        context: SecurityContext | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Record security event."""
         ...
 
     @abc.abstractmethod
-    async def get_security_metrics(self) -> Dict[str, Any]:
+    async def get_security_metrics(self) -> dict[str, Any]:
         """Get security metrics."""
         ...
 
@@ -251,7 +251,7 @@ class IThreatDetector(Protocol):
     """Interface for threat detection."""
 
     @abc.abstractmethod
-    async def analyze_request(self, request_data: Dict[str, Any], context: SecurityContext) -> List[str]:
+    async def analyze_request(self, request_data: dict[str, Any], context: SecurityContext) -> list[str]:
         """Analyze request for threats."""
         ...
 
@@ -271,17 +271,17 @@ class ISecurityAuditor(Protocol):
 
     @abc.abstractmethod
     async def log_access(
-        self, user_id: str, resource: str, action: str, result: str, metadata: Optional[Dict[str, Any]] = None
+        self, user_id: str, resource: str, action: str, result: str, metadata: dict[str, Any] | None = None
     ) -> None:
         """Log access attempt."""
         ...
 
     @abc.abstractmethod
-    async def get_audit_logs(self, filters: Dict[str, Any], limit: int = 100) -> List[Dict[str, Any]]:
+    async def get_audit_logs(self, filters: dict[str, Any], limit: int = 100) -> list[dict[str, Any]]:
         """Get audit logs."""
         ...
 
     @abc.abstractmethod
-    async def generate_security_report(self, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+    async def generate_security_report(self, start_date: datetime, end_date: datetime) -> dict[str, Any]:
         """Generate security report."""
         ...

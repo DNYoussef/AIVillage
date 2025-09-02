@@ -6,14 +6,15 @@ Advanced reputation and trust management system for federated learning participa
 Implements dynamic trust scoring, reputation decay, and trust-based decision making.
 """
 
-import logging
-import time
-import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
-import numpy as np
 import hashlib
+import logging
+import time
+from typing import Any
+import uuid
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ class ReputationScore:
     confidence: float  # How confident we are in this score
     last_updated: float = field(default_factory=time.time)
     sample_count: int = 0
-    historical_values: List[float] = field(default_factory=list)
+    historical_values: list[float] = field(default_factory=list)
 
 
 @dataclass
@@ -73,14 +74,14 @@ class TrustProfile:
     node_id: str
     overall_trust_score: float = 0.5  # Start at neutral
     trust_level: TrustLevel = TrustLevel.MEDIUM
-    reputation_scores: Dict[TrustMetric, ReputationScore] = field(default_factory=dict)
+    reputation_scores: dict[TrustMetric, ReputationScore] = field(default_factory=dict)
     interaction_count: int = 0
     first_seen: float = field(default_factory=time.time)
     last_interaction: float = field(default_factory=time.time)
-    trust_history: List[Tuple[float, float]] = field(default_factory=list)  # (timestamp, score)
-    recommendations: Dict[str, float] = field(default_factory=dict)  # From other nodes
-    penalties: List[Dict[str, Any]] = field(default_factory=list)
-    rewards: List[Dict[str, Any]] = field(default_factory=list)
+    trust_history: list[tuple[float, float]] = field(default_factory=list)  # (timestamp, score)
+    recommendations: dict[str, float] = field(default_factory=dict)  # From other nodes
+    penalties: list[dict[str, Any]] = field(default_factory=list)
+    rewards: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -92,12 +93,12 @@ class TrustTransaction:
     provider_node: str
     transaction_type: str
     expected_outcome: str
-    actual_outcome: Optional[str] = None
+    actual_outcome: str | None = None
     trust_requirement: float = 0.5
     provider_trust_score: float = 0.5
     started_at: float = field(default_factory=time.time)
-    completed_at: Optional[float] = None
-    success: Optional[bool] = None
+    completed_at: float | None = None
+    success: bool | None = None
     trust_impact: float = 0.0
 
 
@@ -112,7 +113,7 @@ class RecommendationCredential:
     interaction_count: int
     recommendation_reason: str
     timestamp: float = field(default_factory=time.time)
-    signature: Optional[bytes] = None
+    signature: bytes | None = None
 
 
 class ReputationTrustSystem:
@@ -134,15 +135,15 @@ class ReputationTrustSystem:
         self.node_id = node_id
 
         # Trust profiles for all known nodes
-        self.trust_profiles: Dict[str, TrustProfile] = {}
+        self.trust_profiles: dict[str, TrustProfile] = {}
 
         # Trust transactions
-        self.trust_transactions: List[TrustTransaction] = []
-        self.active_transactions: Dict[str, TrustTransaction] = {}
+        self.trust_transactions: list[TrustTransaction] = []
+        self.active_transactions: dict[str, TrustTransaction] = {}
 
         # Recommendation system
-        self.trust_recommendations: List[RecommendationCredential] = []
-        self.recommendation_network: Dict[str, Set[str]] = {}  # Who recommends whom
+        self.trust_recommendations: list[RecommendationCredential] = []
+        self.recommendation_network: dict[str, set[str]] = {}  # Who recommends whom
 
         # System configuration
         self.trust_config = {
@@ -191,7 +192,7 @@ class ReputationTrustSystem:
     async def initialize_node_trust(
         self,
         node_id: str,
-        initial_reputation: Optional[Dict[TrustMetric, float]] = None,
+        initial_reputation: dict[TrustMetric, float] | None = None,
         bootstrap_method: str = "neutral",
     ) -> TrustProfile:
         """Initialize trust profile for a new node."""
@@ -234,7 +235,7 @@ class ReputationTrustSystem:
         return profile
 
     async def record_interaction(
-        self, node_id: str, interaction_type: str, outcome: str, performance_metrics: Optional[Dict[str, float]] = None
+        self, node_id: str, interaction_type: str, outcome: str, performance_metrics: dict[str, float] | None = None
     ) -> None:
         """Record an interaction with a node and update trust."""
 
@@ -265,7 +266,7 @@ class ReputationTrustSystem:
 
     async def start_trust_transaction(
         self, provider_node: str, transaction_type: str, expected_outcome: str, min_trust_requirement: float = 0.5
-    ) -> Tuple[bool, Optional[str]]:
+    ) -> tuple[bool, str | None]:
         """Start a trust-based transaction."""
 
         # Check if provider meets trust requirements
@@ -301,7 +302,7 @@ class ReputationTrustSystem:
         return True, transaction_id
 
     async def complete_trust_transaction(
-        self, transaction_id: str, actual_outcome: str, success: bool, performance_data: Optional[Dict[str, Any]] = None
+        self, transaction_id: str, actual_outcome: str, success: bool, performance_data: dict[str, Any] | None = None
     ) -> None:
         """Complete a trust transaction and update trust."""
 
@@ -353,7 +354,7 @@ class ReputationTrustSystem:
         logger.info(f"Completed trust transaction {transaction_id} with outcome: {actual_outcome}")
 
     async def report_byzantine_behavior(
-        self, node_id: str, behavior_type: str, evidence: Dict[str, Any], confidence: float = 1.0
+        self, node_id: str, behavior_type: str, evidence: dict[str, Any], confidence: float = 1.0
     ) -> None:
         """Report Byzantine behavior and apply trust penalty."""
 
@@ -473,8 +474,8 @@ class ReputationTrustSystem:
         self,
         node_id: str,
         required_trust_level: TrustLevel = TrustLevel.MEDIUM,
-        context: Optional[Dict[str, Any]] = None,
-    ) -> Tuple[bool, float, str]:
+        context: dict[str, Any] | None = None,
+    ) -> tuple[bool, float, str]:
         """Make a trust-based decision about a node."""
 
         if node_id not in self.trust_profiles:
@@ -519,7 +520,7 @@ class ReputationTrustSystem:
 
     # Private helper methods
 
-    def _map_interaction_to_events(self, interaction_type: str, outcome: str) -> List[ReputationEvent]:
+    def _map_interaction_to_events(self, interaction_type: str, outcome: str) -> list[ReputationEvent]:
         """Map interaction outcomes to reputation events."""
 
         events = []
@@ -549,7 +550,7 @@ class ReputationTrustSystem:
         return events
 
     async def _process_reputation_event(
-        self, node_id: str, event: ReputationEvent, performance_metrics: Optional[Dict[str, float]] = None
+        self, node_id: str, event: ReputationEvent, performance_metrics: dict[str, float] | None = None
     ) -> None:
         """Process a reputation event and update relevant trust metrics."""
 
@@ -609,7 +610,7 @@ class ReputationTrustSystem:
         if performance_metrics:
             await self._update_performance_metrics(node_id, performance_metrics)
 
-    async def _update_performance_metrics(self, node_id: str, metrics: Dict[str, float]) -> None:
+    async def _update_performance_metrics(self, node_id: str, metrics: dict[str, float]) -> None:
         """Update performance-related trust metrics."""
 
         profile = self.trust_profiles[node_id]
@@ -730,7 +731,7 @@ class ReputationTrustSystem:
         else:
             return TrustLevel.UNTRUSTED
 
-    async def _calculate_context_adjustment(self, profile: TrustProfile, context: Dict[str, Any]) -> float:
+    async def _calculate_context_adjustment(self, profile: TrustProfile, context: dict[str, Any]) -> float:
         """Calculate context-specific trust adjustment."""
 
         adjustment = 0.0
@@ -798,13 +799,13 @@ class ReputationTrustSystem:
             return TrustLevel.MEDIUM
         return self.trust_profiles[node_id].trust_level
 
-    def get_trusted_nodes(self, min_trust_level: TrustLevel = TrustLevel.MEDIUM) -> List[str]:
+    def get_trusted_nodes(self, min_trust_level: TrustLevel = TrustLevel.MEDIUM) -> list[str]:
         """Get list of nodes meeting minimum trust level."""
         threshold = self.trust_config["trust_thresholds"][min_trust_level]
 
         return [node_id for node_id, profile in self.trust_profiles.items() if profile.overall_trust_score >= threshold]
 
-    def get_trust_statistics(self) -> Dict[str, Any]:
+    def get_trust_statistics(self) -> dict[str, Any]:
         """Get trust system statistics."""
 
         # Calculate trust distribution
@@ -835,7 +836,7 @@ class ReputationTrustSystem:
             "total_recommendations": len(self.trust_recommendations),
         }
 
-    def get_node_trust_details(self, node_id: str) -> Optional[Dict[str, Any]]:
+    def get_node_trust_details(self, node_id: str) -> dict[str, Any] | None:
         """Get detailed trust information for a node."""
 
         if node_id not in self.trust_profiles:
@@ -865,7 +866,7 @@ class ReputationTrustSystem:
             "trust_history_points": len(profile.trust_history),
         }
 
-    async def export_trust_data(self) -> Dict[str, Any]:
+    async def export_trust_data(self) -> dict[str, Any]:
         """Export trust system data for backup or analysis."""
 
         return {
@@ -903,7 +904,7 @@ class ReputationTrustSystem:
             "export_timestamp": time.time(),
         }
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Perform system health check."""
 
         issues = []

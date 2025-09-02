@@ -5,16 +5,18 @@ including agent health, system resources, external dependencies, and overall
 system status monitoring with automatic recovery mechanisms.
 """
 
-import asyncio
-import json
-import logging
-import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field, asdict
+import asyncio
+from collections.abc import Callable
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Any, Callable
+import json
+import logging
 from pathlib import Path
+import time
+from typing import Any
+
 import aiohttp
 import psutil
 
@@ -53,9 +55,9 @@ class HealthCheckResult:
     timestamp: datetime
     response_time_ms: float
     message: str
-    details: Dict[str, Any] = field(default_factory=dict)
-    error: Optional[str] = None
-    recovery_suggestions: List[str] = field(default_factory=list)
+    details: dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
+    recovery_suggestions: list[str] = field(default_factory=list)
 
     def is_healthy(self) -> bool:
         """Check if component is healthy."""
@@ -78,7 +80,7 @@ class SystemHealthSummary:
     total_components: int
     last_check: datetime
     uptime_seconds: float
-    system_load: Dict[str, float] = field(default_factory=dict)
+    system_load: dict[str, float] = field(default_factory=dict)
 
     @property
     def health_percentage(self) -> float:
@@ -151,7 +153,7 @@ class HealthChecker(ABC):
 class HttpHealthChecker(HealthChecker):
     """HTTP-based health checker for web services."""
 
-    def __init__(self, component_id: str, url: str, expected_status: int = 200, expected_content: Optional[str] = None):
+    def __init__(self, component_id: str, url: str, expected_status: int = 200, expected_content: str | None = None):
         super().__init__(component_id, ComponentType.EXTERNAL_SERVICE)
         self.url = url
         self.expected_status = expected_status
@@ -497,17 +499,17 @@ class SystemHealthMonitor:
             check_interval: Interval between health checks in seconds
         """
         self.check_interval = check_interval
-        self.health_checkers: Dict[str, HealthChecker] = {}
-        self.health_history: Dict[str, List[HealthCheckResult]] = {}
+        self.health_checkers: dict[str, HealthChecker] = {}
+        self.health_history: dict[str, list[HealthCheckResult]] = {}
         self.system_start_time = datetime.now()
 
         # Monitoring state
         self.is_running = False
-        self.monitor_task: Optional[asyncio.Task] = None
+        self.monitor_task: asyncio.Task | None = None
 
         # Alerting
-        self.alert_handlers: List[Callable[[HealthCheckResult], None]] = []
-        self.notification_cooldown: Dict[str, datetime] = {}
+        self.alert_handlers: list[Callable[[HealthCheckResult], None]] = []
+        self.notification_cooldown: dict[str, datetime] = {}
         self.cooldown_period = timedelta(minutes=15)
 
         # Add default system resource checker
@@ -574,7 +576,7 @@ class SystemHealthMonitor:
                 logger.error(f"Error in health monitoring loop: {e}")
                 await asyncio.sleep(30)  # Wait before retrying
 
-    async def check_all_health(self) -> Dict[str, HealthCheckResult]:
+    async def check_all_health(self) -> dict[str, HealthCheckResult]:
         """Check health of all registered components."""
         results = {}
 
@@ -696,8 +698,8 @@ class SystemHealthMonitor:
         )
 
     def get_component_health_history(
-        self, component_id: str, duration: Optional[timedelta] = None
-    ) -> List[HealthCheckResult]:
+        self, component_id: str, duration: timedelta | None = None
+    ) -> list[HealthCheckResult]:
         """Get health history for a specific component."""
         if component_id not in self.health_history:
             return []
@@ -709,7 +711,7 @@ class SystemHealthMonitor:
         cutoff_time = datetime.now() - duration
         return [result for result in history if result.timestamp >= cutoff_time]
 
-    def get_detailed_status_report(self) -> Dict[str, Any]:
+    def get_detailed_status_report(self) -> dict[str, Any]:
         """Get detailed status report for all components."""
         summary = self.get_system_health_summary()
 

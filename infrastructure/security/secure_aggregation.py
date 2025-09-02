@@ -6,14 +6,15 @@ Advanced cryptographic protocols for secure gradient aggregation with privacy pr
 Implements homomorphic encryption, secure multi-party computation, and differential privacy.
 """
 
+from dataclasses import dataclass, field
+from enum import Enum
 import hashlib
 import logging
 import secrets
 import time
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 import uuid
+
 import numpy as np
 import torch
 
@@ -57,12 +58,12 @@ class SecureGradient:
 
     participant_id: str
     gradient_id: str
-    encrypted_gradients: Dict[str, bytes]
-    gradient_metadata: Dict[str, Any] = field(default_factory=dict)
-    privacy_params: Dict[str, float] = field(default_factory=dict)
-    signature: Optional[bytes] = None
+    encrypted_gradients: dict[str, bytes]
+    gradient_metadata: dict[str, Any] = field(default_factory=dict)
+    privacy_params: dict[str, float] = field(default_factory=dict)
+    signature: bytes | None = None
     timestamp: float = field(default_factory=time.time)
-    verification_proof: Optional[bytes] = None
+    verification_proof: bytes | None = None
 
 
 @dataclass
@@ -125,13 +126,13 @@ class SecureAggregationProtocol:
         self.byzantine_threshold = byzantine_threshold
 
         # Cryptographic keys and parameters
-        self.homomorphic_keys: Dict[str, HomomorphicKey] = {}
-        self.aggregation_keys: Dict[str, bytes] = {}
-        self.privacy_budgets: Dict[str, PrivacyBudget] = {}
+        self.homomorphic_keys: dict[str, HomomorphicKey] = {}
+        self.aggregation_keys: dict[str, bytes] = {}
+        self.privacy_budgets: dict[str, PrivacyBudget] = {}
 
         # Active aggregation sessions
-        self.active_aggregations: Dict[str, Dict[str, Any]] = {}
-        self.gradient_shares: Dict[str, List[AggregationShare]] = {}
+        self.active_aggregations: dict[str, dict[str, Any]] = {}
+        self.gradient_shares: dict[str, list[AggregationShare]] = {}
 
         # Protocol parameters
         self.protocol_params = {
@@ -157,8 +158,8 @@ class SecureAggregationProtocol:
         logger.info(f"Secure Aggregation Protocol initialized with {default_method.value}")
 
     async def setup_participant(
-        self, participant_id: str, capabilities: Dict[str, Any], privacy_preferences: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, participant_id: str, capabilities: dict[str, Any], privacy_preferences: dict[str, Any]
+    ) -> dict[str, Any]:
         """Set up cryptographic materials for a participant."""
 
         setup_result = {
@@ -202,10 +203,10 @@ class SecureAggregationProtocol:
     async def secure_aggregate(
         self,
         aggregation_id: str,
-        gradients: List[SecureGradient],
-        method: Optional[AggregationMethod] = None,
-        privacy_level: Optional[PrivacyLevel] = None,
-    ) -> Tuple[bool, Optional[Dict[str, torch.Tensor]], Dict[str, Any]]:
+        gradients: list[SecureGradient],
+        method: AggregationMethod | None = None,
+        privacy_level: PrivacyLevel | None = None,
+    ) -> tuple[bool, dict[str, torch.Tensor] | None, dict[str, Any]]:
         """
         Perform secure aggregation of gradients.
         """
@@ -290,8 +291,8 @@ class SecureAggregationProtocol:
     async def create_secure_gradient(
         self,
         participant_id: str,
-        raw_gradients: Dict[str, torch.Tensor],
-        privacy_params: Optional[Dict[str, float]] = None,
+        raw_gradients: dict[str, torch.Tensor],
+        privacy_params: dict[str, float] | None = None,
     ) -> SecureGradient:
         """Create a secure gradient representation."""
 
@@ -340,8 +341,8 @@ class SecureAggregationProtocol:
     # Private aggregation methods
 
     async def _homomorphic_aggregation(
-        self, aggregation_id: str, gradients: List[SecureGradient]
-    ) -> Dict[str, torch.Tensor]:
+        self, aggregation_id: str, gradients: list[SecureGradient]
+    ) -> dict[str, torch.Tensor]:
         """Perform homomorphic encryption based aggregation."""
 
         if not gradients:
@@ -376,8 +377,8 @@ class SecureAggregationProtocol:
         return aggregated
 
     async def _secret_sharing_aggregation(
-        self, aggregation_id: str, gradients: List[SecureGradient]
-    ) -> Dict[str, torch.Tensor]:
+        self, aggregation_id: str, gradients: list[SecureGradient]
+    ) -> dict[str, torch.Tensor]:
         """Perform secret sharing based aggregation."""
 
         threshold = max(2, int(len(gradients) * self.protocol_params["secret_sharing_threshold"]))
@@ -412,8 +413,8 @@ class SecureAggregationProtocol:
         return aggregated
 
     async def _differential_private_aggregation(
-        self, aggregation_id: str, gradients: List[SecureGradient], privacy_level: PrivacyLevel
-    ) -> Dict[str, torch.Tensor]:
+        self, aggregation_id: str, gradients: list[SecureGradient], privacy_level: PrivacyLevel
+    ) -> dict[str, torch.Tensor]:
         """Perform differential privacy enhanced aggregation."""
 
         # Determine privacy parameters based on level
@@ -458,8 +459,8 @@ class SecureAggregationProtocol:
         return aggregated
 
     async def _byzantine_robust_aggregation(
-        self, aggregation_id: str, gradients: List[SecureGradient]
-    ) -> Dict[str, torch.Tensor]:
+        self, aggregation_id: str, gradients: list[SecureGradient]
+    ) -> dict[str, torch.Tensor]:
         """Perform Byzantine fault-tolerant aggregation."""
 
         # Decrypt gradients
@@ -501,8 +502,8 @@ class SecureAggregationProtocol:
         return aggregated
 
     async def _weighted_average_aggregation(
-        self, aggregation_id: str, gradients: List[SecureGradient]
-    ) -> Dict[str, torch.Tensor]:
+        self, aggregation_id: str, gradients: list[SecureGradient]
+    ) -> dict[str, torch.Tensor]:
         """Perform weighted average aggregation."""
 
         # Simple equal weight aggregation for now
@@ -568,7 +569,7 @@ class SecureAggregationProtocol:
             # XOR encryption as fallback
             return bytes(a ^ b for a, b in zip(data, cipher_key * (len(data) // 16 + 1)))
 
-    async def _homomorphic_add(self, encrypted_values: List[bytes]) -> bytes:
+    async def _homomorphic_add(self, encrypted_values: list[bytes]) -> bytes:
         """Perform homomorphic addition."""
         # Simplified homomorphic addition
         # In production, would use proper homomorphic operations
@@ -626,12 +627,12 @@ class SecureAggregationProtocol:
         """Convert tensor to bytes."""
         return tensor.cpu().numpy().tobytes()
 
-    def _bytes_to_tensor(self, data: bytes, shape: List[int], dtype: str) -> torch.Tensor:
+    def _bytes_to_tensor(self, data: bytes, shape: list[int], dtype: str) -> torch.Tensor:
         """Convert bytes to tensor."""
         np_array = np.frombuffer(data, dtype=dtype).reshape(shape)
         return torch.from_numpy(np_array)
 
-    def _create_secret_shares(self, secret: bytes, threshold: int, total_shares: int) -> List[AggregationShare]:
+    def _create_secret_shares(self, secret: bytes, threshold: int, total_shares: int) -> list[AggregationShare]:
         """Create secret shares using Shamir's Secret Sharing."""
         # Simplified secret sharing implementation
         # In production, would use proper polynomial interpolation
@@ -652,7 +653,7 @@ class SecureAggregationProtocol:
 
         return shares
 
-    def _reconstruct_secret(self, shares: List[AggregationShare]) -> bytes:
+    def _reconstruct_secret(self, shares: list[AggregationShare]) -> bytes:
         """Reconstruct secret from shares."""
         # Simplified secret reconstruction
         # In production, would use Lagrange interpolation
@@ -668,8 +669,8 @@ class SecureAggregationProtocol:
         return result
 
     def _add_differential_privacy_noise(
-        self, gradients: Dict[str, torch.Tensor], epsilon: float, delta: float
-    ) -> Dict[str, torch.Tensor]:
+        self, gradients: dict[str, torch.Tensor], epsilon: float, delta: float
+    ) -> dict[str, torch.Tensor]:
         """Add differential privacy noise to gradients."""
 
         noisy_gradients = {}
@@ -683,7 +684,7 @@ class SecureAggregationProtocol:
 
         return noisy_gradients
 
-    def _detect_byzantine_gradients(self, gradients: List[Dict[str, torch.Tensor]]) -> List[Dict[str, torch.Tensor]]:
+    def _detect_byzantine_gradients(self, gradients: list[dict[str, torch.Tensor]]) -> list[dict[str, torch.Tensor]]:
         """Detect and filter Byzantine gradients using statistical analysis."""
 
         if len(gradients) < 3:
@@ -710,7 +711,7 @@ class SecureAggregationProtocol:
 
         return honest_gradients
 
-    def _trimmed_mean(self, tensors: List[torch.Tensor], trim_ratio: float = 0.1) -> torch.Tensor:
+    def _trimmed_mean(self, tensors: list[torch.Tensor], trim_ratio: float = 0.1) -> torch.Tensor:
         """Compute trimmed mean of tensors for robustness."""
         if not tensors:
             return torch.tensor(0.0)
@@ -734,7 +735,7 @@ class SecureAggregationProtocol:
 
     # Validation and verification methods
 
-    async def _validate_gradients(self, gradients: List[SecureGradient]) -> List[SecureGradient]:
+    async def _validate_gradients(self, gradients: list[SecureGradient]) -> list[SecureGradient]:
         """Validate gradient integrity and authenticity."""
         valid_gradients = []
 
@@ -758,7 +759,7 @@ class SecureAggregationProtocol:
 
         return valid_gradients
 
-    async def _check_privacy_budgets(self, gradients: List[SecureGradient]) -> bool:
+    async def _check_privacy_budgets(self, gradients: list[SecureGradient]) -> bool:
         """Check if privacy budgets allow aggregation."""
         for gradient in gradients:
             budget = self.privacy_budgets.get(gradient.participant_id)
@@ -776,7 +777,7 @@ class SecureAggregationProtocol:
 
         return True
 
-    async def _update_privacy_budgets(self, gradients: List[SecureGradient], privacy_level: PrivacyLevel) -> None:
+    async def _update_privacy_budgets(self, gradients: list[SecureGradient], privacy_level: PrivacyLevel) -> None:
         """Update privacy budgets after aggregation."""
         privacy_params = self._get_privacy_parameters(privacy_level)
 
@@ -787,7 +788,7 @@ class SecureAggregationProtocol:
                 budget.delta_used += privacy_params["delta"]
 
     async def _verify_aggregation(
-        self, aggregation_id: str, gradients: List[SecureGradient], result: Dict[str, torch.Tensor]
+        self, aggregation_id: str, gradients: list[SecureGradient], result: dict[str, torch.Tensor]
     ) -> bool:
         """Verify aggregation correctness using sampling."""
 
@@ -808,7 +809,7 @@ class SecureAggregationProtocol:
         return set(verification_result.keys()) == set(result.keys())
 
     def _create_gradient_proof(
-        self, participant_id: str, gradient_id: str, encrypted_gradients: Dict[str, bytes]
+        self, participant_id: str, gradient_id: str, encrypted_gradients: dict[str, bytes]
     ) -> bytes:
         """Create zero-knowledge proof for gradient."""
         # Simplified proof creation
@@ -826,7 +827,7 @@ class SecureAggregationProtocol:
 
         return gradient.verification_proof == expected_proof
 
-    def _sign_gradient(self, participant_id: str, gradient_id: str, encrypted_gradients: Dict[str, bytes]) -> bytes:
+    def _sign_gradient(self, participant_id: str, gradient_id: str, encrypted_gradients: dict[str, bytes]) -> bytes:
         """Sign gradient for authenticity."""
         # Create signature data
         signature_data = f"{participant_id}:{gradient_id}".encode()
@@ -847,7 +848,7 @@ class SecureAggregationProtocol:
 
         return gradient.signature == expected_signature
 
-    def _get_privacy_parameters(self, privacy_level: PrivacyLevel) -> Dict[str, float]:
+    def _get_privacy_parameters(self, privacy_level: PrivacyLevel) -> dict[str, float]:
         """Get privacy parameters based on level."""
         privacy_configs = {
             PrivacyLevel.NONE: {"epsilon": 0.0, "delta": 0.0, "noise_scale": 0.0},
@@ -861,7 +862,7 @@ class SecureAggregationProtocol:
 
     # Statistics and monitoring
 
-    def get_aggregation_stats(self) -> Dict[str, Any]:
+    def get_aggregation_stats(self) -> dict[str, Any]:
         """Get aggregation statistics."""
         success_rate = self.aggregation_stats["successful_aggregations"] / max(
             1, self.aggregation_stats["total_aggregations"]
@@ -877,7 +878,7 @@ class SecureAggregationProtocol:
             ),
         }
 
-    def get_privacy_budget_status(self, participant_id: str) -> Optional[Dict[str, Any]]:
+    def get_privacy_budget_status(self, participant_id: str) -> dict[str, Any] | None:
         """Get privacy budget status for a participant."""
         budget = self.privacy_budgets.get(participant_id)
         if not budget:
@@ -897,7 +898,7 @@ class SecureAggregationProtocol:
             ),
         }
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Perform health check on secure aggregation system."""
         # Clean up expired privacy budgets
         current_time = time.time()

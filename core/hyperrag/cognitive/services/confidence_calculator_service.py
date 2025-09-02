@@ -7,11 +7,11 @@ Combines multiple evidence sources and validation algorithms.
 Extracted from GraphFixer to follow single responsibility principle.
 """
 
-from typing import Any, Dict, List, Union
+from typing import Any
 
 from ..graph_fixer import DetectedGap, ProposedNode, ProposedRelationship
+from ..interfaces.base_service import AsyncServiceMixin, CacheableMixin, ServiceConfig
 from ..interfaces.service_interfaces import IConfidenceCalculatorService
-from ..interfaces.base_service import ServiceConfig, CacheableMixin, AsyncServiceMixin
 
 
 class ConfidenceCalculatorService(IConfidenceCalculatorService, CacheableMixin, AsyncServiceMixin):
@@ -55,7 +55,7 @@ class ConfidenceCalculatorService(IConfidenceCalculatorService, CacheableMixin, 
         self._initialized = False
 
     async def calculate_confidence(
-        self, proposal: Union[ProposedNode, ProposedRelationship], gap: DetectedGap, evidence: List[str]
+        self, proposal: ProposedNode | ProposedRelationship, gap: DetectedGap, evidence: list[str]
     ) -> float:
         """
         Calculate comprehensive confidence score for a proposal.
@@ -108,7 +108,7 @@ class ConfidenceCalculatorService(IConfidenceCalculatorService, CacheableMixin, 
             self.logger.exception(f"Confidence calculation failed: {e}")
             return 0.5  # Default confidence
 
-    async def combine_evidence(self, evidence_list: List[str]) -> float:
+    async def combine_evidence(self, evidence_list: list[str]) -> float:
         """
         Combine multiple pieces of evidence into a confidence score.
 
@@ -153,7 +153,7 @@ class ConfidenceCalculatorService(IConfidenceCalculatorService, CacheableMixin, 
             self.logger.exception(f"Evidence combination failed: {e}")
             return 0.5
 
-    async def validate_proposal_logic(self, proposal: Union[ProposedNode, ProposedRelationship]) -> bool:
+    async def validate_proposal_logic(self, proposal: ProposedNode | ProposedRelationship) -> bool:
         """
         Validate the logical consistency of a proposal.
 
@@ -299,7 +299,7 @@ class ConfidenceCalculatorService(IConfidenceCalculatorService, CacheableMixin, 
 
         return sum(factors) / len(factors)
 
-    async def _calculate_historical_confidence(self, proposal: Union[ProposedNode, ProposedRelationship]) -> float:
+    async def _calculate_historical_confidence(self, proposal: ProposedNode | ProposedRelationship) -> float:
         """Calculate confidence based on historical validation performance."""
         if not self.validation_history:
             return 0.6  # Neutral confidence without history
@@ -315,7 +315,7 @@ class ConfidenceCalculatorService(IConfidenceCalculatorService, CacheableMixin, 
 
         return 0.6
 
-    async def _combine_confidence_factors(self, factors: Dict[str, float]) -> float:
+    async def _combine_confidence_factors(self, factors: dict[str, float]) -> float:
         """Combine confidence factors with appropriate weighting."""
         weights = {"evidence": 0.30, "gap": 0.25, "proposal": 0.20, "historical": 0.15, "validation": 0.10}
 
@@ -364,7 +364,7 @@ class ConfidenceCalculatorService(IConfidenceCalculatorService, CacheableMixin, 
         self.validation_history = {"node": {"total": 0, "accepted": 0}, "relationship": {"total": 0, "accepted": 0}}
 
     async def update_validation_history(
-        self, proposal: Union[ProposedNode, ProposedRelationship], is_accepted: bool
+        self, proposal: ProposedNode | ProposedRelationship, is_accepted: bool
     ) -> None:
         """Update validation history for future confidence calculation."""
         proposal_type = "node" if isinstance(proposal, ProposedNode) else "relationship"
@@ -381,7 +381,7 @@ class ConfidenceCalculatorService(IConfidenceCalculatorService, CacheableMixin, 
         # Log validation for learning
         self.logger.info(f"Validation update: {proposal_type} proposal {'accepted' if is_accepted else 'rejected'}")
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get service statistics."""
         return {
             "confidence_calculations": self.stats["confidence_calculations"],

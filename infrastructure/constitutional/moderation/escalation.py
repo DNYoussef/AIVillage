@@ -3,11 +3,11 @@ Constitutional Human Escalation System
 Manages human escalation for constitutional moderation decisions requiring expert review
 """
 
-import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Any
+import logging
+from typing import Any
 from uuid import uuid4
 
 logger = logging.getLogger(__name__)
@@ -52,29 +52,29 @@ class EscalationCase:
 
     case_id: str
     content_id: str
-    moderation_result: Dict[str, Any]
+    moderation_result: dict[str, Any]
     priority: EscalationPriority
-    constitutional_concerns: Dict[str, Any]
+    constitutional_concerns: dict[str, Any]
     user_tier: str
     created_at: datetime
 
     # Assignment and review
-    assigned_reviewer: Optional[str] = None
-    reviewer_specialty: Optional[ReviewerSpecialty] = None
-    assigned_at: Optional[datetime] = None
+    assigned_reviewer: str | None = None
+    reviewer_specialty: ReviewerSpecialty | None = None
+    assigned_at: datetime | None = None
 
     # Review process
     status: EscalationStatus = EscalationStatus.PENDING
-    review_notes: List[Dict[str, Any]] = field(default_factory=list)
-    constitutional_analysis: Dict[str, Any] = field(default_factory=dict)
+    review_notes: list[dict[str, Any]] = field(default_factory=list)
+    constitutional_analysis: dict[str, Any] = field(default_factory=dict)
 
     # Resolution
-    final_decision: Optional[str] = None
-    resolution_rationale: Optional[str] = None
-    resolved_at: Optional[datetime] = None
+    final_decision: str | None = None
+    resolution_rationale: str | None = None
+    resolved_at: datetime | None = None
 
     # Metadata
-    sla_deadline: Optional[datetime] = None
+    sla_deadline: datetime | None = None
     escalation_source: str = "automated"
     community_oversight_required: bool = False
 
@@ -84,7 +84,7 @@ class ReviewerWorkload:
     """Reviewer workload tracking"""
 
     reviewer_id: str
-    specialties: List[ReviewerSpecialty]
+    specialties: list[ReviewerSpecialty]
     current_cases: int
     max_capacity: int
     average_resolution_time: timedelta
@@ -99,10 +99,10 @@ class EscalationManager:
     """
 
     def __init__(self):
-        self.active_cases: Dict[str, EscalationCase] = {}
-        self.reviewer_pool: Dict[str, ReviewerWorkload] = {}
-        self.escalation_queue: List[str] = []
-        self.priority_queue: Dict[EscalationPriority, List[str]] = {priority: [] for priority in EscalationPriority}
+        self.active_cases: dict[str, EscalationCase] = {}
+        self.reviewer_pool: dict[str, ReviewerWorkload] = {}
+        self.escalation_queue: list[str] = []
+        self.priority_queue: dict[EscalationPriority, list[str]] = {priority: [] for priority in EscalationPriority}
 
         # SLA requirements by priority
         self.sla_requirements = {
@@ -224,7 +224,7 @@ class EscalationManager:
             logger.error(f"Failed to escalate content {moderation_result.content_id}: {str(e)}")
             raise
 
-    async def _analyze_constitutional_urgency(self, moderation_result: Any) -> Dict[str, Any]:
+    async def _analyze_constitutional_urgency(self, moderation_result: Any) -> dict[str, Any]:
         """Analyze constitutional urgency factors"""
         concerns = {
             "urgency_score": 0.0,
@@ -274,7 +274,7 @@ class EscalationManager:
         return concerns
 
     async def _determine_escalation_priority(
-        self, moderation_result: Any, constitutional_concerns: Dict[str, Any]
+        self, moderation_result: Any, constitutional_concerns: dict[str, Any]
     ) -> EscalationPriority:
         """Determine appropriate escalation priority"""
 
@@ -303,7 +303,7 @@ class EscalationManager:
         else:
             return EscalationPriority.LOW
 
-    def _serialize_moderation_result(self, moderation_result: Any) -> Dict[str, Any]:
+    def _serialize_moderation_result(self, moderation_result: Any) -> dict[str, Any]:
         """Serialize moderation result for storage"""
         return {
             "content_id": moderation_result.content_id,
@@ -367,7 +367,7 @@ class EscalationManager:
             f"with SLA deadline {escalation_case.sla_deadline}"
         )
 
-    async def _find_best_reviewer(self, escalation_case: EscalationCase) -> Optional[str]:
+    async def _find_best_reviewer(self, escalation_case: EscalationCase) -> str | None:
         """Find the best available reviewer for the case"""
 
         constitutional_concerns = escalation_case.constitutional_concerns
@@ -465,7 +465,7 @@ class EscalationManager:
             f"with specialty {escalation_case.reviewer_specialty.value}"
         )
 
-    async def process_reviewer_decision(self, case_id: str, reviewer_decision: Dict[str, Any]) -> Dict[str, Any]:
+    async def process_reviewer_decision(self, case_id: str, reviewer_decision: dict[str, Any]) -> dict[str, Any]:
         """
         Process reviewer decision for escalated case
 
@@ -575,7 +575,7 @@ class EscalationManager:
             if case_id in priority_list:
                 priority_list.remove(case_id)
 
-    async def get_queue_size(self) -> Dict[str, int]:
+    async def get_queue_size(self) -> dict[str, int]:
         """Get current queue sizes"""
         return {
             "total_queue": len(self.escalation_queue),
@@ -589,7 +589,7 @@ class EscalationManager:
             ),
         }
 
-    async def get_case_status(self, case_id: str) -> Optional[Dict[str, Any]]:
+    async def get_case_status(self, case_id: str) -> dict[str, Any] | None:
         """Get status of specific case"""
         if case_id not in self.active_cases:
             return None
@@ -611,7 +611,7 @@ class EscalationManager:
             "community_oversight_required": escalation_case.community_oversight_required,
         }
 
-    async def get_reviewer_workloads(self) -> Dict[str, Any]:
+    async def get_reviewer_workloads(self) -> dict[str, Any]:
         """Get current reviewer workloads"""
         return {
             reviewer_id: {
@@ -626,7 +626,7 @@ class EscalationManager:
             for reviewer_id, workload in self.reviewer_pool.items()
         }
 
-    async def get_escalation_metrics(self) -> Dict[str, Any]:
+    async def get_escalation_metrics(self) -> dict[str, Any]:
         """Get escalation system metrics"""
 
         # Calculate metrics from active cases

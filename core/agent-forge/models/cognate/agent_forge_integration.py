@@ -10,7 +10,7 @@ other pipeline components.
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import torch
 
@@ -28,7 +28,7 @@ class AgentForgeCompatibilityError(Exception):
     pass
 
 
-def validate_agent_forge_compatibility(models: List[CognateProductionModel]) -> Dict[str, Any]:
+def validate_agent_forge_compatibility(models: list[CognateProductionModel]) -> dict[str, Any]:
     """
     Validate that models are compatible with Agent Forge pipeline.
 
@@ -121,8 +121,8 @@ def validate_agent_forge_compatibility(models: List[CognateProductionModel]) -> 
 
 
 def save_agent_forge_models(
-    models: List[CognateProductionModel], output_dir: Union[str, Path], include_metadata: bool = True
-) -> Dict[str, str]:
+    models: list[CognateProductionModel], output_dir: str | Path, include_metadata: bool = True
+) -> dict[str, str]:
     """
     Save models in Agent Forge expected format.
 
@@ -207,7 +207,7 @@ def save_agent_forge_models(
     return saved_paths
 
 
-def load_agent_forge_models(model_dir: Union[str, Path]) -> List[CognateProductionModel]:
+def load_agent_forge_models(model_dir: str | Path) -> list[CognateProductionModel]:
     """
     Load models saved in Agent Forge format.
 
@@ -243,8 +243,8 @@ def load_agent_forge_models(model_dir: Union[str, Path]) -> List[CognateProducti
 
 # Main Agent Forge integration function
 def create_agent_forge_cognate_models(
-    output_dir: Optional[Union[str, Path]] = None, validate_compatibility: bool = True, **config_overrides
-) -> Dict[str, Any]:
+    output_dir: str | Path | None = None, validate_compatibility: bool = True, **config_overrides
+) -> dict[str, Any]:
     """
     Create and optionally save Cognate models for Agent Forge pipeline.
 
@@ -288,7 +288,7 @@ def create_agent_forge_cognate_models(
 
 
 # Compatibility with existing scattered implementations
-def create_three_cognate_models(**kwargs) -> List[CognateProductionModel]:
+def create_three_cognate_models(**kwargs) -> list[CognateProductionModel]:
     """
     Legacy compatibility function for scattered implementations.
 

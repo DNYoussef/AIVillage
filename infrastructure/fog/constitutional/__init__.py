@@ -16,29 +16,27 @@ This module provides the core constitutional architecture that can operate
 independently while preparing for TEE integration.
 """
 
-from .tier_mapping import (
-    ConstitutionalTier,
-    TierMapping,
-    ConstitutionalTierManager,
-    map_legacy_tier_to_constitutional,
-    get_tier_requirements,
-)
-
 from .governance_engine import (
+    ConstitutionalConstraint,
     ConstitutionalGovernanceEngine,
-    PolicyDecision,
     GovernanceAction,
     HarmTaxonomy,
-    ConstitutionalConstraint,
+    PolicyDecision,
     ViewpointFirewall,
 )
-
+from .tier_mapping import (
+    ConstitutionalTier,
+    ConstitutionalTierManager,
+    TierMapping,
+    get_tier_requirements,
+    map_legacy_tier_to_constitutional,
+)
 from .workload_router import (
-    ConstitutionalWorkloadRouter,
-    WorkloadClassification,
-    IsolationLevel,
     ConstitutionalRouting,
+    ConstitutionalWorkloadRouter,
+    IsolationLevel,
     TransparencyLogger,
+    WorkloadClassification,
 )
 
 __all__ = [

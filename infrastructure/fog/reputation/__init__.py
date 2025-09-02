@@ -6,15 +6,15 @@ Bayesian reputation management with uncertainty quantification and temporal deca
 
 from .bayesian_reputation import (
     BayesianReputationEngine,
-    ReputationScore,
-    ReputationEvent,
-    TrustComposition,
-    ReputationConfig,
     EventType,
+    ReputationConfig,
+    ReputationEvent,
+    ReputationScore,
     ReputationTier,
-    integrate_with_scheduler,
-    integrate_with_pricing,
+    TrustComposition,
     create_reputation_metrics,
+    integrate_with_pricing,
+    integrate_with_scheduler,
 )
 
 __all__ = [

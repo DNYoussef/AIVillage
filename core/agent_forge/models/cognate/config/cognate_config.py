@@ -6,13 +6,14 @@ This module provides comprehensive configuration management for the canonical Co
 including validation, loading from YAML/JSON files, and environment-specific configurations.
 """
 
-from dataclasses import dataclass, field, asdict
-from pathlib import Path
+from dataclasses import asdict, dataclass, field
 import json
-import yaml
-import os
-from typing import Any, Dict, List, Union
 import logging
+import os
+from pathlib import Path
+from typing import Any
+
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ class MemoryConfig:
     novelty_threshold: float = 0.7  # Write novelty threshold
 
     # Memory integration layers (which transformer layers have memory cross-attention)
-    memory_layers: List[int] = field(default_factory=lambda: [3, 6, 9])
+    memory_layers: list[int] = field(default_factory=lambda: [3, 6, 9])
 
     # Titans-style gating parameters
     surprise_alpha: float = 4.0  # Surprise scaling factor
@@ -89,7 +90,7 @@ class TrainingConfig:
 
     # Optimization
     optimizer: str = "adamw"
-    betas: List[float] = field(default_factory=lambda: [0.9, 0.999])
+    betas: list[float] = field(default_factory=lambda: [0.9, 0.999])
     gradient_clip_norm: float = 1.0
 
     # Scheduling
@@ -220,7 +221,7 @@ class CognateModelConfig:
 
         logger.debug("Configuration validation passed")
 
-    def estimate_parameters(self) -> Dict[str, int]:
+    def estimate_parameters(self) -> dict[str, int]:
         """Estimate parameter count by component."""
         estimates = {}
 
@@ -257,12 +258,12 @@ class CognateModelConfig:
 
         return estimates
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary."""
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "CognateModelConfig":
+    def from_dict(cls, config_dict: dict[str, Any]) -> "CognateModelConfig":
         """Create configuration from dictionary."""
         # Handle nested configurations
         if "memory" in config_dict and isinstance(config_dict["memory"], dict):
@@ -277,7 +278,7 @@ class CognateModelConfig:
         return cls(**config_dict)
 
 
-def load_config(config_path: Union[str, Path]) -> CognateModelConfig:
+def load_config(config_path: str | Path) -> CognateModelConfig:
     """
     Load configuration from YAML or JSON file.
 
@@ -292,7 +293,7 @@ def load_config(config_path: Union[str, Path]) -> CognateModelConfig:
     if not config_path.exists():
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
-    with open(config_path, "r") as f:
+    with open(config_path) as f:
         if config_path.suffix.lower() in [".yaml", ".yml"]:
             config_dict = yaml.safe_load(f)
         elif config_path.suffix.lower() == ".json":
@@ -303,7 +304,7 @@ def load_config(config_path: Union[str, Path]) -> CognateModelConfig:
     return CognateModelConfig.from_dict(config_dict)
 
 
-def save_config(config: CognateModelConfig, config_path: Union[str, Path], format: str = "yaml"):
+def save_config(config: CognateModelConfig, config_path: str | Path, format: str = "yaml"):
     """
     Save configuration to file.
 
@@ -397,7 +398,7 @@ def create_default_config(variant: str = "base", environment: str = "development
     return base_config
 
 
-def merge_configs(base_config: CognateModelConfig, override_config: Dict[str, Any]) -> CognateModelConfig:
+def merge_configs(base_config: CognateModelConfig, override_config: dict[str, Any]) -> CognateModelConfig:
     """
     Merge a base configuration with overrides.
 
@@ -424,7 +425,7 @@ def merge_configs(base_config: CognateModelConfig, override_config: Dict[str, An
 
 
 # Environment variable configuration
-def load_config_from_env() -> Dict[str, Any]:
+def load_config_from_env() -> dict[str, Any]:
     """Load configuration overrides from environment variables."""
     env_config = {}
 

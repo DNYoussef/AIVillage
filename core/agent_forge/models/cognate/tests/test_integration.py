@@ -9,22 +9,23 @@ This module tests the integration of the Cognate model with:
 - Training pipelines
 """
 
-import unittest
-import tempfile
-from pathlib import Path
 import json
-import torch
 import logging
+import os
+from pathlib import Path
 
 # Import the canonical Cognate implementation
 import sys
-import os
+import tempfile
+import unittest
+
+import torch
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from cognate_model import create_cognate_model, CognateModel
-from training.trainer import CognateTrainer, CognateTrainingConfig
+from cognate_model import CognateModel, create_cognate_model
 from torch.utils.data import Dataset
+from training.trainer import CognateTrainer, CognateTrainingConfig
 
 logger = logging.getLogger(__name__)
 
@@ -243,7 +244,7 @@ class TestPipelineCompatibility(unittest.TestCase):
 
     def test_mixed_precision_compatibility(self):
         """Test Automatic Mixed Precision (AMP) compatibility."""
-        from torch.cuda.amp import autocast, GradScaler
+        from torch.cuda.amp import GradScaler, autocast
 
         if not torch.cuda.is_available():
             self.skipTest("CUDA not available for AMP test")

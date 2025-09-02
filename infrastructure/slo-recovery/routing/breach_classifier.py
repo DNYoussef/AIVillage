@@ -4,12 +4,11 @@ Intelligent problem classification with priority-based routing
 Target: 30min MTTR with 92.8%+ success rate
 """
 
-import logging
-from typing import Dict, List, Tuple
 from dataclasses import dataclass
-from enum import Enum
-import re
 from datetime import datetime
+from enum import Enum
+import logging
+import re
 
 
 class BreachSeverity(Enum):
@@ -35,7 +34,7 @@ class BreachPattern:
     category: FailureCategory
     severity: BreachSeverity
     priority_score: int
-    indicators: List[str]
+    indicators: list[str]
     confidence_threshold: float
     recovery_time_estimate: int  # minutes
 
@@ -47,7 +46,7 @@ class BreachClassification:
     severity: BreachSeverity
     priority_score: int
     confidence_score: float
-    indicators_matched: List[str]
+    indicators_matched: list[str]
     routing_recommendation: str
     estimated_recovery_time: int
     escalation_required: bool
@@ -70,7 +69,7 @@ class BreachClassifier:
         }
         self.adaptive_threshold_history = []
 
-    def _initialize_patterns(self) -> List[BreachPattern]:
+    def _initialize_patterns(self) -> list[BreachPattern]:
         """Initialize breach classification patterns with DSPy optimization"""
         return [
             # CRITICAL - Security baseline failures (Priority 85+)
@@ -176,7 +175,7 @@ class BreachClassifier:
             ),
         ]
 
-    def classify_breach(self, failure_data: Dict) -> BreachClassification:
+    def classify_breach(self, failure_data: dict) -> BreachClassification:
         """
         Classify breach with confidence scoring and adaptive thresholds
         """
@@ -262,7 +261,7 @@ class BreachClassifier:
 
         return max(0.5, min(0.95, base_threshold))
 
-    def _get_matched_indicators(self, pattern: BreachPattern, text: str) -> List[str]:
+    def _get_matched_indicators(self, pattern: BreachPattern, text: str) -> list[str]:
         """Get list of matched indicators for transparency"""
         matched = []
         for indicator in pattern.indicators:
@@ -303,7 +302,7 @@ class BreachClassifier:
         if len(self.adaptive_threshold_history) > 50:
             self.adaptive_threshold_history = self.adaptive_threshold_history[-50:]
 
-    def generate_classification_matrix(self) -> Dict:
+    def generate_classification_matrix(self) -> dict:
         """Generate breach classification matrix for output"""
         matrix = {
             "classification_patterns": [],
@@ -354,7 +353,7 @@ class BreachClassifier:
 
         return matrix
 
-    def _get_priority_range(self, severity: BreachSeverity) -> Tuple[int, int]:
+    def _get_priority_range(self, severity: BreachSeverity) -> tuple[int, int]:
         """Get priority range for severity level"""
         ranges = {
             BreachSeverity.CRITICAL: (85, 100),

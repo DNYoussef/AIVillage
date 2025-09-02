@@ -10,12 +10,12 @@ Mathematical reasoning and multi-hop text understanding:
 Purpose: Complex reasoning with chain-of-thought and multi-step inference.
 """
 
+from dataclasses import dataclass
 import logging
 import random
-from dataclasses import dataclass
-from typing import Dict, List, Any, Optional
+from typing import Any
 
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 try:
     from datasets import load_dataset
@@ -37,9 +37,9 @@ class ReasoningDataConfig:
     use_competition_math: bool = True
 
     # Dataset limits
-    gsm8k_limit: Optional[int] = None  # None = use all
-    hotpotqa_limit: Optional[int] = 5000  # Limit for efficiency
-    math_limit: Optional[int] = 2000
+    gsm8k_limit: int | None = None  # None = use all
+    hotpotqa_limit: int | None = 5000  # Limit for efficiency
+    math_limit: int | None = 2000
 
     # Format settings
     chain_of_thought: bool = True
@@ -62,7 +62,7 @@ class GSM8KProcessor:
     def __init__(self, config: ReasoningDataConfig):
         self.config = config
 
-    def load_gsm8k_data(self) -> List[Dict[str, Any]]:
+    def load_gsm8k_data(self) -> list[dict[str, Any]]:
         """Load GSM8K dataset."""
         if not self.config.use_gsm8k or load_dataset is None:
             return []
@@ -91,7 +91,7 @@ class GSM8KProcessor:
             logger.error(f"Failed to load GSM8K: {e}")
             return self._generate_synthetic_math_problems()
 
-    def _process_gsm8k_item(self, item: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _process_gsm8k_item(self, item: dict[str, Any]) -> dict[str, Any] | None:
         """Process a single GSM8K item."""
         try:
             question = item.get("question", "").strip()
@@ -145,7 +145,7 @@ class GSM8KProcessor:
         numbers = re.findall(r"\d+(?:\.\d+)?", answer)
         return numbers[-1] if numbers else "unknown"
 
-    def _generate_synthetic_math_problems(self, num_problems: int = 100) -> List[Dict[str, Any]]:
+    def _generate_synthetic_math_problems(self, num_problems: int = 100) -> list[dict[str, Any]]:
         """Generate synthetic math problems as fallback."""
         logger.info(f"Generating {num_problems} synthetic math problems...")
 
@@ -203,7 +203,7 @@ class HotpotQAProcessor:
     def __init__(self, config: ReasoningDataConfig):
         self.config = config
 
-    def load_hotpotqa_data(self) -> List[Dict[str, Any]]:
+    def load_hotpotqa_data(self) -> list[dict[str, Any]]:
         """Load HotpotQA dataset."""
         if not self.config.use_hotpotqa or load_dataset is None:
             return []
@@ -232,7 +232,7 @@ class HotpotQAProcessor:
             logger.error(f"Failed to load HotpotQA: {e}")
             return self._generate_synthetic_qa_problems()
 
-    def _process_hotpotqa_item(self, item: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _process_hotpotqa_item(self, item: dict[str, Any]) -> dict[str, Any] | None:
         """Process a single HotpotQA item."""
         try:
             question = item.get("question", "").strip()
@@ -276,7 +276,7 @@ class HotpotQAProcessor:
             logger.debug(f"Failed to process HotpotQA item: {e}")
             return None
 
-    def _extract_relevant_context(self, context: List, question: str, answer: str) -> str:
+    def _extract_relevant_context(self, context: list, question: str, answer: str) -> str:
         """Extract most relevant context sentences."""
         if not context:
             return "No context provided."
@@ -305,7 +305,7 @@ class HotpotQAProcessor:
 
         return "\n".join(steps)
 
-    def _generate_synthetic_qa_problems(self, num_problems: int = 50) -> List[Dict[str, Any]]:
+    def _generate_synthetic_qa_problems(self, num_problems: int = 50) -> list[dict[str, Any]]:
         """Generate synthetic QA problems as fallback."""
         logger.info(f"Generating {num_problems} synthetic QA problems...")
 
@@ -358,7 +358,7 @@ class CompetitionMathProcessor:
     def __init__(self, config: ReasoningDataConfig):
         self.config = config
 
-    def load_competition_math_data(self) -> List[Dict[str, Any]]:
+    def load_competition_math_data(self) -> list[dict[str, Any]]:
         """Load competition math dataset."""
         if not self.config.use_competition_math or load_dataset is None:
             return []
@@ -387,7 +387,7 @@ class CompetitionMathProcessor:
             logger.error(f"Failed to load Competition Math: {e}")
             return self._generate_advanced_math_problems()
 
-    def _process_math_item(self, item: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _process_math_item(self, item: dict[str, Any]) -> dict[str, Any] | None:
         """Process a single competition math item."""
         try:
             problem = item.get("problem", "").strip()
@@ -426,7 +426,7 @@ class CompetitionMathProcessor:
             logger.debug(f"Failed to process math item: {e}")
             return None
 
-    def _generate_advanced_math_problems(self, num_problems: int = 25) -> List[Dict[str, Any]]:
+    def _generate_advanced_math_problems(self, num_problems: int = 25) -> list[dict[str, Any]]:
         """Generate advanced math problems as fallback."""
         logger.info(f"Generating {num_problems} advanced math problems...")
 
@@ -481,7 +481,7 @@ class CompetitionMathProcessor:
 class MathTextReasoningDataset(Dataset):
     """Complete math and text reasoning dataset for Stage 3."""
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: dict[str, Any] = None):
         self.config = ReasoningDataConfig(**(config or {}))
 
         # Initialize processors
@@ -498,7 +498,7 @@ class MathTextReasoningDataset(Dataset):
 
         logger.info(f"Math & text reasoning dataset initialized with {len(self.samples)} samples")
 
-    def _load_all_samples(self) -> List[Dict[str, Any]]:
+    def _load_all_samples(self) -> list[dict[str, Any]]:
         """Load samples from all sources."""
         all_samples = []
 
@@ -520,14 +520,14 @@ class MathTextReasoningDataset(Dataset):
     def __len__(self) -> int:
         return len(self.samples)
 
-    def __getitem__(self, idx: int) -> Dict[str, Any]:
+    def __getitem__(self, idx: int) -> dict[str, Any]:
         return self.samples[idx]
 
     def get_data_loader(self, batch_size: int = 4, shuffle: bool = True) -> DataLoader:
         """Get DataLoader for this dataset."""
         return DataLoader(self, batch_size=batch_size, shuffle=shuffle, collate_fn=self._collate_fn)
 
-    def _collate_fn(self, batch: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _collate_fn(self, batch: list[dict[str, Any]]) -> dict[str, Any]:
         """Collate function for batching."""
         return {
             "inputs": [item["input"] for item in batch],
@@ -537,7 +537,7 @@ class MathTextReasoningDataset(Dataset):
             "metadata": [item["metadata"] for item in batch],
         }
 
-    def get_domain_distribution(self) -> Dict[str, int]:
+    def get_domain_distribution(self) -> dict[str, int]:
         """Get distribution by reasoning domain."""
         distribution = {}
 
@@ -547,7 +547,7 @@ class MathTextReasoningDataset(Dataset):
 
         return distribution
 
-    def get_task_type_distribution(self) -> Dict[str, int]:
+    def get_task_type_distribution(self) -> dict[str, int]:
         """Get distribution by task type."""
         distribution = {}
 
@@ -590,7 +590,7 @@ class MathTextReasoningDataset(Dataset):
         return success_rate > 0.7  # 70% minimum
 
 
-def create_reasoning_dataset(config: Dict[str, Any] = None) -> MathTextReasoningDataset:
+def create_reasoning_dataset(config: dict[str, Any] = None) -> MathTextReasoningDataset:
     """Factory function to create reasoning dataset."""
     dataset = MathTextReasoningDataset(config)
 

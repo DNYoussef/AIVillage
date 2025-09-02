@@ -4,21 +4,21 @@ Comprehensive transparency logging with Merkle tree integrity, privacy preservat
 """
 
 import asyncio
-import logging
-from typing import Dict, Optional, Any
 from dataclasses import dataclass
+import logging
 import time
+from typing import Any
 
-from .merkle_audit import ConstitutionalMerkleAudit, AuditLevel, ConstitutionalViolationType
 from .constitutional_logging import (
     ConstitutionalDecisionLogger,
     ConstitutionalDecisionType,
     DecisionOutcome,
     GovernanceLevel,
 )
-from .privacy_preserving_audit import PrivacyPreservingAuditSystem, PrivacyLevel, ZKProofType
+from .governance_audit import DemocraticAction, GovernanceAuditTrail, ParticipationLevel
+from .merkle_audit import AuditLevel, ConstitutionalMerkleAudit, ConstitutionalViolationType
+from .privacy_preserving_audit import PrivacyLevel, PrivacyPreservingAuditSystem, ZKProofType
 from .public_dashboard import PublicAccountabilityDashboard
-from .governance_audit import GovernanceAuditTrail, DemocraticAction, ParticipationLevel
 
 
 @dataclass
@@ -50,7 +50,7 @@ class ConstitutionalTransparencySystem:
     Integrates all transparency components for comprehensive constitutional governance
     """
 
-    def __init__(self, config: Optional[ConstitutionalTransparencyConfig] = None):
+    def __init__(self, config: ConstitutionalTransparencyConfig | None = None):
         self.config = config or ConstitutionalTransparencyConfig()
 
         # Initialize core transparency components
@@ -133,12 +133,12 @@ class ConstitutionalTransparencySystem:
 
     async def log_constitutional_decision_comprehensive(
         self,
-        decision_data: Dict[str, Any],
+        decision_data: dict[str, Any],
         user_tier: str,
         user_id: str,
-        violation_type: Optional[ConstitutionalViolationType] = None,
+        violation_type: ConstitutionalViolationType | None = None,
         governance_level: GovernanceLevel = GovernanceLevel.AUTOMATED,
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """
         Comprehensive constitutional decision logging across all transparency components
         Returns IDs from all relevant logging systems
@@ -243,7 +243,7 @@ class ConstitutionalTransparencySystem:
 
         return mapping.get(outcome_str, DecisionOutcome.APPROVED)
 
-    async def verify_constitutional_decision_integrity(self, decision_ids: Dict[str, str]) -> Dict[str, Any]:
+    async def verify_constitutional_decision_integrity(self, decision_ids: dict[str, str]) -> dict[str, Any]:
         """
         Verify integrity of constitutional decision across all logging systems
         """
@@ -285,7 +285,7 @@ class ConstitutionalTransparencySystem:
             self.logger.error(f"Error verifying constitutional decision integrity: {e}")
             return {"error": str(e), "verified": False}
 
-    async def get_public_transparency_data(self, user_tier: Optional[str] = None) -> Dict[str, Any]:
+    async def get_public_transparency_data(self, user_tier: str | None = None) -> dict[str, Any]:
         """
         Get comprehensive public transparency data from all components
         """
@@ -331,7 +331,7 @@ class ConstitutionalTransparencySystem:
             self.logger.error(f"Error getting public transparency data: {e}")
             return {"error": str(e)}
 
-    async def generate_comprehensive_transparency_report(self) -> Dict[str, Any]:
+    async def generate_comprehensive_transparency_report(self) -> dict[str, Any]:
         """
         Generate comprehensive transparency report across all systems
         """
@@ -387,7 +387,7 @@ class ConstitutionalTransparencySystem:
 
         return await self.governance_audit.register_democratic_participant(participant_id, tier, participation_level)
 
-    async def submit_governance_proposal(self, proposer_id: str, proposal_data: Dict[str, Any]) -> str:
+    async def submit_governance_proposal(self, proposer_id: str, proposal_data: dict[str, Any]) -> str:
         """Submit governance proposal through the transparency system"""
         if not self.config.democratic_participation_enabled:
             raise ValueError("Democratic participation is not enabled")

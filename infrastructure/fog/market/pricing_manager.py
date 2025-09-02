@@ -23,7 +23,7 @@ from decimal import Decimal, getcontext
 from enum import Enum
 import logging
 import statistics
-from typing import Any, Dict
+from typing import Any
 import uuid
 
 # Import reputation system for pricing integration
@@ -1426,7 +1426,7 @@ class DynamicPricingManager:
         utilization_rate: Decimal,
         time_hours: Decimal,
         device_id: str = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Calculate H200-hour equivalent using formula: H200h(d) = (TOPS_d × u × t) / T_ref"""
 
         # Core H200-hour calculation
@@ -1462,7 +1462,7 @@ class DynamicPricingManager:
         constitutional_level: str = "basic",
         tee_enabled: bool = False,
         device_id: str = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get constitutional H200-hour pricing with transparency and audit trail"""
 
         if user_tier not in self.constitutional_tiers:
@@ -1547,7 +1547,7 @@ class DynamicPricingManager:
         duration_hours: Decimal = Decimal("1"),
         tee_level: str = "basic",  # "basic", "enhanced", "confidential"
         node_id: str = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get TEE-enhanced workload pricing with security premiums"""
 
         # Get base resource pricing
@@ -1657,7 +1657,7 @@ async def get_h200_hour_quote(
     time_hours: float,
     constitutional_level: str = "basic",
     tee_enabled: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Get H200-hour constitutional pricing quote"""
 
     manager = await get_pricing_manager()
@@ -1673,7 +1673,7 @@ async def get_h200_hour_quote(
     )
 
 
-async def calculate_h200_equivalent(device_tops: float, utilization_rate: float, time_hours: float) -> Dict[str, Any]:
+async def calculate_h200_equivalent(device_tops: float, utilization_rate: float, time_hours: float) -> dict[str, Any]:
     """Calculate H200-hour equivalent for device"""
 
     manager = await get_pricing_manager()
@@ -1685,7 +1685,7 @@ async def calculate_h200_equivalent(device_tops: float, utilization_rate: float,
 
 async def get_tee_pricing_quote(
     lane: str, quantity: float = 1.0, duration_hours: float = 1.0, tee_level: str = "basic"
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Get TEE-enhanced pricing quote"""
 
     manager = await get_pricing_manager()

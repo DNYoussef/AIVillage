@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Tuple, Optional, Dict
-from abc import ABC, abstractmethod
 
 
 class TaskAdapter(nn.Module, ABC):
@@ -64,7 +64,7 @@ class ClassificationAdapter(TaskAdapter):
         nn.init.zeros_(self.classifier.bias)
 
     def _pool_sequence(
-        self, hidden_states: torch.Tensor, attention_mask: Optional[torch.Tensor] = None
+        self, hidden_states: torch.Tensor, attention_mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """Pool sequence to single representation."""
         if not self.use_pooling:
@@ -99,7 +99,7 @@ class ClassificationAdapter(TaskAdapter):
         else:
             raise ValueError(f"Unknown pooling strategy: {self.pooling_strategy}")
 
-    def forward(self, hidden_states: torch.Tensor, attention_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(self, hidden_states: torch.Tensor, attention_mask: torch.Tensor | None = None) -> torch.Tensor:
         """
         Convert hidden states to class logits.
 
@@ -177,7 +177,7 @@ class RegressionAdapter(TaskAdapter):
         nn.init.zeros_(self.regressor.bias)
 
     def _pool_sequence(
-        self, hidden_states: torch.Tensor, attention_mask: Optional[torch.Tensor] = None
+        self, hidden_states: torch.Tensor, attention_mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         """Pool sequence to single representation (shared with ClassificationAdapter)."""
         if not self.use_pooling:
@@ -204,7 +204,7 @@ class RegressionAdapter(TaskAdapter):
         else:
             return hidden_states[:, 0]  # Default to first token
 
-    def forward(self, hidden_states: torch.Tensor, attention_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(self, hidden_states: torch.Tensor, attention_mask: torch.Tensor | None = None) -> torch.Tensor:
         """
         Convert hidden states to regression outputs.
 
@@ -293,8 +293,8 @@ class ARCTaskAdapter(TaskAdapter):
                     nn.init.zeros_(module.bias)
 
     def forward(
-        self, hidden_states: torch.Tensor, target_grid_size: Optional[Tuple[int, int]] = None
-    ) -> Dict[str, torch.Tensor]:
+        self, hidden_states: torch.Tensor, target_grid_size: tuple[int, int] | None = None
+    ) -> dict[str, torch.Tensor]:
         """
         Convert hidden states to ARC outputs.
 
@@ -474,7 +474,7 @@ class MathTaskAdapter(TaskAdapter):
                 if module.bias is not None:
                     nn.init.zeros_(module.bias)
 
-    def forward(self, hidden_states: torch.Tensor) -> Dict[str, torch.Tensor]:
+    def forward(self, hidden_states: torch.Tensor) -> dict[str, torch.Tensor]:
         """
         Convert hidden states to math outputs.
 
@@ -546,7 +546,7 @@ class MultiTaskAdapter(nn.Module):
     Useful for models that need to handle different tasks with shared representations.
     """
 
-    def __init__(self, d_model: int, task_configs: Dict[str, Dict]):
+    def __init__(self, d_model: int, task_configs: dict[str, dict]):
         super().__init__()
 
         self.d_model = d_model
@@ -565,7 +565,7 @@ class MultiTaskAdapter(nn.Module):
 
         return self.adapters[task_name](hidden_states, **kwargs)
 
-    def get_all_outputs(self, hidden_states: torch.Tensor, **kwargs) -> Dict[str, torch.Tensor]:
+    def get_all_outputs(self, hidden_states: torch.Tensor, **kwargs) -> dict[str, torch.Tensor]:
         """Get outputs for all tasks."""
         outputs = {}
         for task_name, adapter in self.adapters.items():

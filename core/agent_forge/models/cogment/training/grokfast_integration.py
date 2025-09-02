@@ -9,9 +9,8 @@ Provides selective GrokFast application with different parameters for each compo
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+import logging
 
 import torch
 import torch.nn as nn
@@ -57,15 +56,15 @@ class CogmentGrokFastOptimizer:
 
     def __init__(
         self,
-        model_components: Dict[str, nn.Module],
-        base_optimizers: Dict[str, torch.optim.Optimizer],
+        model_components: dict[str, nn.Module],
+        base_optimizers: dict[str, torch.optim.Optimizer],
         config: GrokFastConfig,
     ):
         self.config = config
         self.model_components = model_components
         self.base_optimizers = base_optimizers
-        self.grokfast_optimizers: Dict[str, GrokFastOptimizer] = {}
-        self.statistics: Dict[str, Dict] = {}
+        self.grokfast_optimizers: dict[str, GrokFastOptimizer] = {}
+        self.statistics: dict[str, dict] = {}
 
         # Initialize GrokFast optimizers for each component
         self._initialize_grokfast_optimizers()
@@ -183,7 +182,7 @@ class CogmentGrokFastOptimizer:
                 # Base optimizer
                 optimizer.zero_grad()
 
-    def get_grokking_statistics(self) -> Dict[str, Dict]:
+    def get_grokking_statistics(self) -> dict[str, dict]:
         """Get grokking statistics for all components."""
         stats = {}
 
@@ -196,7 +195,7 @@ class CogmentGrokFastOptimizer:
 
         return stats
 
-    def detect_grokking_onset(self) -> Dict[str, bool]:
+    def detect_grokking_onset(self) -> dict[str, bool]:
         """Detect grokking onset for each component."""
         grokking_status = {}
 
@@ -244,13 +243,13 @@ class SelectiveGrokFastManager:
     def __init__(self, config: GrokFastConfig):
         self.config = config
         self.current_stage = 1
-        self.grokking_history: List[Dict] = []
-        self.optimizer: Optional[CogmentGrokFastOptimizer] = None
+        self.grokking_history: list[dict] = []
+        self.optimizer: CogmentGrokFastOptimizer | None = None
 
         logger.info("Initialized SelectiveGrokFastManager")
 
     def setup_optimizers(
-        self, model_components: Dict[str, nn.Module], base_optimizers: Dict[str, torch.optim.Optimizer]
+        self, model_components: dict[str, nn.Module], base_optimizers: dict[str, torch.optim.Optimizer]
     ):
         """Setup GrokFast optimizers for model components."""
         self.optimizer = CogmentGrokFastOptimizer(
@@ -315,7 +314,7 @@ class SelectiveGrokFastManager:
                 )
                 logger.info(f"🚀 Grokking detected in {component} at step {step} (slow ratio: {slow_ratio:.3f})")
 
-    def get_grokking_summary(self) -> Dict:
+    def get_grokking_summary(self) -> dict:
         """Get comprehensive grokking summary."""
         if not self.grokking_history:
             return {"status": "no_data", "history_length": 0}

@@ -10,14 +10,16 @@ for training-related functionality including:
 - Model checkpointing and artifact management
 """
 
-import asyncio
-import logging
-import uuid
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, Any, List, Optional, Callable
-from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
+import asyncio
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import datetime
+import logging
+from pathlib import Path
+from typing import Any
+import uuid
+
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -63,8 +65,8 @@ class TrainingConfig:
     save_steps: int = 1000
 
     # Dataset configuration
-    dataset_path: Optional[str] = None
-    dataset_sources: List[str] = field(default_factory=lambda: ["GSM8K", "SVAMP", "HotpotQA"])
+    dataset_path: str | None = None
+    dataset_sources: list[str] = field(default_factory=lambda: ["GSM8K", "SVAMP", "HotpotQA"])
 
 
 @dataclass
@@ -74,10 +76,10 @@ class TrainingProgress:
     progress: float
     message: str
     phase_name: str = "Training"
-    step: Optional[int] = None
-    total_steps: Optional[int] = None
-    loss: Optional[float] = None
-    learning_rate: Optional[float] = None
+    step: int | None = None
+    total_steps: int | None = None
+    loss: float | None = None
+    learning_rate: float | None = None
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
 
@@ -93,8 +95,8 @@ class ModelArtifacts:
     training_status: str
     focus: str
     training_mode: str
-    datasets_used: List[str]
-    training_stats: Dict[str, Any]
+    datasets_used: list[str]
+    training_stats: dict[str, Any]
 
     # Feature flags
     grokfast_enabled: bool = True
@@ -102,10 +104,10 @@ class ModelArtifacts:
     ltm_enabled: bool = True
 
     # File paths
-    artifacts: Dict[str, str] = field(default_factory=dict)
+    artifacts: dict[str, str] = field(default_factory=dict)
 
     # Capabilities and metrics
-    capabilities: List[str] = field(default_factory=list)
+    capabilities: list[str] = field(default_factory=list)
 
 
 class ProgressEmitter(ABC):
@@ -136,7 +138,7 @@ class DatasetLoader(ABC):
         pass
 
     @abstractmethod
-    def get_dataset_results(self) -> Dict[str, bool]:
+    def get_dataset_results(self) -> dict[str, bool]:
         """Get results of dataset downloads."""
         pass
 
@@ -147,7 +149,7 @@ class ModelTrainer(ABC):
     @abstractmethod
     async def train_model(
         self, model_name: str, config: TrainingConfig, progress_callback: Callable[[int, int, float, float], None]
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Train a single model and return training statistics."""
         pass
 
@@ -163,7 +165,7 @@ class TrainingService:
         progress_emitter: ProgressEmitter,
         dataset_loader: DatasetLoader,
         model_trainer: ModelTrainer,
-        config: Optional[TrainingConfig] = None,
+        config: TrainingConfig | None = None,
     ):
         """Initialize training service with injected dependencies."""
         self.progress_emitter = progress_emitter
@@ -172,14 +174,14 @@ class TrainingService:
         self.config = config or TrainingConfig()
 
         # Training state
-        self.active_training_sessions: Dict[str, Dict[str, Any]] = {}
-        self.model_storage: Dict[str, ModelArtifacts] = {}
+        self.active_training_sessions: dict[str, dict[str, Any]] = {}
+        self.model_storage: dict[str, ModelArtifacts] = {}
 
         logger.info("TrainingService initialized with dependency injection")
 
     async def start_training_session(
-        self, task_id: str, training_parameters: Dict[str, Any], model_names: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+        self, task_id: str, training_parameters: dict[str, Any], model_names: list[str] | None = None
+    ) -> dict[str, Any]:
         """
         Start a new training session with the specified parameters.
 
@@ -224,7 +226,7 @@ class TrainingService:
 
         return session_info
 
-    async def execute_training_pipeline(self, task_id: str) -> List[ModelArtifacts]:
+    async def execute_training_pipeline(self, task_id: str) -> list[ModelArtifacts]:
         """
         Execute the complete training pipeline for a session.
 
@@ -261,7 +263,7 @@ class TrainingService:
             logger.error(f"Training session {task_id} failed: {e}")
             raise
 
-    async def _prepare_datasets(self, task_id: str) -> Dict[str, bool]:
+    async def _prepare_datasets(self, task_id: str) -> dict[str, bool]:
         """Prepare datasets for training."""
         session = self.active_training_sessions[task_id]
 
@@ -315,7 +317,7 @@ class TrainingService:
         session["dataset_results"] = dataset_results
         return dataset_results
 
-    async def _train_models(self, task_id: str) -> List[ModelArtifacts]:
+    async def _train_models(self, task_id: str) -> list[ModelArtifacts]:
         """Train all models for the session."""
         session = self.active_training_sessions[task_id]
         model_names = session["model_names"]
@@ -393,7 +395,7 @@ class TrainingService:
         return trained_models
 
     async def _create_model_artifacts(
-        self, model_name: str, model_index: int, training_stats: Dict[str, Any], dataset_results: Dict[str, bool]
+        self, model_name: str, model_index: int, training_stats: dict[str, Any], dataset_results: dict[str, bool]
     ) -> ModelArtifacts:
         """Create model artifacts from training results."""
         model_id = f"trained_{model_name}_{uuid.uuid4().hex[:8]}"
@@ -470,7 +472,7 @@ class TrainingService:
         total_params = embedding_params + layer_params + output_params
         return int(total_params)
 
-    async def _finalize_training(self, task_id: str, trained_models: List[ModelArtifacts]) -> None:
+    async def _finalize_training(self, task_id: str, trained_models: list[ModelArtifacts]) -> None:
         """Finalize training session."""
         session = self.active_training_sessions[task_id]
 
@@ -500,15 +502,15 @@ class TrainingService:
         session["summary"] = session_summary
         logger.info(f"✅ Training session {task_id} finalized: {session_summary}")
 
-    async def get_training_status(self, task_id: str) -> Optional[Dict[str, Any]]:
+    async def get_training_status(self, task_id: str) -> dict[str, Any] | None:
         """Get current status of a training session."""
         return self.active_training_sessions.get(task_id)
 
-    async def list_trained_models(self) -> List[ModelArtifacts]:
+    async def list_trained_models(self) -> list[ModelArtifacts]:
         """Get list of all trained models."""
         return list(self.model_storage.values())
 
-    async def get_model_artifacts(self, model_id: str) -> Optional[ModelArtifacts]:
+    async def get_model_artifacts(self, model_id: str) -> ModelArtifacts | None:
         """Get artifacts for a specific trained model."""
         return self.model_storage.get(model_id)
 
@@ -561,8 +563,8 @@ class MockProgressEmitter(ProgressEmitter):
     """Mock progress emitter for testing."""
 
     def __init__(self):
-        self.progress_events: List[TrainingProgress] = []
-        self.model_events: List[ModelArtifacts] = []
+        self.progress_events: list[TrainingProgress] = []
+        self.model_events: list[ModelArtifacts] = []
 
     async def emit_progress(self, progress: TrainingProgress) -> None:
         """Emit a progress update."""
@@ -580,7 +582,7 @@ class MockDatasetLoader(DatasetLoader):
 
     def __init__(self, base_path: str = "./mock_datasets"):
         self.base_path = Path(base_path)
-        self.dataset_results: Dict[str, bool] = {}
+        self.dataset_results: dict[str, bool] = {}
 
     async def download_dataset(self, dataset_name: str, dataset_id: str) -> bool:
         """Simulate dataset download."""
@@ -601,7 +603,7 @@ class MockDatasetLoader(DatasetLoader):
         logger.info(f"Mock created mixed dataset: {mixed_path}")
         return mixed_path
 
-    def get_dataset_results(self) -> Dict[str, bool]:
+    def get_dataset_results(self) -> dict[str, bool]:
         """Get results of dataset downloads."""
         return self.dataset_results.copy()
 
@@ -611,7 +613,7 @@ class MockModelTrainer(ModelTrainer):
 
     async def train_model(
         self, model_name: str, config: TrainingConfig, progress_callback: Callable[[int, int, float, float], None]
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Simulate model training with realistic progress."""
         total_steps = config.max_steps
         current_loss = 4.2  # Starting loss

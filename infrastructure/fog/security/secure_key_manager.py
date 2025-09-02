@@ -7,20 +7,21 @@ backup/recovery, and integration with hardware security modules (HSMs).
 """
 
 import asyncio
+import base64
+from dataclasses import dataclass, field
+from enum import Enum
 import hashlib
 import json
 import logging
 import secrets
 import time
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict, List, Optional
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import rsa, ec
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.backends import default_backend
+from typing import Any
+
 from cryptography.fernet import Fernet
-import base64
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import ec, rsa
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 logger = logging.getLogger(__name__)
 
@@ -66,17 +67,17 @@ class CryptographicKey:
     key_type: KeyType
     algorithm: str
     key_size: int
-    public_key: Optional[bytes]
-    private_key: Optional[bytes]  # Encrypted when stored
+    public_key: bytes | None
+    private_key: bytes | None  # Encrypted when stored
     created_at: float
-    expires_at: Optional[float]
+    expires_at: float | None
     status: KeyStatus = KeyStatus.ACTIVE
     usage_count: int = 0
-    max_usage: Optional[int] = None
-    rotation_schedule: Optional[int] = None  # Rotation interval in seconds
-    last_rotated: Optional[float] = None
-    parent_key_id: Optional[str] = None  # For derived keys
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    max_usage: int | None = None
+    rotation_schedule: int | None = None  # Rotation interval in seconds
+    last_rotated: float | None = None
+    parent_key_id: str | None = None  # For derived keys
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def is_expired(self) -> bool:
         """Check if key is expired"""
@@ -121,7 +122,7 @@ class KeyShare:
     verification_hash: str
     holder_id: str
     created_at: float = field(default_factory=time.time)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -133,10 +134,10 @@ class KeyBackup:
     encrypted_backup: bytes
     backup_method: str
     checksum: str
-    recovery_shares: List[str]  # Share IDs needed for recovery
+    recovery_shares: list[str]  # Share IDs needed for recovery
     created_at: float = field(default_factory=time.time)
     location: str = "local"
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -150,22 +151,22 @@ class RotationEvent:
     trigger: RotationTrigger
     initiated_by: str
     started_at: float
-    completed_at: Optional[float] = None
+    completed_at: float | None = None
     status: str = "in_progress"
-    details: Dict[str, Any] = field(default_factory=dict)
-    rollback_plan: Optional[Dict[str, Any]] = None
+    details: dict[str, Any] = field(default_factory=dict)
+    rollback_plan: dict[str, Any] | None = None
 
 
 class SecureKeyStore:
     """Secure storage for cryptographic keys"""
 
-    def __init__(self, master_password: Optional[str] = None):
+    def __init__(self, master_password: str | None = None):
         self.master_password = master_password or self._generate_master_password()
         self.salt = secrets.token_bytes(32)
         self.fernet = self._initialize_encryption()
-        self.keys: Dict[str, CryptographicKey] = {}
-        self.key_shares: Dict[str, KeyShare] = {}
-        self.backups: Dict[str, KeyBackup] = {}
+        self.keys: dict[str, CryptographicKey] = {}
+        self.key_shares: dict[str, KeyShare] = {}
+        self.backups: dict[str, KeyBackup] = {}
 
     def _generate_master_password(self) -> str:
         """Generate cryptographically secure master password"""
@@ -212,7 +213,7 @@ class SecureKeyStore:
             logger.error(f"Failed to store key {key.key_id}: {e}")
             return False
 
-    def retrieve_key(self, key_id: str, decrypt_private: bool = True) -> Optional[CryptographicKey]:
+    def retrieve_key(self, key_id: str, decrypt_private: bool = True) -> CryptographicKey | None:
         """Retrieve and optionally decrypt key"""
         if key_id not in self.keys:
             return None
@@ -253,7 +254,7 @@ class SecureKeyStore:
             return True
         return False
 
-    def list_keys(self, key_type: Optional[KeyType] = None, status: Optional[KeyStatus] = None) -> List[str]:
+    def list_keys(self, key_type: KeyType | None = None, status: KeyStatus | None = None) -> list[str]:
         """List key IDs matching criteria"""
         result = []
         for key_id, key in self.keys.items():
@@ -270,17 +271,17 @@ class DistributedKeyGenerator:
 
     def __init__(self, node_id: str):
         self.node_id = node_id
-        self.active_ceremonies: Dict[str, Dict[str, Any]] = {}
-        self.completed_ceremonies: Dict[str, Dict[str, Any]] = {}
+        self.active_ceremonies: dict[str, dict[str, Any]] = {}
+        self.completed_ceremonies: dict[str, dict[str, Any]] = {}
 
     async def initiate_dkg_ceremony(
         self,
         ceremony_id: str,
-        participants: List[str],
+        participants: list[str],
         threshold: int,
         key_type: KeyType = KeyType.SIGNING,
         algorithm: str = "ECDSA",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Initiate distributed key generation ceremony"""
         if ceremony_id in self.active_ceremonies:
             raise ValueError(f"Ceremony {ceremony_id} already active")
@@ -316,7 +317,7 @@ class DistributedKeyGenerator:
             "your_index": participants.index(self.node_id) if self.node_id in participants else -1,
         }
 
-    async def contribute_to_ceremony(self, ceremony_id: str, contribution_data: bytes) -> Dict[str, Any]:
+    async def contribute_to_ceremony(self, ceremony_id: str, contribution_data: bytes) -> dict[str, Any]:
         """Contribute to DKG ceremony"""
         if ceremony_id not in self.active_ceremonies:
             raise ValueError(f"Unknown ceremony {ceremony_id}")
@@ -422,8 +423,8 @@ class DistributedKeyGenerator:
         logger.info(f"DKG ceremony {ceremony_id} completed successfully")
 
     async def _generate_key_shares(
-        self, private_key: bytes, participants: List[str], threshold: int
-    ) -> Dict[str, KeyShare]:
+        self, private_key: bytes, participants: list[str], threshold: int
+    ) -> dict[str, KeyShare]:
         """Generate key shares using Shamir's Secret Sharing"""
         shares = {}
 
@@ -468,7 +469,7 @@ class DistributedKeyGenerator:
         fernet = Fernet(base64.urlsafe_b64encode(recipient_key))
         return fernet.encrypt(share_data)
 
-    def get_ceremony_status(self, ceremony_id: str) -> Optional[Dict[str, Any]]:
+    def get_ceremony_status(self, ceremony_id: str) -> dict[str, Any] | None:
         """Get ceremony status"""
         if ceremony_id in self.active_ceremonies:
             ceremony = self.active_ceremonies[ceremony_id]
@@ -495,16 +496,16 @@ class KeyRotationManager:
 
     def __init__(self, key_store: SecureKeyStore):
         self.key_store = key_store
-        self.rotation_events: Dict[str, RotationEvent] = {}
-        self.rotation_policies: Dict[str, Dict[str, Any]] = {}
-        self.background_task: Optional[asyncio.Task] = None
+        self.rotation_events: dict[str, RotationEvent] = {}
+        self.rotation_policies: dict[str, dict[str, Any]] = {}
+        self.background_task: asyncio.Task | None = None
 
     def set_rotation_policy(
         self,
         policy_id: str,
-        key_types: List[KeyType],
+        key_types: list[KeyType],
         rotation_interval: int,
-        max_usage: Optional[int] = None,
+        max_usage: int | None = None,
         auto_rotate: bool = True,
     ):
         """Set key rotation policy"""
@@ -674,7 +675,7 @@ class KeyRotationManager:
         except Exception as e:
             logger.error(f"Scheduled rotation failed for key {key_id}: {e}")
 
-    def get_rotation_history(self, key_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    def get_rotation_history(self, key_id: str | None = None) -> list[dict[str, Any]]:
         """Get rotation event history"""
         events = []
 
@@ -705,9 +706,9 @@ class KeyBackupManager:
 
     def __init__(self, key_store: SecureKeyStore):
         self.key_store = key_store
-        self.backup_locations: Dict[str, Dict[str, Any]] = {}
+        self.backup_locations: dict[str, dict[str, Any]] = {}
 
-    def add_backup_location(self, location_id: str, location_type: str, config: Dict[str, Any]):
+    def add_backup_location(self, location_id: str, location_type: str, config: dict[str, Any]):
         """Add backup storage location"""
         self.backup_locations[location_id] = {
             "type": location_type,
@@ -719,7 +720,7 @@ class KeyBackupManager:
         logger.info(f"Added backup location {location_id} of type {location_type}")
 
     async def create_backup(
-        self, key_id: str, backup_locations: List[str], recovery_threshold: int = 2, method: str = "shamir_shares"
+        self, key_id: str, backup_locations: list[str], recovery_threshold: int = 2, method: str = "shamir_shares"
     ) -> str:
         """Create secure backup of key"""
         key = self.key_store.retrieve_key(key_id)
@@ -743,7 +744,7 @@ class KeyBackupManager:
         return backup_id
 
     async def _create_shamir_backup(
-        self, key: CryptographicKey, backup_id: str, locations: List[str], threshold: int
+        self, key: CryptographicKey, backup_id: str, locations: list[str], threshold: int
     ) -> KeyBackup:
         """Create backup using Shamir's Secret Sharing"""
         # Serialize key data
@@ -794,7 +795,7 @@ class KeyBackupManager:
 
         return backup
 
-    async def _create_encrypted_backup(self, key: CryptographicKey, backup_id: str, locations: List[str]) -> KeyBackup:
+    async def _create_encrypted_backup(self, key: CryptographicKey, backup_id: str, locations: list[str]) -> KeyBackup:
         """Create backup using encryption"""
         # Serialize key data
         key_data = {
@@ -836,7 +837,7 @@ class KeyBackupManager:
 
         return backup
 
-    async def _generate_backup_shares(self, data: bytes, total_shares: int, threshold: int) -> List[bytes]:
+    async def _generate_backup_shares(self, data: bytes, total_shares: int, threshold: int) -> list[bytes]:
         """Generate Shamir secret shares for backup"""
         # Convert data to integer
         data_int = int.from_bytes(hashlib.sha256(data).digest(), "big")
@@ -888,7 +889,7 @@ class KeyBackupManager:
         # In production, implement actual storage to configured location
         logger.debug(f"Stored backup {backup_id} at location {location_id}")
 
-    async def recover_key(self, backup_id: str, recovery_data: Dict[str, Any]) -> CryptographicKey:
+    async def recover_key(self, backup_id: str, recovery_data: dict[str, Any]) -> CryptographicKey:
         """Recover key from backup"""
         if backup_id not in self.key_store.backups:
             raise ValueError(f"Backup {backup_id} not found")
@@ -926,7 +927,7 @@ class KeyBackupManager:
 
         return key
 
-    async def _recover_from_shamir_shares(self, backup: KeyBackup, recovery_data: Dict[str, Any]) -> bytes:
+    async def _recover_from_shamir_shares(self, backup: KeyBackup, recovery_data: dict[str, Any]) -> bytes:
         """Recover key data from Shamir shares"""
         threshold = backup.metadata["threshold"]
         provided_shares = recovery_data.get("shares", [])
@@ -978,7 +979,7 @@ class KeyBackupManager:
         # In production, you'd store the actual data encrypted with this secret
         return b"reconstructed_key_data"  # Placeholder
 
-    async def _recover_from_encrypted_backup(self, backup: KeyBackup, recovery_data: Dict[str, Any]) -> bytes:
+    async def _recover_from_encrypted_backup(self, backup: KeyBackup, recovery_data: dict[str, Any]) -> bytes:
         """Recover key data from encrypted backup"""
         backup_key = recovery_data.get("backup_key")
         if not backup_key:
@@ -1005,7 +1006,7 @@ class KeyBackupManager:
         fernet = Fernet(location_key)
         return fernet.decrypt(encrypted_data)
 
-    def list_backups(self, key_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    def list_backups(self, key_id: str | None = None) -> list[dict[str, Any]]:
         """List available backups"""
         backups = []
 
@@ -1033,7 +1034,7 @@ class SecureKeyManager:
     Main secure key management system coordinating all components
     """
 
-    def __init__(self, node_id: str, master_password: Optional[str] = None):
+    def __init__(self, node_id: str, master_password: str | None = None):
         self.node_id = node_id
         self.key_store = SecureKeyStore(master_password)
         self.dkg = DistributedKeyGenerator(node_id)
@@ -1086,7 +1087,7 @@ class SecureKeyManager:
         key_type: KeyType,
         algorithm: str = "RSA",
         key_size: int = 2048,
-        expires_in: Optional[int] = None,
+        expires_in: int | None = None,
         auto_backup: bool = True,
     ) -> CryptographicKey:
         """Generate new cryptographic key"""
@@ -1147,7 +1148,7 @@ class SecureKeyManager:
 
         return key
 
-    async def get_key(self, key_id: str, include_private: bool = True) -> Optional[CryptographicKey]:
+    async def get_key(self, key_id: str, include_private: bool = True) -> CryptographicKey | None:
         """Retrieve key by ID"""
         key = self.key_store.retrieve_key(key_id, decrypt_private=include_private)
 
@@ -1173,7 +1174,7 @@ class SecureKeyManager:
         self.stats["keys_rotated"] += 1
         return new_key_id
 
-    async def backup_key(self, key_id: str, locations: Optional[List[str]] = None) -> str:
+    async def backup_key(self, key_id: str, locations: list[str] | None = None) -> str:
         """Create backup of key"""
         if locations is None:
             locations = ["local_encrypted"]
@@ -1182,7 +1183,7 @@ class SecureKeyManager:
         self.stats["keys_backed_up"] += 1
         return backup_id
 
-    async def recover_key(self, backup_id: str, recovery_data: Dict[str, Any]) -> CryptographicKey:
+    async def recover_key(self, backup_id: str, recovery_data: dict[str, Any]) -> CryptographicKey:
         """Recover key from backup"""
         key = await self.backup_manager.recover_key(backup_id, recovery_data)
 
@@ -1196,13 +1197,13 @@ class SecureKeyManager:
         return key
 
     async def initiate_distributed_key_generation(
-        self, ceremony_id: str, participants: List[str], threshold: int, key_type: KeyType = KeyType.SIGNING
-    ) -> Dict[str, Any]:
+        self, ceremony_id: str, participants: list[str], threshold: int, key_type: KeyType = KeyType.SIGNING
+    ) -> dict[str, Any]:
         """Initiate distributed key generation"""
         result = await self.dkg.initiate_dkg_ceremony(ceremony_id, participants, threshold, key_type)
         return result
 
-    async def participate_in_dkg(self, ceremony_id: str) -> Dict[str, Any]:
+    async def participate_in_dkg(self, ceremony_id: str) -> dict[str, Any]:
         """Participate in distributed key generation"""
         # Generate contribution
         contribution = secrets.token_bytes(64)  # Random contribution
@@ -1215,8 +1216,8 @@ class SecureKeyManager:
         return result
 
     def list_keys(
-        self, key_type: Optional[KeyType] = None, status: Optional[KeyStatus] = None, include_expired: bool = False
-    ) -> List[Dict[str, Any]]:
+        self, key_type: KeyType | None = None, status: KeyStatus | None = None, include_expired: bool = False
+    ) -> list[dict[str, Any]]:
         """List keys with metadata"""
         key_ids = self.key_store.list_keys(key_type, status)
         keys_info = []
@@ -1246,7 +1247,7 @@ class SecureKeyManager:
 
         return sorted(keys_info, key=lambda x: x["created_at"], reverse=True)
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get key manager statistics"""
         active_keys = len(self.key_store.list_keys(status=KeyStatus.ACTIVE))
         expired_keys = len([k for k in self.key_store.keys.values() if k.is_expired()])
@@ -1287,7 +1288,7 @@ class SecureKeyManager:
 
 # Factory function for system creation
 def create_secure_key_manager(
-    node_id: str, master_password: Optional[str] = None, config: Optional[Dict[str, Any]] = None
+    node_id: str, master_password: str | None = None, config: dict[str, Any] | None = None
 ) -> SecureKeyManager:
     """
     Factory function to create secure key manager

@@ -8,18 +8,20 @@ This module provides comprehensive system monitoring capabilities including:
 - Metrics aggregation and reporting
 """
 
-import asyncio
-import json
-import logging
-import psutil
-import time
 from abc import ABC, abstractmethod
+import asyncio
 from collections import defaultdict, deque
-from dataclasses import dataclass, field, asdict
+from collections.abc import Callable
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Any, Callable
+import json
+import logging
 from pathlib import Path
+import time
+from typing import Any
+
+import psutil
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +57,7 @@ class Alert:
     threshold: float
     timestamp: datetime = field(default_factory=datetime.now)
     resolved: bool = False
-    resolved_at: Optional[datetime] = None
+    resolved_at: datetime | None = None
 
 
 @dataclass
@@ -63,8 +65,8 @@ class MetricThreshold:
     """Metric threshold configuration."""
 
     metric_name: str
-    warning_threshold: Optional[float] = None
-    critical_threshold: Optional[float] = None
+    warning_threshold: float | None = None
+    critical_threshold: float | None = None
     comparison_operator: str = "gt"  # gt, lt, eq, gte, lte
     window_duration: timedelta = field(default_factory=lambda: timedelta(minutes=5))
     min_samples: int = 3
@@ -82,20 +84,20 @@ class SystemSnapshot:
     network_bytes_recv: int
     active_connections: int
     process_count: int
-    load_average: Optional[List[float]] = None
-    custom_metrics: Dict[str, float] = field(default_factory=dict)
+    load_average: list[float] | None = None
+    custom_metrics: dict[str, float] = field(default_factory=dict)
 
 
 class MetricsCollector(ABC):
     """Abstract base class for metrics collection."""
 
     @abstractmethod
-    async def collect_metrics(self) -> Dict[str, Any]:
+    async def collect_metrics(self) -> dict[str, Any]:
         """Collect metrics and return as dictionary."""
         pass
 
     @abstractmethod
-    def get_metric_definitions(self) -> Dict[str, MetricType]:
+    def get_metric_definitions(self) -> dict[str, MetricType]:
         """Return metric definitions."""
         pass
 
@@ -108,7 +110,7 @@ class SystemResourcesCollector(MetricsCollector):
         self.last_disk_io = None
         self.last_timestamp = None
 
-    async def collect_metrics(self) -> Dict[str, Any]:
+    async def collect_metrics(self) -> dict[str, Any]:
         """Collect system resource metrics."""
         current_time = time.time()
 
@@ -180,7 +182,7 @@ class SystemResourcesCollector(MetricsCollector):
             "load_average": load_average,
         }
 
-    def get_metric_definitions(self) -> Dict[str, MetricType]:
+    def get_metric_definitions(self) -> dict[str, MetricType]:
         """Return metric definitions."""
         return {
             "cpu_percent": MetricType.GAUGE,
@@ -203,16 +205,16 @@ class SystemMetricsManager:
             collection_interval: Interval between metric collections in seconds
         """
         self.collection_interval = collection_interval
-        self.collectors: List[MetricsCollector] = []
-        self.thresholds: Dict[str, MetricThreshold] = {}
-        self.alerts: Dict[str, Alert] = {}
-        self.metrics_history: Dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
+        self.collectors: list[MetricsCollector] = []
+        self.thresholds: dict[str, MetricThreshold] = {}
+        self.alerts: dict[str, Alert] = {}
+        self.metrics_history: dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
         self.snapshots: deque = deque(maxlen=1000)
 
         # State management
         self.is_running = False
-        self.collection_task: Optional[asyncio.Task] = None
-        self.alert_handlers: List[Callable[[Alert], None]] = []
+        self.collection_task: asyncio.Task | None = None
+        self.alert_handlers: list[Callable[[Alert], None]] = []
 
         # Performance tracking
         self.collection_count = 0
@@ -327,7 +329,7 @@ class SystemMetricsManager:
                 logger.error(f"Error in metrics collection loop: {e}")
                 await asyncio.sleep(5)  # Wait before retrying
 
-    def _create_snapshot(self, timestamp: datetime, metrics: Dict[str, Any]) -> SystemSnapshot:
+    def _create_snapshot(self, timestamp: datetime, metrics: dict[str, Any]) -> SystemSnapshot:
         """Create system snapshot from metrics."""
         return SystemSnapshot(
             timestamp=timestamp,
@@ -356,7 +358,7 @@ class SystemMetricsManager:
             },
         )
 
-    async def _check_thresholds(self, metrics: Dict[str, Any], timestamp: datetime) -> None:
+    async def _check_thresholds(self, metrics: dict[str, Any], timestamp: datetime) -> None:
         """Check metrics against configured thresholds."""
         for metric_name, threshold in self.thresholds.items():
             if metric_name not in metrics:
@@ -428,7 +430,7 @@ class SystemMetricsManager:
                     existing_alert.resolved_at = timestamp
                     await self._resolve_alert(existing_alert)
 
-    def _is_threshold_breached(self, value: float, threshold: Optional[float], operator: str) -> bool:
+    def _is_threshold_breached(self, value: float, threshold: float | None, operator: str) -> bool:
         """Check if value breaches threshold based on operator."""
         if threshold is None:
             return False
@@ -465,7 +467,7 @@ class SystemMetricsManager:
 
         # Could trigger resolution handlers here if needed
 
-    def get_current_metrics(self) -> Dict[str, Any]:
+    def get_current_metrics(self) -> dict[str, Any]:
         """Get current metric values."""
         current_metrics = {}
 
@@ -475,7 +477,7 @@ class SystemMetricsManager:
 
         return current_metrics
 
-    def get_metric_history(self, metric_name: str, duration: Optional[timedelta] = None) -> List[tuple]:
+    def get_metric_history(self, metric_name: str, duration: timedelta | None = None) -> list[tuple]:
         """Get metric history for specified duration."""
         if metric_name not in self.metrics_history:
             return []
@@ -486,7 +488,7 @@ class SystemMetricsManager:
         cutoff_time = datetime.now() - duration
         return [(ts, value) for ts, value in self.metrics_history[metric_name] if ts >= cutoff_time]
 
-    def get_active_alerts(self) -> List[Alert]:
+    def get_active_alerts(self) -> list[Alert]:
         """Get all active (unresolved) alerts."""
         return [alert for alert in self.alerts.values() if not alert.resolved]
 
@@ -511,7 +513,7 @@ class SystemMetricsManager:
 
         return min(100.0, max(0.0, health_score))
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """Get performance summary."""
         return {
             "collection_count": self.collection_count,

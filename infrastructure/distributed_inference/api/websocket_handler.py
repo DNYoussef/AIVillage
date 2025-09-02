@@ -13,11 +13,10 @@ optimization and intelligent connection management.
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
-import time
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 import uuid
 
 from fastapi import WebSocket, WebSocketDisconnect
@@ -101,9 +100,9 @@ class WebSocketMessage(BaseModel):
     data: Any = None
     timestamp: datetime = None
     message_id: str = None
-    request_id: Optional[str] = None
+    request_id: str | None = None
     priority: int = 1  # 1-5, higher is more important
-    archaeological_metadata: Optional[Dict[str, Any]] = None
+    archaeological_metadata: dict[str, Any] | None = None
     
     def __init__(self, **data):
         if data.get("timestamp") is None:
@@ -122,14 +121,14 @@ class ConnectionInfo:
         self.last_activity = datetime.now()
         self.message_count = 0
         self.error_count = 0
-        self.subscriptions: Set[str] = set()
-        self.user_id: Optional[str] = None
-        self.client_info: Dict[str, Any] = {}
+        self.subscriptions: set[str] = set()
+        self.user_id: str | None = None
+        self.client_info: dict[str, Any] = {}
         
         # Archaeological enhancements
         self.archaeological_priority = 0.5
         self.bandwidth_allocation = 1.0
-        self.message_queue: List[WebSocketMessage] = []
+        self.message_queue: list[WebSocketMessage] = []
         self.performance_score = 1.0
 
 class DistributedInferenceWebSocketHandler:
@@ -150,7 +149,7 @@ class DistributedInferenceWebSocketHandler:
         self.archaeological_metadata = ARCHAEOLOGICAL_METADATA
         
         # Connection management
-        self.active_connections: Dict[str, ConnectionInfo] = {}
+        self.active_connections: dict[str, ConnectionInfo] = {}
         self.connection_stats = {
             "total_connections": 0,
             "active_connections": 0,
@@ -177,9 +176,9 @@ class DistributedInferenceWebSocketHandler:
         
         # Background tasks
         self.running = False
-        self._background_tasks: Set[asyncio.Task] = set()
+        self._background_tasks: set[asyncio.Task] = set()
         
-        logger.info(f"🔌 WebSocket handler initialized with archaeological metadata")
+        logger.info("🔌 WebSocket handler initialized with archaeological metadata")
         logger.info(f"📊 Innovation Score: {self.archaeological_metadata['innovation_score']}")
         
     async def start(self):
@@ -223,7 +222,7 @@ class DistributedInferenceWebSocketHandler:
         
         logger.info("✅ WebSocket handler stopped")
         
-    async def handle_connection(self, websocket: WebSocket, connection_id: Optional[str] = None):
+    async def handle_connection(self, websocket: WebSocket, connection_id: str | None = None):
         """
         Handle a new WebSocket connection with archaeological optimization.
         
@@ -328,8 +327,8 @@ class DistributedInferenceWebSocketHandler:
     async def broadcast_message(
         self,
         message: WebSocketMessage,
-        subscription_filter: Optional[str] = None,
-        user_filter: Optional[List[str]] = None
+        subscription_filter: str | None = None,
+        user_filter: list[str] | None = None
     ):
         """
         Broadcast message to multiple connections with archaeological optimization.
@@ -384,7 +383,7 @@ class DistributedInferenceWebSocketHandler:
     async def send_inference_progress(
         self,
         request_id: str,
-        progress_data: Dict[str, Any]
+        progress_data: dict[str, Any]
     ):
         """Send inference progress update to relevant connections."""
         message = WebSocketMessage(
@@ -404,7 +403,7 @@ class DistributedInferenceWebSocketHandler:
         for connection_info in target_connections:
             await self._send_message(connection_info, message)
             
-    async def send_performance_metrics(self, metrics: Dict[str, Any]):
+    async def send_performance_metrics(self, metrics: dict[str, Any]):
         """Send performance metrics to subscribed connections."""
         message = WebSocketMessage(
             type=MessageType.PERFORMANCE_METRICS,
@@ -414,7 +413,7 @@ class DistributedInferenceWebSocketHandler:
         
         await self.broadcast_message(message, subscription_filter="performance_metrics")
         
-    async def send_optimization_recommendation(self, recommendation: Dict[str, Any]):
+    async def send_optimization_recommendation(self, recommendation: dict[str, Any]):
         """Send optimization recommendation to administrative connections."""
         message = WebSocketMessage(
             type=MessageType.OPTIMIZATION_RECOMMENDATION,
@@ -909,7 +908,7 @@ class DistributedInferenceWebSocketHandler:
         except Exception as e:
             logger.warning(f"⚠️ Could not save archaeological data: {e}")
 
-    def get_connection_stats(self) -> Dict[str, Any]:
+    def get_connection_stats(self) -> dict[str, Any]:
         """Get current connection statistics."""
         return {
             **self.connection_stats,

@@ -8,14 +8,15 @@ Integration: Complete agent orchestration with existing Agent Forge and P2P syst
 """
 
 import asyncio
-import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Set
-from dataclasses import dataclass, asdict
-from enum import Enum
-import uuid
-import networkx as nx
 from collections import deque
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
+from enum import Enum
+import logging
+from typing import Any
+import uuid
+
+import networkx as nx
 
 logger = logging.getLogger(__name__)
 
@@ -75,11 +76,11 @@ class AgentCapability:
     name: str
     description: str
     performance_score: float  # 0.0 - 1.0
-    resource_requirements: Dict[str, float]
-    specialization_areas: List[str]
+    resource_requirements: dict[str, float]
+    specialization_areas: list[str]
     learning_rate: float
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -91,15 +92,15 @@ class CoordinatedAgent:
     name: str
     role: AgentRole
     state: AgentState
-    capabilities: List[AgentCapability]
-    current_tasks: List[str]
-    performance_metrics: Dict[str, float]
-    location: Dict[str, str]  # node, region, etc.
+    capabilities: list[AgentCapability]
+    current_tasks: list[str]
+    performance_metrics: dict[str, float]
+    location: dict[str, str]  # node, region, etc.
     last_heartbeat: datetime
-    communication_endpoints: List[str]
-    metadata: Dict[str, Any]
+    communication_endpoints: list[str]
+    metadata: dict[str, Any]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             **asdict(self),
             "last_heartbeat": self.last_heartbeat.isoformat(),
@@ -115,17 +116,17 @@ class CoordinationTask:
     name: str
     description: str
     priority: TaskPriority
-    required_capabilities: List[str]
+    required_capabilities: list[str]
     estimated_duration: float  # hours
-    dependencies: List[str]  # other task IDs
-    assigned_agents: List[str]
+    dependencies: list[str]  # other task IDs
+    assigned_agents: list[str]
     progress: float  # 0.0 - 1.0
     status: str
     created_at: datetime
-    deadline: Optional[datetime]
-    result: Optional[Dict[str, Any]]
+    deadline: datetime | None
+    result: dict[str, Any] | None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             **asdict(self),
             "created_at": self.created_at.isoformat(),
@@ -149,7 +150,7 @@ class CoordinationMetrics:
     consensus_time: float
     timestamp: datetime
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "timestamp": self.timestamp.isoformat()}
 
 
@@ -166,25 +167,25 @@ class DistributedAgentCoordinator:
     - Integration with existing Agent Forge and P2P systems
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self.config = config or {}
 
         # Agent management
-        self.agents: Dict[str, CoordinatedAgent] = {}
-        self.agent_groups: Dict[str, List[str]] = {}  # role -> agent_ids
-        self.offline_agents: Set[str] = set()
+        self.agents: dict[str, CoordinatedAgent] = {}
+        self.agent_groups: dict[str, list[str]] = {}  # role -> agent_ids
+        self.offline_agents: set[str] = set()
 
         # Task management
-        self.tasks: Dict[str, CoordinationTask] = {}
+        self.tasks: dict[str, CoordinationTask] = {}
         self.task_queue: deque = deque()
         self.dependency_graph = nx.DiGraph()
 
         # Coordination strategy
         self.strategy = CoordinationStrategy(self.config.get("strategy", CoordinationStrategy.HYBRID))
-        self.coordinator_agents: List[str] = []
+        self.coordinator_agents: list[str] = []
 
         # Performance tracking
-        self.metrics_history: List[CoordinationMetrics] = []
+        self.metrics_history: list[CoordinationMetrics] = []
         self.performance_optimizer = PerformanceOptimizer()
         self.consensus_engine = ConsensusEngine()
 
@@ -235,7 +236,7 @@ class DistributedAgentCoordinator:
             logger.error(f"Failed to initialize Distributed Agent Coordination System: {e}")
             return False
 
-    async def register_agent(self, agent_config: Dict[str, Any]) -> Optional[CoordinatedAgent]:
+    async def register_agent(self, agent_config: dict[str, Any]) -> CoordinatedAgent | None:
         """
         Register new agent in coordination system.
 
@@ -309,7 +310,7 @@ class DistributedAgentCoordinator:
             logger.error(f"Failed to register agent: {e}")
             return None
 
-    async def submit_task(self, task_config: Dict[str, Any]) -> Optional[CoordinationTask]:
+    async def submit_task(self, task_config: dict[str, Any]) -> CoordinationTask | None:
         """
         Submit task to coordination system.
 
@@ -389,7 +390,7 @@ class DistributedAgentCoordinator:
             # Assign task to agents
             await self._assign_task_to_agents(task_id, suitable_agents)
 
-    async def _find_suitable_agents(self, task: CoordinationTask) -> List[str]:
+    async def _find_suitable_agents(self, task: CoordinationTask) -> list[str]:
         """Find agents suitable for task execution."""
         suitable_agents = []
 
@@ -454,7 +455,7 @@ class DistributedAgentCoordinator:
 
         return min(1.0, fitness)
 
-    def _is_capability_compatible(self, required_capability: str, agent_capabilities: List[str]) -> bool:
+    def _is_capability_compatible(self, required_capability: str, agent_capabilities: list[str]) -> bool:
         """Check if agent capabilities can satisfy required capability."""
         # Simplified compatibility checking
         compatibility_map = {
@@ -467,7 +468,7 @@ class DistributedAgentCoordinator:
         compatible_caps = compatibility_map.get(required_capability, [])
         return any(cap in agent_capabilities for cap in compatible_caps)
 
-    async def _assign_task_to_agents(self, task_id: str, agent_ids: List[str]):
+    async def _assign_task_to_agents(self, task_id: str, agent_ids: list[str]):
         """Assign task to selected agents."""
         task = self.tasks[task_id]
 
@@ -535,8 +536,8 @@ class DistributedAgentCoordinator:
         task_id: str,
         progress: float,
         agent_id: str,
-        status: Optional[str] = None,
-        result: Optional[Dict[str, Any]] = None,
+        status: str | None = None,
+        result: dict[str, Any] | None = None,
     ) -> bool:
         """Update task progress from agent."""
         if task_id not in self.tasks:
@@ -567,7 +568,7 @@ class DistributedAgentCoordinator:
 
         return True
 
-    async def _complete_task(self, task_id: str, result: Dict[str, Any]):
+    async def _complete_task(self, task_id: str, result: dict[str, Any]):
         """Handle task completion."""
         task = self.tasks[task_id]
 
@@ -615,7 +616,7 @@ class DistributedAgentCoordinator:
 
         return True
 
-    async def get_system_status(self) -> Dict[str, Any]:
+    async def get_system_status(self) -> dict[str, Any]:
         """Get comprehensive system status."""
         current_time = datetime.now()
 
@@ -848,12 +849,12 @@ class DistributedAgentCoordinator:
 
     # Utility methods for message handling and agent communication
 
-    async def _send_agent_message(self, agent_id: str, message: Dict[str, Any]):
+    async def _send_agent_message(self, agent_id: str, message: dict[str, Any]):
         """Send message to specific agent."""
         if agent_id in self.agents:
             await self.message_broker.send_message(agent_id, message)
 
-    async def _update_agent_performance(self, agent_id: str, task_id: str, progress: float, status: Optional[str]):
+    async def _update_agent_performance(self, agent_id: str, task_id: str, progress: float, status: str | None):
         """Update agent performance metrics."""
         if agent_id in self.agents:
             agent = self.agents[agent_id]
@@ -936,7 +937,7 @@ class MessageBroker:
         """Initialize message broker."""
         self.message_queues = {}
 
-    async def send_message(self, agent_id: str, message: Dict[str, Any]):
+    async def send_message(self, agent_id: str, message: dict[str, Any]):
         """Send message to agent."""
         if agent_id not in self.message_queues:
             self.message_queues[agent_id] = deque()
@@ -953,7 +954,7 @@ class ConsensusEngine:
         """Initialize consensus engine."""
         pass
 
-    async def reach_consensus(self, agents: List[str], decision: Dict[str, Any]) -> bool:
+    async def reach_consensus(self, agents: list[str], decision: dict[str, Any]) -> bool:
         """Reach consensus among agents for decision."""
         # Simplified consensus implementation
         return True
@@ -966,7 +967,7 @@ class PerformanceOptimizer:
         """Initialize performance optimizer."""
         pass
 
-    async def optimize_assignments(self, agents: Dict[str, CoordinatedAgent], tasks: Dict[str, CoordinationTask]):
+    async def optimize_assignments(self, agents: dict[str, CoordinatedAgent], tasks: dict[str, CoordinationTask]):
         """Optimize agent-task assignments."""
         # Simplified optimization
         pass

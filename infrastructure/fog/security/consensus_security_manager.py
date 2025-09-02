@@ -6,15 +6,15 @@ with advanced threat detection, cryptographic infrastructure, and attack mitigat
 Designed specifically for federated learning environments using BetaNet integration.
 """
 
+from collections import defaultdict
+from dataclasses import dataclass, field
+from enum import Enum
 import hashlib
 import json
 import logging
-import time
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
 import secrets
-from collections import defaultdict
+import time
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -49,11 +49,11 @@ class SecurityAlert:
     attack_type: AttackType
     severity: SecurityLevel
     confidence: float  # 0.0 to 1.0
-    details: Dict[str, Any]
-    affected_nodes: List[str]
+    details: dict[str, Any]
+    affected_nodes: list[str]
     timestamp: float = field(default_factory=time.time)
-    evidence: Dict[str, Any] = field(default_factory=dict)
-    mitigation_applied: Optional[str] = None
+    evidence: dict[str, Any] = field(default_factory=dict)
+    mitigation_applied: str | None = None
 
 
 @dataclass
@@ -64,7 +64,7 @@ class ThresholdSignature:
     commitment: bytes
     challenge: bytes
     response: bytes
-    participants: List[str]
+    participants: list[str]
     threshold: int
 
 
@@ -75,7 +75,7 @@ class ZKProof:
     commitment: bytes
     challenge: bytes
     response: bytes
-    public_parameters: Dict[str, Any]
+    public_parameters: dict[str, Any]
     proof_type: str
     verified: bool = False
 
@@ -110,7 +110,7 @@ class EllipticCurveOperations:
         combined = point1 + point2
         return hashlib.sha256(combined).digest()
 
-    def generate_keypair(self) -> Tuple[int, bytes]:
+    def generate_keypair(self) -> tuple[int, bytes]:
         """Generate private/public key pair"""
         private_key = secrets.randbits(256)
         public_key = self.point_multiply(self.generator_point, private_key)
@@ -127,12 +127,12 @@ class ThresholdCryptographySystem:
         self.threshold = threshold
         self.total_parties = total_parties
         self.curve = EllipticCurveOperations()
-        self.master_public_key: Optional[bytes] = None
-        self.key_shares: Dict[str, int] = {}
-        self.public_shares: Dict[str, bytes] = {}
-        self.verification_keys: Dict[str, bytes] = {}
+        self.master_public_key: bytes | None = None
+        self.key_shares: dict[str, int] = {}
+        self.public_shares: dict[str, bytes] = {}
+        self.verification_keys: dict[str, bytes] = {}
 
-    async def distributed_key_generation(self, participants: List[str]) -> Dict[str, Any]:
+    async def distributed_key_generation(self, participants: list[str]) -> dict[str, Any]:
         """
         Execute distributed key generation protocol
 
@@ -209,7 +209,7 @@ class ThresholdCryptographySystem:
             "threshold": self.threshold,
         }
 
-    def _verify_share_commitment(self, share: int, commitments: List[bytes], participant_id: str) -> bool:
+    def _verify_share_commitment(self, share: int, commitments: list[bytes], participant_id: str) -> bool:
         """Verify that a share matches its commitment"""
         # Simplified verification - in production use proper Feldman VSS
         hash(participant_id) % len(commitments)
@@ -217,7 +217,7 @@ class ThresholdCryptographySystem:
         # This is a simplified check
         return True  # In production, implement proper verification
 
-    async def create_threshold_signature(self, message: bytes, signers: List[str]) -> ThresholdSignature:
+    async def create_threshold_signature(self, message: bytes, signers: list[str]) -> ThresholdSignature:
         """
         Create threshold signature from t signers
 
@@ -284,7 +284,7 @@ class ThresholdCryptographySystem:
 
         return signature
 
-    def _calculate_lagrange_coefficient(self, signer: str, signers: List[str]) -> int:
+    def _calculate_lagrange_coefficient(self, signer: str, signers: list[str]) -> int:
         """Calculate Lagrange interpolation coefficient"""
         signer_index = signers.index(signer) + 1  # 1-indexed
         coefficient = 1
@@ -327,7 +327,7 @@ class ZeroKnowledgeProofSystem:
 
     def __init__(self):
         self.curve = EllipticCurveOperations()
-        self.proof_cache: Dict[str, ZKProof] = {}
+        self.proof_cache: dict[str, ZKProof] = {}
 
     async def prove_gradient_knowledge(self, gradient_commitment: bytes, gradient_value: int, node_id: str) -> ZKProof:
         """
@@ -488,9 +488,9 @@ class AttackDetectionSystem:
     """
 
     def __init__(self):
-        self.reputation_scores: Dict[str, float] = defaultdict(lambda: 1.0)
-        self.behavior_history: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
-        self.active_alerts: List[SecurityAlert] = []
+        self.reputation_scores: dict[str, float] = defaultdict(lambda: 1.0)
+        self.behavior_history: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        self.active_alerts: list[SecurityAlert] = []
         self.detection_thresholds = {
             AttackType.BYZANTINE: 0.7,
             AttackType.SYBIL: 0.8,
@@ -503,8 +503,8 @@ class AttackDetectionSystem:
         }
 
     async def detect_byzantine_behavior(
-        self, node_id: str, messages: List[Dict[str, Any]], consensus_round: int
-    ) -> Optional[SecurityAlert]:
+        self, node_id: str, messages: list[dict[str, Any]], consensus_round: int
+    ) -> SecurityAlert | None:
         """
         Detect Byzantine behavior patterns
 
@@ -582,7 +582,7 @@ class AttackDetectionSystem:
 
         return None
 
-    async def detect_sybil_attack(self, new_node_requests: List[Dict[str, Any]]) -> Optional[SecurityAlert]:
+    async def detect_sybil_attack(self, new_node_requests: list[dict[str, Any]]) -> SecurityAlert | None:
         """
         Detect Sybil attack patterns in node join requests
 
@@ -679,8 +679,8 @@ class AttackDetectionSystem:
         return None
 
     async def detect_eclipse_attack(
-        self, node_id: str, peer_connections: List[Dict[str, Any]]
-    ) -> Optional[SecurityAlert]:
+        self, node_id: str, peer_connections: list[dict[str, Any]]
+    ) -> SecurityAlert | None:
         """
         Detect Eclipse attack attempts
 
@@ -796,12 +796,12 @@ class SecureFederatedAggregation:
     def __init__(self, threshold_crypto: ThresholdCryptographySystem):
         self.threshold_crypto = threshold_crypto
         self.zk_system = ZeroKnowledgeProofSystem()
-        self.aggregation_rounds: Dict[str, Dict[str, Any]] = {}
-        self.gradient_commitments: Dict[str, Dict[str, bytes]] = {}
+        self.aggregation_rounds: dict[str, dict[str, Any]] = {}
+        self.gradient_commitments: dict[str, dict[str, bytes]] = {}
 
     async def initialize_aggregation_round(
-        self, round_id: str, participants: List[str], gradient_shape: Tuple[int, ...], privacy_budget: float = 1.0
-    ) -> Dict[str, Any]:
+        self, round_id: str, participants: list[str], gradient_shape: tuple[int, ...], privacy_budget: float = 1.0
+    ) -> dict[str, Any]:
         """
         Initialize secure aggregation round
 
@@ -848,8 +848,8 @@ class SecureFederatedAggregation:
         }
 
     async def commit_gradient(
-        self, round_id: str, node_id: str, gradient_vector: List[float], noise_scale: float = 0.1
-    ) -> Dict[str, Any]:
+        self, round_id: str, node_id: str, gradient_vector: list[float], noise_scale: float = 0.1
+    ) -> dict[str, Any]:
         """
         Commit to gradient with privacy protection
 
@@ -916,7 +916,7 @@ class SecureFederatedAggregation:
             "round_phase": round_data["phase"],
         }
 
-    async def verify_commitments(self, round_id: str) -> Dict[str, bool]:
+    async def verify_commitments(self, round_id: str) -> dict[str, bool]:
         """
         Verify all gradient commitments and proofs for a round
 
@@ -953,7 +953,7 @@ class SecureFederatedAggregation:
 
         return verification_results
 
-    async def aggregate_gradients(self, round_id: str, byzantine_tolerance: int = 1) -> Dict[str, Any]:
+    async def aggregate_gradients(self, round_id: str, byzantine_tolerance: int = 1) -> dict[str, Any]:
         """
         Perform secure gradient aggregation with Byzantine fault tolerance
 
@@ -1071,9 +1071,9 @@ class FederatedSecurityCoordinator:
             "privacy_budget": 1.0,
             "reputation_threshold": 0.5,
         }
-        self.active_rounds: Dict[str, str] = {}  # round_id -> status
+        self.active_rounds: dict[str, str] = {}  # round_id -> status
 
-    async def initialize_security_infrastructure(self, participants: List[str]) -> Dict[str, Any]:
+    async def initialize_security_infrastructure(self, participants: list[str]) -> dict[str, Any]:
         """
         Initialize the complete security infrastructure
 
@@ -1110,10 +1110,10 @@ class FederatedSecurityCoordinator:
     async def start_secure_training_round(
         self,
         round_id: str,
-        participants: List[str],
-        gradient_shape: Tuple[int, ...],
-        model_parameters: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        participants: list[str],
+        gradient_shape: tuple[int, ...],
+        model_parameters: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Start a secure federated training round
 
@@ -1164,9 +1164,9 @@ class FederatedSecurityCoordinator:
         self,
         round_id: str,
         node_id: str,
-        gradient_vector: List[float],
-        submission_metadata: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        gradient_vector: list[float],
+        submission_metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Process and validate gradient submission
 
@@ -1224,7 +1224,7 @@ class FederatedSecurityCoordinator:
             "node_reputation": self.attack_detector.reputation_scores[node_id],
         }
 
-    async def finalize_training_round(self, round_id: str) -> Dict[str, Any]:
+    async def finalize_training_round(self, round_id: str) -> dict[str, Any]:
         """
         Finalize secure training round with aggregation
 
@@ -1276,7 +1276,7 @@ class FederatedSecurityCoordinator:
             "failed_verifications": failed_verifications,
         }
 
-    async def monitor_security_status(self) -> Dict[str, Any]:
+    async def monitor_security_status(self) -> dict[str, Any]:
         """
         Get comprehensive security status
 
@@ -1335,7 +1335,7 @@ class FederatedSecurityCoordinator:
 
 # Factory function for easy integration
 def create_federated_security_coordinator(
-    node_id: str, threshold: int = 3, total_nodes: int = 5, config: Optional[Dict[str, Any]] = None
+    node_id: str, threshold: int = 3, total_nodes: int = 5, config: dict[str, Any] | None = None
 ) -> FederatedSecurityCoordinator:
     """
     Factory function to create federated security coordinator

@@ -1,15 +1,15 @@
 """Configuration management system with environment overrides."""
 
+from dataclasses import asdict, dataclass
 import json
 import os
-from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import Any, Dict, Optional, TypeVar, Union
+from typing import Any, TypeVar
 
-from .task_constants import TaskConstants
-from .project_constants import ProjectConstants
-from .timing_constants import TimingConstants
 from .performance_constants import PerformanceConstants
+from .project_constants import ProjectConstants
+from .task_constants import TaskConstants
+from .timing_constants import TimingConstants
 
 T = TypeVar("T")
 
@@ -19,25 +19,25 @@ class EnvironmentConfig:
     """Environment-specific configuration overrides."""
 
     # Task configuration
-    batch_size: Optional[int] = None
-    default_priority: Optional[int] = None
-    max_retries: Optional[int] = None
+    batch_size: int | None = None
+    default_priority: int | None = None
+    max_retries: int | None = None
 
     # Timing configuration
-    batch_processing_interval: Optional[float] = None
-    retry_delay: Optional[float] = None
-    default_timeout: Optional[int] = None
+    batch_processing_interval: float | None = None
+    retry_delay: float | None = None
+    default_timeout: int | None = None
 
     # Performance configuration
-    learning_rate: Optional[float] = None
-    history_length: Optional[int] = None
-    max_performance: Optional[float] = None
-    min_performance: Optional[float] = None
+    learning_rate: float | None = None
+    history_length: int | None = None
+    max_performance: float | None = None
+    min_performance: float | None = None
 
     # Project configuration
-    default_project_status: Optional[str] = None
+    default_project_status: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary, excluding None values."""
         return {k: v for k, v in asdict(self).items() if v is not None}
 
@@ -45,14 +45,14 @@ class EnvironmentConfig:
 class ConfigManager:
     """Manages configuration with environment variable overrides."""
 
-    def __init__(self, config_file: Optional[Union[str, Path]] = None):
+    def __init__(self, config_file: str | Path | None = None):
         """Initialize configuration manager.
 
         Args:
             config_file: Optional path to JSON configuration file
         """
         self._config_file = Path(config_file) if config_file else None
-        self._environment_config: Optional[EnvironmentConfig] = None
+        self._environment_config: EnvironmentConfig | None = None
         self._load_configuration()
 
     def _load_configuration(self) -> None:
@@ -61,7 +61,7 @@ class ConfigManager:
 
         # Load from configuration file if provided
         if self._config_file and self._config_file.exists():
-            with open(self._config_file, "r", encoding="utf-8") as f:
+            with open(self._config_file, encoding="utf-8") as f:
                 config_data = json.load(f)
 
         # Override with environment variables
@@ -71,7 +71,7 @@ class ConfigManager:
         # Create environment configuration
         self._environment_config = EnvironmentConfig(**config_data)
 
-    def _load_from_environment(self) -> Dict[str, Any]:
+    def _load_from_environment(self) -> dict[str, Any]:
         """Load configuration from environment variables."""
         env_config = {}
 
@@ -192,8 +192,8 @@ class ConfigManager:
 
     @staticmethod
     def _validate_range(
-        value: Union[int, float], min_val: Union[int, float], max_val: Union[int, float], param_name: str
-    ) -> Union[int, float]:
+        value: int | float, min_val: int | float, max_val: int | float, param_name: str
+    ) -> int | float:
         """Validate that a value is within the specified range."""
         if not min_val <= value <= max_val:
             raise ValueError(
@@ -201,7 +201,7 @@ class ConfigManager:
             )
         return value
 
-    def validate_configuration(self) -> Dict[str, Any]:
+    def validate_configuration(self) -> dict[str, Any]:
         """Validate all configuration values and return summary."""
         validation_results = {"valid": True, "errors": [], "warnings": [], "configuration": {}}
 
@@ -227,7 +227,7 @@ class ConfigManager:
 
         return validation_results
 
-    def save_configuration(self, file_path: Union[str, Path]) -> None:
+    def save_configuration(self, file_path: str | Path) -> None:
         """Save current configuration to file."""
         if self._environment_config:
             config_dict = self._environment_config.to_dict()
@@ -240,7 +240,7 @@ class ConfigManager:
 
 
 # Global configuration manager instance
-_config_manager: Optional[ConfigManager] = None
+_config_manager: ConfigManager | None = None
 
 
 def get_config_manager() -> ConfigManager:
@@ -251,7 +251,7 @@ def get_config_manager() -> ConfigManager:
     return _config_manager
 
 
-def set_config_file(config_file: Union[str, Path]) -> None:
+def set_config_file(config_file: str | Path) -> None:
     """Set configuration file and reload configuration."""
     global _config_manager
     _config_manager = ConfigManager(config_file)

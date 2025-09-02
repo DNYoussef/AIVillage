@@ -8,14 +8,14 @@ Implements a sophisticated reputation management system using:
 - Quality-aware reputation scoring
 """
 
-import time
-import math
-import logging
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple, Any
-from enum import Enum
 from collections import defaultdict
+from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
+import logging
+import math
+import time
+from typing import Any
 
 
 class EventType(Enum):
@@ -51,8 +51,8 @@ class ReputationEvent:
     event_type: EventType
     timestamp: float
     weight: float = 1.0
-    quality_score: Optional[float] = None
-    context: Dict[str, Any] = field(default_factory=dict)
+    quality_score: float | None = None
+    context: dict[str, Any] = field(default_factory=dict)
 
     def is_positive(self) -> bool:
         """Check if event is positive for reputation"""
@@ -87,7 +87,7 @@ class ReputationScore:
         return (self.alpha * self.beta) / (total * total * (total + 1))
 
     @property
-    def confidence_interval(self, confidence: float = 0.95) -> Tuple[float, float]:
+    def confidence_interval(self, confidence: float = 0.95) -> tuple[float, float]:
         """Confidence interval for reputation score"""
         from scipy.stats import beta
 
@@ -144,7 +144,7 @@ class ReputationConfig:
     min_beta: float = 1.0
 
     # Event weights
-    event_weights: Dict[EventType, float] = field(
+    event_weights: dict[EventType, float] = field(
         default_factory=lambda: {
             EventType.TASK_SUCCESS: 1.0,
             EventType.TASK_FAILURE: 1.0,
@@ -172,7 +172,7 @@ class TrustComposition:
         self.config = config
 
     def compute_transitive_trust(
-        self, source_node: str, target_node: str, trust_graph: Dict[str, Dict[str, float]], max_hops: int = 3
+        self, source_node: str, target_node: str, trust_graph: dict[str, dict[str, float]], max_hops: int = 3
     ) -> float:
         """Compute transitive trust through network paths"""
         if source_node == target_node:
@@ -212,8 +212,8 @@ class TrustComposition:
         return max_trust
 
     def aggregate_tier_trust(
-        self, node_scores: Dict[str, ReputationScore], tier_structure: Dict[ReputationTier, List[str]]
-    ) -> Dict[ReputationTier, float]:
+        self, node_scores: dict[str, ReputationScore], tier_structure: dict[ReputationTier, list[str]]
+    ) -> dict[ReputationTier, float]:
         """Aggregate trust scores by tier"""
         tier_trust = {}
 
@@ -241,10 +241,10 @@ class TrustComposition:
 class BayesianReputationEngine:
     """Main Bayesian reputation management system"""
 
-    def __init__(self, config: Optional[ReputationConfig] = None):
+    def __init__(self, config: ReputationConfig | None = None):
         self.config = config or ReputationConfig()
-        self.reputation_scores: Dict[str, ReputationScore] = {}
-        self.event_history: Dict[str, List[ReputationEvent]] = defaultdict(list)
+        self.reputation_scores: dict[str, ReputationScore] = {}
+        self.event_history: dict[str, list[ReputationEvent]] = defaultdict(list)
         self.trust_composition = TrustComposition(self.config)
         self.logger = logging.getLogger(__name__)
 
@@ -310,7 +310,7 @@ class BayesianReputationEngine:
             score.alpha = max(score.alpha, self.config.min_alpha)
             score.beta = max(score.beta, self.config.min_beta)
 
-    def get_reputation_score(self, node_id: str, current_time: Optional[float] = None) -> Optional[ReputationScore]:
+    def get_reputation_score(self, node_id: str, current_time: float | None = None) -> ReputationScore | None:
         """Get current reputation score for a node"""
         if node_id not in self.reputation_scores:
             return None
@@ -342,7 +342,7 @@ class BayesianReputationEngine:
 
         return max(0.0, min(1.0, adjusted_trust))
 
-    def get_node_ranking(self, tier: Optional[ReputationTier] = None) -> List[Tuple[str, float, ReputationTier]]:
+    def get_node_ranking(self, tier: ReputationTier | None = None) -> list[tuple[str, float, ReputationTier]]:
         """Get ranked list of nodes by reputation"""
         current_time = time.time()
 
@@ -358,7 +358,7 @@ class BayesianReputationEngine:
         # Sort by trust score descending, then by tier
         return sorted(nodes_data, key=lambda x: (x[1], x[2].value), reverse=True)
 
-    def get_tier_distribution(self) -> Dict[ReputationTier, int]:
+    def get_tier_distribution(self) -> dict[ReputationTier, int]:
         """Get distribution of nodes across tiers"""
         current_time = time.time()
         distribution = defaultdict(int)
@@ -371,8 +371,8 @@ class BayesianReputationEngine:
         return dict(distribution)
 
     def recommend_nodes_for_task(
-        self, task_requirements: Dict[str, Any], min_trust: float = 0.7, max_nodes: int = 5
-    ) -> List[str]:
+        self, task_requirements: dict[str, Any], min_trust: float = 0.7, max_nodes: int = 5
+    ) -> list[str]:
         """Recommend trusted nodes for a task"""
         # Get all nodes above minimum trust threshold
         candidates = []
@@ -386,7 +386,7 @@ class BayesianReputationEngine:
         candidates.sort(key=lambda x: x[1], reverse=True)
         return [node_id for node_id, _ in candidates[:max_nodes]]
 
-    def get_reputation_insights(self, node_id: str) -> Dict[str, Any]:
+    def get_reputation_insights(self, node_id: str) -> dict[str, Any]:
         """Get detailed reputation insights for a node"""
         score = self.get_reputation_score(node_id, time.time())
 
@@ -421,7 +421,7 @@ class BayesianReputationEngine:
             "last_updated": datetime.fromtimestamp(score.last_updated).isoformat(),
         }
 
-    def batch_update_from_metrics(self, metrics_data: List[Dict[str, Any]]) -> None:
+    def batch_update_from_metrics(self, metrics_data: list[dict[str, Any]]) -> None:
         """Batch update reputations from collected metrics"""
         current_time = time.time()
 
@@ -473,7 +473,7 @@ class BayesianReputationEngine:
             for event in events:
                 self.record_event(event)
 
-    def export_state(self) -> Dict[str, Any]:
+    def export_state(self) -> dict[str, Any]:
         """Export reputation system state"""
         return {
             "config": {
@@ -494,7 +494,7 @@ class BayesianReputationEngine:
             "event_counts": {node_id: len(events) for node_id, events in self.event_history.items()},
         }
 
-    def import_state(self, state_data: Dict[str, Any]) -> None:
+    def import_state(self, state_data: dict[str, Any]) -> None:
         """Import reputation system state"""
         if "reputation_scores" in state_data:
             for node_id, score_data in state_data["reputation_scores"].items():
@@ -511,8 +511,8 @@ class BayesianReputationEngine:
 
 
 def integrate_with_scheduler(
-    reputation_engine: BayesianReputationEngine, scheduler_config: Dict[str, Any]
-) -> Dict[str, float]:
+    reputation_engine: BayesianReputationEngine, scheduler_config: dict[str, Any]
+) -> dict[str, float]:
     """Integrate reputation with task scheduler"""
     trust_scores = {}
 
@@ -524,8 +524,8 @@ def integrate_with_scheduler(
 
 
 def integrate_with_pricing(
-    reputation_engine: BayesianReputationEngine, base_prices: Dict[str, float]
-) -> Dict[str, float]:
+    reputation_engine: BayesianReputationEngine, base_prices: dict[str, float]
+) -> dict[str, float]:
     """Adjust pricing based on reputation"""
     adjusted_prices = {}
 
@@ -541,7 +541,7 @@ def integrate_with_pricing(
     return adjusted_prices
 
 
-def create_reputation_metrics(reputation_engine: BayesianReputationEngine) -> Dict[str, Any]:
+def create_reputation_metrics(reputation_engine: BayesianReputationEngine) -> dict[str, Any]:
     """Create metrics for monitoring reputation system"""
     tier_dist = reputation_engine.get_tier_distribution()
 

@@ -10,18 +10,16 @@ cross-attention integration for the Cognate model. Features:
 - Memory bank persistence and serialization
 """
 
+from .cross_attention import (
+    MemoryCrossAttention,
+    create_memory_cross_attention,
+)
 from .ltm_bank import (
     CognateLTMBank,
     MemoryConfig,
     MemoryItem,
     create_memory_bank,
 )
-
-from .cross_attention import (
-    MemoryCrossAttention,
-    create_memory_cross_attention,
-)
-
 from .memory_scheduler import (
     MemoryScheduler,
     ReadPolicy,

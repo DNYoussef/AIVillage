@@ -4,15 +4,14 @@ Multi-agent execution coordination with real-time monitoring
 Target: Coordinated parallel execution with conflict resolution
 """
 
-import logging
-from typing import Dict, List, Optional
-from dataclasses import dataclass, field
-from enum import Enum
-from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+import logging
 
 from .breach_classifier import BreachClassification
-from .strategy_selector import StrategySelection, AgentType
+from .strategy_selector import AgentType, StrategySelection
 
 
 class CoordinationStatus(Enum):
@@ -39,28 +38,28 @@ class AgentExecution:
     agent_type: AgentType
     task_description: str
     status: AgentStatus
-    start_time: Optional[datetime] = None
-    completion_time: Optional[datetime] = None
+    start_time: datetime | None = None
+    completion_time: datetime | None = None
     progress_percentage: int = 0
     current_phase: str = ""
-    output_data: Dict = field(default_factory=dict)
-    error_message: Optional[str] = None
-    dependencies: List[str] = field(default_factory=list)
-    dependents: List[str] = field(default_factory=list)
+    output_data: dict = field(default_factory=dict)
+    error_message: str | None = None
+    dependencies: list[str] = field(default_factory=list)
+    dependents: list[str] = field(default_factory=list)
 
 
 @dataclass
 class CoordinationPlan:
     plan_id: str
     strategy_selection: StrategySelection
-    agent_executions: List[AgentExecution]
-    execution_graph: Dict[str, List[str]]  # Dependencies
+    agent_executions: list[AgentExecution]
+    execution_graph: dict[str, list[str]]  # Dependencies
     coordination_status: CoordinationStatus
     start_time: datetime
     estimated_completion: datetime
-    actual_completion: Optional[datetime] = None
-    conflict_resolutions: List[Dict] = field(default_factory=list)
-    escalation_triggers: List[str] = field(default_factory=list)
+    actual_completion: datetime | None = None
+    conflict_resolutions: list[dict] = field(default_factory=list)
+    escalation_triggers: list[str] = field(default_factory=list)
 
 
 class ParallelCoordinator:
@@ -76,7 +75,7 @@ class ParallelCoordinator:
         self.conflict_resolution_rules = self._initialize_conflict_rules()
         self.executor = ThreadPoolExecutor(max_workers=10)
 
-    def _initialize_conflict_rules(self) -> Dict:
+    def _initialize_conflict_rules(self) -> dict:
         """Initialize conflict resolution rules for agent coordination"""
         return {
             "resource_conflicts": {
@@ -148,7 +147,7 @@ class ParallelCoordinator:
         self.active_plans[plan_id] = plan
         return plan
 
-    def execute_coordination_plan(self, plan: CoordinationPlan) -> Dict:
+    def execute_coordination_plan(self, plan: CoordinationPlan) -> dict:
         """Execute coordination plan with parallel agent management"""
 
         self.logger.info(f"Starting coordination plan execution: {plan.plan_id}")
@@ -193,7 +192,7 @@ class ParallelCoordinator:
 
         return execution_results
 
-    def _execute_parallel_agents(self, plan: CoordinationPlan) -> Dict:
+    def _execute_parallel_agents(self, plan: CoordinationPlan) -> dict:
         """Execute agents in parallel with dependency resolution"""
 
         results = {}
@@ -243,7 +242,7 @@ class ParallelCoordinator:
 
         return results
 
-    def _execute_sequential_agents(self, plan: CoordinationPlan) -> Dict:
+    def _execute_sequential_agents(self, plan: CoordinationPlan) -> dict:
         """Execute agents sequentially in dependency order"""
 
         results = {}
@@ -278,7 +277,7 @@ class ParallelCoordinator:
 
         return results
 
-    def _execute_single_agent(self, agent: AgentExecution, plan: CoordinationPlan) -> Dict:
+    def _execute_single_agent(self, agent: AgentExecution, plan: CoordinationPlan) -> dict:
         """Execute a single agent with monitoring and conflict resolution"""
 
         # This would integrate with actual agent execution system
@@ -316,7 +315,7 @@ class ParallelCoordinator:
 
         return result
 
-    def _execute_security_agent(self, agent: AgentExecution, plan: CoordinationPlan) -> Dict:
+    def _execute_security_agent(self, agent: AgentExecution, plan: CoordinationPlan) -> dict:
         """Execute security manager agent"""
         return {
             "actions_performed": [
@@ -330,7 +329,7 @@ class ParallelCoordinator:
             "vulnerabilities_resolved": 2,
         }
 
-    def _execute_dependency_agent(self, agent: AgentExecution, plan: CoordinationPlan) -> Dict:
+    def _execute_dependency_agent(self, agent: AgentExecution, plan: CoordinationPlan) -> dict:
         """Execute dependency resolver agent"""
         return {
             "actions_performed": [
@@ -344,7 +343,7 @@ class ParallelCoordinator:
             "conflicts_fixed": 2,
         }
 
-    def _execute_config_agent(self, agent: AgentExecution, plan: CoordinationPlan) -> Dict:
+    def _execute_config_agent(self, agent: AgentExecution, plan: CoordinationPlan) -> dict:
         """Execute configuration manager agent"""
         return {
             "actions_performed": [
@@ -358,7 +357,7 @@ class ParallelCoordinator:
             "environment_issues_fixed": 3,
         }
 
-    def _execute_validator_agent(self, agent: AgentExecution, plan: CoordinationPlan) -> Dict:
+    def _execute_validator_agent(self, agent: AgentExecution, plan: CoordinationPlan) -> dict:
         """Execute production validator agent"""
         return {
             "actions_performed": [
@@ -372,7 +371,7 @@ class ParallelCoordinator:
             "issues_identified": 1,
         }
 
-    def _execute_general_agent(self, agent: AgentExecution, plan: CoordinationPlan) -> Dict:
+    def _execute_general_agent(self, agent: AgentExecution, plan: CoordinationPlan) -> dict:
         """Execute general purpose agent"""
         return {
             "actions_performed": [
@@ -385,7 +384,7 @@ class ParallelCoordinator:
             "issues_addressed": 2,
         }
 
-    def _get_agent_task(self, agent_type: AgentType, execution_plan: Dict, classification: BreachClassification) -> str:
+    def _get_agent_task(self, agent_type: AgentType, execution_plan: dict, classification: BreachClassification) -> str:
         """Get specific task description for agent based on context"""
 
         base_tasks = {
@@ -406,7 +405,7 @@ class ParallelCoordinator:
 
         return base_task + context_suffix
 
-    def _calculate_dependencies(self, agent_type: AgentType, strategy, position: int) -> List[str]:
+    def _calculate_dependencies(self, agent_type: AgentType, strategy, position: int) -> list[str]:
         """Calculate dependencies for agent based on type and strategy"""
 
         # For sequential execution, each agent depends on previous ones
@@ -429,7 +428,7 @@ class ParallelCoordinator:
 
         return dependencies
 
-    def _get_newly_ready_agents(self, all_agents: List[AgentExecution], completed: set) -> List[AgentExecution]:
+    def _get_newly_ready_agents(self, all_agents: list[AgentExecution], completed: set) -> list[AgentExecution]:
         """Get agents that are now ready to execute based on completed dependencies"""
 
         ready = []
@@ -439,7 +438,7 @@ class ParallelCoordinator:
 
         return ready
 
-    def _calculate_execution_order(self, agents: List[AgentExecution]) -> List[AgentExecution]:
+    def _calculate_execution_order(self, agents: list[AgentExecution]) -> list[AgentExecution]:
         """Calculate execution order for sequential processing"""
 
         # Topological sort based on dependencies
@@ -479,7 +478,7 @@ class ParallelCoordinator:
 
         return True
 
-    def generate_routing_plan(self, plan: CoordinationPlan) -> Dict:
+    def generate_routing_plan(self, plan: CoordinationPlan) -> dict:
         """Generate parallel routing plan for output"""
 
         routing_plan = {
@@ -525,7 +524,7 @@ class ParallelCoordinator:
 
         return routing_plan
 
-    def get_coordination_status(self, plan_id: str) -> Optional[Dict]:
+    def get_coordination_status(self, plan_id: str) -> dict | None:
         """Get current coordination status for a plan"""
 
         if plan_id in self.active_plans:

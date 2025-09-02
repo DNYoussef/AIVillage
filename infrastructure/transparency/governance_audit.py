@@ -3,16 +3,16 @@ Democratic Governance Audit Trail System
 Comprehensive logging and analysis of democratic participation in constitutional governance
 """
 
-import json
-import time
-import hashlib
 import asyncio
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, asdict
-from enum import Enum
-import logging
 from collections import defaultdict, deque
+from dataclasses import asdict, dataclass
+from enum import Enum
+import hashlib
+import json
+import logging
 from pathlib import Path
+import time
+from typing import Any
 
 
 class DemocraticAction(Enum):
@@ -69,8 +69,8 @@ class DemocraticParticipant:
     feedback_provided: int
     constitutional_contributions: int
     representative_status: bool
-    election_history: List[str]
-    participation_metrics: Dict[str, Any]
+    election_history: list[str]
+    participation_metrics: dict[str, Any]
 
 
 @dataclass
@@ -84,8 +84,8 @@ class GovernanceVote:
     proposal_id: str
     vote_choice: str  # "approve", "reject", "abstain", "modify"
     voting_power: float  # Weighted voting based on tier/reputation
-    rationale: Optional[str]
-    public_comment: Optional[str]
+    rationale: str | None
+    public_comment: str | None
     verification_signature: str
 
 
@@ -100,7 +100,7 @@ class GovernanceProposal:
     title: str
     description: str
     constitutional_impact: str
-    implementation_plan: Dict[str, Any]
+    implementation_plan: dict[str, Any]
     voting_period_start: float
     voting_period_end: float
     quorum_requirement: int
@@ -123,14 +123,14 @@ class ConstitutionalAmendment:
     current_constitutional_text: str
     proposed_constitutional_text: str
     rationale: str
-    constitutional_analysis: Dict[str, Any]
-    public_comment_period: Tuple[float, float]
-    voting_period: Tuple[float, float]
+    constitutional_analysis: dict[str, Any]
+    public_comment_period: tuple[float, float]
+    voting_period: tuple[float, float]
     supermajority_required: float  # e.g., 0.67 for 2/3 majority
     current_support: float
     amendment_status: str
-    implementation_plan: Dict[str, Any]
-    historical_precedents: List[str]
+    implementation_plan: dict[str, Any]
+    historical_precedents: list[str]
 
 
 @dataclass
@@ -141,8 +141,8 @@ class DemocraticEvent:
     timestamp: float
     event_type: DemocraticAction
     participant_id_hash: str
-    related_proposal_id: Optional[str]
-    event_details: Dict[str, Any]
+    related_proposal_id: str | None
+    event_details: dict[str, Any]
     participation_tier: str
     public_visibility: bool
     constitutional_significance: str
@@ -160,11 +160,11 @@ class GovernanceAuditTrail:
         self.storage_path.mkdir(exist_ok=True)
 
         # Democratic governance data
-        self.participants: Dict[str, DemocraticParticipant] = {}
-        self.proposals: Dict[str, GovernanceProposal] = {}
-        self.amendments: Dict[str, ConstitutionalAmendment] = {}
-        self.votes: Dict[str, GovernanceVote] = {}
-        self.democratic_events: List[DemocraticEvent] = []
+        self.participants: dict[str, DemocraticParticipant] = {}
+        self.proposals: dict[str, GovernanceProposal] = {}
+        self.amendments: dict[str, ConstitutionalAmendment] = {}
+        self.votes: dict[str, GovernanceVote] = {}
+        self.democratic_events: list[DemocraticEvent] = []
 
         # Analytics and metrics
         self.participation_metrics = {
@@ -179,7 +179,7 @@ class GovernanceAuditTrail:
         }
 
         # Real-time democratic activity tracking
-        self.active_votes: Dict[str, GovernanceProposal] = {}
+        self.active_votes: dict[str, GovernanceProposal] = {}
         self.recent_democratic_activity = deque(maxlen=1000)
 
         self.logger = logging.getLogger(__name__)
@@ -205,7 +205,7 @@ class GovernanceAuditTrail:
             # Load participants
             participants_file = self.storage_path / "participants.json"
             if participants_file.exists():
-                with open(participants_file, "r") as f:
+                with open(participants_file) as f:
                     data = json.load(f)
                     for participant_data in data.get("participants", []):
                         participant = DemocraticParticipant(**participant_data)
@@ -214,7 +214,7 @@ class GovernanceAuditTrail:
             # Load proposals
             proposals_file = self.storage_path / "proposals.json"
             if proposals_file.exists():
-                with open(proposals_file, "r") as f:
+                with open(proposals_file) as f:
                     data = json.load(f)
                     for proposal_data in data.get("proposals", []):
                         proposal = GovernanceProposal(**proposal_data)
@@ -227,7 +227,7 @@ class GovernanceAuditTrail:
             # Load constitutional amendments
             amendments_file = self.storage_path / "amendments.json"
             if amendments_file.exists():
-                with open(amendments_file, "r") as f:
+                with open(amendments_file) as f:
                     data = json.load(f)
                     for amendment_data in data.get("amendments", []):
                         amendment = ConstitutionalAmendment(**amendment_data)
@@ -236,7 +236,7 @@ class GovernanceAuditTrail:
             # Load votes
             votes_file = self.storage_path / "votes.json"
             if votes_file.exists():
-                with open(votes_file, "r") as f:
+                with open(votes_file) as f:
                     data = json.load(f)
                     for vote_data in data.get("votes", []):
                         vote = GovernanceVote(**vote_data)
@@ -245,7 +245,7 @@ class GovernanceAuditTrail:
             # Load democratic events
             events_file = self.storage_path / "democratic_events.json"
             if events_file.exists():
-                with open(events_file, "r") as f:
+                with open(events_file) as f:
                     data = json.load(f)
                     for event_data in data.get("events", []):
                         event = DemocraticEvent(**event_data)
@@ -348,7 +348,7 @@ class GovernanceAuditTrail:
         self, participant_id: str, tier: str, initial_participation_level: ParticipationLevel = ParticipationLevel.VOTER
     ) -> str:
         """Register new democratic participant"""
-        participant_id_hash = hashlib.sha256(f"{participant_id}_{time.time()}".encode("utf-8")).hexdigest()[:16]
+        participant_id_hash = hashlib.sha256(f"{participant_id}_{time.time()}".encode()).hexdigest()[:16]
 
         participant = DemocraticParticipant(
             participant_id=participant_id_hash,
@@ -399,7 +399,7 @@ class GovernanceAuditTrail:
         proposal_type: str,
         title: str,
         description: str,
-        implementation_plan: Dict[str, Any],
+        implementation_plan: dict[str, Any],
         voting_period_days: int = 7,
         quorum_requirement: int = 100,
         approval_threshold: float = 0.5,
@@ -484,8 +484,8 @@ class GovernanceAuditTrail:
         voter_id: str,
         proposal_id: str,
         vote_choice: str,
-        rationale: Optional[str] = None,
-        public_comment: Optional[str] = None,
+        rationale: str | None = None,
+        public_comment: str | None = None,
     ) -> str:
         """Cast vote on governance proposal"""
         if voter_id not in self.participants:
@@ -662,8 +662,8 @@ class GovernanceAuditTrail:
         self,
         event_type: DemocraticAction,
         participant_id: str,
-        related_proposal_id: Optional[str],
-        event_details: Dict[str, Any],
+        related_proposal_id: str | None,
+        event_details: dict[str, Any],
         participation_tier: str,
         public_visibility: bool,
         constitutional_significance: str,
@@ -749,7 +749,7 @@ class GovernanceAuditTrail:
 
     # PUBLIC API METHODS
 
-    def get_democratic_participation_metrics(self) -> Dict[str, Any]:
+    def get_democratic_participation_metrics(self) -> dict[str, Any]:
         """Get comprehensive democratic participation metrics"""
         return {
             "participation_overview": self.participation_metrics.copy(),
@@ -780,21 +780,21 @@ class GovernanceAuditTrail:
             },
         }
 
-    def _get_participation_by_tier(self) -> Dict[str, int]:
+    def _get_participation_by_tier(self) -> dict[str, int]:
         """Get participation distribution by tier"""
         tier_distribution = defaultdict(int)
         for participant in self.participants.values():
             tier_distribution[participant.tier] += 1
         return dict(tier_distribution)
 
-    def _get_participation_by_level(self) -> Dict[str, int]:
+    def _get_participation_by_level(self) -> dict[str, int]:
         """Get participation distribution by participation level"""
         level_distribution = defaultdict(int)
         for participant in self.participants.values():
             level_distribution[participant.participation_level.value] += 1
         return dict(level_distribution)
 
-    def _get_participation_by_activity(self) -> Dict[str, int]:
+    def _get_participation_by_activity(self) -> dict[str, int]:
         """Get participation distribution by activity level"""
         recent_cutoff = time.time() - (30 * 24 * 3600)  # Last 30 days
 
@@ -892,7 +892,7 @@ class GovernanceAuditTrail:
 
         return round(legitimacy_score, 2)
 
-    def generate_governance_transparency_report(self) -> Dict[str, Any]:
+    def generate_governance_transparency_report(self) -> dict[str, Any]:
         """Generate comprehensive governance transparency report"""
         metrics = self.get_democratic_participation_metrics()
 

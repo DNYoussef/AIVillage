@@ -14,16 +14,16 @@ Key Features:
 """
 
 import asyncio
-import logging
-import time
-import uuid
-from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
+import time
+from typing import Any
+import uuid
 
 # P2P Network Integration
 try:
-    from infrastructure.p2p.core.message_delivery import MessageDeliveryService, DeliveryConfig, MessagePriority
+    from infrastructure.p2p.core.message_delivery import DeliveryConfig, MessageDeliveryService, MessagePriority
     from infrastructure.p2p.core.message_types import MeshMessage, MeshMessageType
 
     P2P_AVAILABLE = True
@@ -34,7 +34,7 @@ except ImportError:
 
 # Marketplace Integration
 try:
-    from infrastructure.fog.market.marketplace_api import get_marketplace_api, MarketplaceAPI
+    from infrastructure.fog.market.marketplace_api import MarketplaceAPI, get_marketplace_api
 
     MARKETPLACE_AVAILABLE = True
 except ImportError:
@@ -45,8 +45,8 @@ except ImportError:
 # Distributed Inference Integration
 try:
     from infrastructure.distributed_inference.core.distributed_inference_manager import (
-        get_distributed_inference_manager,
         DistributedInferenceManager,
+        get_distributed_inference_manager,
     )
 
     DISTRIBUTED_INFERENCE_AVAILABLE = True
@@ -95,14 +95,14 @@ class FogNode:
     node_id: str
     hostname: str
     port: int
-    capabilities: List[str] = field(default_factory=list)
+    capabilities: list[str] = field(default_factory=list)
     trust_score: float = field(default=0.7)
     performance_score: float = field(default=0.8)
     cost_per_hour: float = field(default=1.0)
     privacy_level: str = field(default="medium")
     available: bool = field(default=True)
     current_load: float = field(default=0.0)
-    last_heartbeat: Optional[float] = field(default=None)
+    last_heartbeat: float | None = field(default=None)
 
     def is_healthy(self) -> bool:
         """Check if node is healthy and available."""
@@ -111,7 +111,7 @@ class FogNode:
         return (time.time() - self.last_heartbeat) < 60
 
     def get_selection_score(
-        self, strategy: QueryDistributionStrategy, required_capabilities: List[str] = None
+        self, strategy: QueryDistributionStrategy, required_capabilities: list[str] = None
     ) -> float:
         """Calculate node selection score based on strategy."""
         if not self.is_healthy():
@@ -149,16 +149,16 @@ class QueryRequest:
     user_tier: str = field(default="medium")
     max_budget: float = field(default=100.0)
     privacy_level: str = field(default="medium")
-    required_capabilities: List[str] = field(default_factory=list)
+    required_capabilities: list[str] = field(default_factory=list)
     timeout_seconds: int = field(default=300)
 
     # Processing state
     created_at: float = field(default_factory=time.time)
-    started_at: Optional[float] = field(default=None)
-    completed_at: Optional[float] = field(default=None)
-    assigned_nodes: List[str] = field(default_factory=list)
-    results: Dict[str, Any] = field(default_factory=dict)
-    error_message: Optional[str] = field(default=None)
+    started_at: float | None = field(default=None)
+    completed_at: float | None = field(default=None)
+    assigned_nodes: list[str] = field(default_factory=list)
+    results: dict[str, Any] = field(default_factory=dict)
+    error_message: str | None = field(default=None)
     total_cost: float = field(default=0.0)
 
 
@@ -184,15 +184,15 @@ class FogComputeBridge:
         self.enable_security = enable_security and SECURITY_AVAILABLE
 
         # Core components
-        self.message_service: Optional[MessageDeliveryService] = None
-        self.marketplace_api: Optional[MarketplaceAPI] = None
-        self.inference_manager: Optional[DistributedInferenceManager] = None
-        self.security_coordinator: Optional[SecurityCoordinator] = None
+        self.message_service: MessageDeliveryService | None = None
+        self.marketplace_api: MarketplaceAPI | None = None
+        self.inference_manager: DistributedInferenceManager | None = None
+        self.security_coordinator: SecurityCoordinator | None = None
 
         # State management
-        self.fog_nodes: Dict[str, FogNode] = {}
-        self.active_requests: Dict[str, QueryRequest] = {}
-        self.completed_requests: Dict[str, QueryRequest] = {}
+        self.fog_nodes: dict[str, FogNode] = {}
+        self.active_requests: dict[str, QueryRequest] = {}
+        self.completed_requests: dict[str, QueryRequest] = {}
 
         # Performance metrics
         self.stats = {
@@ -366,9 +366,9 @@ class FogComputeBridge:
         user_tier: str = "medium",
         max_budget: float = 100.0,
         privacy_level: str = "medium",
-        required_capabilities: List[str] = None,
+        required_capabilities: list[str] = None,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Distribute a query across fog nodes with full integration."""
         if not self.initialized:
             raise RuntimeError("Fog Compute Bridge not initialized")
@@ -517,7 +517,7 @@ class FogComputeBridge:
         except Exception as e:
             logger.warning(f"Marketplace allocation failed: {e}")
 
-    async def _select_fog_nodes(self, request: QueryRequest, max_nodes: int = 3) -> List[FogNode]:
+    async def _select_fog_nodes(self, request: QueryRequest, max_nodes: int = 3) -> list[FogNode]:
         """Select optimal fog nodes based on strategy and requirements."""
         available_nodes = [node for node in self.fog_nodes.values() if node.is_healthy()]
 
@@ -572,7 +572,7 @@ class FogComputeBridge:
             selected_nodes = [self.fog_nodes[node_id] for node_id in request.assigned_nodes]
             await self._process_with_p2p(request, selected_nodes)
 
-    async def _process_with_p2p(self, request: QueryRequest, selected_nodes: List[FogNode]):
+    async def _process_with_p2p(self, request: QueryRequest, selected_nodes: list[FogNode]):
         """Process request using direct P2P communication."""
         try:
             # Create messages for each node
@@ -628,7 +628,7 @@ class FogComputeBridge:
             logger.error(f"P2P processing failed: {e}")
             raise
 
-    async def _aggregate_results(self, request: QueryRequest) -> Dict[str, Any]:
+    async def _aggregate_results(self, request: QueryRequest) -> dict[str, Any]:
         """Aggregate results from all fog nodes."""
         node_results = [
             result
@@ -672,7 +672,7 @@ class FogComputeBridge:
 
         return aggregated_result
 
-    def get_system_status(self) -> Dict[str, Any]:
+    def get_system_status(self) -> dict[str, Any]:
         """Get comprehensive system status."""
         healthy_nodes = [node for node in self.fog_nodes.values() if node.is_healthy()]
 
@@ -743,7 +743,7 @@ class FogComputeBridge:
 
 
 # Global bridge instance for easy integration
-_global_bridge: Optional[FogComputeBridge] = None
+_global_bridge: FogComputeBridge | None = None
 
 
 def get_fog_compute_bridge(**kwargs) -> FogComputeBridge:
@@ -761,7 +761,7 @@ async def distribute_query_globally(
     query_type: QueryType = QueryType.SIMPLE_RAG,
     strategy: QueryDistributionStrategy = QueryDistributionStrategy.BALANCED,
     **kwargs,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Global function for distributing queries across fog network."""
     bridge = get_fog_compute_bridge()
 
@@ -771,7 +771,7 @@ async def distribute_query_globally(
     return await bridge.distribute_query(query=query, query_type=query_type, strategy=strategy, **kwargs)
 
 
-def get_fog_system_status() -> Dict[str, Any]:
+def get_fog_system_status() -> dict[str, Any]:
     """Global function to get fog system status."""
     bridge = get_fog_compute_bridge()
     return bridge.get_system_status()

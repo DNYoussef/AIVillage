@@ -8,13 +8,13 @@ Provides common patterns for all fog services including:
 - Lifecycle management
 """
 
-import asyncio
 from abc import ABC, abstractmethod
-from datetime import datetime, UTC
-import logging
-from typing import Any, Dict, List, Optional
-from enum import Enum
+import asyncio
 from dataclasses import dataclass
+from datetime import UTC, datetime
+from enum import Enum
+import logging
+from typing import Any
 
 
 class ServiceStatus(Enum):
@@ -31,7 +31,7 @@ class ServiceEvent:
     """Service event for inter-service communication"""
 
     def __init__(
-        self, event_type: str, source_service: str, data: Dict[str, Any], timestamp: Optional[datetime] = None
+        self, event_type: str, source_service: str, data: dict[str, Any], timestamp: datetime | None = None
     ):
         self.event_type = event_type
         self.source_service = source_service
@@ -47,8 +47,8 @@ class ServiceHealthCheck:
     service_name: str
     status: ServiceStatus
     last_check: datetime
-    error_message: Optional[str] = None
-    metrics: Dict[str, Any] = None
+    error_message: str | None = None
+    metrics: dict[str, Any] = None
 
     def __post_init__(self):
         if self.metrics is None:
@@ -59,7 +59,7 @@ class EventBus:
     """Event bus for inter-service communication"""
 
     def __init__(self):
-        self.subscribers: Dict[str, List[callable]] = {}
+        self.subscribers: dict[str, list[callable]] = {}
         self.logger = logging.getLogger(f"{__name__}.EventBus")
 
     def subscribe(self, event_type: str, handler: callable):
@@ -91,7 +91,7 @@ class EventBus:
 class BaseFogService(ABC):
     """Base class for all fog computing services"""
 
-    def __init__(self, service_name: str, config: Dict[str, Any], event_bus: EventBus):
+    def __init__(self, service_name: str, config: dict[str, Any], event_bus: EventBus):
         self.service_name = service_name
         self.config = config
         self.event_bus = event_bus
@@ -99,13 +99,13 @@ class BaseFogService(ABC):
 
         # Service state
         self.status = ServiceStatus.STOPPED
-        self.start_time: Optional[datetime] = None
-        self.last_health_check: Optional[datetime] = None
+        self.start_time: datetime | None = None
+        self.last_health_check: datetime | None = None
         self.error_count = 0
-        self.metrics: Dict[str, Any] = {}
+        self.metrics: dict[str, Any] = {}
 
         # Background tasks
-        self.background_tasks: List[asyncio.Task] = []
+        self.background_tasks: list[asyncio.Task] = []
         self._shutdown_event = asyncio.Event()
 
     @abstractmethod
@@ -195,7 +195,7 @@ class BaseFogService(ABC):
             success = await self.start()
         return success
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get service status information"""
         return {
             "service_name": self.service_name,
@@ -206,7 +206,7 @@ class BaseFogService(ABC):
             "metrics": self.metrics.copy(),
         }
 
-    def add_background_task(self, coro, name: Optional[str] = None):
+    def add_background_task(self, coro, name: str | None = None):
         """Add a background task to the service"""
         task = asyncio.create_task(coro)
         if name:
@@ -247,7 +247,7 @@ class BaseFogService(ABC):
                 self.error_count += 1
                 await asyncio.sleep(30)
 
-    async def publish_event(self, event_type: str, data: Dict[str, Any]):
+    async def publish_event(self, event_type: str, data: dict[str, Any]):
         """Publish an event from this service"""
         event = ServiceEvent(event_type, self.service_name, data)
         await self.event_bus.publish(event)

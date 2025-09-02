@@ -24,15 +24,15 @@ Key Features:
 """
 
 import asyncio
-import json
-import logging
-import secrets
-import uuid
 from datetime import datetime, timedelta
 from decimal import Decimal, getcontext
 from enum import Enum
+import json
+import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+import secrets
+from typing import Any
+import uuid
 
 from pydantic import BaseModel, Field
 
@@ -93,7 +93,7 @@ class TokenAccount(BaseModel):
 
     # Staking information
     total_staked: Decimal = Decimal("0")
-    staking_positions: List[Dict[str, Any]] = Field(default_factory=list)
+    staking_positions: list[dict[str, Any]] = Field(default_factory=list)
 
     # Governance metrics
     voting_power: Decimal = Decimal("0")
@@ -144,8 +144,8 @@ class TokenTransaction(BaseModel):
     gas_used: int = 0
 
     # Additional data
-    memo: Optional[str] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    memo: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
     # Status tracking
     confirmed: bool = False
@@ -200,8 +200,8 @@ class EconomicMetrics(BaseModel):
     governance_rewards: Decimal
 
     # Price and liquidity (if available)
-    token_price_usd: Optional[Decimal] = None
-    market_cap_usd: Optional[Decimal] = None
+    token_price_usd: Decimal | None = None
+    market_cap_usd: Decimal | None = None
     liquidity_pool_size: Decimal = Decimal("0")
 
     # Economic health indicators
@@ -218,9 +218,9 @@ class ComprehensiveTokenomicsSystem:
         self.data_dir.mkdir(exist_ok=True)
 
         # Core data structures
-        self.accounts: Dict[str, TokenAccount] = {}
-        self.transactions: List[TokenTransaction] = []
-        self.staking_positions: Dict[str, StakingPosition] = {}
+        self.accounts: dict[str, TokenAccount] = {}
+        self.transactions: list[TokenTransaction] = []
+        self.staking_positions: dict[str, StakingPosition] = {}
 
         # Economic parameters
         self.token_config = {
@@ -264,7 +264,7 @@ class ComprehensiveTokenomicsSystem:
         self.network_utilization = Decimal("0.5")  # 50% default utilization
 
         # Economic metrics history
-        self.metrics_history: List[EconomicMetrics] = []
+        self.metrics_history: list[EconomicMetrics] = []
 
         # Initialize system
         self._initialize_tokenomics()
@@ -640,7 +640,7 @@ class ComprehensiveTokenomicsSystem:
 
         return total_reward
 
-    def process_periodic_rewards(self) -> Dict[str, Any]:
+    def process_periodic_rewards(self) -> dict[str, Any]:
         """Process periodic staking rewards and economic updates."""
         now = datetime.now()
         total_rewards_distributed = Decimal("0")
@@ -765,7 +765,7 @@ class ComprehensiveTokenomicsSystem:
         amount: Decimal,
         fee: Decimal = Decimal("0"),
         memo: str = None,
-        metadata: Dict[str, Any] = None,
+        metadata: dict[str, Any] = None,
     ) -> str:
         """Record a transaction in the system."""
         tx_id = f"tx_{uuid.uuid4().hex[:16]}"
@@ -858,7 +858,7 @@ class ComprehensiveTokenomicsSystem:
         if len(self.metrics_history) > 365:
             self.metrics_history = self.metrics_history[-365:]
 
-    def get_account_balance(self, account_id: str) -> Dict[str, Any]:
+    def get_account_balance(self, account_id: str) -> dict[str, Any]:
         """Get comprehensive account balance and statistics."""
         if account_id not in self.accounts:
             raise ValueError(f"Account {account_id} not found")
@@ -927,7 +927,7 @@ class ComprehensiveTokenomicsSystem:
             },
         }
 
-    def get_network_statistics(self) -> Dict[str, Any]:
+    def get_network_statistics(self) -> dict[str, Any]:
         """Get comprehensive network statistics."""
         latest_metrics = self.metrics_history[-1] if self.metrics_history else None
 
@@ -1012,7 +1012,7 @@ class ComprehensiveTokenomicsSystem:
 
     def get_transaction_history(
         self, account_id: str = None, limit: int = 100, tx_type: TransactionType = None
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Get transaction history with optional filtering."""
         transactions = self.transactions
 
@@ -1044,7 +1044,7 @@ class ComprehensiveTokenomicsSystem:
             for tx in transactions
         ]
 
-    def export_tokenomics_data(self) -> Dict[str, Any]:
+    def export_tokenomics_data(self) -> dict[str, Any]:
         """Export complete tokenomics data for backup or analysis."""
         return {
             "system_config": {

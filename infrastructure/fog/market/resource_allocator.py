@@ -22,12 +22,12 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from enum import Enum
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 import uuid
 
 from .auction_engine import AuctionEngine, ResourceRequirement
-from .pricing_manager import DynamicPricingManager
 from .market_orchestrator import AllocationStrategy
+from .pricing_manager import DynamicPricingManager
 
 logger = logging.getLogger(__name__)
 
@@ -102,9 +102,9 @@ class ResourceNode:
     # Metadata
     last_heartbeat: datetime = field(default_factory=lambda: datetime.now(UTC))
     uptime_percentage: Decimal = Decimal("99.0")
-    specializations: List[str] = field(default_factory=list)
+    specializations: list[str] = field(default_factory=list)
 
-    def calculate_quality_score(self, weights: Dict[str, Decimal] = None) -> Decimal:
+    def calculate_quality_score(self, weights: dict[str, Decimal] = None) -> Decimal:
         """Calculate composite quality score"""
         if weights is None:
             weights = {
@@ -183,8 +183,8 @@ class AllocationPlan:
     qos_requirements: QoSRequirement
 
     # Selected resources
-    primary_nodes: List[ResourceNode]
-    backup_nodes: List[ResourceNode] = field(default_factory=list)
+    primary_nodes: list[ResourceNode]
+    backup_nodes: list[ResourceNode] = field(default_factory=list)
 
     # Allocation details
     total_cost: Decimal = Decimal("0")
@@ -228,17 +228,17 @@ class DynamicResourceAllocator:
         self.auction_engine = auction_engine
 
         # Resource pools
-        self.available_nodes: Dict[str, ResourceNode] = {}
-        self.allocated_nodes: Dict[str, ResourceNode] = {}
-        self.node_performance_history: Dict[str, List[Dict]] = {}
+        self.available_nodes: dict[str, ResourceNode] = {}
+        self.allocated_nodes: dict[str, ResourceNode] = {}
+        self.node_performance_history: dict[str, list[dict]] = {}
 
         # Active allocations
-        self.active_allocations: Dict[str, AllocationPlan] = {}
-        self.allocation_monitoring: Dict[str, Dict[str, Any]] = {}
+        self.active_allocations: dict[str, AllocationPlan] = {}
+        self.allocation_monitoring: dict[str, dict[str, Any]] = {}
 
         # QoS monitoring
-        self.qos_violations: List[Dict[str, Any]] = []
-        self.sla_penalties: Dict[str, Decimal] = {}
+        self.qos_violations: list[dict[str, Any]] = []
+        self.sla_penalties: dict[str, Decimal] = {}
 
         # Configuration
         self.config = {
@@ -251,8 +251,8 @@ class DynamicResourceAllocator:
         }
 
         # Background tasks
-        self._monitoring_task: Optional[asyncio.Task] = None
-        self._health_check_task: Optional[asyncio.Task] = None
+        self._monitoring_task: asyncio.Task | None = None
+        self._health_check_task: asyncio.Task | None = None
 
         logger.info("Dynamic resource allocator initialized")
 
@@ -272,7 +272,7 @@ class DynamicResourceAllocator:
 
     async def discover_resources(
         self, requirements: ResourceRequirement, qos_requirements: QoSRequirement, discovery_timeout: int = None
-    ) -> List[ResourceNode]:
+    ) -> list[ResourceNode]:
         """Discover suitable resources based on requirements"""
 
         discovery_timeout or self.config["discovery_timeout_seconds"]
@@ -320,7 +320,7 @@ class DynamicResourceAllocator:
         self,
         requirements: ResourceRequirement,
         qos_requirements: QoSRequirement,
-        discovered_nodes: List[ResourceNode],
+        discovered_nodes: list[ResourceNode],
         allocation_strategy: AllocationStrategy = AllocationStrategy.BALANCED,
     ) -> AllocationPlan:
         """Create optimized allocation plan with QoS guarantees"""
@@ -390,7 +390,7 @@ class DynamicResourceAllocator:
             await self._cleanup_failed_allocation(plan, allocation_id)
             raise
 
-    async def monitor_allocation_qos(self, allocation_id: str) -> Dict[str, Any]:
+    async def monitor_allocation_qos(self, allocation_id: str) -> dict[str, Any]:
         """Monitor QoS metrics for active allocation"""
 
         if allocation_id not in self.active_allocations:
@@ -480,7 +480,7 @@ class DynamicResourceAllocator:
             logger.error(f"Failed to scale allocation {allocation_id}: {e}")
             return False
 
-    async def get_allocation_status(self, allocation_id: str) -> Dict[str, Any]:
+    async def get_allocation_status(self, allocation_id: str) -> dict[str, Any]:
         """Get comprehensive allocation status"""
 
         if allocation_id not in self.active_allocations:
@@ -538,7 +538,7 @@ class DynamicResourceAllocator:
             del self.available_nodes[node_id]
             logger.info(f"Unregistered resource node {node_id}")
 
-    async def update_node_metrics(self, node_id: str, metrics: Dict[str, Any]):
+    async def update_node_metrics(self, node_id: str, metrics: dict[str, Any]):
         """Update performance metrics for a node"""
         if node_id in self.available_nodes:
             node = self.available_nodes[node_id]
@@ -585,8 +585,8 @@ class DynamicResourceAllocator:
         return max(Decimal("0"), min(Decimal("1"), cost_score))
 
     def _select_primary_nodes(
-        self, requirements: ResourceRequirement, candidates: List[ResourceNode], strategy: AllocationStrategy
-    ) -> List[ResourceNode]:
+        self, requirements: ResourceRequirement, candidates: list[ResourceNode], strategy: AllocationStrategy
+    ) -> list[ResourceNode]:
         """Select primary nodes based on allocation strategy"""
 
         participants_needed = getattr(requirements, "participants_needed", 1)
@@ -616,9 +616,9 @@ class DynamicResourceAllocator:
         self,
         requirements: ResourceRequirement,
         qos_requirements: QoSRequirement,
-        candidates: List[ResourceNode],
-        primary_nodes: List[ResourceNode],
-    ) -> List[ResourceNode]:
+        candidates: list[ResourceNode],
+        primary_nodes: list[ResourceNode],
+    ) -> list[ResourceNode]:
         """Select backup nodes for redundancy"""
 
         # Calculate redundancy needs based on reliability requirements
@@ -730,7 +730,7 @@ class DynamicResourceAllocator:
         for node in all_nodes:
             await self._release_node(node, allocation_id)
 
-    async def _collect_node_metrics(self, node: ResourceNode) -> Dict[str, Any]:
+    async def _collect_node_metrics(self, node: ResourceNode) -> dict[str, Any]:
         """Collect current performance metrics from node"""
         # This would integrate with actual node monitoring systems
         return {
@@ -743,8 +743,8 @@ class DynamicResourceAllocator:
         }
 
     def _check_qos_violations(
-        self, node: ResourceNode, metrics: Dict[str, Any], qos_req: QoSRequirement
-    ) -> List[Dict[str, Any]]:
+        self, node: ResourceNode, metrics: dict[str, Any], qos_req: QoSRequirement
+    ) -> list[dict[str, Any]]:
         """Check for QoS violations on a node"""
         violations = []
 
@@ -774,7 +774,7 @@ class DynamicResourceAllocator:
 
         return violations
 
-    def _calculate_qos_compliance(self, plan: AllocationPlan, metrics: Dict[str, Dict]) -> Dict[str, Any]:
+    def _calculate_qos_compliance(self, plan: AllocationPlan, metrics: dict[str, dict]) -> dict[str, Any]:
         """Calculate overall QoS compliance for allocation"""
         total_nodes = len(plan.primary_nodes)
         compliant_nodes = 0
@@ -794,7 +794,7 @@ class DynamicResourceAllocator:
             "status": "compliant" if compliance_percentage >= 95 else "non_compliant",
         }
 
-    async def _handle_qos_violations(self, allocation_id: str, violations: List[Dict[str, Any]]):
+    async def _handle_qos_violations(self, allocation_id: str, violations: list[dict[str, Any]]):
         """Handle QoS violations through scaling or failover"""
 
         critical_violations = [v for v in violations if v.get("severity") == "critical"]
@@ -809,7 +809,7 @@ class DynamicResourceAllocator:
             logger.info(f"Multiple QoS violations in allocation {allocation_id}, scaling up")
             await self.scale_allocation(allocation_id, Decimal("1.5"))
 
-    async def _trigger_failover(self, allocation_id: str, violations: List[Dict[str, Any]]):
+    async def _trigger_failover(self, allocation_id: str, violations: list[dict[str, Any]]):
         """Trigger failover to backup nodes"""
         if allocation_id not in self.active_allocations:
             return
@@ -898,7 +898,7 @@ class DynamicResourceAllocator:
 
 
 # Global allocator instance
-_resource_allocator: Optional[DynamicResourceAllocator] = None
+_resource_allocator: DynamicResourceAllocator | None = None
 
 
 async def get_resource_allocator() -> DynamicResourceAllocator:

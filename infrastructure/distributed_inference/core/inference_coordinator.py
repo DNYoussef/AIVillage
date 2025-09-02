@@ -13,18 +13,14 @@ aggregation with integration to Phase 1 emergency triage and tensor optimization
 """
 
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum, auto
-import json
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 import uuid
-from concurrent.futures import ThreadPoolExecutor
-
-import numpy as np
-from pydantic import BaseModel, Field
 
 # Import Phase 1 components for integration
 from infrastructure.monitoring.triage.emergency_triage_system import EmergencyTriageSystem
@@ -94,30 +90,30 @@ class InferenceRequest:
     """Comprehensive inference request definition."""
     request_id: str
     model_id: str
-    input_data: Dict[str, Any]
+    input_data: dict[str, Any]
     priority: RequestPriority = RequestPriority.NORMAL
     timeout_seconds: int = 300
-    routing_hints: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    routing_hints: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     
     # Timestamps
     created_at: datetime = field(default_factory=datetime.now)
-    queued_at: Optional[datetime] = None
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    queued_at: datetime | None = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
     
     # Status tracking
     status: InferenceRequestStatus = InferenceRequestStatus.PENDING
-    error_message: Optional[str] = None
+    error_message: str | None = None
     retry_count: int = 0
     
     # Result tracking
-    partial_results: Dict[str, Any] = field(default_factory=dict)
-    final_result: Optional[Dict[str, Any]] = None
+    partial_results: dict[str, Any] = field(default_factory=dict)
+    final_result: dict[str, Any] | None = None
     
     # Archaeological enhancements
     archaeological_priority: float = 0.0  # Calculated priority score
-    phase1_triage_score: Optional[float] = None
+    phase1_triage_score: float | None = None
 
 @dataclass
 class NodePerformanceMetrics:
@@ -139,12 +135,12 @@ class NodePerformanceMetrics:
 class RoutingDecision:
     """Routing decision with archaeological optimization."""
     request_id: str
-    selected_nodes: List[str]
+    selected_nodes: list[str]
     routing_strategy: RoutingStrategy
     estimated_completion_time: float
     confidence_score: float
-    archaeological_factors: Dict[str, float] = field(default_factory=dict)
-    backup_nodes: List[str] = field(default_factory=list)
+    archaeological_factors: dict[str, float] = field(default_factory=dict)
+    backup_nodes: list[str] = field(default_factory=list)
 
 class InferenceCoordinator:
     """
@@ -158,19 +154,19 @@ class InferenceCoordinator:
     - Archaeological optimization patterns
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize the inference coordinator."""
         self.config = config or {}
         self.archaeological_metadata = ARCHAEOLOGICAL_METADATA
         
         # Core components
-        self.active_requests: Dict[str, InferenceRequest] = {}
+        self.active_requests: dict[str, InferenceRequest] = {}
         self.request_queue: asyncio.PriorityQueue = asyncio.PriorityQueue()
-        self.node_metrics: Dict[str, NodePerformanceMetrics] = {}
-        self.routing_history: List[RoutingDecision] = []
+        self.node_metrics: dict[str, NodePerformanceMetrics] = {}
+        self.routing_history: list[RoutingDecision] = []
         
         # Phase 1 integration
-        self.emergency_triage: Optional[EmergencyTriageSystem] = None
+        self.emergency_triage: EmergencyTriageSystem | None = None
         
         # Performance tracking
         self.performance_stats = {
@@ -196,7 +192,7 @@ class InferenceCoordinator:
         self.executor = ThreadPoolExecutor(max_workers=10)
         self.running = False
         
-        logger.info(f"🧠 InferenceCoordinator initialized with archaeological metadata")
+        logger.info("🧠 InferenceCoordinator initialized with archaeological metadata")
         logger.info(f"📊 Innovation Score: {self.archaeological_metadata['innovation_score']}")
         
     async def start(self):
@@ -253,11 +249,11 @@ class InferenceCoordinator:
     async def submit_inference_request(
         self,
         model_id: str,
-        input_data: Dict[str, Any],
+        input_data: dict[str, Any],
         priority: RequestPriority = RequestPriority.NORMAL,
-        timeout_seconds: Optional[int] = None,
-        routing_hints: Optional[Dict[str, Any]] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        timeout_seconds: int | None = None,
+        routing_hints: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None
     ) -> str:
         """
         Submit an inference request for distributed processing.
@@ -318,7 +314,7 @@ class InferenceCoordinator:
             logger.error(f"❌ Failed to submit inference request: {e}")
             raise
             
-    async def get_request_status(self, request_id: str) -> Optional[Dict[str, Any]]:
+    async def get_request_status(self, request_id: str) -> dict[str, Any] | None:
         """Get the current status of an inference request."""
         if request_id not in self.active_requests:
             return None
@@ -342,7 +338,7 @@ class InferenceCoordinator:
             "final_result_available": request.final_result is not None
         }
         
-    async def get_request_result(self, request_id: str) -> Optional[Dict[str, Any]]:
+    async def get_request_result(self, request_id: str) -> dict[str, Any] | None:
         """Get the result of a completed inference request."""
         if request_id not in self.active_requests:
             return None
@@ -383,7 +379,7 @@ class InferenceCoordinator:
             logger.error(f"❌ Failed to cancel request {request_id}: {e}")
             return False
             
-    async def register_node(self, node_id: str, initial_metrics: Optional[Dict[str, Any]] = None) -> bool:
+    async def register_node(self, node_id: str, initial_metrics: dict[str, Any] | None = None) -> bool:
         """Register a compute node for inference coordination."""
         try:
             metrics = NodePerformanceMetrics(
@@ -405,7 +401,7 @@ class InferenceCoordinator:
             logger.error(f"❌ Failed to register node {node_id}: {e}")
             return False
             
-    async def update_node_metrics(self, node_id: str, metrics: Dict[str, Any]) -> bool:
+    async def update_node_metrics(self, node_id: str, metrics: dict[str, Any]) -> bool:
         """Update performance metrics for a node."""
         try:
             if node_id not in self.node_metrics:
@@ -440,7 +436,7 @@ class InferenceCoordinator:
             logger.error(f"❌ Failed to update metrics for node {node_id}: {e}")
             return False
             
-    async def get_coordinator_stats(self) -> Dict[str, Any]:
+    async def get_coordinator_stats(self) -> dict[str, Any]:
         """Get comprehensive coordinator statistics."""
         active_count = len([r for r in self.active_requests.values() 
                            if r.status not in [InferenceRequestStatus.COMPLETED, InferenceRequestStatus.FAILED]])
@@ -577,7 +573,7 @@ class InferenceCoordinator:
             request.completed_at = datetime.now()
             self.performance_stats["failed_requests"] += 1
             
-    async def _make_routing_decision(self, request: InferenceRequest) -> Optional[RoutingDecision]:
+    async def _make_routing_decision(self, request: InferenceRequest) -> RoutingDecision | None:
         """Make routing decision using archaeological algorithms."""
         try:
             available_nodes = [node_id for node_id, metrics in self.node_metrics.items()
@@ -640,7 +636,7 @@ class InferenceCoordinator:
             
         return True
         
-    def _select_routing_strategy(self, request: InferenceRequest, available_nodes: List[str]) -> RoutingStrategy:
+    def _select_routing_strategy(self, request: InferenceRequest, available_nodes: list[str]) -> RoutingStrategy:
         """Select optimal routing strategy for the request."""
         
         # Check routing hints
@@ -670,9 +666,9 @@ class InferenceCoordinator:
     async def _select_nodes_for_request(
         self,
         request: InferenceRequest,
-        available_nodes: List[str],
+        available_nodes: list[str],
         strategy: RoutingStrategy
-    ) -> List[str]:
+    ) -> list[str]:
         """Select nodes based on routing strategy."""
         
         if strategy == RoutingStrategy.ROUND_ROBIN:
@@ -724,7 +720,7 @@ class InferenceCoordinator:
             # Fallback to least loaded
             return await self._select_nodes_for_request(request, available_nodes, RoutingStrategy.LEAST_LOADED)
             
-    async def _archaeological_node_selection(self, request: InferenceRequest, available_nodes: List[str]) -> List[str]:
+    async def _archaeological_node_selection(self, request: InferenceRequest, available_nodes: list[str]) -> list[str]:
         """Archaeological node selection algorithm."""
         node_scores = []
         
@@ -771,7 +767,7 @@ class InferenceCoordinator:
             
         return selected
         
-    def _estimate_completion_time(self, request: InferenceRequest, selected_nodes: List[str]) -> float:
+    def _estimate_completion_time(self, request: InferenceRequest, selected_nodes: list[str]) -> float:
         """Estimate completion time for the request."""
         if not selected_nodes:
             return float('inf')
@@ -793,7 +789,7 @@ class InferenceCoordinator:
     def _calculate_routing_confidence(
         self,
         request: InferenceRequest,
-        selected_nodes: List[str],
+        selected_nodes: list[str],
         strategy: RoutingStrategy
     ) -> float:
         """Calculate confidence in routing decision."""
@@ -827,8 +823,8 @@ class InferenceCoordinator:
     async def _calculate_archaeological_factors(
         self,
         request: InferenceRequest,
-        selected_nodes: List[str]
-    ) -> Dict[str, float]:
+        selected_nodes: list[str]
+    ) -> dict[str, float]:
         """Calculate archaeological optimization factors."""
         factors = {}
         
@@ -953,7 +949,7 @@ class InferenceCoordinator:
         
         return min(max(archaeological_priority, 0.0), 1.0)
         
-    async def _get_phase1_triage_score(self, request: InferenceRequest) -> Optional[float]:
+    async def _get_phase1_triage_score(self, request: InferenceRequest) -> float | None:
         """Get triage score from Phase 1 emergency triage system."""
         if not self.emergency_triage:
             return None

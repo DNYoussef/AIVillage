@@ -6,15 +6,14 @@ and agent health monitoring.
 """
 
 import asyncio
-import json
-import logging
 from collections import defaultdict, deque
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, Optional, Any
+import json
+import logging
 from pathlib import Path
-
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -50,16 +49,16 @@ class TaskMetrics:
     task_type: str
     status: TaskStatus
     start_time: datetime
-    end_time: Optional[datetime] = None
-    processing_duration: Optional[float] = None
-    memory_usage_mb: Optional[float] = None
-    error_message: Optional[str] = None
+    end_time: datetime | None = None
+    processing_duration: float | None = None
+    memory_usage_mb: float | None = None
+    error_message: str | None = None
     retry_count: int = 0
-    input_size_bytes: Optional[int] = None
-    output_size_bytes: Optional[int] = None
-    custom_metrics: Dict[str, Any] = field(default_factory=dict)
+    input_size_bytes: int | None = None
+    output_size_bytes: int | None = None
+    custom_metrics: dict[str, Any] = field(default_factory=dict)
 
-    def mark_completed(self, end_time: Optional[datetime] = None) -> None:
+    def mark_completed(self, end_time: datetime | None = None) -> None:
         """Mark task as completed."""
         if end_time is None:
             end_time = datetime.now()
@@ -67,7 +66,7 @@ class TaskMetrics:
         self.processing_duration = (end_time - self.start_time).total_seconds()
         self.status = TaskStatus.COMPLETED
 
-    def mark_failed(self, error: str, end_time: Optional[datetime] = None) -> None:
+    def mark_failed(self, error: str, end_time: datetime | None = None) -> None:
         """Mark task as failed."""
         if end_time is None:
             end_time = datetime.now()
@@ -95,7 +94,7 @@ class AgentHealthMetrics:
     throughput_tasks_per_minute: float
     queue_size: int
     active_connections: int
-    custom_health_indicators: Dict[str, Any] = field(default_factory=dict)
+    custom_health_indicators: dict[str, Any] = field(default_factory=dict)
 
     @property
     def success_rate(self) -> float:
@@ -146,9 +145,9 @@ class AgentMetricsCollector:
         self.last_activity = datetime.now()
 
         # Task metrics
-        self.active_tasks: Dict[str, TaskMetrics] = {}
+        self.active_tasks: dict[str, TaskMetrics] = {}
         self.completed_tasks: deque = deque(maxlen=max_history_size)
-        self.task_history_by_type: Dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
+        self.task_history_by_type: dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
 
         # Performance metrics
         self.total_tasks_processed = 0
@@ -159,7 +158,7 @@ class AgentMetricsCollector:
         self.peak_memory_usage = 0.0
 
         # Error tracking
-        self.error_counts: Dict[str, int] = defaultdict(int)
+        self.error_counts: dict[str, int] = defaultdict(int)
         self.recent_errors: deque = deque(maxlen=100)
 
         # Queue and connection metrics
@@ -167,7 +166,7 @@ class AgentMetricsCollector:
         self.active_connections = 0
 
         # Custom metrics
-        self.custom_metrics: Dict[str, Any] = {}
+        self.custom_metrics: dict[str, Any] = {}
 
         logger.info(f"AgentMetricsCollector initialized for agent {agent_id}")
 
@@ -179,7 +178,7 @@ class AgentMetricsCollector:
 
         logger.debug(f"Agent {self.agent_id} state changed: {old_state.value} -> {state.value}")
 
-    def start_task(self, task_id: str, task_type: str, input_size_bytes: Optional[int] = None) -> TaskMetrics:
+    def start_task(self, task_id: str, task_type: str, input_size_bytes: int | None = None) -> TaskMetrics:
         """Start tracking a new task."""
         task_metrics = TaskMetrics(
             task_id=task_id,
@@ -198,8 +197,8 @@ class AgentMetricsCollector:
         return task_metrics
 
     def complete_task(
-        self, task_id: str, output_size_bytes: Optional[int] = None, custom_metrics: Optional[Dict[str, Any]] = None
-    ) -> Optional[TaskMetrics]:
+        self, task_id: str, output_size_bytes: int | None = None, custom_metrics: dict[str, Any] | None = None
+    ) -> TaskMetrics | None:
         """Mark a task as completed."""
         if task_id not in self.active_tasks:
             logger.warning(f"Attempted to complete unknown task {task_id}")
@@ -234,8 +233,8 @@ class AgentMetricsCollector:
         return task_metrics
 
     def fail_task(
-        self, task_id: str, error_message: str, error_category: Optional[str] = None
-    ) -> Optional[TaskMetrics]:
+        self, task_id: str, error_message: str, error_category: str | None = None
+    ) -> TaskMetrics | None:
         """Mark a task as failed."""
         if task_id not in self.active_tasks:
             logger.warning(f"Attempted to fail unknown task {task_id}")
@@ -329,7 +328,7 @@ class AgentMetricsCollector:
             custom_health_indicators=self.custom_metrics.copy(),
         )
 
-    def get_task_statistics(self, time_window: Optional[timedelta] = None) -> Dict[str, Any]:
+    def get_task_statistics(self, time_window: timedelta | None = None) -> dict[str, Any]:
         """Get task processing statistics."""
         if time_window:
             cutoff_time = datetime.now() - time_window
@@ -370,7 +369,7 @@ class AgentMetricsCollector:
             "time_window": str(time_window) if time_window else "all",
         }
 
-    def get_error_summary(self) -> Dict[str, Any]:
+    def get_error_summary(self) -> dict[str, Any]:
         """Get error summary and recent errors."""
         return {
             "error_counts": dict(self.error_counts),
@@ -379,7 +378,7 @@ class AgentMetricsCollector:
             "error_rate": self.failed_tasks / max(self.total_tasks_processed, 1),
         }
 
-    def export_metrics(self, include_task_history: bool = False) -> Dict[str, Any]:
+    def export_metrics(self, include_task_history: bool = False) -> dict[str, Any]:
         """Export all metrics data."""
         health = self.get_health_metrics()
         stats = self.get_task_statistics()
@@ -409,7 +408,7 @@ class MultiAgentMetricsManager:
     def __init__(self, export_interval: float = 300.0):  # Export every 5 minutes
         """Initialize multi-agent metrics manager."""
         self.export_interval = export_interval
-        self.agent_collectors: Dict[str, AgentMetricsCollector] = {}
+        self.agent_collectors: dict[str, AgentMetricsCollector] = {}
         self.system_start_time = datetime.now()
 
         # Aggregated metrics
@@ -422,7 +421,7 @@ class MultiAgentMetricsManager:
         }
 
         # Background tasks
-        self.export_task: Optional[asyncio.Task] = None
+        self.export_task: asyncio.Task | None = None
         self.is_running = False
 
         logger.info("MultiAgentMetricsManager initialized")
@@ -448,7 +447,7 @@ class MultiAgentMetricsManager:
         logger.info(f"Unregistered agent {agent_id}")
         return True
 
-    def get_agent_collector(self, agent_id: str) -> Optional[AgentMetricsCollector]:
+    def get_agent_collector(self, agent_id: str) -> AgentMetricsCollector | None:
         """Get metrics collector for an agent."""
         return self.agent_collectors.get(agent_id)
 
@@ -482,7 +481,7 @@ class MultiAgentMetricsManager:
             }
         )
 
-    def get_system_overview(self) -> Dict[str, Any]:
+    def get_system_overview(self) -> dict[str, Any]:
         """Get system-wide metrics overview."""
         self.update_system_metrics()
 
@@ -507,7 +506,7 @@ class MultiAgentMetricsManager:
             "timestamp": datetime.now().isoformat(),
         }
 
-    def get_performance_insights(self) -> Dict[str, Any]:
+    def get_performance_insights(self) -> dict[str, Any]:
         """Generate performance insights across all agents."""
         insights = {
             "top_performers": [],
@@ -624,7 +623,7 @@ class MultiAgentMetricsManager:
 
 
 # Global metrics manager instance
-_global_metrics_manager: Optional[MultiAgentMetricsManager] = None
+_global_metrics_manager: MultiAgentMetricsManager | None = None
 
 
 def get_global_metrics_manager() -> MultiAgentMetricsManager:
@@ -635,7 +634,7 @@ def get_global_metrics_manager() -> MultiAgentMetricsManager:
     return _global_metrics_manager
 
 
-def get_agent_metrics(agent_id: str) -> Optional[AgentMetricsCollector]:
+def get_agent_metrics(agent_id: str) -> AgentMetricsCollector | None:
     """Get metrics collector for an agent."""
     manager = get_global_metrics_manager()
     return manager.get_agent_collector(agent_id)

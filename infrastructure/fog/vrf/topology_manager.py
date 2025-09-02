@@ -9,13 +9,13 @@ Manages network topology properties including:
 """
 
 import asyncio
-import logging
-import math
-import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+import logging
+import math
+import time
+from typing import Any
 
 import numpy as np
 from scipy.sparse.linalg import eigsh
@@ -43,7 +43,7 @@ class NetworkMetrics:
     node_count: int = 0
     edge_count: int = 0
     average_degree: float = 0.0
-    degree_distribution: Dict[int, int] = field(default_factory=dict)
+    degree_distribution: dict[int, int] = field(default_factory=dict)
 
     # Expansion properties
     expansion_ratio: float = 0.0
@@ -56,9 +56,9 @@ class NetworkMetrics:
     radius: int = 0
 
     # K-core properties
-    k_core_distribution: Dict[int, Set[str]] = field(default_factory=dict)
+    k_core_distribution: dict[int, set[str]] = field(default_factory=dict)
     max_k_core: int = 0
-    k_core_nodes: Set[str] = field(default_factory=set)
+    k_core_nodes: set[str] = field(default_factory=set)
 
     # Health indicators
     churn_resistance: float = 0.0
@@ -75,8 +75,8 @@ class TopologyHealingAction:
     """Action to heal topology degradation."""
 
     action_type: str
-    target_nodes: List[str]
-    parameters: Dict[str, Any]
+    target_nodes: list[str]
+    parameters: dict[str, Any]
     priority: int
     expected_improvement: float
     estimated_cost: float
@@ -117,7 +117,7 @@ class GraphAnalyzer:
             self.logger.warning(f"Failed to compute spectral gap: {e}")
             return 0.0
 
-    def compute_k_core_decomposition(self, adjacency_dict: Dict[str, Set[str]]) -> Dict[int, Set[str]]:
+    def compute_k_core_decomposition(self, adjacency_dict: dict[str, set[str]]) -> dict[int, set[str]]:
         """Compute k-core decomposition of the network."""
         nodes = set(adjacency_dict.keys())
         k_cores = defaultdict(set)
@@ -159,7 +159,7 @@ class GraphAnalyzer:
 
         return dict(k_cores)
 
-    def compute_expansion_ratio(self, adjacency_dict: Dict[str, Set[str]]) -> float:
+    def compute_expansion_ratio(self, adjacency_dict: dict[str, set[str]]) -> float:
         """Compute expansion ratio of the graph."""
         if not adjacency_dict:
             return 0.0
@@ -192,7 +192,7 @@ class GraphAnalyzer:
 
         return min_expansion if min_expansion != float("inf") else 0.0
 
-    def compute_clustering_coefficient(self, adjacency_dict: Dict[str, Set[str]]) -> float:
+    def compute_clustering_coefficient(self, adjacency_dict: dict[str, set[str]]) -> float:
         """Compute average clustering coefficient."""
         if not adjacency_dict:
             return 0.0
@@ -222,7 +222,7 @@ class GraphAnalyzer:
 
         return total_clustering / nodes_with_neighbors if nodes_with_neighbors > 0 else 0.0
 
-    def compute_diameter(self, adjacency_dict: Dict[str, Set[str]]) -> Tuple[int, int]:
+    def compute_diameter(self, adjacency_dict: dict[str, set[str]]) -> tuple[int, int]:
         """Compute network diameter and radius using BFS."""
         if not adjacency_dict:
             return 0, 0
@@ -290,20 +290,20 @@ class TopologyManager:
 
         # Graph analysis
         self.graph_analyzer = GraphAnalyzer()
-        self.current_metrics: Optional[NetworkMetrics] = None
+        self.current_metrics: NetworkMetrics | None = None
 
         # Network state
-        self.adjacency_dict: Dict[str, Set[str]] = defaultdict(set)
-        self.node_metadata: Dict[str, NodeInfo] = {}
+        self.adjacency_dict: dict[str, set[str]] = defaultdict(set)
+        self.node_metadata: dict[str, NodeInfo] = {}
 
         # Healing system
-        self.healing_actions: List[TopologyHealingAction] = []
-        self.healing_history: List[Dict[str, Any]] = []
+        self.healing_actions: list[TopologyHealingAction] = []
+        self.healing_history: list[dict[str, Any]] = []
         self.status = TopologyHealthStatus.GOOD
 
         # Background monitoring
-        self._monitor_task: Optional[asyncio.Task] = None
-        self._healing_task: Optional[asyncio.Task] = None
+        self._monitor_task: asyncio.Task | None = None
+        self._healing_task: asyncio.Task | None = None
 
         # Configuration
         self.config = {
@@ -348,7 +348,7 @@ class TopologyManager:
 
         self.logger.info("Topology management system stopped")
 
-    async def update_network_topology(self, adjacency_updates: Dict[str, Set[str]]):
+    async def update_network_topology(self, adjacency_updates: dict[str, set[str]]):
         """Update network topology with new adjacency information."""
         for node_id, neighbors in adjacency_updates.items():
             self.adjacency_dict[node_id] = neighbors
@@ -361,7 +361,7 @@ class TopologyManager:
         # Trigger metrics recomputation
         await self._compute_network_metrics()
 
-    async def get_k_core_nodes(self, min_k: int = None) -> Set[str]:
+    async def get_k_core_nodes(self, min_k: int = None) -> set[str]:
         """Get nodes in k-core with k >= min_k."""
         if not self.current_metrics:
             await self._compute_network_metrics()
@@ -408,7 +408,7 @@ class TopologyManager:
         self.status = status
         return status
 
-    async def plan_healing_actions(self) -> List[TopologyHealingAction]:
+    async def plan_healing_actions(self) -> list[TopologyHealingAction]:
         """Plan healing actions for topology improvement."""
         if not self.current_metrics:
             await self._compute_network_metrics()
@@ -504,7 +504,7 @@ class TopologyManager:
             self.logger.error(f"Failed to execute healing action {action.action_type}: {e}")
             return False
 
-    def get_topology_status(self) -> Dict[str, Any]:
+    def get_topology_status(self) -> dict[str, Any]:
         """Get comprehensive topology status."""
         status = {
             "health_status": self.status.value,
@@ -627,7 +627,7 @@ class TopologyManager:
             self.logger.error(f"Failed to compute network metrics: {e}")
             return NetworkMetrics()
 
-    def _identify_bridge_nodes(self) -> List[str]:
+    def _identify_bridge_nodes(self) -> list[str]:
         """Identify nodes that could improve spectral gap."""
         # Simplified: return nodes with low degree that could benefit from more connections
         candidates = []
@@ -638,7 +638,7 @@ class TopologyManager:
 
         return candidates[:5]  # Limit for performance
 
-    def _identify_weak_core_nodes(self) -> List[str]:
+    def _identify_weak_core_nodes(self) -> list[str]:
         """Identify nodes in lower k-cores that could be strengthened."""
         if not self.current_metrics:
             return []
@@ -650,7 +650,7 @@ class TopologyManager:
 
         return weak_nodes[:10]  # Overall limit
 
-    def _identify_peripheral_nodes(self) -> List[str]:
+    def _identify_peripheral_nodes(self) -> list[str]:
         """Identify peripheral nodes that could improve expansion."""
         # Find nodes with few connections to different network regions
         peripheral = []

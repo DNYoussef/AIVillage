@@ -22,11 +22,11 @@ from aiohttp_cors import setup as cors_setup
 from infrastructure.twin.security.rbac_system import RBACSystem
 from infrastructure.twin.security.secure_digital_twin_db import SecureDigitalTwinDB
 
-# Import legacy components for compatibility
-from .enhanced_encryption import EnhancedDigitalTwinEncryption
-
 # Import our new authentication module
 from .auth import AuthContainer, DeviceInfo
+
+# Import legacy components for compatibility
+from .enhanced_encryption import EnhancedDigitalTwinEncryption
 
 logger = logging.getLogger(__name__)
 

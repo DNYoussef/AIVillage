@@ -26,13 +26,13 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from enum import Enum
-import logging
-from typing import Any, Dict, List, Optional, Set, Tuple
-import uuid
 import json
+import logging
+from typing import Any
+import uuid
 
+from .governance_engine import ConstitutionalGovernanceEngine, HarmCategory, PolicyDecision, PolicyDecisionType
 from .tier_mapping import ConstitutionalTier, ConstitutionalTierManager
-from .governance_engine import ConstitutionalGovernanceEngine, PolicyDecision, PolicyDecisionType, HarmCategory
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ class WorkloadRequirements:
     isolation_level: IsolationLevel = IsolationLevel.PROCESS
 
     # Safety and governance requirements
-    harm_categories_to_monitor: Set[HarmCategory] = field(default_factory=set)
+    harm_categories_to_monitor: set[HarmCategory] = field(default_factory=set)
     requires_human_oversight: bool = False
     requires_constitutional_review: bool = False
     max_allowed_risk_score: Decimal = Decimal("0.5")
@@ -102,7 +102,7 @@ class WorkloadRequirements:
     # Compliance requirements
     audit_logging_required: bool = True
     transparency_level: str = "basic"  # basic, detailed, comprehensive
-    data_residency_requirements: List[str] = field(default_factory=list)
+    data_residency_requirements: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -117,7 +117,7 @@ class NodeCapabilities:
     available_storage_gb: Decimal
 
     # Constitutional capabilities
-    supported_tiers: Set[ConstitutionalTier]
+    supported_tiers: set[ConstitutionalTier]
     max_isolation_level: IsolationLevel
     constitutional_compliance_rating: Decimal
 
@@ -140,7 +140,7 @@ class NodeCapabilities:
 
     # Location and compliance
     geographic_region: str = ""
-    regulatory_compliance: List[str] = field(default_factory=list)
+    regulatory_compliance: list[str] = field(default_factory=list)
 
     # Current load
     current_workloads: int = 0
@@ -153,7 +153,7 @@ class RoutingDecision:
 
     routing_id: str
     workload_id: str
-    selected_nodes: List[str]
+    selected_nodes: list[str]
 
     # Decision details
     routing_rationale: str
@@ -162,12 +162,12 @@ class RoutingDecision:
 
     # Constitutional aspects
     constitutional_compliance: bool = True
-    policy_decisions_applied: List[str] = field(default_factory=list)
+    policy_decisions_applied: list[str] = field(default_factory=list)
     isolation_level_assigned: IsolationLevel = IsolationLevel.PROCESS
 
     # Quality guarantees
-    sla_commitments: Dict[str, Any] = field(default_factory=dict)
-    fallback_nodes: List[str] = field(default_factory=list)
+    sla_commitments: dict[str, Any] = field(default_factory=dict)
+    fallback_nodes: list[str] = field(default_factory=list)
 
     # Monitoring and transparency
     transparency_log_id: str = ""
@@ -176,7 +176,7 @@ class RoutingDecision:
 
     # Timestamps
     decision_timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
-    execution_deadline: Optional[datetime] = None
+    execution_deadline: datetime | None = None
 
 
 @dataclass
@@ -194,12 +194,12 @@ class TransparencyLogEntry:
     # Decision details
     action: str  # "route", "reject", "escalate", "monitor"
     reasoning: str
-    constitutional_basis: List[str] = field(default_factory=list)
+    constitutional_basis: list[str] = field(default_factory=list)
 
     # Privacy-preserving details
     anonymized_content_hash: str = ""
-    risk_assessment_summary: Dict[str, Any] = field(default_factory=dict)
-    governance_actions_taken: List[str] = field(default_factory=list)
+    risk_assessment_summary: dict[str, Any] = field(default_factory=dict)
+    governance_actions_taken: list[str] = field(default_factory=list)
 
     # Compliance tracking
     tier: ConstitutionalTier = ConstitutionalTier.BRONZE
@@ -223,7 +223,7 @@ class TransparencyLogger:
     """
 
     def __init__(self):
-        self.log_entries: List[TransparencyLogEntry] = []
+        self.log_entries: list[TransparencyLogEntry] = []
         self.config = {
             "public_reporting_enabled": True,
             "anonymization_level": "high",
@@ -238,7 +238,7 @@ class TransparencyLogger:
         routing_decision: RoutingDecision,
         workload_requirements: WorkloadRequirements,
         user_id: str,
-        content_summary: Dict[str, Any] = None,
+        content_summary: dict[str, Any] = None,
     ) -> str:
         """Log routing decision with appropriate transparency level"""
 
@@ -311,7 +311,7 @@ class TransparencyLogger:
         else:
             return user_id[:8] + "***"
 
-    async def generate_transparency_report(self, days_back: int = 30) -> Dict[str, Any]:
+    async def generate_transparency_report(self, days_back: int = 30) -> dict[str, Any]:
         """Generate public transparency report"""
 
         cutoff_date = datetime.now(UTC) - timedelta(days=days_back)
@@ -368,7 +368,7 @@ class TransparencyLogger:
 
         return report
 
-    def _get_transparency_distribution(self, entries: List[TransparencyLogEntry]) -> Dict[str, int]:
+    def _get_transparency_distribution(self, entries: list[TransparencyLogEntry]) -> dict[str, int]:
         """Get distribution of transparency levels"""
         distribution = {}
         for entry in entries:
@@ -376,7 +376,7 @@ class TransparencyLogger:
             distribution[level] = distribution.get(level, 0) + 1
         return distribution
 
-    def _get_isolation_distribution(self, entries: List[TransparencyLogEntry]) -> Dict[str, int]:
+    def _get_isolation_distribution(self, entries: list[TransparencyLogEntry]) -> dict[str, int]:
         """Get distribution of isolation levels used"""
         distribution = {}
         for entry in entries:
@@ -405,20 +405,20 @@ class ConstitutionalWorkloadRouter:
 
     def __init__(
         self,
-        tier_manager: Optional[ConstitutionalTierManager] = None,
-        governance_engine: Optional[ConstitutionalGovernanceEngine] = None,
+        tier_manager: ConstitutionalTierManager | None = None,
+        governance_engine: ConstitutionalGovernanceEngine | None = None,
     ):
         self.tier_manager = tier_manager or ConstitutionalTierManager()
         self.governance_engine = governance_engine
         self.transparency_logger = TransparencyLogger()
 
         # Node registry
-        self.available_nodes: Dict[str, NodeCapabilities] = {}
-        self.node_load_tracking: Dict[str, List[datetime]] = {}
+        self.available_nodes: dict[str, NodeCapabilities] = {}
+        self.node_load_tracking: dict[str, list[datetime]] = {}
 
         # Routing state
-        self.active_routes: Dict[str, RoutingDecision] = {}
-        self.routing_history: List[RoutingDecision] = []
+        self.active_routes: dict[str, RoutingDecision] = {}
+        self.routing_history: list[RoutingDecision] = []
 
         # Configuration
         self.routing_config = {
@@ -450,7 +450,7 @@ class ConstitutionalWorkloadRouter:
         )
 
     async def route_workload(
-        self, workload_id: str, user_id: str, requirements: WorkloadRequirements, content_data: Dict[str, Any] = None
+        self, workload_id: str, user_id: str, requirements: WorkloadRequirements, content_data: dict[str, Any] = None
     ) -> RoutingDecision:
         """Route workload with constitutional safety integration"""
 
@@ -561,7 +561,7 @@ class ConstitutionalWorkloadRouter:
 
         return routing_decision
 
-    async def _find_candidate_nodes(self, requirements: WorkloadRequirements) -> List[NodeCapabilities]:
+    async def _find_candidate_nodes(self, requirements: WorkloadRequirements) -> list[NodeCapabilities]:
         """Find nodes that can satisfy workload requirements"""
 
         candidates = []
@@ -633,8 +633,8 @@ class ConstitutionalWorkloadRouter:
         return max_index >= required_index
 
     async def _select_optimal_nodes(
-        self, candidates: List[NodeCapabilities], requirements: WorkloadRequirements
-    ) -> Tuple[List[NodeCapabilities], List[NodeCapabilities]]:
+        self, candidates: list[NodeCapabilities], requirements: WorkloadRequirements
+    ) -> tuple[list[NodeCapabilities], list[NodeCapabilities]]:
         """Select optimal nodes from candidates"""
 
         if not candidates:
@@ -714,7 +714,7 @@ class ConstitutionalWorkloadRouter:
         return min(Decimal("1.0"), total_score)
 
     def _determine_isolation_level(
-        self, requirements: WorkloadRequirements, selected_nodes: List[NodeCapabilities]
+        self, requirements: WorkloadRequirements, selected_nodes: list[NodeCapabilities]
     ) -> IsolationLevel:
         """Determine appropriate isolation level for workload"""
 
@@ -744,7 +744,7 @@ class ConstitutionalWorkloadRouter:
         return required_level
 
     def _generate_routing_rationale(
-        self, requirements: WorkloadRequirements, selected_nodes: List[NodeCapabilities]
+        self, requirements: WorkloadRequirements, selected_nodes: list[NodeCapabilities]
     ) -> str:
         """Generate human-readable rationale for routing decision"""
 
@@ -771,7 +771,7 @@ class ConstitutionalWorkloadRouter:
         return ". ".join(rationale_parts)
 
     def _calculate_routing_confidence(
-        self, selected_nodes: List[NodeCapabilities], requirements: WorkloadRequirements
+        self, selected_nodes: list[NodeCapabilities], requirements: WorkloadRequirements
     ) -> Decimal:
         """Calculate confidence in routing decision"""
 
@@ -806,7 +806,7 @@ class ConstitutionalWorkloadRouter:
         return min(Decimal("1.0"), confidence)
 
     def _estimate_completion_time(
-        self, requirements: WorkloadRequirements, selected_nodes: List[NodeCapabilities]
+        self, requirements: WorkloadRequirements, selected_nodes: list[NodeCapabilities]
     ) -> datetime:
         """Estimate workload completion time"""
 
@@ -850,8 +850,8 @@ class ConstitutionalWorkloadRouter:
         return datetime.now(UTC) + timedelta(hours=float(estimated_hours))
 
     async def _create_sla_commitments(
-        self, requirements: WorkloadRequirements, selected_nodes: List[NodeCapabilities]
-    ) -> Dict[str, Any]:
+        self, requirements: WorkloadRequirements, selected_nodes: list[NodeCapabilities]
+    ) -> dict[str, Any]:
         """Create SLA commitments for routing decision"""
 
         if not selected_nodes:
@@ -903,7 +903,7 @@ class ConstitutionalWorkloadRouter:
 
         return commitments
 
-    async def get_routing_statistics(self) -> Dict[str, Any]:
+    async def get_routing_statistics(self) -> dict[str, Any]:
         """Get comprehensive routing statistics"""
 
         total_routes = len(self.routing_history) + len(self.active_routes)
@@ -958,8 +958,8 @@ class ConstitutionalWorkloadRouter:
 
 
 async def create_constitutional_workload_router(
-    tier_manager: Optional[ConstitutionalTierManager] = None,
-    governance_engine: Optional[ConstitutionalGovernanceEngine] = None,
+    tier_manager: ConstitutionalTierManager | None = None,
+    governance_engine: ConstitutionalGovernanceEngine | None = None,
 ) -> ConstitutionalWorkloadRouter:
     """Create constitutional workload router with dependencies"""
 

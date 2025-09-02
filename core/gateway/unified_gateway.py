@@ -23,7 +23,6 @@ Performance Targets:
 - Zero downtime deployments
 """
 
-import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 import logging
@@ -31,19 +30,19 @@ import os
 from pathlib import Path
 import sys
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # Core FastAPI and middleware
-from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect, status
+from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse, Response
 from fastapi.security import HTTPBearer
-from pydantic import BaseModel, Field, field_validator
-from starlette.middleware.base import BaseHTTPMiddleware
 
 # Performance and monitoring
-from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+from pydantic import BaseModel, Field, field_validator
+from starlette.middleware.base import BaseHTTPMiddleware
 import uvicorn
 
 # Add project root to path for imports
@@ -53,8 +52,8 @@ sys.path.insert(0, str(project_root))
 
 # Import consolidated authentication
 try:
-    from infrastructure.gateway.auth.jwt_handler import JWTHandler, TokenPayload, JWTBearer
     from core.gateway.server import GatewayConfig  # Reuse proven configuration
+    from infrastructure.gateway.auth.jwt_handler import JWTBearer, JWTHandler
     AUTH_AVAILABLE = True
 except ImportError as e:
     logging.warning(f"Authentication modules not available: {e}")
@@ -62,7 +61,6 @@ except ImportError as e:
 
 # Import Agent Forge components
 try:
-    from core.agent_forge.phases.cognate_pretrain.real_pretraining_pipeline import RealCognateTrainer
     AGENT_FORGE_AVAILABLE = True
 except ImportError:
     AGENT_FORGE_AVAILABLE = False
@@ -77,7 +75,6 @@ except ImportError:
 
 # Import RAG pipeline
 try:
-    from rag_system.core.pipeline import EnhancedRAGPipeline
     RAG_AVAILABLE = True
 except ImportError:
     RAG_AVAILABLE = False
@@ -254,16 +251,16 @@ class UnifiedHealthResponse(BaseModel):
     status: str
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     version: str = "2.0.0-unified"
-    services: Dict[str, Any] = Field(default_factory=dict)
-    features: Dict[str, bool] = Field(default_factory=dict)
-    performance: Dict[str, Any] = Field(default_factory=dict)
+    services: dict[str, Any] = Field(default_factory=dict)
+    features: dict[str, bool] = Field(default_factory=dict)
+    performance: dict[str, Any] = Field(default_factory=dict)
 
 class UnifiedQueryRequest(BaseModel):
     """Unified query request supporting all service types."""
     query: str = Field(..., min_length=1, max_length=10000)
     service_type: str = Field(default="auto", regex="^(auto|rag|agent_forge|p2p|fog)$")
-    session_id: Optional[str] = None
-    options: Dict[str, Any] = Field(default_factory=dict)
+    session_id: str | None = None
+    options: dict[str, Any] = Field(default_factory=dict)
     
     @field_validator("query")
     @classmethod
@@ -322,7 +319,7 @@ class UnifiedServiceOrchestrator:
             except Exception as e:
                 logger.error(f"P2P/Fog initialization failed: {e}")
     
-    async def route_request(self, request: UnifiedQueryRequest) -> Dict[str, Any]:
+    async def route_request(self, request: UnifiedQueryRequest) -> dict[str, Any]:
         """Intelligently route requests to appropriate services."""
         if request.service_type == "auto":
             service_type = await self._determine_service_type(request.query)
@@ -352,7 +349,7 @@ class UnifiedServiceOrchestrator:
         else:
             return "rag"
     
-    async def _handle_rag_request(self, request: UnifiedQueryRequest) -> Dict[str, Any]:
+    async def _handle_rag_request(self, request: UnifiedQueryRequest) -> dict[str, Any]:
         """Handle RAG pipeline requests."""
         try:
             result = await self.services["rag"].process(request.query)
@@ -361,17 +358,17 @@ class UnifiedServiceOrchestrator:
             logger.error(f"RAG processing failed: {e}")
             return {"success": False, "error": str(e), "service": "rag"}
     
-    async def _handle_agent_forge_request(self, request: UnifiedQueryRequest) -> Dict[str, Any]:
+    async def _handle_agent_forge_request(self, request: UnifiedQueryRequest) -> dict[str, Any]:
         """Handle Agent Forge requests."""
         # Implement Agent Forge routing logic
         return {"success": True, "data": {"message": "Agent Forge processing"}, "service": "agent_forge"}
     
-    async def _handle_p2p_fog_request(self, request: UnifiedQueryRequest, service_type: str) -> Dict[str, Any]:
+    async def _handle_p2p_fog_request(self, request: UnifiedQueryRequest, service_type: str) -> dict[str, Any]:
         """Handle P2P/Fog requests."""
         # Implement P2P/Fog routing logic
         return {"success": True, "data": {"message": f"{service_type.upper()} processing"}, "service": service_type}
     
-    async def _handle_external_request(self, request: UnifiedQueryRequest, service_type: str) -> Dict[str, Any]:
+    async def _handle_external_request(self, request: UnifiedQueryRequest, service_type: str) -> dict[str, Any]:
         """Route to external microservices."""
         import httpx
         
@@ -526,7 +523,7 @@ async def unified_health_check() -> UnifiedHealthResponse:
 async def unified_query_endpoint(
     request: UnifiedQueryRequest,
     user=Depends(get_auth_user)
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Unified query endpoint with intelligent service routing."""
     start_time = time.time()
     
@@ -564,7 +561,7 @@ async def unified_query_endpoint(
 async def unified_upload_endpoint(
     file: UploadFile = File(...),
     user=Depends(get_auth_user)
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Unified file upload with intelligent processing."""
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file provided")

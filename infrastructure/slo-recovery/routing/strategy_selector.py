@@ -4,11 +4,10 @@ Condition-based routing and remedy selection with agent coordination
 Target: 30min MTTR with optimal remedy selection
 """
 
-import logging
-from typing import Dict, List, Optional
 from dataclasses import dataclass
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+import logging
 
 from .breach_classifier import BreachClassification, BreachSeverity, FailureCategory
 
@@ -28,14 +27,14 @@ class AgentType(Enum):
 class RecoveryStrategy:
     strategy_id: str
     name: str
-    conditions: List[str]
+    conditions: list[str]
     route: str
     priority: str
-    agents: List[AgentType]
+    agents: list[AgentType]
     estimated_duration: int  # minutes
     success_rate: float
-    prerequisites: List[str]
-    rollback_strategy: Optional[str]
+    prerequisites: list[str]
+    rollback_strategy: str | None
     parallel_execution: bool
 
 
@@ -44,10 +43,10 @@ class StrategySelection:
     selection_id: str
     breach_classification: BreachClassification
     selected_strategy: RecoveryStrategy
-    alternative_strategies: List[RecoveryStrategy]
+    alternative_strategies: list[RecoveryStrategy]
     confidence_score: float
-    execution_plan: Dict
-    resource_requirements: Dict
+    execution_plan: dict
+    resource_requirements: dict
     timestamp: datetime
 
 
@@ -61,7 +60,7 @@ class StrategySelector:
         self.recovery_strategies = self._initialize_strategies()
         self.strategy_performance_history = {}
 
-    def _initialize_strategies(self) -> List[RecoveryStrategy]:
+    def _initialize_strategies(self) -> list[RecoveryStrategy]:
         """Initialize recovery strategies with condition-based routing"""
         return [
             # Immediate Security Remediation
@@ -244,7 +243,7 @@ class StrategySelector:
 
         return min(1.0, total_score)
 
-    def _evaluate_conditions(self, conditions: List[str], classification: BreachClassification) -> float:
+    def _evaluate_conditions(self, conditions: list[str], classification: BreachClassification) -> float:
         """Evaluate strategy conditions against breach classification"""
 
         # Create context for condition evaluation
@@ -284,7 +283,7 @@ class StrategySelector:
 
         return matches / len(conditions) if conditions else 0
 
-    def _evaluate_single_condition(self, condition: str, context: Dict) -> bool:
+    def _evaluate_single_condition(self, condition: str, context: dict) -> bool:
         """Evaluate a single condition string against context"""
         try:
             # Replace context variables in condition
@@ -315,7 +314,7 @@ class StrategySelector:
         diff = abs(strategy_level - breach_level)
         return max(0.3, 1.0 - (diff * 0.3))
 
-    def _generate_execution_plan(self, strategy: RecoveryStrategy, classification: BreachClassification) -> Dict:
+    def _generate_execution_plan(self, strategy: RecoveryStrategy, classification: BreachClassification) -> dict:
         """Generate detailed execution plan for selected strategy"""
 
         plan = {
@@ -396,7 +395,7 @@ class StrategySelector:
         }
         return responsibilities.get(agent, "general_support")
 
-    def _calculate_resource_requirements(self, strategy: RecoveryStrategy) -> Dict:
+    def _calculate_resource_requirements(self, strategy: RecoveryStrategy) -> dict:
         """Calculate resource requirements for strategy execution"""
 
         base_requirements = {
@@ -414,7 +413,7 @@ class StrategySelector:
 
         return base_requirements
 
-    def generate_strategy_selection_map(self) -> Dict:
+    def generate_strategy_selection_map(self) -> dict:
         """Generate recovery strategy selection mapping for output"""
 
         strategy_map = {

@@ -5,10 +5,10 @@ import argparse
 import logging
 from pathlib import Path
 
+from accelerate import Accelerator
 import torch
 import torch.nn.functional as F
 import yaml
-from accelerate import Accelerator
 
 from packages.hrrm.common.data_mixture import text_stream
 from packages.hrrm.common.param_math import assert_tiny_params

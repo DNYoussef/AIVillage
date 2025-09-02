@@ -30,94 +30,101 @@ Key Consolidation Achievements:
 # === CONSOLIDATED PRODUCTION COMPONENTS ===
 
 # Network Optimization (consolidated: network + message processing + security)
-from .network_optimizer import (
-    NetworkOptimizer,
-    NetworkOptimizerConfig,
-    NetworkProtocol,
-    QualityOfService,
-    NetworkMetrics,
-    MessageProcessor,
-    MessageMetrics,
-    ProtocolSelector,
-    BandwidthManager,
-    LatencyOptimizer,
-    QosManager,
-    # Security Enhancements - ECH + Noise Protocol
-    create_network_optimizer,
-    get_default_config as get_network_config,
-    get_performance_config as get_network_performance_config,
-    get_reliability_config as get_network_reliability_config,
-)
-
-# Dashboard Integration (builds on existing dashboard infrastructure)
-
-# Load Testing Infrastructure (comprehensive testing with regression detection)
-
-# Resource Management (consolidated: memory + CPU + network resources)
-from .resource_manager import (
-    ResourceManager,
-    ResourceManagerConfig,
-    ResourceType,
-    ResourceState,
-    ResourceMetrics,
-    ResourceAllocation,
-    MemoryManager,
-    CPUManager,
-    NetworkResourceManager,
-    ResourceLimiter,
-    create_resource_manager,
-)
-
 # Analytics & AI Optimization (consolidated: all optimization algorithms)
 from .analytics import (
-    PerformanceAnalytics,
     AnalyticsConfig,
-    ArchaeologicalOptimizer,
-    TrendAnalyzer,
     AnomalyDetector,
+    ArchaeologicalOptimizer,
+    ComponentDiscovery,
+    PerformanceAnalytics,
     PredictiveOptimizer,
     SystemAnalyzer,
-    ComponentDiscovery,
+    TrendAnalyzer,
 )
-
-# Performance Monitoring (consolidated: profiling + monitoring)
-from .monitoring import (
-    PerformanceMonitor,
-    MonitoringConfig,
-    PerformanceMetric,
-    ComponentProfile,
-    BottleneckAnalysis,
-    MonitoringAlert,
-    create_monitor,
-    get_global_monitor,
-    record_metric,
-    profile_component,
-    profile_async_component,
+from .config import (
+    AnalyticsConfig as BaseAnalyticsConfig,
 )
 
 # Configuration Management (consolidated: all config classes)
 from .config import (
-    OptimizationConfig,
-    NetworkConfig,
-    ResourceConfig,
-    MonitoringConfig as BaseMonitoringConfig,
-    AnalyticsConfig as BaseAnalyticsConfig,
-    SecurityConfig,
-    LoggingConfig,
-    DeploymentMode,
-    SerializationFormat,
     CompressionAlgorithm,
+    DeploymentMode,
     EncryptionMode,
+    LoggingConfig,
+    NetworkConfig,
+    OptimizationConfig,
+    ResourceConfig,
+    SecurityConfig,
+    SerializationFormat,
     get_development_config,
-    get_production_config,
-    get_performance_config,
-    get_reliability_config,
     get_global_config,
+    get_performance_config,
+    get_production_config,
+    get_reliability_config,
     set_global_config,
+)
+from .config import (
+    MonitoringConfig as BaseMonitoringConfig,
 )
 
 # Production-Ready Connection Management (preserved)
 from .connection_pool import ConnectionPoolManager, PoolConfig, PoolMetrics
+
+# Performance Monitoring (consolidated: profiling + monitoring)
+from .monitoring import (
+    BottleneckAnalysis,
+    ComponentProfile,
+    MonitoringAlert,
+    MonitoringConfig,
+    PerformanceMetric,
+    PerformanceMonitor,
+    create_monitor,
+    get_global_monitor,
+    profile_async_component,
+    profile_component,
+    record_metric,
+)
+from .network_optimizer import (
+    BandwidthManager,
+    LatencyOptimizer,
+    MessageMetrics,
+    MessageProcessor,
+    NetworkMetrics,
+    NetworkOptimizer,
+    NetworkOptimizerConfig,
+    NetworkProtocol,
+    ProtocolSelector,
+    QosManager,
+    QualityOfService,
+    # Security Enhancements - ECH + Noise Protocol
+    create_network_optimizer,
+)
+from .network_optimizer import (
+    get_default_config as get_network_config,
+)
+from .network_optimizer import (
+    get_performance_config as get_network_performance_config,
+)
+from .network_optimizer import (
+    get_reliability_config as get_network_reliability_config,
+)
+
+# Dashboard Integration (builds on existing dashboard infrastructure)
+# Load Testing Infrastructure (comprehensive testing with regression detection)
+# Resource Management (consolidated: memory + CPU + network resources)
+from .resource_manager import (
+    CPUManager,
+    MemoryManager,
+    NetworkResourceManager,
+    ResourceAllocation,
+    ResourceLimiter,
+    ResourceManager,
+    ResourceManagerConfig,
+    ResourceMetrics,
+    ResourceState,
+    ResourceType,
+    create_resource_manager,
+)
 
 # Version information
 __version__ = "2.1.0"

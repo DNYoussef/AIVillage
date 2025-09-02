@@ -27,13 +27,13 @@ Key Features:
 """
 
 import asyncio
-import logging
-import time
-import statistics
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any
 from enum import Enum
+import logging
+import statistics
+import time
+from typing import Any
 
 # Import archaeological enhancements
 try:
@@ -217,7 +217,7 @@ class NetworkOptimizerConfig:
 
     # Protocol selection
     enable_auto_protocol_selection: bool = True
-    preferred_protocols: List[NetworkProtocol] = field(
+    preferred_protocols: list[NetworkProtocol] = field(
         default_factory=lambda: [NetworkProtocol.LIBP2P, NetworkProtocol.QUIC, NetworkProtocol.TCP]
     )
 
@@ -275,7 +275,7 @@ class ProtocolSelector:
                 logger.warning(f"NAT traversal optimizer initialization failed: {e}")
 
     async def select_optimal_protocol(
-        self, destination: str, qos_requirement: QualityOfService, context: Optional[Dict[str, Any]] = None
+        self, destination: str, qos_requirement: QualityOfService, context: dict[str, Any] | None = None
     ) -> NetworkProtocol:
         """Select optimal protocol based on conditions and requirements."""
         try:
@@ -354,7 +354,7 @@ class ProtocolSelector:
         destination: str,
         qos_requirement: QualityOfService,
         network_condition: NetworkCondition,
-        nat_info: Optional[Dict[str, Any]],
+        nat_info: dict[str, Any] | None,
     ) -> NetworkProtocol:
         """Evaluate protocol options based on all factors."""
 
@@ -572,7 +572,7 @@ class BandwidthManager:
         self.emergency_mode = False
         logger.info("Emergency bandwidth mode deactivated - utilization normalized")
 
-    def get_bandwidth_stats(self) -> Dict[str, Any]:
+    def get_bandwidth_stats(self) -> dict[str, Any]:
         """Get current bandwidth utilization statistics."""
         return {
             "total_allocated": self.total_allocated_bandwidth,
@@ -596,7 +596,7 @@ class LatencyOptimizer:
         # Archaeological Enhancement: Predictive routing based on distributed processing patterns
         self.route_predictor = RoutePredictor()
 
-    async def optimize_latency(self, source: str, destination: str, current_latency: float) -> Dict[str, Any]:
+    async def optimize_latency(self, source: str, destination: str, current_latency: float) -> dict[str, Any]:
         """Optimize latency through various techniques."""
         try:
             optimization_result = {
@@ -663,7 +663,7 @@ class LatencyOptimizer:
                 "error": str(e),
             }
 
-    async def _optimize_route(self, source: str, destination: str) -> Optional[Dict[str, Any]]:
+    async def _optimize_route(self, source: str, destination: str) -> dict[str, Any] | None:
         """Optimize network route between source and destination."""
         route_key = f"{source}:{destination}"
 
@@ -707,7 +707,7 @@ class LatencyOptimizer:
 
         return None
 
-    async def _discover_alternative_routes(self, source: str, destination: str) -> List[Dict[str, Any]]:
+    async def _discover_alternative_routes(self, source: str, destination: str) -> list[dict[str, Any]]:
         """Discover alternative network routes."""
         # Simplified implementation - would use actual network topology discovery
         alternatives = []
@@ -725,7 +725,7 @@ class LatencyOptimizer:
 
         return alternatives
 
-    async def _estimate_route_latency(self, route: Dict[str, Any]) -> float:
+    async def _estimate_route_latency(self, route: dict[str, Any]) -> float:
         """Estimate latency for a given route."""
         # Simplified estimation based on route type and distance
         base_latency = 10.0  # Base network latency
@@ -752,7 +752,7 @@ class LatencyOptimizer:
 
         return avg_latency > self.config.target_latency_ms * 1.5
 
-    async def _apply_protocol_optimizations(self, current_latency: float) -> Optional[Dict[str, Any]]:
+    async def _apply_protocol_optimizations(self, current_latency: float) -> dict[str, Any] | None:
         """Apply protocol-level latency optimizations."""
         optimizations = {"techniques": [], "improvement_factor": 1.0}
 
@@ -779,7 +779,7 @@ class RoutePredictor:
 
     async def predict_optimal_route(
         self, source: str, destination: str, latency_history: deque
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Predict optimal route based on historical patterns."""
         try:
             if len(latency_history) < 20:  # Need sufficient history
@@ -809,7 +809,7 @@ class RoutePredictor:
             logger.error(f"Route prediction failed: {e}")
             return None
 
-    def _analyze_latency_trend(self, latencies: List[float]) -> str:
+    def _analyze_latency_trend(self, latencies: list[float]) -> str:
         """Analyze trend in latency measurements."""
         if len(latencies) < 5:
             return "insufficient_data"
@@ -828,7 +828,7 @@ class RoutePredictor:
         else:
             return "stable"
 
-    async def _predict_for_time_period(self, route_key: str, hour: int, trend: str) -> Optional[Dict[str, Any]]:
+    async def _predict_for_time_period(self, route_key: str, hour: int, trend: str) -> dict[str, Any] | None:
         """Predict optimal route for specific time period."""
         # Simplified predictive logic - would be enhanced with ML models
 
@@ -894,7 +894,7 @@ class QosManager:
 
     async def _create_qos_policy(
         self, qos_requirement: QualityOfService, protocol: NetworkProtocol
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Create QoS policy based on requirements."""
 
         policy = {
@@ -950,7 +950,7 @@ class QosManager:
 
         return policy
 
-    async def _apply_multiplexer_qos(self, connection_id: str, policy: Dict[str, Any]):
+    async def _apply_multiplexer_qos(self, connection_id: str, policy: dict[str, Any]):
         """Apply QoS policy to protocol multiplexer."""
         if not self.multiplexer:
             return
@@ -962,7 +962,7 @@ class QosManager:
         # This is a simplified implementation
         logger.debug(f"Applied multiplexer QoS for {connection_id}: priority {stream_priority}")
 
-    async def monitor_qos_compliance(self, connection_id: str, metrics: NetworkMetrics) -> Dict[str, Any]:
+    async def monitor_qos_compliance(self, connection_id: str, metrics: NetworkMetrics) -> dict[str, Any]:
         """Monitor QoS compliance for connection."""
         if connection_id not in self.qos_policies:
             return {"compliant": True, "violations": []}
@@ -1014,7 +1014,7 @@ class QosManager:
 class NetworkOptimizer:
     """Archaeological Enhancement: Main network optimization orchestrator with NAT traversal and protocol multiplexing."""
 
-    def __init__(self, config: Optional[NetworkOptimizerConfig] = None):
+    def __init__(self, config: NetworkOptimizerConfig | None = None):
         self.config = config or NetworkOptimizerConfig()
 
         # Initialize components with archaeological enhancements
@@ -1099,8 +1099,8 @@ class NetworkOptimizer:
         connection_id: str,
         destination: str,
         qos_requirement: QualityOfService,
-        current_metrics: Optional[NetworkMetrics] = None,
-    ) -> Dict[str, Any]:
+        current_metrics: NetworkMetrics | None = None,
+    ) -> dict[str, Any]:
         """Comprehensive connection optimization."""
         try:
             optimization_start = time.time()
@@ -1205,8 +1205,8 @@ class NetworkOptimizer:
         return mapping.get(qos_requirement, StreamPriority.NORMAL)
 
     async def _calculate_improvement(
-        self, baseline_metrics: NetworkMetrics, optimization_result: Dict[str, Any]
-    ) -> Dict[str, float]:
+        self, baseline_metrics: NetworkMetrics, optimization_result: dict[str, Any]
+    ) -> dict[str, float]:
         """Calculate expected performance improvement."""
         improvement = {}
 
@@ -1242,8 +1242,8 @@ class NetworkOptimizer:
         return improvement
 
     async def _generate_optimization_recommendations(
-        self, connection_id: str, optimization_result: Dict[str, Any]
-    ) -> List[str]:
+        self, connection_id: str, optimization_result: dict[str, Any]
+    ) -> list[str]:
         """Generate optimization recommendations."""
         recommendations = []
 
@@ -1281,7 +1281,7 @@ class NetworkOptimizer:
 
     async def optimize_connection_with_nat_traversal(
         self, connection_id: str, destination: str, qos_requirement: QualityOfService
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Enhanced connection optimization with NAT traversal integration."""
         try:
             # First perform NAT discovery if not cached
@@ -1305,7 +1305,7 @@ class NetworkOptimizer:
             # Fallback to standard optimization
             return await self.optimize_connection(connection_id, destination, qos_requirement)
 
-    async def _discover_nat_configuration(self, destination: str) -> Optional[Dict[str, Any]]:
+    async def _discover_nat_configuration(self, destination: str) -> dict[str, Any] | None:
         """Discover NAT configuration for destination."""
         if destination in self.nat_discovery_cache:
             cached_result = self.nat_discovery_cache[destination]
@@ -1339,8 +1339,8 @@ class NetworkOptimizer:
             return None
 
     async def _apply_nat_traversal_optimization(
-        self, connection_id: str, destination: str, nat_info: Dict[str, Any], base_optimization: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, connection_id: str, destination: str, nat_info: dict[str, Any], base_optimization: dict[str, Any]
+    ) -> dict[str, Any]:
         """Apply NAT traversal optimization based on discovered configuration."""
         try:
             nat_type = nat_info.get("nat_type", NATType.UNKNOWN)
@@ -1426,7 +1426,7 @@ class NetworkOptimizer:
 
     async def create_optimized_stream(
         self, connection_id: str, stream_type: StreamType, priority: StreamPriority, qos_requirement: QualityOfService
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create optimized stream using protocol multiplexer."""
         if not self.protocol_multiplexer:
             return {"error": "Protocol multiplexer not available"}
@@ -1463,7 +1463,7 @@ class NetworkOptimizer:
             logger.error(f"Stream creation failed: {e}")
             return {"error": str(e)}
 
-    async def get_multiplexer_statistics(self) -> Dict[str, Any]:
+    async def get_multiplexer_statistics(self) -> dict[str, Any]:
         """Get protocol multiplexer performance statistics."""
         if not self.protocol_multiplexer:
             return {"error": "Protocol multiplexer not available"}
@@ -1575,7 +1575,7 @@ class NetworkOptimizer:
                 logger.error(f"Optimization adjustment error: {e}")
                 await asyncio.sleep(10)
 
-    async def _collect_system_metrics(self) -> Dict[str, Any]:
+    async def _collect_system_metrics(self) -> dict[str, Any]:
         """Collect current system performance metrics."""
         return {
             "timestamp": time.time(),
@@ -1643,7 +1643,7 @@ class NetworkOptimizer:
         self.protocol_selector.current_selections.clear()
         logger.info("Forced protocol re-evaluation - cleared performance cache")
 
-    async def _review_optimization_effectiveness(self, connection_id: str, optimization: Dict[str, Any]):
+    async def _review_optimization_effectiveness(self, connection_id: str, optimization: dict[str, Any]):
         """Review and adjust optimization effectiveness."""
         # Simplified effectiveness review - would use actual performance metrics
         age = time.time() - optimization["timestamp"]
@@ -1670,7 +1670,7 @@ class NetworkOptimizer:
         except ImportError:
             return 25.0  # Default assumption
 
-    async def get_system_status(self) -> Dict[str, Any]:
+    async def get_system_status(self) -> dict[str, Any]:
         """Get comprehensive system status."""
         return {
             "system_health": self.system_health,
@@ -1714,7 +1714,7 @@ class NetworkOptimizer:
 # Convenience factory functions
 
 
-async def create_network_optimizer(config: Optional[NetworkOptimizerConfig] = None) -> NetworkOptimizer:
+async def create_network_optimizer(config: NetworkOptimizerConfig | None = None) -> NetworkOptimizer:
     """
     Factory function to create and initialize a NetworkOptimizer with archaeological enhancements.
 
@@ -1812,7 +1812,7 @@ class SecurityContext:
     require_traffic_analysis_resistance: bool = False
     max_handshake_time_ms: float = 5000.0
     enable_quantum_resistance: bool = False
-    custom_ech_config: Optional[bytes] = None
+    custom_ech_config: bytes | None = None
     noise_protocol_variant: str = "XK"  # XK, XX, IK, etc.
 
     def __post_init__(self):
@@ -1842,10 +1842,10 @@ class EnhancedSecurityManager:
 
     def __init__(self, config: NetworkOptimizerConfig):
         self.config = config
-        self.ech_configs: Dict[str, bytes] = {}  # Destination -> ECH config
-        self.noise_sessions: Dict[str, Any] = {}  # Session management
-        self.security_metrics: Dict[str, Any] = defaultdict(dict)
-        self.handshake_cache: Dict[str, Any] = {}  # Handshake optimization cache
+        self.ech_configs: dict[str, bytes] = {}  # Destination -> ECH config
+        self.noise_sessions: dict[str, Any] = {}  # Session management
+        self.security_metrics: dict[str, Any] = defaultdict(dict)
+        self.handshake_cache: dict[str, Any] = {}  # Handshake optimization cache
 
         # Initialize security capabilities
         self.has_ech_support = HAS_ECH_SUPPORT
@@ -1854,8 +1854,8 @@ class EnhancedSecurityManager:
         logger.info(f"Security capabilities - ECH: {self.has_ech_support}, Noise: {self.has_noise_support}")
 
     async def optimize_security_protocol(
-        self, destination: str, security_context: SecurityContext, network_metrics: Optional[NetworkMetrics] = None
-    ) -> Dict[str, Any]:
+        self, destination: str, security_context: SecurityContext, network_metrics: NetworkMetrics | None = None
+    ) -> dict[str, Any]:
         """
         Select and optimize security protocol based on requirements and network conditions.
 
@@ -1934,7 +1934,7 @@ class EnhancedSecurityManager:
             }
 
     async def _select_optimal_security_protocol(
-        self, destination: str, context: SecurityContext, metrics: Optional[NetworkMetrics] = None
+        self, destination: str, context: SecurityContext, metrics: NetworkMetrics | None = None
     ) -> SecurityProtocol:
         """Select optimal security protocol based on capabilities and requirements."""
 
@@ -1968,7 +1968,7 @@ class EnhancedSecurityManager:
         # Default to requested protocol if supported
         return context.protocol
 
-    async def _optimize_ech_tls(self, destination: str, context: SecurityContext) -> Dict[str, Any]:
+    async def _optimize_ech_tls(self, destination: str, context: SecurityContext) -> dict[str, Any]:
         """Optimize ECH (Encrypted Client Hello) TLS connection."""
         result = {"ech_config": None, "sni_protected": False, "handshake_optimized": False}
 
@@ -1998,7 +1998,7 @@ class EnhancedSecurityManager:
             logger.error(f"ECH optimization failed for {destination}: {e}")
             return {"error": str(e)}
 
-    async def _optimize_noise_xk(self, destination: str, context: SecurityContext) -> Dict[str, Any]:
+    async def _optimize_noise_xk(self, destination: str, context: SecurityContext) -> dict[str, Any]:
         """Optimize Noise XK protocol connection."""
         result = {"noise_session": None, "forward_secrecy": True, "traffic_analysis_resistant": True}
 
@@ -2030,7 +2030,7 @@ class EnhancedSecurityManager:
             logger.error(f"Noise XK optimization failed for {destination}: {e}")
             return {"error": str(e)}
 
-    async def _optimize_hybrid_security(self, destination: str, context: SecurityContext) -> Dict[str, Any]:
+    async def _optimize_hybrid_security(self, destination: str, context: SecurityContext) -> dict[str, Any]:
         """Optimize hybrid ECH + Noise security protocol."""
         result = {"hybrid_mode": "ech_outer_noise_inner", "layers": []}
 
@@ -2060,7 +2060,7 @@ class EnhancedSecurityManager:
             logger.error(f"Hybrid security optimization failed for {destination}: {e}")
             return {"error": str(e)}
 
-    async def _optimize_tls13(self, destination: str, context: SecurityContext) -> Dict[str, Any]:
+    async def _optimize_tls13(self, destination: str, context: SecurityContext) -> dict[str, Any]:
         """Optimize standard TLS 1.3 connection."""
         return {
             "protocol": "tls_1.3",
@@ -2071,7 +2071,7 @@ class EnhancedSecurityManager:
             "quantum_resistance": False,
         }
 
-    async def _fetch_ech_config(self, destination: str) -> Optional[bytes]:
+    async def _fetch_ech_config(self, destination: str) -> bytes | None:
         """Fetch ECH configuration for destination (placeholder implementation)."""
         # In production, this would fetch ECH configs from DNS or other sources
         # For now, return a mock configuration
@@ -2089,7 +2089,7 @@ class EnhancedSecurityManager:
         else:
             return "basic"
 
-    def get_security_metrics(self, destination: Optional[str] = None) -> Dict[str, Any]:
+    def get_security_metrics(self, destination: str | None = None) -> dict[str, Any]:
         """Get security optimization metrics."""
         if destination:
             return self.security_metrics.get(destination, {})
@@ -2120,15 +2120,15 @@ class SecurityEnhancedNetworkOptimizer(NetworkOptimizer):
     with ECH and Noise Protocol support for enhanced privacy and performance.
     """
 
-    def __init__(self, config: Optional[NetworkOptimizerConfig] = None):
+    def __init__(self, config: NetworkOptimizerConfig | None = None):
         super().__init__(config)
 
         # Initialize security manager
         self.security_manager = EnhancedSecurityManager(self.config)
 
         # Security-specific state
-        self.security_optimizations: Dict[str, Any] = {}
-        self.security_policies: Dict[str, SecurityContext] = {}
+        self.security_optimizations: dict[str, Any] = {}
+        self.security_policies: dict[str, SecurityContext] = {}
 
     async def optimize_secure_connection(
         self,
@@ -2136,8 +2136,8 @@ class SecurityEnhancedNetworkOptimizer(NetworkOptimizer):
         destination: str,
         qos_requirement: QualityOfService,
         security_context: SecurityContext,
-        current_metrics: Optional[NetworkMetrics] = None,
-    ) -> Dict[str, Any]:
+        current_metrics: NetworkMetrics | None = None,
+    ) -> dict[str, Any]:
         """
         Comprehensive secure connection optimization with ECH + Noise Protocol support.
 
@@ -2215,7 +2215,7 @@ class SecurityEnhancedNetworkOptimizer(NetworkOptimizer):
             max_handshake_time_ms=max_handshake_time_ms,
         )
 
-    def get_security_status(self) -> Dict[str, Any]:
+    def get_security_status(self) -> dict[str, Any]:
         """Get comprehensive security optimization status."""
         return {
             "ech_support": self.security_manager.has_ech_support,
@@ -2237,7 +2237,7 @@ class SecurityEnhancedNetworkOptimizer(NetworkOptimizer):
 
 # Factory Functions for Security-Enhanced Optimization
 async def create_security_enhanced_optimizer(
-    config: Optional[NetworkOptimizerConfig] = None,
+    config: NetworkOptimizerConfig | None = None,
 ) -> SecurityEnhancedNetworkOptimizer:
     """Create security-enhanced network optimizer with ECH + Noise Protocol support."""
     if config is None:

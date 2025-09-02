@@ -3,15 +3,15 @@ Constitutional Merkle Tree Audit System
 Provides tamper-proof audit trails for constitutional accountability
 """
 
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import asdict, dataclass
+from enum import Enum
 import hashlib
 import json
-import time
-from typing import List, Dict, Optional, Any, Union, Tuple
-from dataclasses import dataclass, asdict
-from enum import Enum
-from concurrent.futures import ThreadPoolExecutor
 import logging
 from pathlib import Path
+import time
+from typing import Any, Optional, Union
 
 
 class AuditLevel(Enum):
@@ -42,13 +42,13 @@ class ConstitutionalAuditEntry:
     timestamp: float
     entry_id: str
     audit_level: AuditLevel
-    violation_type: Optional[ConstitutionalViolationType]
+    violation_type: ConstitutionalViolationType | None
     decision_hash: str
     user_tier: str
     constitutional_rationale: str
     evidence_hash: str
-    governance_context: Dict[str, Any]
-    privacy_preserving_data: Optional[str]
+    governance_context: dict[str, Any]
+    privacy_preserving_data: str | None
     public_summary: str
 
     def to_hash_input(self) -> str:
@@ -95,7 +95,7 @@ class MerkleNode:
             else:
                 self.hash = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert node to dictionary for serialization"""
         return {
             "hash": self.hash,
@@ -117,10 +117,10 @@ class ConstitutionalMerkleAudit:
         self.storage_path = Path(storage_path)
         self.storage_path.mkdir(exist_ok=True)
 
-        self.audit_entries: List[ConstitutionalAuditEntry] = []
-        self.merkle_trees: Dict[str, MerkleNode] = {}  # Date-based trees
-        self.current_tree: Optional[MerkleNode] = None
-        self.tree_roots: List[Tuple[str, str]] = []  # (date, root_hash)
+        self.audit_entries: list[ConstitutionalAuditEntry] = []
+        self.merkle_trees: dict[str, MerkleNode] = {}  # Date-based trees
+        self.current_tree: MerkleNode | None = None
+        self.tree_roots: list[tuple[str, str]] = []  # (date, root_hash)
 
         self.logger = logging.getLogger(__name__)
         self.executor = ThreadPoolExecutor(max_workers=4)
@@ -154,7 +154,7 @@ class ConstitutionalMerkleAudit:
         try:
             log_files = list(self.storage_path.glob("audit_*.json"))
             for log_file in sorted(log_files):
-                with open(log_file, "r") as f:
+                with open(log_file) as f:
                     data = json.load(f)
                     for entry_data in data.get("entries", []):
                         entry = ConstitutionalAuditEntry(**entry_data)
@@ -184,7 +184,7 @@ class ConstitutionalMerkleAudit:
         self.merkle_trees[date] = None
         self.logger.info(f"Created new daily audit tree for {date}")
 
-    def _build_merkle_tree_for_date(self, date: str, entries: List[ConstitutionalAuditEntry]):
+    def _build_merkle_tree_for_date(self, date: str, entries: list[ConstitutionalAuditEntry]):
         """Build Merkle tree for specific date"""
         if not entries:
             return
@@ -203,7 +203,7 @@ class ConstitutionalMerkleAudit:
 
         self.logger.info(f"Built Merkle tree for {date} with {len(entries)} entries")
 
-    def _build_merkle_tree(self, nodes: List[MerkleNode]) -> MerkleNode:
+    def _build_merkle_tree(self, nodes: list[MerkleNode]) -> MerkleNode:
         """Build Merkle tree from leaf nodes"""
         if len(nodes) == 1:
             return nodes[0]
@@ -221,10 +221,10 @@ class ConstitutionalMerkleAudit:
 
     async def log_constitutional_decision(
         self,
-        decision_data: Dict[str, Any],
+        decision_data: dict[str, Any],
         audit_level: AuditLevel,
         user_tier: str,
-        violation_type: Optional[ConstitutionalViolationType] = None,
+        violation_type: ConstitutionalViolationType | None = None,
     ) -> str:
         """
         Log constitutional decision with appropriate transparency level
@@ -279,8 +279,8 @@ class ConstitutionalMerkleAudit:
         return entry_id
 
     async def _create_privacy_preserving_data(
-        self, decision_data: Dict[str, Any], audit_level: AuditLevel, user_tier: str
-    ) -> Optional[str]:
+        self, decision_data: dict[str, Any], audit_level: AuditLevel, user_tier: str
+    ) -> str | None:
         """Create privacy-preserving audit data based on tier"""
         if audit_level == AuditLevel.BRONZE:
             # Full transparency for Bronze tier
@@ -305,7 +305,7 @@ class ConstitutionalMerkleAudit:
 
         return None
 
-    async def _generate_zk_proof(self, decision_data: Dict[str, Any], user_tier: str) -> str:
+    async def _generate_zk_proof(self, decision_data: dict[str, Any], user_tier: str) -> str:
         """Generate zero-knowledge proof for privacy-preserving transparency"""
         # Simplified ZK proof generation (in production, use proper ZK libraries)
         proof_data = {
@@ -322,9 +322,9 @@ class ConstitutionalMerkleAudit:
 
     def _generate_public_summary(
         self,
-        decision_data: Dict[str, Any],
+        decision_data: dict[str, Any],
         audit_level: AuditLevel,
-        violation_type: Optional[ConstitutionalViolationType],
+        violation_type: ConstitutionalViolationType | None,
     ) -> str:
         """Generate public summary based on transparency level"""
         if audit_level == AuditLevel.BRONZE:
@@ -389,7 +389,7 @@ class ConstitutionalMerkleAudit:
         # Load existing data
         existing_data = {"entries": [], "tree_info": {}}
         if log_file.exists():
-            with open(log_file, "r") as f:
+            with open(log_file) as f:
                 existing_data = json.load(f)
 
         # Add new entry
@@ -409,7 +409,7 @@ class ConstitutionalMerkleAudit:
         with open(log_file, "w") as f:
             json.dump(existing_data, f, indent=2)
 
-    def verify_audit_integrity(self, entry_id: str) -> Dict[str, Any]:
+    def verify_audit_integrity(self, entry_id: str) -> dict[str, Any]:
         """Verify integrity of specific audit entry"""
         entry = next((e for e in self.audit_entries if e.entry_id == entry_id), None)
         if not entry:
@@ -438,13 +438,13 @@ class ConstitutionalMerkleAudit:
             "verification_time": time.time(),
         }
 
-    def _generate_merkle_proof(self, entry: ConstitutionalAuditEntry, tree: MerkleNode) -> List[str]:
+    def _generate_merkle_proof(self, entry: ConstitutionalAuditEntry, tree: MerkleNode) -> list[str]:
         """Generate Merkle proof for specific entry"""
         # Simplified proof generation (in production, implement full Merkle proof)
         proof = []
         entry_hash = hashlib.sha256(entry.to_hash_input().encode("utf-8")).hexdigest()
 
-        def find_path(node: MerkleNode, target_hash: str, path: List[str]) -> bool:
+        def find_path(node: MerkleNode, target_hash: str, path: list[str]) -> bool:
             if node.is_leaf:
                 return node.hash == target_hash
 
@@ -463,7 +463,7 @@ class ConstitutionalMerkleAudit:
         find_path(tree, entry_hash, proof)
         return proof
 
-    def _verify_merkle_proof(self, entry: ConstitutionalAuditEntry, proof: List[str], root_hash: str) -> bool:
+    def _verify_merkle_proof(self, entry: ConstitutionalAuditEntry, proof: list[str], root_hash: str) -> bool:
         """Verify Merkle proof for entry"""
         current_hash = hashlib.sha256(entry.to_hash_input().encode("utf-8")).hexdigest()
 
@@ -473,7 +473,7 @@ class ConstitutionalMerkleAudit:
 
         return current_hash == root_hash
 
-    def get_public_audit_summary(self, date_range: Optional[Tuple[str, str]] = None) -> Dict[str, Any]:
+    def get_public_audit_summary(self, date_range: tuple[str, str] | None = None) -> dict[str, Any]:
         """Get public summary of constitutional audit activity"""
         if date_range:
             start_date, end_date = date_range
@@ -520,7 +520,7 @@ class ConstitutionalMerkleAudit:
             "audit_integrity": "verified",
         }
 
-    def get_constitutional_compliance_report(self) -> Dict[str, Any]:
+    def get_constitutional_compliance_report(self) -> dict[str, Any]:
         """Generate comprehensive constitutional compliance report"""
         total_decisions = self.compliance_metrics["total_decisions"]
         violations = self.compliance_metrics["violations_detected"]
@@ -565,8 +565,8 @@ class ConstitutionalMerkleAudit:
         }
 
     async def export_audit_logs(
-        self, audit_level: AuditLevel, date_range: Optional[Tuple[str, str]] = None, include_proofs: bool = True
-    ) -> Dict[str, Any]:
+        self, audit_level: AuditLevel, date_range: tuple[str, str] | None = None, include_proofs: bool = True
+    ) -> dict[str, Any]:
         """Export audit logs with appropriate transparency level"""
         if date_range:
             start_date, end_date = date_range

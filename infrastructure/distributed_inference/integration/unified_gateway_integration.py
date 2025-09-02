@@ -10,23 +10,21 @@ This module provides seamless integration between the distributed inference syst
 and the existing enhanced unified API gateway, maintaining full backward compatibility.
 """
 
-import asyncio
-import logging
-from typing import Dict, List, Optional, Any
 from dataclasses import asdict
-from fastapi import APIRouter, HTTPException, BackgroundTasks
-from fastapi.responses import StreamingResponse
 import json
+import logging
 
-from ..core.distributed_inference_manager import DistributedInferenceManager
+from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi.responses import StreamingResponse
+
 from ..api.distributed_inference_endpoints import (
     InferenceRequest,
     InferenceResponse,
     NodeStatusResponse,
-    SystemHealthResponse
+    SystemHealthResponse,
 )
+from ..core.distributed_inference_manager import DistributedInferenceManager
 from ..utils.node_discovery import get_node_discovery_service
-
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +95,7 @@ class UnifiedGatewayIntegration:
                 raise HTTPException(status_code=500, detail=str(e))
         
         @self.router.post("/inference/batch")
-        async def batch_distributed_inference(requests: List[InferenceRequest]):
+        async def batch_distributed_inference(requests: list[InferenceRequest]):
             """
             Execute batch inference across distributed nodes.
             
@@ -146,7 +144,7 @@ class UnifiedGatewayIntegration:
         async def streaming_distributed_inference(
             model: str,
             input_data: str,
-            parameters: Optional[str] = None
+            parameters: str | None = None
         ):
             """
             Stream inference results from distributed nodes.
@@ -180,7 +178,7 @@ class UnifiedGatewayIntegration:
                 logger.error(f"Streaming inference failed: {e}")
                 raise HTTPException(status_code=500, detail=str(e))
         
-        @self.router.get("/nodes", response_model=List[NodeStatusResponse])
+        @self.router.get("/nodes", response_model=list[NodeStatusResponse])
         async def get_distributed_nodes():
             """
             Get status of all discovered inference nodes.
@@ -373,7 +371,7 @@ class UnifiedGatewayIntegration:
 
 async def integrate_distributed_inference_with_gateway(
     gateway_app,
-    inference_manager: Optional[DistributedInferenceManager] = None,
+    inference_manager: DistributedInferenceManager | None = None,
     enable_compatibility_layer: bool = True
 ) -> UnifiedGatewayIntegration:
     """

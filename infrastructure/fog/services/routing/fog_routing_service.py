@@ -9,23 +9,23 @@ Manages onion routing and privacy layer including:
 """
 
 import asyncio
-from typing import Any, Dict, Optional
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from ..interfaces.base_service import BaseFogService, ServiceStatus, ServiceHealthCheck
-from ...privacy.onion_routing import OnionRouter, NodeType
-from ...integration.fog_onion_coordinator import FogOnionCoordinator, PrivacyLevel, PrivacyAwareTask
+from ...integration.fog_onion_coordinator import FogOnionCoordinator, PrivacyAwareTask, PrivacyLevel
+from ...privacy.onion_routing import NodeType, OnionRouter
+from ..interfaces.base_service import BaseFogService, ServiceHealthCheck, ServiceStatus
 
 
 class FogRoutingService(BaseFogService):
     """Service for managing fog computing routing and privacy"""
 
-    def __init__(self, service_name: str, config: Dict[str, Any], event_bus):
+    def __init__(self, service_name: str, config: dict[str, Any], event_bus):
         super().__init__(service_name, config, event_bus)
 
         # Core components
-        self.onion_router: Optional[OnionRouter] = None
-        self.onion_coordinator: Optional[FogOnionCoordinator] = None
+        self.onion_router: OnionRouter | None = None
+        self.onion_coordinator: FogOnionCoordinator | None = None
 
         # Routing configuration
         self.onion_config = config.get("onion", {})
@@ -155,7 +155,7 @@ class FogRoutingService(BaseFogService):
                 metrics=self.metrics.copy(),
             )
 
-    async def create_hidden_service(self, ports: Dict[int, int], service_type: str = "web") -> Optional[str]:
+    async def create_hidden_service(self, ports: dict[int, int], service_type: str = "web") -> str | None:
         """Create a .fog hidden service"""
         try:
             if not self.onion_router:
@@ -188,7 +188,7 @@ class FogRoutingService(BaseFogService):
             self.logger.error(f"Failed to create hidden service: {e}")
             return None
 
-    async def submit_privacy_aware_task(self, task_data: Dict[str, Any]) -> bool:
+    async def submit_privacy_aware_task(self, task_data: dict[str, Any]) -> bool:
         """Submit a privacy-aware task for processing"""
         try:
             if not self.onion_coordinator:
@@ -252,7 +252,7 @@ class FogRoutingService(BaseFogService):
             self.logger.error(f"Failed to send private message: {e}")
             return False
 
-    async def get_routing_stats(self) -> Dict[str, Any]:
+    async def get_routing_stats(self) -> dict[str, Any]:
         """Get comprehensive routing statistics"""
         try:
             stats = self.metrics.copy()

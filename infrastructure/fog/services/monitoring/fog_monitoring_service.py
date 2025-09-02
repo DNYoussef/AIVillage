@@ -9,18 +9,19 @@ Manages system monitoring and health tracking including:
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional
-from datetime import datetime, UTC
-import psutil
+from datetime import UTC, datetime
 import json
+from typing import Any
 
-from ..interfaces.base_service import BaseFogService, ServiceStatus, ServiceHealthCheck
+import psutil
+
+from ..interfaces.base_service import BaseFogService, ServiceHealthCheck, ServiceStatus
 
 
 class FogMonitoringService(BaseFogService):
     """Service for monitoring fog computing system health and performance"""
 
-    def __init__(self, service_name: str, config: Dict[str, Any], event_bus):
+    def __init__(self, service_name: str, config: dict[str, Any], event_bus):
         super().__init__(service_name, config, event_bus)
 
         # Monitoring configuration
@@ -28,7 +29,7 @@ class FogMonitoringService(BaseFogService):
         self.node_id = config.get("node_id", "default")
 
         # Tracked services
-        self.tracked_services: Dict[str, Dict[str, Any]] = {}
+        self.tracked_services: dict[str, dict[str, Any]] = {}
         self.alert_thresholds = self.monitoring_config.get(
             "alert_thresholds",
             {
@@ -54,7 +55,7 @@ class FogMonitoringService(BaseFogService):
         }
 
         # Alert history
-        self.alert_history: List[Dict[str, Any]] = []
+        self.alert_history: list[dict[str, Any]] = []
         self.max_alert_history = 1000
 
     async def initialize(self) -> bool:
@@ -140,7 +141,7 @@ class FogMonitoringService(BaseFogService):
             )
 
     async def register_service_for_monitoring(
-        self, service_name: str, service_type: str, monitoring_config: Optional[Dict[str, Any]] = None
+        self, service_name: str, service_type: str, monitoring_config: dict[str, Any] | None = None
     ):
         """Register a service for monitoring"""
         try:
@@ -175,8 +176,8 @@ class FogMonitoringService(BaseFogService):
         alert_type: str,
         severity: str,
         message: str,
-        source_service: Optional[str] = None,
-        additional_data: Optional[Dict[str, Any]] = None,
+        source_service: str | None = None,
+        additional_data: dict[str, Any] | None = None,
     ):
         """Create an alert"""
         try:
@@ -215,7 +216,7 @@ class FogMonitoringService(BaseFogService):
         except Exception as e:
             self.logger.error(f"Failed to create alert: {e}")
 
-    async def get_monitoring_stats(self) -> Dict[str, Any]:
+    async def get_monitoring_stats(self) -> dict[str, Any]:
         """Get comprehensive monitoring statistics"""
         try:
             # Get current system metrics
@@ -264,7 +265,7 @@ class FogMonitoringService(BaseFogService):
             self.logger.error(f"Failed to get monitoring stats: {e}")
             return self.metrics.copy()
 
-    async def get_service_health_summary(self) -> Dict[str, Any]:
+    async def get_service_health_summary(self) -> dict[str, Any]:
         """Get health summary for all tracked services"""
         try:
             summary = {"healthy_services": 0, "unhealthy_services": 0, "unknown_services": 0, "service_details": []}
@@ -356,7 +357,7 @@ class FogMonitoringService(BaseFogService):
             error_data,
         )
 
-    async def _handle_critical_alert(self, alert: Dict[str, Any]):
+    async def _handle_critical_alert(self, alert: dict[str, Any]):
         """Handle critical alerts with immediate action"""
         try:
             # Log critical alert

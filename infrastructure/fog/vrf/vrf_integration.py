@@ -9,14 +9,15 @@ Integrates VRF-based neighbor selection with existing P2P mesh networking infras
 """
 
 import asyncio
+from collections.abc import Callable
 from dataclasses import dataclass
 import logging
-from typing import Any, Dict, List, Optional, Set, Callable
+from typing import Any
 
-from .vrf_neighbor_selection import VRFNeighborSelector, NodeInfo, VRFProof
-from ..integration.fog_coordinator import FogCoordinator
-from ...p2p.protocols.mesh_networking import TopologyManager, PeerMetrics
 from ...p2p.core.transport_manager import TransportManager, TransportType
+from ...p2p.protocols.mesh_networking import PeerMetrics, TopologyManager
+from ..integration.fog_coordinator import FogCoordinator
+from .vrf_neighbor_selection import NodeInfo, VRFNeighborSelector, VRFProof
 
 logger = logging.getLogger(__name__)
 
@@ -58,10 +59,10 @@ class VRFMeshIntegrator:
     def __init__(
         self,
         node_id: str,
-        fog_coordinator: Optional[FogCoordinator] = None,
-        transport_manager: Optional[TransportManager] = None,
-        topology_manager: Optional[TopologyManager] = None,
-        config: Optional[VRFNetworkConfig] = None,
+        fog_coordinator: FogCoordinator | None = None,
+        transport_manager: TransportManager | None = None,
+        topology_manager: TopologyManager | None = None,
+        config: VRFNetworkConfig | None = None,
         **kwargs,
     ):
         self.node_id = node_id
@@ -82,10 +83,10 @@ class VRFMeshIntegrator:
         )
 
         # Network state
-        self.active_connections: Dict[str, Any] = {}
-        self.pending_connections: Set[str] = set()
-        self.connection_handlers: List[Callable] = []
-        self.discovery_callbacks: List[Callable] = []
+        self.active_connections: dict[str, Any] = {}
+        self.pending_connections: set[str] = set()
+        self.connection_handlers: list[Callable] = []
+        self.discovery_callbacks: list[Callable] = []
 
         # Integration state
         self.peer_discovery_active = False
@@ -103,9 +104,9 @@ class VRFMeshIntegrator:
         }
 
         # Background tasks
-        self._discovery_task: Optional[asyncio.Task] = None
-        self._health_task: Optional[asyncio.Task] = None
-        self._topology_sync_task: Optional[asyncio.Task] = None
+        self._discovery_task: asyncio.Task | None = None
+        self._health_task: asyncio.Task | None = None
+        self._topology_sync_task: asyncio.Task | None = None
 
         logger.info(f"VRF mesh integrator initialized for node {node_id}")
 
@@ -166,7 +167,7 @@ class VRFMeshIntegrator:
 
         logger.info("VRF mesh integration stopped")
 
-    async def discover_peers(self) -> List[NodeInfo]:
+    async def discover_peers(self) -> list[NodeInfo]:
         """Discover peers in the network."""
         discovered_peers = []
 
@@ -241,7 +242,7 @@ class VRFMeshIntegrator:
             self.integration_metrics["integration_errors"] += 1
             return False
 
-    async def verify_peer_selection(self, peer_id: str, vrf_proof: VRFProof, claimed_neighbors: List[str]) -> bool:
+    async def verify_peer_selection(self, peer_id: str, vrf_proof: VRFProof, claimed_neighbors: list[str]) -> bool:
         """Verify another peer's neighbor selection."""
         try:
             result = await self.vrf_selector.verify_selection(peer_id, vrf_proof, claimed_neighbors)
@@ -323,7 +324,7 @@ class VRFMeshIntegrator:
         except Exception as e:
             logger.warning(f"Failed to initialize from existing topology: {e}")
 
-    async def _discover_via_quorum(self) -> List[NodeInfo]:
+    async def _discover_via_quorum(self) -> list[NodeInfo]:
         """Discover peers via quorum manager."""
         peers = []
 
@@ -350,7 +351,7 @@ class VRFMeshIntegrator:
 
         return peers
 
-    async def _discover_via_transport(self) -> List[NodeInfo]:
+    async def _discover_via_transport(self) -> list[NodeInfo]:
         """Discover peers via transport manager."""
         peers = []
 
@@ -370,7 +371,7 @@ class VRFMeshIntegrator:
 
         return peers
 
-    async def _discover_via_topology(self) -> List[NodeInfo]:
+    async def _discover_via_topology(self) -> list[NodeInfo]:
         """Discover peers via topology manager."""
         peers = []
 
@@ -395,7 +396,7 @@ class VRFMeshIntegrator:
 
         return peers
 
-    async def _establish_neighbor_connections(self, neighbors: List[str]) -> Dict[str, bool]:
+    async def _establish_neighbor_connections(self, neighbors: list[str]) -> dict[str, bool]:
         """Establish connections to VRF-selected neighbors."""
         connection_results = {}
 
@@ -458,7 +459,7 @@ class VRFMeshIntegrator:
             logger.error(f"Connection to {peer_id} failed: {e}")
             return False
 
-    async def _sync_with_topology_manager(self, selected_neighbors: List[str]):
+    async def _sync_with_topology_manager(self, selected_neighbors: list[str]):
         """Synchronize VRF selection with topology manager."""
         if not self.topology_manager:
             return
@@ -581,7 +582,7 @@ class VRFMeshIntegrator:
         """Register callback for peer discovery events."""
         self.discovery_callbacks.append(callback)
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get comprehensive integration status."""
         vrf_status = self.vrf_selector.get_status()
 

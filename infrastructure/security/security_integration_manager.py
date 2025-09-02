@@ -7,18 +7,18 @@ Provides unified security layer for the entire AIVillage ecosystem.
 """
 
 import asyncio
-import logging
-import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+import logging
+import time
+from typing import Any
 
+from .betanet_security_manager import BetaNetSecurityManager, ChannelType, SecurityLevel
+from .consensus_security_manager import ConsensusProtocol, ConsensusSecurityManager
 from .federated_auth_system import FederatedAuthenticationSystem, NodeRole
-from .secure_aggregation import SecureAggregationProtocol, AggregationMethod, PrivacyLevel
-from .betanet_security_manager import BetaNetSecurityManager, SecurityLevel, ChannelType
-from .consensus_security_manager import ConsensusSecurityManager, ConsensusProtocol
-from .threat_detection_system import ThreatDetectionSystem
 from .reputation_trust_system import ReputationTrustSystem, TrustLevel
+from .secure_aggregation import AggregationMethod, PrivacyLevel, SecureAggregationProtocol
+from .threat_detection_system import ThreatDetectionSystem
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +118,7 @@ class SecurityIntegrationManager:
     - Reputation Trust System
     """
 
-    def __init__(self, node_id: str, config: Optional[SecurityConfiguration] = None):
+    def __init__(self, node_id: str, config: SecurityConfiguration | None = None):
         """Initialize security integration manager."""
         self.node_id = node_id
         self.config = config or SecurityConfiguration()
@@ -142,12 +142,12 @@ class SecurityIntegrationManager:
 
         # Integration state
         self.security_metrics = SecurityMetrics()
-        self.active_integrations: Set[str] = set()
-        self.security_event_handlers: Dict[SecurityEvent, List[callable]] = {}
-        self.component_health: Dict[str, bool] = {}
+        self.active_integrations: set[str] = set()
+        self.security_event_handlers: dict[SecurityEvent, list[callable]] = {}
+        self.component_health: dict[str, bool] = {}
 
         # Background tasks
-        self.monitoring_tasks: List[asyncio.Task] = []
+        self.monitoring_tasks: list[asyncio.Task] = []
         self.started = False
 
         logger.info(f"Security Integration Manager initialized for node {node_id}")
@@ -208,9 +208,9 @@ class SecurityIntegrationManager:
         node_id: str,
         role: NodeRole,
         password: str,
-        capabilities: Optional[Dict[str, Any]] = None,
-        initial_trust: Optional[float] = None,
-    ) -> Tuple[bool, Optional[str]]:
+        capabilities: dict[str, Any] | None = None,
+        initial_trust: float | None = None,
+    ) -> tuple[bool, str | None]:
         """Register a new federated learning node with comprehensive security setup."""
 
         try:
@@ -242,8 +242,8 @@ class SecurityIntegrationManager:
             return False, None
 
     async def authenticate_federated_participant(
-        self, node_id: str, password: str, mfa_token: Optional[str] = None, context: Optional[Dict[str, Any]] = None
-    ) -> Tuple[bool, Optional[str], Optional[Dict[str, Any]]]:
+        self, node_id: str, password: str, mfa_token: str | None = None, context: dict[str, Any] | None = None
+    ) -> tuple[bool, str | None, dict[str, Any] | None]:
         """Authenticate a federated learning participant."""
 
         try:
@@ -300,10 +300,10 @@ class SecurityIntegrationManager:
     async def secure_federated_aggregation(
         self,
         aggregation_id: str,
-        participant_gradients: List[Dict[str, Any]],
-        aggregation_method: Optional[AggregationMethod] = None,
-        privacy_level: Optional[PrivacyLevel] = None,
-    ) -> Tuple[bool, Optional[Dict[str, Any]], Dict[str, Any]]:
+        participant_gradients: list[dict[str, Any]],
+        aggregation_method: AggregationMethod | None = None,
+        privacy_level: PrivacyLevel | None = None,
+    ) -> tuple[bool, dict[str, Any] | None, dict[str, Any]]:
         """Perform secure federated learning aggregation."""
 
         try:
@@ -373,7 +373,7 @@ class SecurityIntegrationManager:
         remote_node_id: str,
         channel_type: ChannelType = ChannelType.HTTP3_COVERT,
         security_level: SecurityLevel = SecurityLevel.HIGH,
-    ) -> Tuple[bool, Optional[str]]:
+    ) -> tuple[bool, str | None]:
         """Establish secure communication channel with remote node."""
 
         try:
@@ -406,8 +406,8 @@ class SecurityIntegrationManager:
             return False, None
 
     async def secure_consensus_round(
-        self, round_id: str, participants: List[str], proposal: Dict[str, Any]
-    ) -> Tuple[bool, Optional[Dict[str, Any]]]:
+        self, round_id: str, participants: list[str], proposal: dict[str, Any]
+    ) -> tuple[bool, dict[str, Any] | None]:
         """Execute a secure consensus round with Byzantine fault tolerance."""
 
         try:
@@ -482,7 +482,7 @@ class SecurityIntegrationManager:
             return False, None
 
     async def handle_security_incident(
-        self, incident_type: str, source_node: str, incident_data: Dict[str, Any]
+        self, incident_type: str, source_node: str, incident_data: dict[str, Any]
     ) -> bool:
         """Handle a security incident with integrated response."""
 
@@ -532,7 +532,7 @@ class SecurityIntegrationManager:
         """Set up cross-component event handlers."""
 
         # Trust update handler
-        async def handle_trust_update(event_data: Dict[str, Any]) -> None:
+        async def handle_trust_update(event_data: dict[str, Any]) -> None:
             node_id = event_data.get("node_id")
             if node_id:
                 self.security_metrics.trust_updates += 1
@@ -540,7 +540,7 @@ class SecurityIntegrationManager:
         self.security_event_handlers[SecurityEvent.TRUST_UPDATED] = [handle_trust_update]
 
         # Threat detection handler
-        async def handle_threat_detection(event_data: Dict[str, Any]) -> None:
+        async def handle_threat_detection(event_data: dict[str, Any]) -> None:
             # Could trigger additional security measures
             pass
 
@@ -632,7 +632,7 @@ class SecurityIntegrationManager:
                 logger.error(f"Trust maintenance monitoring error: {e}")
                 await asyncio.sleep(3600)
 
-    async def _emit_security_event(self, event: SecurityEvent, data: Dict[str, Any]) -> None:
+    async def _emit_security_event(self, event: SecurityEvent, data: dict[str, Any]) -> None:
         """Emit a security event to registered handlers."""
 
         try:
@@ -655,7 +655,7 @@ class SecurityIntegrationManager:
 
     # Public API methods
 
-    def get_security_summary(self) -> Dict[str, Any]:
+    def get_security_summary(self) -> dict[str, Any]:
         """Get comprehensive security summary."""
 
         return {
@@ -682,7 +682,7 @@ class SecurityIntegrationManager:
             "aggregation_stats": self.secure_aggregation.get_aggregation_stats(),
         }
 
-    def get_node_security_status(self, node_id: str) -> Dict[str, Any]:
+    def get_node_security_status(self, node_id: str) -> dict[str, Any]:
         """Get security status for a specific node."""
 
         return {
@@ -724,7 +724,7 @@ class SecurityIntegrationManager:
 
         logger.info("Security integration manager shutdown complete")
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Comprehensive health check of all security components."""
 
         health_results = {}

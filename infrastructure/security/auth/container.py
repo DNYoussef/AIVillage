@@ -6,11 +6,11 @@ to enable proper service composition and testing.
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Any
 
-from .interfaces import IAuthenticationService, ISessionManager, IMFAService
-from .services import SessionService, AuthenticationService, MFAService
 from .handlers import AuthHandlers, MFAHandlers, SessionHandlers
+from .interfaces import IAuthenticationService, IMFAService, ISessionManager
+from .services import AuthenticationService, MFAService, SessionService
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +22,10 @@ class AuthContainer:
     following the Service Locator and Dependency Injection patterns.
     """
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: dict[str, Any] = None):
         """Initialize auth container."""
         self.config = config or {}
-        self._services: Dict[str, Any] = {}
+        self._services: dict[str, Any] = {}
         self._initialized = False
 
     async def initialize(self, rbac_system=None, encryption_service=None) -> None:
@@ -136,7 +136,7 @@ class AuthContainer:
             logger.error(f"Failed to register authentication routes: {e}")
             raise
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Get health status of all authentication services."""
         try:
             health = {"status": "healthy", "services": {}}
@@ -169,7 +169,7 @@ class AuthContainer:
             logger.error(f"Authentication health check failed: {e}")
             return {"status": "error", "error": str(e)}
 
-    def get_service(self, service_name: str) -> Optional[Any]:
+    def get_service(self, service_name: str) -> Any | None:
         """Get service by name (generic accessor)."""
         self._ensure_initialized()
         return self._services.get(service_name)

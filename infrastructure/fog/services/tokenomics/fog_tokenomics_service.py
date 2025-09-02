@@ -9,21 +9,21 @@ Manages token economics and reward distribution including:
 """
 
 import asyncio
-from typing import Any, Dict, Optional
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from ..interfaces.base_service import BaseFogService, ServiceStatus, ServiceHealthCheck
 from ...tokenomics.fog_token_system import FogTokenSystem
+from ..interfaces.base_service import BaseFogService, ServiceHealthCheck, ServiceStatus
 
 
 class FogTokenomicsService(BaseFogService):
     """Service for managing fog computing token economics"""
 
-    def __init__(self, service_name: str, config: Dict[str, Any], event_bus):
+    def __init__(self, service_name: str, config: dict[str, Any], event_bus):
         super().__init__(service_name, config, event_bus)
 
         # Core components
-        self.token_system: Optional[FogTokenSystem] = None
+        self.token_system: FogTokenSystem | None = None
 
         # Tokenomics configuration
         self.token_config = config.get("tokens", {})
@@ -261,7 +261,7 @@ class FogTokenomicsService(BaseFogService):
             self.logger.error(f"Failed to get account balance: {e}")
             return 0.0
 
-    async def get_tokenomics_stats(self) -> Dict[str, Any]:
+    async def get_tokenomics_stats(self) -> dict[str, Any]:
         """Get comprehensive tokenomics statistics"""
         try:
             stats = self.metrics.copy()

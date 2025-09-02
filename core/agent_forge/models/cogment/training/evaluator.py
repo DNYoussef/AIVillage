@@ -7,11 +7,11 @@ and performance monitoring for the 4-stage curriculum.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import logging
 import math
 import time
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Any
+from typing import Any
 
 import torch
 
@@ -32,24 +32,24 @@ class EvaluationMetrics:
     stage: int
 
     # Loss breakdown
-    deep_supervision_loss: Optional[float] = None
-    improvement_loss: Optional[float] = None
-    consistency_loss: Optional[float] = None
-    ponder_loss: Optional[float] = None
+    deep_supervision_loss: float | None = None
+    improvement_loss: float | None = None
+    consistency_loss: float | None = None
+    ponder_loss: float | None = None
 
     # Performance metrics
-    throughput: Optional[float] = None  # samples/second
-    memory_usage: Optional[float] = None  # GB
+    throughput: float | None = None  # samples/second
+    memory_usage: float | None = None  # GB
 
     # Stage-specific metrics
-    convergence_score: Optional[float] = None
-    grokking_ratio: Optional[float] = None
-    refinement_efficiency: Optional[float] = None
+    convergence_score: float | None = None
+    grokking_ratio: float | None = None
+    refinement_efficiency: float | None = None
 
     # Timing
-    eval_time: Optional[float] = None
+    eval_time: float | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for logging."""
         return {k: v for k, v in self.__dict__.items() if v is not None}
 
@@ -78,9 +78,9 @@ class ConvergenceDetector:
         self.grokking_threshold = grokking_threshold
 
         # History tracking
-        self.loss_history: List[float] = []
-        self.accuracy_history: List[float] = []
-        self.ponder_history: List[float] = []
+        self.loss_history: list[float] = []
+        self.accuracy_history: list[float] = []
+        self.ponder_history: list[float] = []
 
         # Convergence state
         self.steps_without_improvement = 0
@@ -89,7 +89,7 @@ class ConvergenceDetector:
         self.grokking_detected = False
         self.convergence_detected = False
 
-    def update(self, metrics: EvaluationMetrics) -> Dict[str, bool]:
+    def update(self, metrics: EvaluationMetrics) -> dict[str, bool]:
         """
         Update convergence detector with new metrics.
 
@@ -188,7 +188,7 @@ class ConvergenceDetector:
         std_dev = math.sqrt(sum((x - sum(recent) / len(recent)) ** 2 for x in recent) / len(recent))
         return std_dev < 0.1  # Ponder cost stability threshold
 
-    def get_convergence_summary(self) -> Dict[str, Any]:
+    def get_convergence_summary(self) -> dict[str, Any]:
         """Get comprehensive convergence summary."""
         return {
             "converged": self.convergence_detected,
@@ -227,7 +227,7 @@ class StageEvaluator:
         self.convergence_detector = ConvergenceDetector()
         self.current_stage = CurriculumStage.SANITY
         self.stage_start_time = time.time()
-        self.evaluation_history: List[EvaluationMetrics] = []
+        self.evaluation_history: list[EvaluationMetrics] = []
 
         # Stage-specific thresholds
         self.stage_thresholds = {
@@ -263,7 +263,7 @@ class StageEvaluator:
             self.convergence_detector.reset()
 
     def evaluate_batch(
-        self, model_output: Dict[str, torch.Tensor], targets: torch.Tensor, step: int, return_detailed: bool = False
+        self, model_output: dict[str, torch.Tensor], targets: torch.Tensor, step: int, return_detailed: bool = False
     ) -> EvaluationMetrics:
         """
         Evaluate a single batch with stage-specific metrics.
@@ -321,7 +321,7 @@ class StageEvaluator:
         return metrics
 
     def _add_detailed_metrics(
-        self, metrics: EvaluationMetrics, model_output: Dict[str, torch.Tensor], targets: torch.Tensor
+        self, metrics: EvaluationMetrics, model_output: dict[str, torch.Tensor], targets: torch.Tensor
     ) -> EvaluationMetrics:
         """Add detailed stage-specific metrics."""
         # Memory usage (approximate)
@@ -355,7 +355,7 @@ class StageEvaluator:
         }
         return target_steps.get(self.current_stage, 3.0)
 
-    def _compute_convergence_score(self, signals: Dict[str, bool]) -> float:
+    def _compute_convergence_score(self, signals: dict[str, bool]) -> float:
         """Compute overall convergence score from signals."""
         # Weight different signals
         weights = {
@@ -373,7 +373,7 @@ class StageEvaluator:
 
         return max(0.0, min(1.0, score))  # Clamp to [0, 1]
 
-    def check_stage_completion(self, config: Optional[StageConfig] = None) -> Dict[str, Any]:
+    def check_stage_completion(self, config: StageConfig | None = None) -> dict[str, Any]:
         """
         Check if current stage meets completion criteria.
 
@@ -441,7 +441,7 @@ class StageEvaluator:
 
         return completion_status
 
-    def get_stage_summary(self) -> Dict[str, Any]:
+    def get_stage_summary(self) -> dict[str, Any]:
         """Get comprehensive summary of current stage evaluation."""
         if not self.evaluation_history:
             return {"status": "no_data"}

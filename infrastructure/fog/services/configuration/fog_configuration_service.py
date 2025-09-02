@@ -9,26 +9,27 @@ Manages configuration across the fog computing system including:
 """
 
 import asyncio
+from datetime import UTC, datetime
 import json
-import yaml
-from typing import Any, Dict, List, Optional
-from datetime import datetime, UTC
 from pathlib import Path
+from typing import Any
 
-from ..interfaces.base_service import BaseFogService, ServiceStatus, ServiceHealthCheck
+import yaml
+
+from ..interfaces.base_service import BaseFogService, ServiceHealthCheck, ServiceStatus
 
 
 class FogConfigurationService(BaseFogService):
     """Service for managing fog computing system configuration"""
 
-    def __init__(self, service_name: str, config: Dict[str, Any], event_bus):
+    def __init__(self, service_name: str, config: dict[str, Any], event_bus):
         super().__init__(service_name, config, event_bus)
 
         # Configuration management
-        self.config_sources: Dict[str, Dict[str, Any]] = {}
-        self.active_config: Dict[str, Any] = config.copy()
-        self.config_schema: Dict[str, Any] = {}
-        self.config_watchers: Dict[str, List[callable]] = {}
+        self.config_sources: dict[str, dict[str, Any]] = {}
+        self.active_config: dict[str, Any] = config.copy()
+        self.config_schema: dict[str, Any] = {}
+        self.config_watchers: dict[str, list[callable]] = {}
 
         # Configuration file paths
         self.config_paths = {
@@ -132,7 +133,7 @@ class FogConfigurationService(BaseFogService):
                 metrics=self.metrics.copy(),
             )
 
-    async def get_configuration(self, key_path: Optional[str] = None) -> Any:
+    async def get_configuration(self, key_path: str | None = None) -> Any:
         """Get configuration value by key path"""
         try:
             if key_path is None:
@@ -254,7 +255,7 @@ class FogConfigurationService(BaseFogService):
             self.logger.error(f"Failed to reload configuration: {e}")
             return False
 
-    async def get_service_configuration(self, service_name: str) -> Dict[str, Any]:
+    async def get_service_configuration(self, service_name: str) -> dict[str, Any]:
         """Get configuration specific to a service"""
         try:
             service_config = {}
@@ -273,7 +274,7 @@ class FogConfigurationService(BaseFogService):
             self.logger.error(f"Failed to get service configuration for {service_name}: {e}")
             return {}
 
-    async def get_configuration_stats(self) -> Dict[str, Any]:
+    async def get_configuration_stats(self) -> dict[str, Any]:
         """Get configuration service statistics"""
         try:
             stats = self.metrics.copy()
@@ -298,7 +299,7 @@ class FogConfigurationService(BaseFogService):
         try:
             schema_path = self.config_paths.get("schema")
             if schema_path and Path(schema_path).exists():
-                with open(schema_path, "r") as f:
+                with open(schema_path) as f:
                     if schema_path.endswith(".yaml") or schema_path.endswith(".yml"):
                         self.config_schema = yaml.safe_load(f)
                     else:
@@ -315,7 +316,7 @@ class FogConfigurationService(BaseFogService):
             # Load main configuration
             main_path = self.config_paths.get("main")
             if main_path and Path(main_path).exists():
-                with open(main_path, "r") as f:
+                with open(main_path) as f:
                     if main_path.endswith(".yaml") or main_path.endswith(".yml"):
                         main_config = yaml.safe_load(f)
                     else:
@@ -327,7 +328,7 @@ class FogConfigurationService(BaseFogService):
             # Load override configuration
             overrides_path = self.config_paths.get("overrides")
             if overrides_path and Path(overrides_path).exists():
-                with open(overrides_path, "r") as f:
+                with open(overrides_path) as f:
                     if overrides_path.endswith(".yaml") or overrides_path.endswith(".yml"):
                         override_config = yaml.safe_load(f)
                     else:
@@ -349,7 +350,7 @@ class FogConfigurationService(BaseFogService):
             self.logger.error(f"Failed to load configurations: {e}")
             return False
 
-    async def _validate_configuration(self, config: Dict[str, Any]) -> bool:
+    async def _validate_configuration(self, config: dict[str, Any]) -> bool:
         """Validate configuration against schema"""
         try:
             if not self.config_schema:
@@ -371,7 +372,7 @@ class FogConfigurationService(BaseFogService):
             self.logger.error(f"Configuration validation error: {e}")
             return False
 
-    def _load_environment_config(self) -> Dict[str, Any]:
+    def _load_environment_config(self) -> dict[str, Any]:
         """Load configuration from environment variables"""
         try:
             import os
@@ -404,7 +405,7 @@ class FogConfigurationService(BaseFogService):
             self.logger.error(f"Failed to load environment configuration: {e}")
             return {}
 
-    def _deep_merge(self, target: Dict[str, Any], source: Dict[str, Any]):
+    def _deep_merge(self, target: dict[str, Any], source: dict[str, Any]):
         """Deep merge source into target dictionary"""
         try:
             for key, value in source.items():

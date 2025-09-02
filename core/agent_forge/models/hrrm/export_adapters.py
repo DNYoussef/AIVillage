@@ -15,12 +15,12 @@ inference while preserving model performance and consistency guarantees.
 """
 
 import asyncio
-import json
-import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+import json
+import logging
+from typing import Any
 from uuid import uuid4
 
 import aiohttp
@@ -59,14 +59,14 @@ class ModelShard:
     strategy: ShardingStrategy
 
     # Model components
-    model_data: Optional[bytes] = None
-    config: Dict[str, Any] = field(default_factory=dict)
-    weights: Optional[Dict[str, Any]] = None
+    model_data: bytes | None = None
+    config: dict[str, Any] = field(default_factory=dict)
+    weights: dict[str, Any] | None = None
 
     # Sharding metadata
-    layer_range: Optional[Tuple[int, int]] = None
-    attention_heads: Optional[List[int]] = None
-    embedding_dimensions: Optional[Tuple[int, int]] = None
+    layer_range: tuple[int, int] | None = None
+    attention_heads: list[int] | None = None
+    embedding_dimensions: tuple[int, int] | None = None
 
     # Execution requirements
     min_memory_gb: float = 1.0
@@ -75,8 +75,8 @@ class ModelShard:
     estimated_inference_time_ms: float = 100.0
 
     # Dependencies
-    depends_on: List[str] = field(default_factory=list)
-    provides_to: List[str] = field(default_factory=list)
+    depends_on: list[str] = field(default_factory=list)
+    provides_to: list[str] = field(default_factory=list)
 
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
@@ -87,26 +87,26 @@ class DistributedInferenceTask:
 
     task_id: str
     model_name: str
-    input_data: Dict[str, Any]
-    shards: List[ModelShard]
+    input_data: dict[str, Any]
+    shards: list[ModelShard]
 
     # Execution planning
-    fog_node_assignments: Dict[str, str] = field(default_factory=dict)  # shard_id -> node_id
+    fog_node_assignments: dict[str, str] = field(default_factory=dict)  # shard_id -> node_id
     execution_strategy: ShardingStrategy = ShardingStrategy.LAYER_WISE
 
     # Progress tracking
     status: str = "pending"
-    completed_shards: List[str] = field(default_factory=list)
-    failed_shards: List[str] = field(default_factory=list)
+    completed_shards: list[str] = field(default_factory=list)
+    failed_shards: list[str] = field(default_factory=list)
 
     # Results
-    shard_results: Dict[str, Any] = field(default_factory=dict)
-    final_result: Optional[Dict[str, Any]] = None
+    shard_results: dict[str, Any] = field(default_factory=dict)
+    final_result: dict[str, Any] | None = None
 
     # Timing
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
 
 
 class HRRMShardingEngine:
@@ -126,11 +126,11 @@ class HRRMShardingEngine:
         ]
 
         # Sharding history for optimization
-        self.sharding_history: List[Dict[str, Any]] = []
+        self.sharding_history: list[dict[str, Any]] = []
 
     async def analyze_model_for_sharding(
-        self, model_config: Dict[str, Any], target_fog_nodes: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, model_config: dict[str, Any], target_fog_nodes: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """
         Analyze HRRM model architecture for optimal sharding
 
@@ -178,10 +178,10 @@ class HRRMShardingEngine:
     async def create_model_shards(
         self,
         model_data: bytes,
-        model_config: Dict[str, Any],
+        model_config: dict[str, Any],
         strategy: ShardingStrategy,
-        shard_configurations: List[Dict[str, Any]],
-    ) -> List[ModelShard]:
+        shard_configurations: list[dict[str, Any]],
+    ) -> list[ModelShard]:
         """
         Create model shards based on sharding strategy
 
@@ -241,7 +241,7 @@ class HRRMShardingEngine:
             logger.error(f"Failed to create model shards: {e}")
             raise
 
-    def _estimate_model_size(self, model_config: Dict[str, Any]) -> float:
+    def _estimate_model_size(self, model_config: dict[str, Any]) -> float:
         """Estimate model size in MB"""
 
         # Simple estimation based on parameters
@@ -260,7 +260,7 @@ class HRRMShardingEngine:
         size_mb = (params * 4) / (1024 * 1024)
         return size_mb
 
-    def _estimate_parameter_count(self, model_config: Dict[str, Any]) -> int:
+    def _estimate_parameter_count(self, model_config: dict[str, Any]) -> int:
         """Estimate total parameter count"""
 
         hidden_size = model_config.get("hidden_size", 768)
@@ -269,7 +269,7 @@ class HRRMShardingEngine:
 
         return vocab_size * hidden_size + num_layers * hidden_size * hidden_size * 12 + hidden_size * vocab_size
 
-    def _determine_architecture_type(self, model_config: Dict[str, Any]) -> str:
+    def _determine_architecture_type(self, model_config: dict[str, Any]) -> str:
         """Determine HRRM architecture type"""
 
         if "retrieval" in model_config and "reasoning" in model_config:
@@ -281,7 +281,7 @@ class HRRMShardingEngine:
         else:
             return "transformer_based"
 
-    def _analyze_fog_node_capabilities(self, fog_nodes: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _analyze_fog_node_capabilities(self, fog_nodes: list[dict[str, Any]]) -> dict[str, Any]:
         """Analyze collective fog node capabilities"""
 
         total_cpu = sum(node.get("cpu_cores", 0) for node in fog_nodes)
@@ -299,7 +299,7 @@ class HRRMShardingEngine:
         }
 
     async def _score_sharding_strategy(
-        self, strategy: ShardingStrategy, model_config: Dict[str, Any], node_analysis: Dict[str, Any]
+        self, strategy: ShardingStrategy, model_config: dict[str, Any], node_analysis: dict[str, Any]
     ) -> float:
         """Score a sharding strategy based on model and node characteristics"""
 
@@ -358,8 +358,8 @@ class HRRMShardingEngine:
         return score
 
     async def _generate_shard_configurations(
-        self, strategy: ShardingStrategy, model_config: Dict[str, Any], node_analysis: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        self, strategy: ShardingStrategy, model_config: dict[str, Any], node_analysis: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Generate shard configurations for the selected strategy"""
 
         configurations = []
@@ -439,8 +439,8 @@ class HRRMShardingEngine:
         return configurations
 
     def _estimate_distributed_performance(
-        self, shard_configs: List[Dict[str, Any]], node_analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, shard_configs: list[dict[str, Any]], node_analysis: dict[str, Any]
+    ) -> dict[str, Any]:
         """Estimate performance of distributed execution"""
 
         # Simple performance estimation
@@ -461,7 +461,7 @@ class HRRMShardingEngine:
             "expected_speedup": max(1.0, len(shard_configs) * 0.7),  # 70% efficiency
         }
 
-    async def _extract_layer_shard(self, model_data: bytes, layer_range: Tuple[int, int]) -> bytes:
+    async def _extract_layer_shard(self, model_data: bytes, layer_range: tuple[int, int]) -> bytes:
         """Extract layers for layer-wise sharding (simplified implementation)"""
 
         # In production, this would extract specific transformer layers
@@ -474,7 +474,7 @@ class HRRMShardingEngine:
 
         return model_data[start_byte:end_byte]
 
-    async def _extract_attention_shard(self, model_data: bytes, head_indices: List[int]) -> bytes:
+    async def _extract_attention_shard(self, model_data: bytes, head_indices: list[int]) -> bytes:
         """Extract attention heads for attention-based sharding"""
 
         # Simplified: return proportional data based on head count
@@ -483,7 +483,7 @@ class HRRMShardingEngine:
 
         return model_data[:shard_size]
 
-    async def _extract_pipeline_shard(self, model_data: bytes, layer_range: Tuple[int, int]) -> bytes:
+    async def _extract_pipeline_shard(self, model_data: bytes, layer_range: tuple[int, int]) -> bytes:
         """Extract pipeline stage for pipeline parallelism"""
 
         # Similar to layer-wise but with pipeline metadata
@@ -502,7 +502,7 @@ class FogBurstAdapter:
         self.fog_gateway_url = fog_gateway_url.rstrip("/")
 
         # Task management
-        self.active_tasks: Dict[str, DistributedInferenceTask] = {}
+        self.active_tasks: dict[str, DistributedInferenceTask] = {}
         self.sharding_engine = HRRMShardingEngine()
 
         # Performance tracking
@@ -514,10 +514,10 @@ class FogBurstAdapter:
         self,
         model_name: str,
         model_data: bytes,
-        model_config: Dict[str, Any],
-        input_data: Dict[str, Any],
-        target_fog_nodes: Optional[List[Dict[str, Any]]] = None,
-    ) -> Dict[str, Any]:
+        model_config: dict[str, Any],
+        input_data: dict[str, Any],
+        target_fog_nodes: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
         """
         Execute HRRM model inference distributed across fog nodes
 
@@ -612,7 +612,7 @@ class FogBurstAdapter:
 
             return {"status": "error", "message": str(e), "task_id": task_id, "model_name": model_name}
 
-    async def _discover_fog_nodes(self) -> List[Dict[str, Any]]:
+    async def _discover_fog_nodes(self) -> list[dict[str, Any]]:
         """Discover fog nodes suitable for HRRM model execution"""
 
         try:
@@ -633,8 +633,8 @@ class FogBurstAdapter:
             return []
 
     async def _plan_distributed_execution(
-        self, task: DistributedInferenceTask, fog_nodes: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, task: DistributedInferenceTask, fog_nodes: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Plan how to distribute shards across fog nodes"""
 
         plan = {
@@ -681,7 +681,7 @@ class FogBurstAdapter:
 
         return plan
 
-    def _score_node_for_shard(self, shard: ModelShard, node: Dict[str, Any]) -> float:
+    def _score_node_for_shard(self, shard: ModelShard, node: dict[str, Any]) -> float:
         """Score how well a fog node matches a shard's requirements"""
 
         score = 0.0
@@ -717,7 +717,7 @@ class FogBurstAdapter:
 
         return score
 
-    def _determine_pipeline_order(self, shards: List[ModelShard]) -> List[str]:
+    def _determine_pipeline_order(self, shards: list[ModelShard]) -> list[str]:
         """Determine execution order for pipeline parallelism"""
 
         # Build dependency graph
@@ -748,8 +748,8 @@ class FogBurstAdapter:
         return ordered
 
     async def _execute_distributed_inference(
-        self, task: DistributedInferenceTask, execution_plan: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, task: DistributedInferenceTask, execution_plan: dict[str, Any]
+    ) -> dict[str, Any]:
         """Execute inference across distributed shards"""
 
         results = {}
@@ -778,7 +778,7 @@ class FogBurstAdapter:
 
         else:
             # Parallel execution for other strategies
-            async def execute_shard_task(shard: ModelShard) -> Tuple[str, Dict[str, Any]]:
+            async def execute_shard_task(shard: ModelShard) -> tuple[str, dict[str, Any]]:
                 node_id = execution_plan["node_assignments"][shard.shard_id]
                 result = await self._execute_shard_on_node(shard, task.input_data, node_id)
                 return shard.shard_id, result
@@ -797,8 +797,8 @@ class FogBurstAdapter:
         return results
 
     async def _execute_shard_on_node(
-        self, shard: ModelShard, input_data: Dict[str, Any], node_id: str
-    ) -> Dict[str, Any]:
+        self, shard: ModelShard, input_data: dict[str, Any], node_id: str
+    ) -> dict[str, Any]:
         """Execute a model shard on a specific fog node"""
 
         try:
@@ -847,7 +847,7 @@ class FogBurstAdapter:
         except Exception as e:
             return {"status": "error", "message": f"Shard execution error: {str(e)}"}
 
-    async def _wait_for_shard_completion(self, job_id: str) -> Dict[str, Any]:
+    async def _wait_for_shard_completion(self, job_id: str) -> dict[str, Any]:
         """Wait for shard execution to complete"""
 
         timeout = 300  # 5 minutes
@@ -898,8 +898,8 @@ class FogBurstAdapter:
                 return {"status": "error", "message": f"Error waiting for shard: {str(e)}"}
 
     async def _merge_distributed_results(
-        self, task: DistributedInferenceTask, shard_results: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, task: DistributedInferenceTask, shard_results: dict[str, Any]
+    ) -> dict[str, Any]:
         """Merge results from distributed shard execution"""
 
         merger = HRRMResultMerger()
@@ -915,8 +915,8 @@ class HRRMResultMerger:
     """
 
     async def merge_shard_results(
-        self, shards: List[ModelShard], shard_results: Dict[str, Any], strategy: ShardingStrategy
-    ) -> Dict[str, Any]:
+        self, shards: list[ModelShard], shard_results: dict[str, Any], strategy: ShardingStrategy
+    ) -> dict[str, Any]:
         """
         Merge results from distributed shard execution
 
@@ -938,7 +938,7 @@ class HRRMResultMerger:
         else:
             return await self._merge_parallel_results(shards, shard_results)
 
-    async def _merge_pipeline_results(self, shards: List[ModelShard], shard_results: Dict[str, Any]) -> Dict[str, Any]:
+    async def _merge_pipeline_results(self, shards: list[ModelShard], shard_results: dict[str, Any]) -> dict[str, Any]:
         """Merge results from pipeline parallel execution"""
 
         # For pipeline, the final result is from the last stage
@@ -965,7 +965,7 @@ class HRRMResultMerger:
         else:
             return {"model_output": {}, "confidence": 0.0, "error": "Failed to find final pipeline stage result"}
 
-    async def _merge_layer_results(self, shards: List[ModelShard], shard_results: Dict[str, Any]) -> Dict[str, Any]:
+    async def _merge_layer_results(self, shards: list[ModelShard], shard_results: dict[str, Any]) -> dict[str, Any]:
         """Merge results from layer-wise parallel execution"""
 
         # Combine outputs from all layers
@@ -995,7 +995,7 @@ class HRRMResultMerger:
         # Combine layer outputs (simplified)
         final_output = {}
         for key, values in combined_outputs.items():
-            if isinstance(values[0], (int, float)):
+            if isinstance(values[0], int | float):
                 final_output[key] = sum(values) / len(values)
             elif isinstance(values[0], list):
                 final_output[key] = [item for sublist in values for item in sublist]
@@ -1012,7 +1012,7 @@ class HRRMResultMerger:
             },
         }
 
-    async def _merge_attention_results(self, shards: List[ModelShard], shard_results: Dict[str, Any]) -> Dict[str, Any]:
+    async def _merge_attention_results(self, shards: list[ModelShard], shard_results: dict[str, Any]) -> dict[str, Any]:
         """Merge results from attention head parallel execution"""
 
         # Combine attention outputs
@@ -1036,7 +1036,7 @@ class HRRMResultMerger:
 
             # Average numerical outputs
             for key in merged_output:
-                if isinstance(merged_output[key], (int, float)):
+                if isinstance(merged_output[key], int | float):
                     values = [out.get(key, 0) for out in attention_outputs if key in out]
                     merged_output[key] = sum(values) / len(values)
         else:
@@ -1052,7 +1052,7 @@ class HRRMResultMerger:
             },
         }
 
-    async def _merge_parallel_results(self, shards: List[ModelShard], shard_results: Dict[str, Any]) -> Dict[str, Any]:
+    async def _merge_parallel_results(self, shards: list[ModelShard], shard_results: dict[str, Any]) -> dict[str, Any]:
         """Merge results from general parallel execution"""
 
         # Simple ensemble approach - average results
@@ -1099,8 +1099,8 @@ class ConsistencyValidator:
         self.tolerance = tolerance
 
     async def validate_distributed_parity(
-        self, local_result: Dict[str, Any], distributed_result: Dict[str, Any], model_name: str
-    ) -> Dict[str, Any]:
+        self, local_result: dict[str, Any], distributed_result: dict[str, Any], model_name: str
+    ) -> dict[str, Any]:
         """
         Validate distributed result matches local execution
 
@@ -1147,7 +1147,7 @@ class ConsistencyValidator:
                 local_val = local_output[key]
                 distributed_val = distributed_output[key]
 
-                if isinstance(local_val, (int, float)) and isinstance(distributed_val, (int, float)):
+                if isinstance(local_val, int | float) and isinstance(distributed_val, int | float):
                     abs_diff = abs(distributed_val - local_val)
                     rel_diff = abs_diff / max(abs(local_val), 1e-6)
 

@@ -10,16 +10,12 @@ Implementation Date: 2025-08-29
 """
 
 from datetime import datetime
-from typing import List, Optional
+
 from fastapi import APIResponse, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from infrastructure.gateway.auth import JWTBearer, TokenPayload
-from infrastructure.monitoring.triage.emergency_triage_system import (
-    EmergencyTriageSystem,
-    ThreatLevel,
-    TriageStatus
-)
+from infrastructure.monitoring.triage.emergency_triage_system import ThreatLevel, TriageStatus
 
 
 # API Models for Triage System
@@ -28,7 +24,7 @@ class TriageIncidentRequest(BaseModel):
     source_component: str = Field(..., description="Component where incident occurred")
     incident_type: str = Field(..., description="Type of incident")
     description: str = Field(..., description="Incident description")
-    threat_level: Optional[str] = Field(default=None, description="Override threat level")
+    threat_level: str | None = Field(default=None, description="Override threat level")
     raw_data: dict = Field(default_factory=dict, description="Additional incident data")
 
 
@@ -36,7 +32,7 @@ class TriageStatusRequest(BaseModel):
     """Request to update triage incident status."""
     incident_id: str = Field(..., description="Incident ID to update")
     new_status: str = Field(..., description="New status for incident")
-    notes: Optional[str] = Field(default=None, description="Additional notes")
+    notes: str | None = Field(default=None, description="Additional notes")
 
 
 def register_triage_endpoints(app, service_manager, jwt_auth: JWTBearer):
@@ -88,8 +84,8 @@ def register_triage_endpoints(app, service_manager, jwt_auth: JWTBearer):
     
     @app.get("/v1/monitoring/triage/incidents", response_model=APIResponse)
     async def get_triage_incidents(
-        status: Optional[str] = None,
-        threat_level: Optional[str] = None,
+        status: str | None = None,
+        threat_level: str | None = None,
         limit: int = 50,
         token: TokenPayload = Depends(jwt_auth)
     ):
@@ -203,7 +199,7 @@ def register_triage_endpoints(app, service_manager, jwt_auth: JWTBearer):
             
             # Add response log entry
             incident.add_response_log(
-                f"status_update_via_api",
+                "status_update_via_api",
                 f"Status changed from {old_status.value} to {new_status.value}" + 
                 (f". Notes: {request.notes}" if request.notes else "")
             )

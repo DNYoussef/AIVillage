@@ -22,7 +22,7 @@ import logging
 import os
 from pathlib import Path
 import sys
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import (
     Depends,
@@ -42,12 +42,6 @@ current_dir = Path(__file__).parent
 sys.path.insert(0, str(current_dir.parent.parent))
 
 # Import authentication
-from infrastructure.gateway.auth import (
-    JWTBearer,
-    JWTHandler,
-    TokenPayload,
-)
-
 # Import enhanced fog computing components
 from infrastructure.fog.integration.fog_system_manager import FogSystemManager
 from infrastructure.fog.market.pricing_manager import (
@@ -55,20 +49,25 @@ from infrastructure.fog.market.pricing_manager import (
     ResourceLane,
     get_pricing_manager,
 )
+from infrastructure.fog.privacy.onion_routing import OnionRouter
+from infrastructure.fog.proofs.proof_generator import ProofGenerator
+from infrastructure.fog.proofs.proof_verifier import ProofVerifier
+from infrastructure.fog.quorum.quorum_manager import ByzantineQuorumManager
+from infrastructure.fog.reputation.bayesian_reputation import BayesianReputationEngine
 from infrastructure.fog.scheduler.placement import (
     FogScheduler,
-    JobRequest,
     JobClass,
+    JobRequest,
     PlacementStrategy,
     get_scheduler,
 )
 from infrastructure.fog.tee.tee_runtime_manager import TEERuntimeManager
-from infrastructure.fog.proofs.proof_generator import ProofGenerator
-from infrastructure.fog.proofs.proof_verifier import ProofVerifier
-from infrastructure.fog.quorum.quorum_manager import ByzantineQuorumManager
-from infrastructure.fog.privacy.onion_routing import OnionRouter
-from infrastructure.fog.reputation.bayesian_reputation import BayesianReputationEngine
 from infrastructure.fog.vrf.vrf_neighbor_selection import VRFNeighborSelector
+from infrastructure.gateway.auth import (
+    JWTBearer,
+    JWTHandler,
+    TokenPayload,
+)
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -85,9 +84,9 @@ class APIResponse(BaseModel):
     success: bool = True
     data: Any = None
     message: str = ""
-    error_code: Optional[str] = None
+    error_code: str | None = None
     timestamp: datetime = Field(default_factory=datetime.now)
-    request_id: Optional[str] = None
+    request_id: str | None = None
 
 
 class HealthCheckResponse(BaseModel):
@@ -103,7 +102,7 @@ class TEERuntimeRequest(BaseModel):
     """TEE runtime operation request."""
 
     operation: str = Field(..., description="TEE operation: create, deploy, execute, terminate")
-    code: Optional[str] = None
+    code: str | None = None
     inputs: dict[str, Any] = Field(default_factory=dict)
     config: dict[str, Any] = Field(default_factory=dict)
 
@@ -113,7 +112,7 @@ class ProofRequest(BaseModel):
 
     proof_type: str = Field(..., description="Type of proof to generate")
     statement: dict[str, Any] = Field(..., description="Statement to prove")
-    witness: Optional[dict[str, Any]] = None
+    witness: dict[str, Any] | None = None
     public_inputs: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -131,7 +130,7 @@ class PricingRequest(BaseModel):
     resource_lane: str = Field(..., description="Resource lane: cpu, memory, storage, etc.")
     quantity: float = Field(default=1.0, ge=0.0)
     duration_hours: float = Field(default=1.0, ge=0.0)
-    node_id: Optional[str] = None
+    node_id: str | None = None
 
 
 class JobSchedulingRequest(BaseModel):
@@ -169,7 +168,7 @@ class ReputationUpdateRequest(BaseModel):
     node_id: str = Field(..., description="Node ID to update")
     event_type: str = Field(..., description="Type of reputation event")
     success: bool = Field(..., description="Whether operation was successful")
-    performance_score: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    performance_score: float | None = Field(default=None, ge=0.0, le=1.0)
 
 
 class VRFNeighborRequest(BaseModel):
@@ -193,8 +192,8 @@ class EnhancedServiceManager:
         self.fog_system_manager = FogSystemManager()
 
         # Individual fog components
-        self.pricing_manager: Optional[DynamicPricingManager] = None
-        self.scheduler: Optional[FogScheduler] = None
+        self.pricing_manager: DynamicPricingManager | None = None
+        self.scheduler: FogScheduler | None = None
         self.tee_runtime = TEERuntimeManager()
         self.proof_generator = ProofGenerator()
         self.proof_verifier = ProofVerifier()
@@ -582,7 +581,7 @@ async def get_pricing_quote(
     resource_lane: str,
     quantity: float = 1.0,
     duration_hours: float = 1.0,
-    node_id: Optional[str] = None,
+    node_id: str | None = None,
     token: TokenPayload = Depends(jwt_auth),
 ):
     """Get dynamic pricing quote for resources."""

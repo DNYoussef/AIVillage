@@ -3,15 +3,15 @@ Constitutional Decision Logging System
 Comprehensive logging for constitutional governance and decision rationale
 """
 
-import json
-import time
-import hashlib
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, asdict
+from collections import defaultdict, deque
+from dataclasses import asdict, dataclass
 from enum import Enum
+import hashlib
+import json
 import logging
 from pathlib import Path
-from collections import defaultdict, deque
+import time
+from typing import Any
 
 
 class ConstitutionalDecisionType(Enum):
@@ -59,8 +59,8 @@ class ConstitutionalEvidence:
     data_hash: str
     source: str
     timestamp: float
-    supporting_documents: List[str]
-    expert_opinions: List[str]
+    supporting_documents: list[str]
+    expert_opinions: list[str]
 
 
 @dataclass
@@ -68,11 +68,11 @@ class ConstitutionalRationale:
     """Detailed rationale for constitutional decision"""
 
     primary_reasoning: str
-    constitutional_principles_applied: List[str]
-    precedents_cited: List[str]
-    harm_analysis: Dict[str, Any]
-    alternative_considerations: List[str]
-    minority_opinions: List[str]
+    constitutional_principles_applied: list[str]
+    precedents_cited: list[str]
+    harm_analysis: dict[str, Any]
+    alternative_considerations: list[str]
+    minority_opinions: list[str]
     democratic_input_summary: str
 
 
@@ -80,12 +80,12 @@ class ConstitutionalRationale:
 class AppealInformation:
     """Information about appeals process"""
 
-    appeal_id: Optional[str]
-    appealing_party: Optional[str]
-    appeal_grounds: List[str]
+    appeal_id: str | None
+    appealing_party: str | None
+    appeal_grounds: list[str]
     appeal_status: str
     appeal_deadline: float
-    appeal_response: Optional[str]
+    appeal_response: str | None
 
 
 @dataclass
@@ -104,16 +104,16 @@ class ConstitutionalDecisionLog:
     decision_summary: str
     decision_outcome: DecisionOutcome
     rationale: ConstitutionalRationale
-    evidence: List[ConstitutionalEvidence]
+    evidence: list[ConstitutionalEvidence]
 
     # Context and metadata
-    constitutional_context: Dict[str, Any]
+    constitutional_context: dict[str, Any]
     policy_version: str
-    system_state: Dict[str, Any]
-    environmental_factors: Dict[str, Any]
+    system_state: dict[str, Any]
+    environmental_factors: dict[str, Any]
 
     # Appeal and oversight
-    appeal_info: Optional[AppealInformation]
+    appeal_info: AppealInformation | None
     oversight_required: bool
     oversight_completed: bool
 
@@ -122,7 +122,7 @@ class ConstitutionalDecisionLog:
     privacy_preserving_hash: str
     audit_trail_hash: str
 
-    def to_audit_format(self) -> Dict[str, Any]:
+    def to_audit_format(self) -> dict[str, Any]:
         """Convert to format suitable for audit logging"""
         return {
             "log_id": self.log_id,
@@ -149,8 +149,8 @@ class ConstitutionalDecisionLogger:
         self.storage_path = Path(storage_path)
         self.storage_path.mkdir(exist_ok=True)
 
-        self.decision_logs: List[ConstitutionalDecisionLog] = []
-        self.decision_index: Dict[str, ConstitutionalDecisionLog] = {}
+        self.decision_logs: list[ConstitutionalDecisionLog] = []
+        self.decision_index: dict[str, ConstitutionalDecisionLog] = {}
 
         # Analytics and metrics
         self.decision_metrics = defaultdict(int)
@@ -179,7 +179,7 @@ class ConstitutionalDecisionLogger:
         try:
             log_files = list(self.storage_path.glob("decisions_*.json"))
             for log_file in sorted(log_files):
-                with open(log_file, "r") as f:
+                with open(log_file) as f:
                     data = json.load(f)
                     for log_data in data.get("decisions", []):
                         # Reconstruct decision log
@@ -194,7 +194,7 @@ class ConstitutionalDecisionLogger:
         except Exception as e:
             self.logger.error(f"Error loading decision logs: {e}")
 
-    def _reconstruct_decision_log(self, log_data: Dict[str, Any]) -> Optional[ConstitutionalDecisionLog]:
+    def _reconstruct_decision_log(self, log_data: dict[str, Any]) -> ConstitutionalDecisionLog | None:
         """Reconstruct decision log from stored data"""
         try:
             # Reconstruct rationale
@@ -269,9 +269,9 @@ class ConstitutionalDecisionLogger:
         user_id: str,
         decision_summary: str,
         decision_outcome: DecisionOutcome,
-        rationale_data: Dict[str, Any],
-        evidence_data: List[Dict[str, Any]],
-        constitutional_context: Dict[str, Any],
+        rationale_data: dict[str, Any],
+        evidence_data: list[dict[str, Any]],
+        constitutional_context: dict[str, Any],
         policy_version: str = "1.0",
         oversight_required: bool = False,
     ) -> str:
@@ -282,7 +282,7 @@ class ConstitutionalDecisionLogger:
         timestamp = time.time()
 
         # Create privacy-preserving user ID hash
-        user_id_hash = hashlib.sha256(f"{user_id}_{timestamp}".encode("utf-8")).hexdigest()[:16]
+        user_id_hash = hashlib.sha256(f"{user_id}_{timestamp}".encode()).hexdigest()[:16]
 
         # Construct rationale
         rationale = ConstitutionalRationale(
@@ -419,7 +419,7 @@ class ConstitutionalDecisionLogger:
 
         return "statistical_only"
 
-    async def _capture_system_state(self) -> Dict[str, Any]:
+    async def _capture_system_state(self) -> dict[str, Any]:
         """Capture relevant system state at decision time"""
         return {
             "active_policies": ["content_moderation_v1", "harm_classification_v2"],
@@ -432,7 +432,7 @@ class ConstitutionalDecisionLogger:
             "constitutional_amendments_pending": 2,  # Placeholder
         }
 
-    async def _capture_environmental_factors(self) -> Dict[str, Any]:
+    async def _capture_environmental_factors(self) -> dict[str, Any]:
         """Capture environmental factors affecting decision"""
         return {
             "peak_usage_period": False,  # Placeholder
@@ -447,7 +447,7 @@ class ConstitutionalDecisionLogger:
         self,
         original_decision_id: str,
         appealing_party: str,
-        appeal_grounds: List[str],
+        appeal_grounds: list[str],
         appeal_deadline_hours: int = 72,
     ) -> str:
         """Register an appeal for a constitutional decision"""
@@ -563,7 +563,7 @@ class ConstitutionalDecisionLogger:
         # Load existing data
         existing_data = {"decisions": [], "metadata": {}}
         if log_file.exists():
-            with open(log_file, "r") as f:
+            with open(log_file) as f:
                 existing_data = json.load(f)
 
         # Add new decision
@@ -589,7 +589,7 @@ class ConstitutionalDecisionLogger:
         with open(log_file, "w") as f:
             json.dump(existing_data, f, indent=2, default=str)
 
-    def get_decision_analytics(self, time_range_hours: int = 24) -> Dict[str, Any]:
+    def get_decision_analytics(self, time_range_hours: int = 24) -> dict[str, Any]:
         """Get analytics for constitutional decisions"""
         cutoff_time = time.time() - (time_range_hours * 3600)
         recent_decisions = [d for d in self.decision_logs if d.timestamp >= cutoff_time]
@@ -642,7 +642,7 @@ class ConstitutionalDecisionLogger:
 
     def get_constitutional_precedents(
         self, decision_type: ConstitutionalDecisionType, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Get constitutional precedents for specific decision type"""
         relevant_decisions = [
             d
@@ -671,7 +671,7 @@ class ConstitutionalDecisionLogger:
 
         return precedents
 
-    def get_public_decision_summary(self, log_id: str) -> Optional[Dict[str, Any]]:
+    def get_public_decision_summary(self, log_id: str) -> dict[str, Any] | None:
         """Get public summary of decision based on disclosure level"""
         if log_id not in self.decision_index:
             return None

@@ -18,18 +18,18 @@ Key Features:
 - Memory usage analytics and reporting
 """
 
+from dataclasses import dataclass
 import gc
 import logging
-import time
 import threading
-import weakref
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+import time
+from typing import Any
 import uuid
+import weakref
 
 import torch
-import torch.nn.functional as F
 from torch import Tensor
+import torch.nn.functional as F
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ class TensorMemoryStats:
     leak_prevention_count: int = 0
     gc_trigger_count: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert stats to dictionary."""
         return {
             "total_tensors": self.total_tensors,
@@ -64,9 +64,9 @@ class TensorRegistry:
 
     def __init__(self, max_tensors: int = 10000):
         self.max_tensors = max_tensors
-        self._tensor_registry: Dict[str, weakref.ref] = {}
-        self._tensor_metadata: Dict[str, Dict[str, Any]] = {}
-        self._creation_times: Dict[str, float] = {}
+        self._tensor_registry: dict[str, weakref.ref] = {}
+        self._tensor_metadata: dict[str, dict[str, Any]] = {}
+        self._creation_times: dict[str, float] = {}
         self._lock = threading.RLock()
         self._stats = TensorMemoryStats()
 
@@ -77,7 +77,7 @@ class TensorRegistry:
         logger.info("TensorRegistry initialized with max_tensors=%d", max_tensors)
 
     def register_tensor(
-        self, tensor: Tensor, tensor_id: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None
+        self, tensor: Tensor, tensor_id: str | None = None, metadata: dict[str, Any] | None = None
     ) -> str:
         """Register a tensor for lifecycle tracking."""
         with self._lock:
@@ -116,7 +116,7 @@ class TensorRegistry:
 
             return False
 
-    def get_tensor(self, tensor_id: str) -> Optional[Tensor]:
+    def get_tensor(self, tensor_id: str) -> Tensor | None:
         """Retrieve a tensor by ID if still alive."""
         with self._lock:
             tensor_ref = self._tensor_registry.get(tensor_id)
@@ -184,7 +184,7 @@ class TensorRegistry:
             self._stats.active_tensor_ids = len(self._tensor_registry)
             return self._stats
 
-    def list_active_tensors(self) -> List[Dict[str, Any]]:
+    def list_active_tensors(self) -> list[dict[str, Any]]:
         """List all active tensors with metadata."""
         with self._lock:
             active_tensors = []
@@ -217,7 +217,7 @@ class TensorMemoryOptimizer:
     def __init__(self, enable_registry: bool = True, max_tensors: int = 10000, auto_cleanup_interval: float = 60.0):
         self.registry = TensorRegistry(max_tensors) if enable_registry else None
         self.auto_cleanup_interval = auto_cleanup_interval
-        self._cleanup_thread: Optional[threading.Thread] = None
+        self._cleanup_thread: threading.Thread | None = None
         self._cleanup_active = False
 
         # Memory optimization settings
@@ -286,8 +286,8 @@ class TensorMemoryOptimizer:
         logger.info("Aggressive memory cleanup completed")
 
     def optimize_tensor_operation(
-        self, operation: str, tensors: List[Tensor], tensor_ids: Optional[List[str]] = None, **kwargs
-    ) -> Tuple[Any, List[str]]:
+        self, operation: str, tensors: list[Tensor], tensor_ids: list[str] | None = None, **kwargs
+    ) -> tuple[Any, list[str]]:
         """Optimize a tensor operation with memory management."""
         if not self.memory_optimization_enabled or not self.registry:
             # Fallback to normal operation
@@ -311,7 +311,7 @@ class TensorMemoryOptimizer:
             if isinstance(result, Tensor):
                 result_id = self.registry.register_tensor(result, metadata={"operation": operation, "result": True})
                 result_ids.append(result_id)
-            elif isinstance(result, (list, tuple)) and all(isinstance(x, Tensor) for x in result):
+            elif isinstance(result, list | tuple) and all(isinstance(x, Tensor) for x in result):
                 for i, res_tensor in enumerate(result):
                     result_id = self.registry.register_tensor(
                         res_tensor, metadata={"operation": operation, "result": True, "result_index": i}
@@ -329,7 +329,7 @@ class TensorMemoryOptimizer:
 
             raise
 
-    def _execute_operation(self, operation: str, tensors: List[Tensor], **kwargs) -> Any:
+    def _execute_operation(self, operation: str, tensors: list[Tensor], **kwargs) -> Any:
         """Execute the actual tensor operation."""
         if operation == "matmul":
             return torch.matmul(tensors[0], tensors[1])
@@ -348,7 +348,7 @@ class TensorMemoryOptimizer:
         else:
             raise ValueError(f"Unsupported operation: {operation}")
 
-    def cleanup_tensor_ids(self, tensor_ids: List[str]) -> int:
+    def cleanup_tensor_ids(self, tensor_ids: list[str]) -> int:
         """Clean up specific tensor IDs (archaeological enhancement)."""
         if not self.registry:
             return 0
@@ -361,7 +361,7 @@ class TensorMemoryOptimizer:
         logger.debug("Cleaned up %d tensor IDs", cleanup_count)
         return cleanup_count
 
-    def receive_tensor_optimized(self, tensor: Tensor, tensor_id: Optional[str] = None, source: str = "unknown") -> str:
+    def receive_tensor_optimized(self, tensor: Tensor, tensor_id: str | None = None, source: str = "unknown") -> str:
         """Optimized tensor reception with leak prevention (archaeological enhancement).
 
         Based on findings from codex/cleanup-tensor-id-in-receive_tensor.
@@ -379,7 +379,7 @@ class TensorMemoryOptimizer:
         logger.debug("Optimized tensor reception: %s from %s", final_tensor_id, source)
         return final_tensor_id
 
-    def get_memory_report(self) -> Dict[str, Any]:
+    def get_memory_report(self) -> dict[str, Any]:
         """Get comprehensive memory usage report."""
         report = {
             "timestamp": time.time(),
@@ -421,7 +421,7 @@ class TensorMemoryOptimizer:
 
 
 # Global optimizer instance for easy integration
-_global_optimizer: Optional[TensorMemoryOptimizer] = None
+_global_optimizer: TensorMemoryOptimizer | None = None
 
 
 def get_tensor_memory_optimizer() -> TensorMemoryOptimizer:
@@ -436,26 +436,26 @@ def get_tensor_memory_optimizer() -> TensorMemoryOptimizer:
 
 
 def optimize_tensor_operation(
-    operation: str, tensors: List[Tensor], tensor_ids: Optional[List[str]] = None, **kwargs
-) -> Tuple[Any, List[str]]:
+    operation: str, tensors: list[Tensor], tensor_ids: list[str] | None = None, **kwargs
+) -> tuple[Any, list[str]]:
     """Global function for optimized tensor operations."""
     optimizer = get_tensor_memory_optimizer()
     return optimizer.optimize_tensor_operation(operation, tensors, tensor_ids, **kwargs)
 
 
-def cleanup_tensor_ids(tensor_ids: List[str]) -> int:
+def cleanup_tensor_ids(tensor_ids: list[str]) -> int:
     """Global function for tensor ID cleanup (archaeological enhancement)."""
     optimizer = get_tensor_memory_optimizer()
     return optimizer.cleanup_tensor_ids(tensor_ids)
 
 
-def receive_tensor_optimized(tensor: Tensor, tensor_id: Optional[str] = None, source: str = "unknown") -> str:
+def receive_tensor_optimized(tensor: Tensor, tensor_id: str | None = None, source: str = "unknown") -> str:
     """Global function for optimized tensor reception (archaeological enhancement)."""
     optimizer = get_tensor_memory_optimizer()
     return optimizer.receive_tensor_optimized(tensor, tensor_id, source)
 
 
-def get_memory_report() -> Dict[str, Any]:
+def get_memory_report() -> dict[str, Any]:
     """Global function to get memory usage report."""
     optimizer = get_tensor_memory_optimizer()
     return optimizer.get_memory_report()

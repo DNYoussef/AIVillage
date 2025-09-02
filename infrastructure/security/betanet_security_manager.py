@@ -7,24 +7,24 @@ Implements transport encryption, identity verification, and secure communication
 """
 
 import asyncio
+from dataclasses import dataclass, field
+from enum import Enum
 import hashlib
 import hmac
 import json
 import logging
 import secrets
 import time
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 import uuid
 
 # Cryptographic libraries
 try:
-    from cryptography.hazmat.primitives import hashes, serialization
-    from cryptography.hazmat.primitives.asymmetric import rsa, padding
-    from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-    from cryptography.hazmat.backends import default_backend
     from cryptography.exceptions import InvalidSignature
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import padding, rsa
+    from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
     CRYPTOGRAPHY_AVAILABLE = True
 except ImportError:
@@ -71,7 +71,7 @@ class SecurityCredential:
     node_id: str
     public_key: bytes
     private_key: bytes
-    certificate: Optional[bytes] = None
+    certificate: bytes | None = None
     key_fingerprint: str = ""
     created_at: float = field(default_factory=time.time)
     expires_at: float = field(default_factory=lambda: time.time() + 86400 * 30)  # 30 days
@@ -92,7 +92,7 @@ class SecureChannel:
     created_at: float = field(default_factory=time.time)
     last_used: float = field(default_factory=time.time)
     is_active: bool = True
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -107,7 +107,7 @@ class ThreatEvent:
     description: str
     detected_at: float = field(default_factory=time.time)
     mitigated: bool = False
-    evidence: Dict[str, Any] = field(default_factory=dict)
+    evidence: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -120,7 +120,7 @@ class SecurityPolicy:
     max_channel_lifetime: int = 3600  # 1 hour
     threat_detection_enabled: bool = True
     automatic_mitigation: bool = True
-    allowed_channel_types: Set[ChannelType] = field(
+    allowed_channel_types: set[ChannelType] = field(
         default_factory=lambda: {ChannelType.HTTP3_COVERT, ChannelType.WEBSOCKET_COVERT, ChannelType.MIXNET_ROUTED}
     )
 
@@ -139,28 +139,28 @@ class BetaNetSecurityManager:
     - Integration with existing BetaNet transport
     """
 
-    def __init__(self, node_id: str, security_policy: Optional[SecurityPolicy] = None):
+    def __init__(self, node_id: str, security_policy: SecurityPolicy | None = None):
         """Initialize BetaNet security manager."""
         self.node_id = node_id
         self.security_policy = security_policy or SecurityPolicy()
 
         # Cryptographic materials
-        self.node_credentials: Optional[SecurityCredential] = None
-        self.trusted_nodes: Dict[str, SecurityCredential] = {}
-        self.revoked_certificates: Set[str] = set()
+        self.node_credentials: SecurityCredential | None = None
+        self.trusted_nodes: dict[str, SecurityCredential] = {}
+        self.revoked_certificates: set[str] = set()
 
         # Secure channels
-        self.active_channels: Dict[str, SecureChannel] = {}
-        self.channel_by_peer: Dict[str, str] = {}  # peer_id -> channel_id
+        self.active_channels: dict[str, SecureChannel] = {}
+        self.channel_by_peer: dict[str, str] = {}  # peer_id -> channel_id
 
         # Threat detection
-        self.threat_events: List[ThreatEvent] = []
-        self.threat_patterns: Dict[str, List[Dict[str, Any]]] = {}
-        self.blocked_nodes: Set[str] = set()
+        self.threat_events: list[ThreatEvent] = []
+        self.threat_patterns: dict[str, list[dict[str, Any]]] = {}
+        self.blocked_nodes: set[str] = set()
 
         # Session management
-        self.session_keys: Dict[str, bytes] = {}
-        self.key_rotation_schedule: Dict[str, float] = {}
+        self.session_keys: dict[str, bytes] = {}
+        self.key_rotation_schedule: dict[str, float] = {}
 
         # Statistics
         self.security_stats = {
@@ -198,7 +198,7 @@ class BetaNetSecurityManager:
 
     async def establish_secure_channel(
         self, remote_node_id: str, channel_type: ChannelType, security_level: SecurityLevel = SecurityLevel.STANDARD
-    ) -> Tuple[bool, Optional[str]]:
+    ) -> tuple[bool, str | None]:
         """Establish a secure communication channel with a remote node."""
 
         if not self.node_credentials:
@@ -254,8 +254,8 @@ class BetaNetSecurityManager:
             return False, None
 
     async def encrypt_message(
-        self, message: bytes, channel_id: str, associated_data: Optional[bytes] = None
-    ) -> Tuple[bool, Optional[bytes]]:
+        self, message: bytes, channel_id: str, associated_data: bytes | None = None
+    ) -> tuple[bool, bytes | None]:
         """Encrypt a message for secure transmission."""
 
         channel = self.active_channels.get(channel_id)
@@ -300,8 +300,8 @@ class BetaNetSecurityManager:
             return False, None
 
     async def decrypt_message(
-        self, encrypted_packet: bytes, expected_sender: Optional[str] = None
-    ) -> Tuple[bool, Optional[bytes], Optional[Dict[str, Any]]]:
+        self, encrypted_packet: bytes, expected_sender: str | None = None
+    ) -> tuple[bool, bytes | None, dict[str, Any] | None]:
         """Decrypt a received secure message."""
 
         try:
@@ -433,7 +433,7 @@ class BetaNetSecurityManager:
             self.security_stats["authentication_failures"] += 1
             return False
 
-    async def detect_threats(self, traffic_sample: List[Dict[str, Any]]) -> List[ThreatEvent]:
+    async def detect_threats(self, traffic_sample: list[dict[str, Any]]) -> list[ThreatEvent]:
         """Detect security threats from traffic analysis."""
 
         detected_threats = []
@@ -593,7 +593,7 @@ class BetaNetSecurityManager:
 
     async def _perform_key_exchange(
         self, remote_node_id: str, security_level: SecurityLevel
-    ) -> Tuple[bool, bytes, bytes]:
+    ) -> tuple[bool, bytes, bytes]:
         """Perform key exchange with remote node."""
 
         try:
@@ -638,8 +638,8 @@ class BetaNetSecurityManager:
         self,
         plaintext: bytes,
         key: bytes,
-        additional_data: Optional[bytes] = None,
-        associated_data: Optional[bytes] = None,
+        additional_data: bytes | None = None,
+        associated_data: bytes | None = None,
     ) -> bytes:
         """Encrypt using AEAD (Authenticated Encryption with Associated Data)."""
 
@@ -665,7 +665,7 @@ class BetaNetSecurityManager:
             ciphertext = aesgcm.encrypt(nonce, plaintext, additional_data)
             return nonce + ciphertext
 
-    async def _aead_decrypt(self, ciphertext: bytes, key: bytes, additional_data: Optional[bytes] = None) -> bytes:
+    async def _aead_decrypt(self, ciphertext: bytes, key: bytes, additional_data: bytes | None = None) -> bytes:
         """Decrypt using AEAD."""
 
         if not CRYPTOGRAPHY_AVAILABLE:
@@ -734,8 +734,8 @@ class BetaNetSecurityManager:
         }
 
     async def _analyze_pattern(
-        self, traffic_sample: List[Dict[str, Any]], rule: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        self, traffic_sample: list[dict[str, Any]], rule: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Analyze traffic for specific threat patterns."""
 
         matches = []
@@ -823,7 +823,7 @@ class BetaNetSecurityManager:
         return matches
 
     async def _record_threat_event(
-        self, threat_type: ThreatType, source_node: str, description: str, evidence: Optional[Dict[str, Any]] = None
+        self, threat_type: ThreatType, source_node: str, description: str, evidence: dict[str, Any] | None = None
     ) -> None:
         """Record a security threat event."""
 
@@ -938,7 +938,7 @@ class BetaNetSecurityManager:
 
     # Public API methods
 
-    def get_security_stats(self) -> Dict[str, Any]:
+    def get_security_stats(self) -> dict[str, Any]:
         """Get security statistics."""
         return {
             **self.security_stats,
@@ -951,7 +951,7 @@ class BetaNetSecurityManager:
             ),
         }
 
-    def get_channel_info(self, channel_id: str) -> Optional[Dict[str, Any]]:
+    def get_channel_info(self, channel_id: str) -> dict[str, Any] | None:
         """Get information about a secure channel."""
         channel = self.active_channels.get(channel_id)
         if not channel:
@@ -968,7 +968,7 @@ class BetaNetSecurityManager:
             "security_level": channel.metadata.get("security_level", "unknown"),
         }
 
-    def get_threat_summary(self) -> Dict[str, Any]:
+    def get_threat_summary(self) -> dict[str, Any]:
         """Get summary of recent threats."""
         recent_threats = [
             event for event in self.threat_events if time.time() - event.detected_at < 86400  # Last 24 hours
@@ -987,7 +987,7 @@ class BetaNetSecurityManager:
             "critical_threats": len([e for e in recent_threats if e.severity == "critical"]),
         }
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Perform security system health check."""
         issues = []
 

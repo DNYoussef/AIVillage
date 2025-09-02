@@ -3,24 +3,25 @@ Public Constitutional Accountability Dashboard
 Real-time transparency interface for constitutional fog computing system
 """
 
-import json
-import time
 import asyncio
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, asdict
-from enum import Enum
-import logging
-from datetime import datetime
 from collections import deque
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from enum import Enum
 import hashlib
+import json
+import logging
 from pathlib import Path
+import time
+from typing import Any
 
-# Import our transparency components
-from .merkle_audit import ConstitutionalMerkleAudit, AuditLevel
 from .constitutional_logging import (
     ConstitutionalDecisionLogger,
     GovernanceLevel,
 )
+
+# Import our transparency components
+from .merkle_audit import AuditLevel, ConstitutionalMerkleAudit
 from .privacy_preserving_audit import PrivacyPreservingAuditSystem
 
 
@@ -60,7 +61,7 @@ class DashboardWidget:
     data_source: str
     update_frequency_seconds: int
     public_visibility: bool
-    tier_restrictions: List[str]  # Which tiers can see this widget
+    tier_restrictions: list[str]  # Which tiers can see this widget
 
 
 @dataclass
@@ -78,8 +79,8 @@ class ConstitutionalMetricSnapshot:
     privacy_preserved_decisions: int
     zk_proofs_active: int
     merkle_trees_verified: int
-    tier_distribution: Dict[str, int]
-    transparency_level_distribution: Dict[str, int]
+    tier_distribution: dict[str, int]
+    transparency_level_distribution: dict[str, int]
 
 
 class PublicAccountabilityDashboard:
@@ -102,9 +103,9 @@ class PublicAccountabilityDashboard:
 
         # Dashboard configuration
         self.config_path = Path(dashboard_config_path)
-        self.widgets: Dict[str, DashboardWidget] = {}
+        self.widgets: dict[str, DashboardWidget] = {}
         self.metric_history: deque = deque(maxlen=10000)  # Last 10k snapshots
-        self.real_time_data: Dict[str, Any] = {}
+        self.real_time_data: dict[str, Any] = {}
 
         # Update tracking
         self.last_update: float = 0
@@ -112,7 +113,7 @@ class PublicAccountabilityDashboard:
         self.is_updating: bool = False
 
         # Public API cache
-        self.public_api_cache: Dict[str, Tuple[float, Any]] = {}
+        self.public_api_cache: dict[str, tuple[float, Any]] = {}
         self.cache_ttl: int = 60  # 1 minute cache TTL
 
         self.logger = logging.getLogger(__name__)
@@ -137,7 +138,7 @@ class PublicAccountabilityDashboard:
         """Load dashboard configuration from file"""
         try:
             if self.config_path.exists():
-                with open(self.config_path, "r") as f:
+                with open(self.config_path) as f:
                     config_data = json.load(f)
 
                     for widget_data in config_data.get("widgets", []):
@@ -344,7 +345,7 @@ class PublicAccountabilityDashboard:
         finally:
             self.is_updating = False
 
-    async def _collect_constitutional_metrics(self) -> Dict[str, Any]:
+    async def _collect_constitutional_metrics(self) -> dict[str, Any]:
         """Collect metrics from all constitutional system components"""
         metrics = {}
 
@@ -432,7 +433,7 @@ class PublicAccountabilityDashboard:
 
     async def _calculate_widget_data(
         self, widget: DashboardWidget, snapshot: ConstitutionalMetricSnapshot
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Calculate data for specific widget based on its configuration"""
         if widget.metric_type == DashboardMetric.CONSTITUTIONAL_COMPLIANCE_RATE:
             return {
@@ -546,7 +547,7 @@ class PublicAccountabilityDashboard:
         else:
             return "stable"
 
-    def _get_historical_data(self, widget_id: str, time_range: TimeRange) -> List[Dict[str, Any]]:
+    def _get_historical_data(self, widget_id: str, time_range: TimeRange) -> list[dict[str, Any]]:
         """Get historical data for widget chart visualization"""
         cutoff_time = time.time()
 
@@ -610,7 +611,7 @@ class PublicAccountabilityDashboard:
 
         return total_resolution_time / len(resolved_appeals)
 
-    async def _get_recent_violations(self) -> List[Dict[str, Any]]:
+    async def _get_recent_violations(self) -> list[dict[str, Any]]:
         """Get recent constitutional violations for display"""
         recent_cutoff = time.time() - (24 * 3600)  # Last 24 hours
 
@@ -646,7 +647,7 @@ class PublicAccountabilityDashboard:
 
     # PUBLIC API METHODS
 
-    async def get_public_dashboard_data(self, user_tier: Optional[str] = None) -> Dict[str, Any]:
+    async def get_public_dashboard_data(self, user_tier: str | None = None) -> dict[str, Any]:
         """Get complete dashboard data for public consumption"""
         cache_key = f"dashboard_data_{user_tier or 'public'}"
 
@@ -696,7 +697,7 @@ class PublicAccountabilityDashboard:
 
         return dashboard_data
 
-    async def get_widget_data(self, widget_id: str, user_tier: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    async def get_widget_data(self, widget_id: str, user_tier: str | None = None) -> dict[str, Any] | None:
         """Get data for specific widget"""
         if widget_id not in self.real_time_data:
             return None
@@ -718,7 +719,7 @@ class PublicAccountabilityDashboard:
             "visualization_type": widget.visualization_type,
         }
 
-    async def get_constitutional_metrics_summary(self) -> Dict[str, Any]:
+    async def get_constitutional_metrics_summary(self) -> dict[str, Any]:
         """Get high-level constitutional metrics summary for public API"""
         if not self.metric_history:
             return {"error": "No metrics available"}
@@ -762,7 +763,7 @@ class PublicAccountabilityDashboard:
             },
         }
 
-    def generate_public_transparency_report(self) -> Dict[str, Any]:
+    def generate_public_transparency_report(self) -> dict[str, Any]:
         """Generate comprehensive public transparency report"""
         if not self.metric_history:
             return {"error": "Insufficient data for report generation"}
@@ -835,8 +836,8 @@ if __name__ == "__main__":
 
     async def test_public_dashboard():
         # This would normally be initialized with real system components
-        from .merkle_audit import ConstitutionalMerkleAudit
         from .constitutional_logging import ConstitutionalDecisionLogger
+        from .merkle_audit import ConstitutionalMerkleAudit
         from .privacy_preserving_audit import PrivacyPreservingAuditSystem
 
         # Initialize components (simplified for testing)

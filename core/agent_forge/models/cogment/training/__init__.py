@@ -5,15 +5,11 @@ Implements 4-stage curriculum training with GrokFast integration for accelerated
 Replaces HRRM's 3-phase approach with enhanced loss functions and stage-specific optimization.
 """
 
-from .losses import DeepSupervisionLoss, ResidualImprovementLoss, ConsistencyLoss, PonderLoss, CogmentLoss
-
 from .curriculum import CurriculumStage, FourStageCurriculum, StageConfig
-
-from .grokfast_integration import CogmentGrokFastOptimizer, SelectiveGrokFastManager, GrokFastConfig
-
-from .trainer import CogmentTrainer, TrainingConfig, MultiOptimizerConfig
-
-from .evaluator import StageEvaluator, EvaluationMetrics, ConvergenceDetector
+from .evaluator import ConvergenceDetector, EvaluationMetrics, StageEvaluator
+from .grokfast_integration import CogmentGrokFastOptimizer, GrokFastConfig, SelectiveGrokFastManager
+from .losses import CogmentLoss, ConsistencyLoss, DeepSupervisionLoss, PonderLoss, ResidualImprovementLoss
+from .trainer import CogmentTrainer, MultiOptimizerConfig, TrainingConfig
 
 __all__ = [
     # Loss functions

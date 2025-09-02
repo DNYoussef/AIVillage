@@ -19,38 +19,32 @@ in the codebase should be considered deprecated and replaced with this version.
 """
 
 # Import production-ready implementation as default
-from .cognate_production import (
-    CognateProductionModel as CognateModel,
-    CognateProductionConfig as CognateConfig,
-    create_production_cognate_model as create_cognate_model,
-    create_three_production_cognate_models,
-)
-
 # Import Agent Forge integration
 from .agent_forge_integration import (
     create_agent_forge_cognate_models,
-    validate_agent_forge_compatibility,
-    save_agent_forge_models,
     load_agent_forge_models,
+    save_agent_forge_models,
+    validate_agent_forge_compatibility,
+)
+from .cognate_production import (
+    CognateProductionConfig as CognateConfig,
+)
+from .cognate_production import (
+    CognateProductionModel as CognateModel,
+)
+from .cognate_production import (
+    create_production_cognate_model as create_cognate_model,
+)
+from .cognate_production import (
+    create_three_production_cognate_models,
 )
 
 # Import configuration system
 from .config.cognate_config import (
     CognateModelConfig,
+    create_default_config,
     load_config,
     validate_config,
-    create_default_config,
-)
-
-# Import training system
-from .training.trainer import (
-    CognateTrainer,
-    CognateTrainingConfig,
-)
-
-from .training.grokfast_optimizer import (
-    GrokFastOptimizer,
-    create_grokfast_optimizer,
 )
 
 # Import memory system
@@ -58,6 +52,16 @@ from .memory.ltm_bank import (
     CognateLTMBank,
     MemoryConfig,
     create_memory_bank,
+)
+from .training.grokfast_optimizer import (
+    GrokFastOptimizer,
+    create_grokfast_optimizer,
+)
+
+# Import training system
+from .training.trainer import (
+    CognateTrainer,
+    CognateTrainingConfig,
 )
 
 __version__ = "1.0.0"

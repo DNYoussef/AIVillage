@@ -14,18 +14,14 @@ with memory-aware optimization and integration with Phase 1 tensor memory system
 
 import asyncio
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum, auto
-import hashlib
 import json
 import logging
 from pathlib import Path
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 import uuid
-
-import numpy as np
-from pydantic import BaseModel, Field
 
 # Archaeological metadata
 ARCHAEOLOGICAL_METADATA = {
@@ -88,11 +84,11 @@ class ModelMetadata:
     architecture: ModelArchitectureType
     total_parameters: int
     layer_count: int
-    layer_sizes: List[int]
+    layer_sizes: list[int]
     memory_footprint: int  # in bytes
     computational_complexity: float  # FLOPs estimate
-    dependencies: Dict[str, List[str]] = field(default_factory=dict)
-    custom_attributes: Dict[str, Any] = field(default_factory=dict)
+    dependencies: dict[str, list[str]] = field(default_factory=dict)
+    custom_attributes: dict[str, Any] = field(default_factory=dict)
 
 @dataclass
 class NodeProfile:
@@ -105,7 +101,7 @@ class NodeProfile:
     compute_power: float  # relative compute power
     network_bandwidth: float  # MB/s
     network_latency: float  # ms to other nodes
-    specialized_hardware: List[str] = field(default_factory=list)
+    specialized_hardware: list[str] = field(default_factory=list)
     current_load: float = 0.0  # 0.0 to 1.0
     reliability_score: float = 1.0  # 0.0 to 1.0
 
@@ -115,14 +111,14 @@ class ModelShard:
     shard_id: str
     model_id: str
     shard_index: int
-    layer_range: Tuple[int, int]  # (start_layer, end_layer)
-    parameters: Dict[str, Any]  # serialized parameters
+    layer_range: tuple[int, int]  # (start_layer, end_layer)
+    parameters: dict[str, Any]  # serialized parameters
     memory_requirement: int  # bytes
     compute_requirement: float  # relative compute need
-    input_shape: Tuple[int, ...]
-    output_shape: Tuple[int, ...]
-    dependencies: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    input_shape: tuple[int, ...]
+    output_shape: tuple[int, ...]
+    dependencies: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 @dataclass
 class ShardingPlan:
@@ -130,14 +126,14 @@ class ShardingPlan:
     plan_id: str
     model_id: str
     strategy: ShardingStrategy
-    shards: List[ModelShard]
-    node_assignments: Dict[str, str]  # shard_id -> node_id
-    communication_pattern: Dict[str, List[str]]  # shard dependencies
-    estimated_memory_usage: Dict[str, int]  # node_id -> memory
+    shards: list[ModelShard]
+    node_assignments: dict[str, str]  # shard_id -> node_id
+    communication_pattern: dict[str, list[str]]  # shard dependencies
+    estimated_memory_usage: dict[str, int]  # node_id -> memory
     estimated_latency: float  # milliseconds
     estimated_throughput: float  # inferences/second
     created_at: datetime
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 class ModelShardingEngine:
     """
@@ -151,12 +147,12 @@ class ModelShardingEngine:
     - Real-time load balancing and adaptation
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize the advanced sharding engine."""
         self.config = config or {}
-        self.node_profiles: Dict[str, NodeProfile] = {}
-        self.active_plans: Dict[str, ShardingPlan] = {}
-        self.performance_cache: Dict[str, Dict[str, float]] = {}
+        self.node_profiles: dict[str, NodeProfile] = {}
+        self.active_plans: dict[str, ShardingPlan] = {}
+        self.performance_cache: dict[str, dict[str, float]] = {}
         self.archaeological_metadata = ARCHAEOLOGICAL_METADATA
         
         # Feature flags from archaeological integration
@@ -169,7 +165,7 @@ class ModelShardingEngine:
         self.memory_weight = self.config.get("memory_weight", 0.4)
         self.compute_weight = self.config.get("compute_weight", 0.3)
         
-        logger.info(f"🧠 ModelShardingEngine initialized with archaeological metadata")
+        logger.info("🧠 ModelShardingEngine initialized with archaeological metadata")
         logger.info(f"📊 Innovation Score: {self.archaeological_metadata['innovation_score']}")
         
     async def start(self):
@@ -247,8 +243,8 @@ class ModelShardingEngine:
         self,
         model_metadata: ModelMetadata,
         strategy: ShardingStrategy = ShardingStrategy.MEMORY_OPTIMAL,
-        target_nodes: Optional[List[str]] = None
-    ) -> Optional[ShardingPlan]:
+        target_nodes: list[str] | None = None
+    ) -> ShardingPlan | None:
         """
         Create an intelligent sharding plan for a model.
         
@@ -373,11 +369,11 @@ class ModelShardingEngine:
             logger.error(f"❌ Failed to execute sharding plan {plan_id}: {e}")
             return False
             
-    async def get_sharding_plan(self, plan_id: str) -> Optional[ShardingPlan]:
+    async def get_sharding_plan(self, plan_id: str) -> ShardingPlan | None:
         """Retrieve a sharding plan by ID."""
         return self.active_plans.get(plan_id)
         
-    async def list_active_plans(self) -> List[Dict[str, Any]]:
+    async def list_active_plans(self) -> list[dict[str, Any]]:
         """List all active sharding plans."""
         plans = []
         
@@ -396,7 +392,7 @@ class ModelShardingEngine:
             
         return plans
         
-    async def get_node_utilization(self) -> Dict[str, Dict[str, Any]]:
+    async def get_node_utilization(self) -> dict[str, dict[str, Any]]:
         """Get current utilization for all registered nodes."""
         utilization = {}
         
@@ -418,7 +414,7 @@ class ModelShardingEngine:
             
         return utilization
         
-    async def optimize_existing_plan(self, plan_id: str) -> Optional[ShardingPlan]:
+    async def optimize_existing_plan(self, plan_id: str) -> ShardingPlan | None:
         """Re-optimize an existing sharding plan based on current conditions."""
         try:
             if plan_id not in self.active_plans:
@@ -448,7 +444,7 @@ class ModelShardingEngine:
                     self.active_plans[optimized_plan.plan_id] = optimized_plan
                     return optimized_plan
                 else:
-                    logger.info(f"📊 Current plan remains optimal")
+                    logger.info("📊 Current plan remains optimal")
                     # Remove the test plan
                     if optimized_plan.plan_id in self.active_plans:
                         del self.active_plans[optimized_plan.plan_id]
@@ -470,7 +466,7 @@ class ModelShardingEngine:
         try:
             performance_data_path = Path("data/archaeological/sharding_performance.json")
             if performance_data_path.exists():
-                with open(performance_data_path, 'r') as f:
+                with open(performance_data_path) as f:
                     historical_data = json.load(f)
                     self.performance_cache.update(historical_data)
                     logger.info(f"📊 Loaded {len(historical_data)} historical performance entries")
@@ -515,7 +511,7 @@ class ModelShardingEngine:
             
         # Validate layer information
         if model_metadata.layer_count < 2:
-            logger.error(f"❌ Model must have at least 2 layers for sharding")
+            logger.error("❌ Model must have at least 2 layers for sharding")
             return False
             
         return True
@@ -523,8 +519,8 @@ class ModelShardingEngine:
     async def _select_optimal_nodes(
         self, 
         model_metadata: ModelMetadata, 
-        target_nodes: Optional[List[str]]
-    ) -> List[str]:
+        target_nodes: list[str] | None
+    ) -> list[str]:
         """Select optimal nodes for model sharding using archaeological algorithms."""
         
         available_nodes = target_nodes or list(self.node_profiles.keys())
@@ -598,8 +594,8 @@ class ModelShardingEngine:
         self,
         model_metadata: ModelMetadata,
         strategy: ShardingStrategy,
-        target_nodes: List[str]
-    ) -> List[ModelShard]:
+        target_nodes: list[str]
+    ) -> list[ModelShard]:
         """Generate model shards using archaeological sharding algorithms."""
         
         shards = []
@@ -619,8 +615,8 @@ class ModelShardingEngine:
     async def _generate_layer_wise_shards(
         self,
         model_metadata: ModelMetadata,
-        target_nodes: List[str]
-    ) -> List[ModelShard]:
+        target_nodes: list[str]
+    ) -> list[ModelShard]:
         """Generate shards using archaeological layer-wise strategy."""
         
         shards = []
@@ -665,8 +661,8 @@ class ModelShardingEngine:
     async def _generate_memory_optimal_shards(
         self,
         model_metadata: ModelMetadata,
-        target_nodes: List[str]
-    ) -> List[ModelShard]:
+        target_nodes: list[str]
+    ) -> list[ModelShard]:
         """Generate memory-optimal shards using archaeological algorithms."""
         
         # Calculate available memory per node
@@ -729,8 +725,8 @@ class ModelShardingEngine:
     async def _generate_hybrid_shards(
         self,
         model_metadata: ModelMetadata,
-        target_nodes: List[str]
-    ) -> List[ModelShard]:
+        target_nodes: list[str]
+    ) -> list[ModelShard]:
         """Generate hybrid shards combining multiple archaeological strategies."""
         
         # Use memory-optimal as base, then apply compute optimization
@@ -758,10 +754,10 @@ class ModelShardingEngine:
         
     async def _optimize_shard_assignments(
         self,
-        shards: List[ModelShard],
-        target_nodes: List[str],
+        shards: list[ModelShard],
+        target_nodes: list[str],
         strategy: ShardingStrategy
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """Optimize shard-to-node assignments using archaeological algorithms."""
         
         assignments = {}
@@ -837,7 +833,7 @@ class ModelShardingEngine:
         self, 
         shard: ModelShard, 
         profile: NodeProfile,
-        current_assignments: Dict[str, str]
+        current_assignments: dict[str, str]
     ) -> float:
         """Calculate network communication cost."""
         cost = 0.0
@@ -869,7 +865,7 @@ class ModelShardingEngine:
         self, 
         shard: ModelShard, 
         node_id: str,
-        current_assignments: Dict[str, str]
+        current_assignments: dict[str, str]
     ) -> bool:
         """Check if shard can be assigned to node."""
         if node_id not in self.node_profiles:
@@ -894,9 +890,9 @@ class ModelShardingEngine:
         
     async def _calculate_communication_pattern(
         self,
-        shards: List[ModelShard],
-        assignments: Dict[str, str]
-    ) -> Dict[str, List[str]]:
+        shards: list[ModelShard],
+        assignments: dict[str, str]
+    ) -> dict[str, list[str]]:
         """Calculate inter-shard communication patterns."""
         pattern = {}
         
@@ -911,9 +907,9 @@ class ModelShardingEngine:
         
     def _estimate_memory_usage(
         self,
-        shards: List[ModelShard],
-        assignments: Dict[str, str]
-    ) -> Dict[str, int]:
+        shards: list[ModelShard],
+        assignments: dict[str, str]
+    ) -> dict[str, int]:
         """Estimate memory usage per node."""
         usage = {}
         
@@ -931,8 +927,8 @@ class ModelShardingEngine:
         
     async def _estimate_latency(
         self,
-        shards: List[ModelShard],
-        assignments: Dict[str, str]
+        shards: list[ModelShard],
+        assignments: dict[str, str]
     ) -> float:
         """Estimate total inference latency."""
         total_latency = 0.0
@@ -963,8 +959,8 @@ class ModelShardingEngine:
     async def _estimate_throughput(
         self,
         model_metadata: ModelMetadata,
-        shards: List[ModelShard],
-        assignments: Dict[str, str]
+        shards: list[ModelShard],
+        assignments: dict[str, str]
     ) -> float:
         """Estimate inference throughput."""
         # Simplified throughput estimation

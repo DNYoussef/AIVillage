@@ -17,23 +17,16 @@ Archaeological Value Recovered: 200+ Hours Development Work
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # Core Evolution Scheduler Components
 try:
     from .core.evolution_scheduler_manager import (
-        EvolutionSchedulerManager,
-        EvolutionTask,
-        EvolutionResult,
-        ModelConfiguration,
-        TaskPriority,
-        TaskStatus,
-        EvolutionMetrics,
         get_evolution_scheduler_manager,
-        scheduler_health_check
+        scheduler_health_check,
     )
     HAS_CORE = True
 except ImportError as e:
@@ -42,18 +35,6 @@ except ImportError as e:
 
 # Adaptive Evolution Algorithms
 try:
-    from .algorithms.adaptive_algorithms import (
-        EvolutionAlgorithm,
-        AdaptiveGeneticAlgorithm,
-        DifferentialEvolution,
-        ParticleSwarmOptimization,
-        EvolutionParameters,
-        SelectionStrategy,
-        MutationStrategy,
-        CrossoverStrategy,
-        get_evolution_algorithm,
-        adaptive_algorithm_health
-    )
     HAS_ALGORITHMS = True
 except ImportError as e:
     logger.warning(f"Evolution algorithms not available: {e}")
@@ -63,14 +44,7 @@ except ImportError as e:
 try:
     from .monitoring.regression_detector import (
         ComprehensiveRegressionDetector,
-        StatisticalRegressionDetector,
-        TrendAnalysisDetector,
-        AnomalyDetectionEngine,
-        RegressionAlert,
-        AlertSeverity as RegressionSeverity,
-        DetectionMethod,
-        get_regression_detector,
-        regression_detector_health
+        regression_detector_health,
     )
     HAS_REGRESSION_DETECTION = True
 except ImportError as e:
@@ -81,12 +55,7 @@ except ImportError as e:
 try:
     from .integration.evomerge_coordinator import (
         EvoMergeCoordinator,
-        ModelCandidate,
-        EvoMergeTask,
-        MergeStrategy,
-        MergeResult,
-        get_evomerge_coordinator,
-        evomerge_health_check
+        evomerge_health_check,
     )
     HAS_EVOMERGE = True
 except ImportError as e:
@@ -96,14 +65,8 @@ except ImportError as e:
 # API Gateway and Monitoring
 try:
     from .api.scheduler_api_gateway import (
-        EvolutionSchedulerAPIGateway,
-        APIStatus,
-        MonitoringLevel,
-        TaskRequest,
-        TaskStatusResponse,
-        get_evolution_scheduler_api_gateway,
+        api_gateway_health,
         initialize_api_gateway,
-        api_gateway_health
     )
     HAS_API_GATEWAY = True
 except ImportError as e:
@@ -112,15 +75,8 @@ except ImportError as e:
 
 try:
     from .monitoring.realtime_dashboard import (
-        RealTimeMonitoringDashboard,
-        DashboardAlert,
-        AlertSeverity as DashboardSeverity,
-        ChartType,
-        ChartData,
-        MetricSnapshot,
-        get_realtime_monitoring_dashboard,
+        dashboard_health,
         initialize_monitoring_dashboard,
-        dashboard_health
     )
     HAS_DASHBOARD = True
 except ImportError as e:
@@ -134,7 +90,7 @@ async def initialize_evolution_scheduler_system(
     enable_api_gateway: bool = True,
     enable_dashboard: bool = True,
     enable_monitoring: bool = True
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Initialize complete Evolution Scheduler system.
     
@@ -219,7 +175,7 @@ async def initialize_evolution_scheduler_system(
             "timestamp": datetime.now().isoformat()
         }
 
-async def get_evolution_scheduler_system() -> Optional[Dict[str, Any]]:
+async def get_evolution_scheduler_system() -> dict[str, Any] | None:
     """Get global Evolution Scheduler system instance."""
     global _global_evolution_system
     if _global_evolution_system is None:
@@ -238,7 +194,9 @@ async def integrate_with_existing_systems():
     try:
         # Phase 1 Integration: Distributed Inference
         try:
-            from infrastructure.distributed_inference.core.distributed_inference_manager import get_distributed_inference_manager
+            from infrastructure.distributed_inference.core.distributed_inference_manager import (
+                get_distributed_inference_manager,
+            )
             distributed_manager = await get_distributed_inference_manager()
             if distributed_manager:
                 integrations["distributed_inference"] = "connected"
@@ -281,7 +239,7 @@ async def integrate_with_existing_systems():
     return integrations
 
 # Health check function for external monitoring
-async def evolution_scheduler_system_health() -> Dict[str, Any]:
+async def evolution_scheduler_system_health() -> dict[str, Any]:
     """Comprehensive health check for Evolution Scheduler system."""
     try:
         health_status = {

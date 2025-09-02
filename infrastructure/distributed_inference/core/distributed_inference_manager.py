@@ -19,22 +19,18 @@ Key Features:
 """
 
 import asyncio
-import logging
-import time
-import uuid
-from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+import logging
 import threading
-
-import torch
-import torch.distributed as dist
-from torch import nn
+import time
+from typing import Any
+import uuid
 
 # Phase 1 Archaeological Integration
 from core.agent_forge.models.cognate.memory.tensor_memory_optimizer import (
-    get_tensor_memory_optimizer, TensorMemoryOptimizer
+    TensorMemoryOptimizer,
+    get_tensor_memory_optimizer,
 )
 from infrastructure.monitoring.triage.emergency_triage_system import EmergencyTriageSystem
 
@@ -74,7 +70,7 @@ class ComputeNode:
     total_memory: int = 0  # MB
     available_memory: int = 0  # MB
     gpu_count: int = 0
-    gpu_memory: List[int] = field(default_factory=list)  # MB per GPU
+    gpu_memory: list[int] = field(default_factory=list)  # MB per GPU
     cpu_cores: int = 0
     network_bandwidth: float = 0.0  # Mbps
     
@@ -83,10 +79,10 @@ class ComputeNode:
     average_response_time: float = 0.0
     total_inferences: int = 0
     successful_inferences: int = 0
-    last_heartbeat: Optional[float] = None
+    last_heartbeat: float | None = None
     
     # Archaeological Metadata
-    archaeological_optimizations: Dict[str, Any] = field(default_factory=dict)
+    archaeological_optimizations: dict[str, Any] = field(default_factory=dict)
     
     def is_healthy(self) -> bool:
         """Check if node is healthy and available."""
@@ -139,23 +135,23 @@ class InferenceRequest:
     
     request_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     model_name: str = ""
-    input_data: Dict[str, Any] = field(default_factory=dict)
-    parameters: Dict[str, Any] = field(default_factory=dict)
+    input_data: dict[str, Any] = field(default_factory=dict)
+    parameters: dict[str, Any] = field(default_factory=dict)
     
     # Status Tracking
     status: InferenceStatus = InferenceStatus.PENDING
     created_at: float = field(default_factory=time.time)
-    started_at: Optional[float] = None
-    completed_at: Optional[float] = None
+    started_at: float | None = None
+    completed_at: float | None = None
     
     # Sharding Information
-    assigned_nodes: List[str] = field(default_factory=list)
-    shard_assignments: Dict[str, List[int]] = field(default_factory=dict)  # node_id -> shard_indices
+    assigned_nodes: list[str] = field(default_factory=list)
+    shard_assignments: dict[str, list[int]] = field(default_factory=dict)  # node_id -> shard_indices
     
     # Results
-    results: Dict[str, Any] = field(default_factory=dict)
-    aggregated_result: Optional[Dict[str, Any]] = None
-    error_message: Optional[str] = None
+    results: dict[str, Any] = field(default_factory=dict)
+    aggregated_result: dict[str, Any] | None = None
+    error_message: str | None = None
     
     # Performance Metrics
     sharding_time: float = 0.0
@@ -166,7 +162,7 @@ class InferenceRequest:
     # Archaeological Metadata
     tensor_optimization_enabled: bool = True
     triage_monitoring_enabled: bool = True
-    archaeological_metadata: Dict[str, Any] = field(default_factory=dict)
+    archaeological_metadata: dict[str, Any] = field(default_factory=dict)
     
     def get_duration(self) -> float:
         """Get total request duration."""
@@ -205,20 +201,20 @@ class DistributedInferenceManager:
         self.node_timeout = node_timeout
         
         # State Management
-        self.nodes: Dict[str, ComputeNode] = {}
-        self.active_requests: Dict[str, InferenceRequest] = {}
-        self.completed_requests: Dict[str, InferenceRequest] = {}
+        self.nodes: dict[str, ComputeNode] = {}
+        self.active_requests: dict[str, InferenceRequest] = {}
+        self.completed_requests: dict[str, InferenceRequest] = {}
         self.request_queue: asyncio.Queue = asyncio.Queue(maxsize=1000)
         
         # Threading and Synchronization
         self._lock = threading.RLock()
         self._running = False
-        self._coordinator_task: Optional[asyncio.Task] = None
-        self._heartbeat_task: Optional[asyncio.Task] = None
+        self._coordinator_task: asyncio.Task | None = None
+        self._heartbeat_task: asyncio.Task | None = None
         
         # Phase 1 Archaeological Integrations
-        self.tensor_optimizer: Optional[TensorMemoryOptimizer] = None
-        self.triage_system: Optional[EmergencyTriageSystem] = None
+        self.tensor_optimizer: TensorMemoryOptimizer | None = None
+        self.triage_system: EmergencyTriageSystem | None = None
         
         if enable_tensor_optimization:
             try:
@@ -294,7 +290,7 @@ class DistributedInferenceManager:
         port: int,
         total_memory: int,
         gpu_count: int = 0,
-        gpu_memory: List[int] = None,
+        gpu_memory: list[int] = None,
         cpu_cores: int = 1,
         network_bandwidth: float = 1000.0
     ) -> str:
@@ -378,8 +374,8 @@ class DistributedInferenceManager:
     async def submit_inference_request(
         self,
         model_name: str,
-        input_data: Dict[str, Any],
-        parameters: Dict[str, Any] = None
+        input_data: dict[str, Any],
+        parameters: dict[str, Any] = None
     ) -> str:
         """Submit a distributed inference request."""
         parameters = parameters or {}
@@ -416,7 +412,7 @@ class DistributedInferenceManager:
         
         return request.request_id
     
-    def get_request_status(self, request_id: str) -> Optional[Dict[str, Any]]:
+    def get_request_status(self, request_id: str) -> dict[str, Any] | None:
         """Get status of an inference request."""
         with self._lock:
             if request_id in self.active_requests:
@@ -463,7 +459,7 @@ class DistributedInferenceManager:
             
         return True
     
-    def get_system_status(self) -> Dict[str, Any]:
+    def get_system_status(self) -> dict[str, Any]:
         """Get comprehensive system status."""
         with self._lock:
             healthy_nodes = [n for n in self.nodes.values() if n.is_healthy()]
@@ -506,7 +502,7 @@ class DistributedInferenceManager:
                 ]
             }
     
-    def get_healthy_nodes(self) -> List[ComputeNode]:
+    def get_healthy_nodes(self) -> list[ComputeNode]:
         """Get list of healthy compute nodes sorted by load score."""
         with self._lock:
             healthy = [node for node in self.nodes.values() if node.is_healthy()]
@@ -816,7 +812,7 @@ class DistributedInferenceManager:
 
 
 # Global manager instance for easy integration
-_global_manager: Optional[DistributedInferenceManager] = None
+_global_manager: DistributedInferenceManager | None = None
 
 
 def get_distributed_inference_manager() -> DistributedInferenceManager:
@@ -831,21 +827,21 @@ def get_distributed_inference_manager() -> DistributedInferenceManager:
 
 async def submit_distributed_inference(
     model_name: str,
-    input_data: Dict[str, Any],
-    parameters: Dict[str, Any] = None
+    input_data: dict[str, Any],
+    parameters: dict[str, Any] = None
 ) -> str:
     """Global function for submitting distributed inference requests."""
     manager = get_distributed_inference_manager()
     return await manager.submit_inference_request(model_name, input_data, parameters)
 
 
-def get_inference_status(request_id: str) -> Optional[Dict[str, Any]]:
+def get_inference_status(request_id: str) -> dict[str, Any] | None:
     """Global function to get inference request status."""
     manager = get_distributed_inference_manager()
     return manager.get_request_status(request_id)
 
 
-def get_distributed_system_status() -> Dict[str, Any]:
+def get_distributed_system_status() -> dict[str, Any]:
     """Global function to get distributed inference system status."""
     manager = get_distributed_inference_manager()
     return manager.get_system_status()

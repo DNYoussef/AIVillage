@@ -3,18 +3,19 @@ Constitutional Moderation Integration with Fog Computing Infrastructure
 Integrates machine-only moderation pipeline with existing fog infrastructure
 """
 
-import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List, Any
+import logging
+from typing import Any
 from uuid import uuid4
 
-from .pipeline import ConstitutionalModerationPipeline, ModerationResult
-from infrastructure.fog.workload.router import WorkloadRouter
-from infrastructure.fog.security.tee_integration import TEESecurityManager
 from infrastructure.constitutional.governance.pricing import ConstitutionalPricing
 from infrastructure.constitutional.transparency.audit_logger import TransparencyLogger
+from infrastructure.fog.security.tee_integration import TEESecurityManager
+from infrastructure.fog.workload.router import WorkloadRouter
 from infrastructure.p2p.core.message_delivery import MessageDeliverySystem
+
+from .pipeline import ConstitutionalModerationPipeline, ModerationResult
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ class FogWorkloadRequest:
     fog_node_id: str
     priority: str
     timestamp: datetime
-    context: Dict[str, Any]
+    context: dict[str, Any]
 
 
 @dataclass
@@ -42,9 +43,9 @@ class ModerationResponse:
     approved: bool
     moderation_result: ModerationResult
     routing_decision: str
-    pricing_impact: Dict[str, Any]
-    security_requirements: List[str]
-    transparency_data: Dict[str, Any]
+    pricing_impact: dict[str, Any]
+    security_requirements: list[str]
+    transparency_data: dict[str, Any]
 
 
 class FogModerationIntegration:
@@ -230,7 +231,7 @@ class FogModerationIntegration:
 
     async def _calculate_pricing_impact(
         self, workload_request: FogWorkloadRequest, moderation_result: ModerationResult
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Calculate pricing impact based on moderation and constitutional factors"""
 
         base_pricing = await self.pricing.calculate_base_workload_cost(
@@ -281,7 +282,7 @@ class FogModerationIntegration:
 
     async def _determine_security_requirements(
         self, moderation_result: ModerationResult, workload_request: FogWorkloadRequest
-    ) -> List[str]:
+    ) -> list[str]:
         """Determine security requirements for workload processing"""
 
         requirements = []
@@ -328,7 +329,7 @@ class FogModerationIntegration:
 
     async def _generate_transparency_data(
         self, workload_request: FogWorkloadRequest, moderation_result: ModerationResult
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate transparency data for public accountability"""
 
         transparency_data = {
@@ -500,7 +501,7 @@ class FogModerationIntegration:
             transparency_data={"error_occurred": True, "error_message": error_message},
         )
 
-    async def get_integration_metrics(self) -> Dict[str, Any]:
+    async def get_integration_metrics(self) -> dict[str, Any]:
         """Get current integration performance metrics"""
 
         total_processed = self.integration_metrics["total_workloads_processed"]
@@ -526,7 +527,7 @@ class FogModerationIntegration:
             },
         }
 
-    async def process_appeal_for_workload(self, workload_id: str, appeal_reason: str, user_tier: str) -> Dict[str, Any]:
+    async def process_appeal_for_workload(self, workload_id: str, appeal_reason: str, user_tier: str) -> dict[str, Any]:
         """Process constitutional appeal for rejected workload"""
 
         # Find original content ID associated with workload
@@ -563,7 +564,7 @@ async def moderate_fog_workload(
     user_tier: str,
     fog_node_id: str,
     priority: str = "standard",
-    context: Dict[str, Any] = None,
+    context: dict[str, Any] = None,
 ) -> ModerationResponse:
     """
     Convenience function to moderate a fog workload
@@ -597,7 +598,7 @@ async def moderate_fog_workload(
     return await integration.process_workload_request(workload_request)
 
 
-async def get_fog_moderation_health() -> Dict[str, Any]:
+async def get_fog_moderation_health() -> dict[str, Any]:
     """Get fog moderation system health status"""
     integration = FogModerationIntegration()
     return await integration.get_integration_metrics()

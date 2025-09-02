@@ -5,8 +5,8 @@ Agent Forge CLI Entry Point
 This module provides command-line interface for the Agent Forge system.
 """
 
-import sys
 import argparse
+import sys
 
 
 def main():

@@ -7,13 +7,14 @@ Integrates with all security components for real-time threat monitoring and resp
 """
 
 import asyncio
-import logging
-import time
-import uuid
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+import logging
+import time
+from typing import Any
+import uuid
+
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -66,7 +67,7 @@ class ThreatIndicator:
     baseline_value: float
     deviation_score: float
     timestamp: float = field(default_factory=time.time)
-    context: Dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -76,16 +77,16 @@ class ThreatEvent:
     event_id: str
     threat_category: ThreatCategory
     threat_level: ThreatLevel
-    attack_vector: Optional[AttackVector]
-    source_nodes: Set[str]
-    target_nodes: Set[str]
-    indicators: List[ThreatIndicator] = field(default_factory=list)
+    attack_vector: AttackVector | None
+    source_nodes: set[str]
+    target_nodes: set[str]
+    indicators: list[ThreatIndicator] = field(default_factory=list)
     confidence_score: float = 0.0
     risk_score: float = 0.0
     detected_at: float = field(default_factory=time.time)
     mitigated: bool = False
-    mitigation_actions: List[str] = field(default_factory=list)
-    evidence: Dict[str, Any] = field(default_factory=dict)
+    mitigation_actions: list[str] = field(default_factory=list)
+    evidence: dict[str, Any] = field(default_factory=dict)
     false_positive: bool = False
 
 
@@ -94,12 +95,12 @@ class BehaviorProfile:
     """Node behavior profile for anomaly detection."""
 
     node_id: str
-    baseline_metrics: Dict[str, float] = field(default_factory=dict)
+    baseline_metrics: dict[str, float] = field(default_factory=dict)
     recent_metrics: deque = field(default_factory=lambda: deque(maxlen=100))
     anomaly_scores: deque = field(default_factory=lambda: deque(maxlen=50))
     last_updated: float = field(default_factory=time.time)
     profile_confidence: float = 0.0
-    behavioral_patterns: Dict[str, Any] = field(default_factory=dict)
+    behavioral_patterns: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -107,14 +108,14 @@ class MitigationStrategy:
     """Threat mitigation strategy."""
 
     strategy_id: str
-    threat_categories: Set[ThreatCategory]
-    attack_vectors: Set[AttackVector]
-    actions: List[Dict[str, Any]]
+    threat_categories: set[ThreatCategory]
+    attack_vectors: set[AttackVector]
+    actions: list[dict[str, Any]]
     effectiveness_score: float
     resource_cost: float
     execution_time: float
-    dependencies: List[str] = field(default_factory=list)
-    constraints: Dict[str, Any] = field(default_factory=dict)
+    dependencies: list[str] = field(default_factory=list)
+    constraints: dict[str, Any] = field(default_factory=dict)
 
 
 class ThreatDetectionSystem:
@@ -135,19 +136,19 @@ class ThreatDetectionSystem:
         self.node_id = node_id
 
         # Threat detection state
-        self.behavior_profiles: Dict[str, BehaviorProfile] = {}
-        self.detected_threats: List[ThreatEvent] = []
-        self.threat_patterns: Dict[str, Dict[str, Any]] = {}
-        self.mitigation_strategies: Dict[str, MitigationStrategy] = {}
+        self.behavior_profiles: dict[str, BehaviorProfile] = {}
+        self.detected_threats: list[ThreatEvent] = []
+        self.threat_patterns: dict[str, dict[str, Any]] = {}
+        self.mitigation_strategies: dict[str, MitigationStrategy] = {}
 
         # Real-time monitoring
-        self.metric_buffers: Dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
+        self.metric_buffers: dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
         self.event_correlation_window = 300  # 5 minutes
-        self.anomaly_thresholds: Dict[str, float] = {}
+        self.anomaly_thresholds: dict[str, float] = {}
 
         # Machine learning models (simplified)
-        self.anomaly_model_weights: Dict[str, np.ndarray] = {}
-        self.pattern_recognition_models: Dict[str, Dict[str, Any]] = {}
+        self.anomaly_model_weights: dict[str, np.ndarray] = {}
+        self.pattern_recognition_models: dict[str, dict[str, Any]] = {}
 
         # Configuration
         self.detection_config = {
@@ -205,8 +206,8 @@ class ThreatDetectionSystem:
         event_type: str,
         source_node: str,
         target_node: str,
-        event_data: Dict[str, Any],
-        timestamp: Optional[float] = None,
+        event_data: dict[str, Any],
+        timestamp: float | None = None,
     ) -> None:
         """Ingest a security event for analysis."""
 
@@ -235,7 +236,7 @@ class ThreatDetectionSystem:
         except Exception as e:
             logger.error(f"Failed to ingest security event: {e}")
 
-    async def detect_threats(self, analysis_window: Optional[float] = None) -> List[ThreatEvent]:
+    async def detect_threats(self, analysis_window: float | None = None) -> list[ThreatEvent]:
         """Run comprehensive threat detection analysis."""
 
         analysis_window = analysis_window or self.event_correlation_window
@@ -288,8 +289,8 @@ class ThreatDetectionSystem:
             return []
 
     async def mitigate_threat(
-        self, threat: ThreatEvent, strategy_preference: Optional[str] = None
-    ) -> Tuple[bool, List[str]]:
+        self, threat: ThreatEvent, strategy_preference: str | None = None
+    ) -> tuple[bool, list[str]]:
         """Mitigate a detected threat using appropriate strategies."""
 
         if threat.mitigated:
@@ -331,7 +332,7 @@ class ThreatDetectionSystem:
             logger.error(f"Threat mitigation failed for {threat.event_id}: {e}")
             return False, [f"Mitigation error: {str(e)}"]
 
-    async def learn_from_incident(self, threat: ThreatEvent, outcome: str, feedback: Dict[str, Any]) -> None:
+    async def learn_from_incident(self, threat: ThreatEvent, outcome: str, feedback: dict[str, Any]) -> None:
         """Learn from incident outcomes to improve detection."""
 
         if not self.detection_config["adaptive_learning_enabled"]:
@@ -512,7 +513,7 @@ class ThreatDetectionSystem:
                 logger.error(f"Profile maintenance loop error: {e}")
                 await asyncio.sleep(1800)
 
-    def _collect_recent_events(self, cutoff_time: float) -> List[Dict[str, Any]]:
+    def _collect_recent_events(self, cutoff_time: float) -> list[dict[str, Any]]:
         """Collect recent events from metric buffers."""
         recent_events = []
 
@@ -523,7 +524,7 @@ class ThreatDetectionSystem:
 
         return recent_events
 
-    async def _detect_statistical_anomalies(self) -> List[Dict[str, Any]]:
+    async def _detect_statistical_anomalies(self) -> list[dict[str, Any]]:
         """Detect statistical anomalies in metrics."""
         anomalies = []
 
@@ -538,9 +539,9 @@ class ThreatDetectionSystem:
                     if isinstance(event["data"], dict):
                         # Extract numeric metrics from event data
                         for key, value in event["data"].items():
-                            if isinstance(value, (int, float)):
+                            if isinstance(value, int | float):
                                 values.append(value)
-                    elif isinstance(event["data"], (int, float)):
+                    elif isinstance(event["data"], int | float):
                         values.append(event["data"])
 
                 if len(values) < 5:
@@ -578,7 +579,7 @@ class ThreatDetectionSystem:
 
         return anomalies
 
-    async def _match_attack_patterns(self, events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def _match_attack_patterns(self, events: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Match events against known attack patterns."""
         pattern_matches = []
 
@@ -604,7 +605,7 @@ class ThreatDetectionSystem:
         return pattern_matches
 
     async def _calculate_pattern_match_score(
-        self, events: List[Dict[str, Any]], pattern_config: Dict[str, Any]
+        self, events: list[dict[str, Any]], pattern_config: dict[str, Any]
     ) -> float:
         """Calculate how well events match a threat pattern."""
 
@@ -641,7 +642,7 @@ class ThreatDetectionSystem:
 
         return total_score / max(1.0, total_weight)
 
-    def _event_matches_rule(self, event: Dict[str, Any], rule: Dict[str, Any]) -> bool:
+    def _event_matches_rule(self, event: dict[str, Any], rule: dict[str, Any]) -> bool:
         """Check if an event matches a rule."""
         conditions = rule.get("conditions", {})
 
@@ -663,7 +664,7 @@ class ThreatDetectionSystem:
 
         return True
 
-    def _calculate_sequence_score(self, events: List[Dict[str, Any]], rule: Dict[str, Any]) -> float:
+    def _calculate_sequence_score(self, events: list[dict[str, Any]], rule: dict[str, Any]) -> float:
         """Calculate score for sequential pattern matching."""
         expected_sequence = rule.get("sequence", [])
 
@@ -682,7 +683,7 @@ class ThreatDetectionSystem:
 
         return min(1.0, sequence_matches / max(1, len(expected_sequence)))
 
-    def _calculate_timing_score(self, events: List[Dict[str, Any]], rule: Dict[str, Any]) -> float:
+    def _calculate_timing_score(self, events: list[dict[str, Any]], rule: dict[str, Any]) -> float:
         """Calculate score for timing pattern matching."""
         if len(events) < 2:
             return 0.0
@@ -699,7 +700,7 @@ class ThreatDetectionSystem:
 
         return len(matching_intervals) / len(intervals)
 
-    def _calculate_correlation_score(self, events: List[Dict[str, Any]], rule: Dict[str, Any]) -> float:
+    def _calculate_correlation_score(self, events: list[dict[str, Any]], rule: dict[str, Any]) -> float:
         """Calculate score for event correlation."""
         correlation_fields = rule.get("fields", [])
 
@@ -712,7 +713,7 @@ class ThreatDetectionSystem:
         for event in events:
             for field in correlation_fields:
                 value = event.get(field) or event.get("data", {}).get(field)
-                if value is not None and isinstance(value, (int, float)):
+                if value is not None and isinstance(value, int | float):
                     field_values[field].append(value)
 
         # Calculate correlation between fields
@@ -736,7 +737,7 @@ class ThreatDetectionSystem:
 
         return np.mean(correlations) if correlations else 0.0
 
-    def _events_match_sequence(self, events: List[Dict[str, Any]], sequence: List[str]) -> bool:
+    def _events_match_sequence(self, events: list[dict[str, Any]], sequence: list[str]) -> bool:
         """Check if events match expected sequence."""
         if len(events) != len(sequence):
             return False
@@ -749,7 +750,7 @@ class ThreatDetectionSystem:
         return True
 
     async def _update_behavior_profile(
-        self, node_id: str, event_type: str, event_data: Dict[str, Any], timestamp: float
+        self, node_id: str, event_type: str, event_data: dict[str, Any], timestamp: float
     ) -> None:
         """Update behavior profile for a node."""
 
@@ -763,7 +764,7 @@ class ThreatDetectionSystem:
         metrics = {}
         if isinstance(event_data, dict):
             for key, value in event_data.items():
-                if isinstance(value, (int, float)):
+                if isinstance(value, int | float):
                     metrics[key] = value
 
         # Update recent metrics
@@ -784,7 +785,7 @@ class ThreatDetectionSystem:
         # Update profile confidence
         profile.profile_confidence = min(1.0, len(profile.recent_metrics) / 50.0)
 
-    def _is_critical_event(self, event_type: str, event_data: Dict[str, Any]) -> bool:
+    def _is_critical_event(self, event_type: str, event_data: dict[str, Any]) -> bool:
         """Check if an event is critical and requires immediate analysis."""
         critical_event_types = {
             "authentication_failure",
@@ -796,7 +797,7 @@ class ThreatDetectionSystem:
 
         return event_type in critical_event_types
 
-    async def _immediate_threat_analysis(self, event: Dict[str, Any]) -> None:
+    async def _immediate_threat_analysis(self, event: dict[str, Any]) -> None:
         """Perform immediate threat analysis for critical events."""
         # Create threat indicator
         indicator = ThreatIndicator(
@@ -834,7 +835,7 @@ class ThreatDetectionSystem:
 
             await self._process_detected_threat(threat)
 
-    def _classify_threat(self, indicator: ThreatIndicator) -> Tuple[ThreatCategory, ThreatLevel]:
+    def _classify_threat(self, indicator: ThreatIndicator) -> tuple[ThreatCategory, ThreatLevel]:
         """Classify threat based on indicator characteristics."""
 
         # Simple classification logic - in production would use ML models
@@ -1016,8 +1017,8 @@ class ThreatDetectionSystem:
         }
 
     async def _select_mitigation_strategy(
-        self, threat: ThreatEvent, preference: Optional[str] = None
-    ) -> Optional[MitigationStrategy]:
+        self, threat: ThreatEvent, preference: str | None = None
+    ) -> MitigationStrategy | None:
         """Select appropriate mitigation strategy for a threat."""
 
         if preference and preference in self.mitigation_strategies:
@@ -1043,7 +1044,7 @@ class ThreatDetectionSystem:
         suitable_strategies.sort(key=lambda x: x[1], reverse=True)
         return suitable_strategies[0][0]
 
-    async def _execute_mitigation_action(self, threat: ThreatEvent, action: Dict[str, Any]) -> bool:
+    async def _execute_mitigation_action(self, threat: ThreatEvent, action: dict[str, Any]) -> bool:
         """Execute a specific mitigation action."""
 
         action_type = action["type"]
@@ -1088,7 +1089,7 @@ class ThreatDetectionSystem:
 
     # Statistics and monitoring methods
 
-    def get_detection_stats(self) -> Dict[str, Any]:
+    def get_detection_stats(self) -> dict[str, Any]:
         """Get threat detection statistics."""
 
         total_threats = self.detection_stats["total_threats_detected"]
@@ -1112,7 +1113,7 @@ class ThreatDetectionSystem:
             ),
         }
 
-    def get_threat_summary(self) -> Dict[str, Any]:
+    def get_threat_summary(self) -> dict[str, Any]:
         """Get summary of detected threats."""
 
         current_time = time.time()
@@ -1139,7 +1140,7 @@ class ThreatDetectionSystem:
             "threat_levels": dict(self.detection_stats["threats_by_level"]),
         }
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Perform system health check."""
 
         issues = []

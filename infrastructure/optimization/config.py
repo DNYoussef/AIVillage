@@ -18,13 +18,13 @@ Key Consolidated Features:
 - Dynamic configuration updates with validation
 """
 
-import os
+from dataclasses import asdict, dataclass, field
+from enum import Enum
 import json
 import logging
-from dataclasses import dataclass, field, asdict
-from typing import Dict, List, Optional, Any, Union
-from enum import Enum
+import os
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ class NetworkConfig:
 
     # Protocol selection
     enable_auto_protocol_selection: bool = True
-    preferred_protocols: List[str] = field(default_factory=lambda: ["libp2p", "quic", "tcp"])
+    preferred_protocols: list[str] = field(default_factory=lambda: ["libp2p", "quic", "tcp"])
 
     # Quality thresholds
     min_quality_threshold: float = 0.3
@@ -181,11 +181,11 @@ class AnalyticsConfig:
 
     # AI optimization settings
     enable_ai_optimization: bool = True
-    optimization_algorithms: List[str] = field(default_factory=lambda: ["genetic", "bayesian", "archaeological"])
+    optimization_algorithms: list[str] = field(default_factory=lambda: ["genetic", "bayesian", "archaeological"])
 
     # Archaeological insights
     enable_archaeological_optimization: bool = True
-    archaeological_insights_file: Optional[str] = None
+    archaeological_insights_file: str | None = None
 
     # Performance prediction
     enable_predictive_analytics: bool = True
@@ -228,8 +228,8 @@ class SecurityConfig:
     # TLS/SSL settings
     enable_tls: bool = True
     tls_version: str = "1.3"
-    certificate_path: Optional[str] = None
-    private_key_path: Optional[str] = None
+    certificate_path: str | None = None
+    private_key_path: str | None = None
 
 
 @dataclass
@@ -239,12 +239,12 @@ class LoggingConfig:
     level: str = "INFO"
     format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     log_to_file: bool = False
-    log_file_path: Optional[str] = None
+    log_file_path: str | None = None
     max_log_file_size_mb: int = 100
     log_rotation_count: int = 5
 
     # Component-specific logging levels
-    component_levels: Dict[str, str] = field(default_factory=dict)
+    component_levels: dict[str, str] = field(default_factory=dict)
 
     # Performance logging
     enable_performance_logging: bool = True
@@ -274,10 +274,10 @@ class OptimizationConfig:
 
     # Archaeological enhancements
     archaeological_insights_enabled: bool = True
-    archaeological_branch_analysis: Dict[str, Any] = field(default_factory=dict)
+    archaeological_branch_analysis: dict[str, Any] = field(default_factory=dict)
 
     # Environment-specific overrides
-    environment_overrides: Dict[str, Any] = field(default_factory=dict)
+    environment_overrides: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         """Post-initialization validation and adjustment."""
@@ -381,11 +381,11 @@ class OptimizationConfig:
         if errors:
             raise ValueError(f"Configuration validation failed: {', '.join(errors)}")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary."""
         return asdict(self)
 
-    def save_to_file(self, filepath: Union[str, Path]):
+    def save_to_file(self, filepath: str | Path):
         """Save configuration to JSON file."""
         filepath = Path(filepath)
         config_dict = self.to_dict()
@@ -408,14 +408,14 @@ class OptimizationConfig:
         logger.info(f"Configuration saved to {filepath}")
 
     @classmethod
-    def load_from_file(cls, filepath: Union[str, Path]) -> "OptimizationConfig":
+    def load_from_file(cls, filepath: str | Path) -> "OptimizationConfig":
         """Load configuration from JSON file."""
         filepath = Path(filepath)
 
         if not filepath.exists():
             raise FileNotFoundError(f"Configuration file not found: {filepath}")
 
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             config_dict = json.load(f)
 
         # Convert string enums back to enum objects
@@ -425,7 +425,7 @@ class OptimizationConfig:
         logger.info(f"Configuration loaded from {filepath}")
         return config
 
-    def _update_from_dict(self, config_dict: Dict[str, Any]):
+    def _update_from_dict(self, config_dict: dict[str, Any]):
         """Update configuration from dictionary."""
         for key, value in config_dict.items():
             if hasattr(self, key):
@@ -436,7 +436,7 @@ class OptimizationConfig:
                 else:
                     setattr(self, key, value)
 
-    def _update_nested_from_dict(self, obj: Any, value_dict: Dict[str, Any]):
+    def _update_nested_from_dict(self, obj: Any, value_dict: dict[str, Any]):
         """Update nested configuration object from dictionary."""
         for key, value in value_dict.items():
             if hasattr(obj, key):
@@ -493,7 +493,7 @@ def get_reliability_config() -> OptimizationConfig:
     return config
 
 
-def load_config_from_env(base_config: Optional[OptimizationConfig] = None) -> OptimizationConfig:
+def load_config_from_env(base_config: OptimizationConfig | None = None) -> OptimizationConfig:
     """Load configuration with environment variable overrides."""
     config = base_config or OptimizationConfig()
 
@@ -506,7 +506,7 @@ def load_config_from_env(base_config: Optional[OptimizationConfig] = None) -> Op
 
 
 # Global configuration instance
-_global_config: Optional[OptimizationConfig] = None
+_global_config: OptimizationConfig | None = None
 
 
 def get_global_config() -> OptimizationConfig:

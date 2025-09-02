@@ -13,15 +13,15 @@ Features:
 5. Comprehensive logging and monitoring
 """
 
-from dataclasses import dataclass, field, asdict
-from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from dataclasses import asdict, dataclass, field
 import json
 import logging
-import numpy as np
+from pathlib import Path
+from typing import Any
 
-import torch.nn as nn
+import numpy as np
 import pandas as pd
+import torch.nn as nn
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +50,9 @@ class GrokFastHyperparameters:
     memory_efficient: bool = True
 
     # Validation bounds (derived from empirical studies)
-    _alpha_bounds: Tuple[float, float] = field(default=(0.9, 0.99), init=False)
-    _lamb_bounds: Tuple[float, float] = field(default=(0.5, 10.0), init=False)
-    _window_size_bounds: Tuple[int, int] = field(default=(10, 500), init=False)
+    _alpha_bounds: tuple[float, float] = field(default=(0.9, 0.99), init=False)
+    _lamb_bounds: tuple[float, float] = field(default=(0.5, 10.0), init=False)
+    _window_size_bounds: tuple[int, int] = field(default=(10, 500), init=False)
 
     def __post_init__(self):
         """Validate parameters and apply corrections if needed."""
@@ -103,7 +103,7 @@ class GrokFastHyperparameters:
             for correction in corrections:
                 logger.warning(f"  - {correction}")
 
-    def get_performance_estimate(self, model_size: int) -> Dict[str, float]:
+    def get_performance_estimate(self, model_size: int) -> dict[str, float]:
         """Estimate expected performance based on model size and parameters."""
         # Empirical performance model based on GrokFast paper and experiments
         base_acceleration = {"ema": 2.5, "ma": 3.0, "hybrid": 4.5}.get(self.method, 2.0)
@@ -135,7 +135,7 @@ class GrokFastConfigOptimizer:
         self.optimization_history = []
 
     def optimize_for_model(
-        self, model: nn.Module, initial_config: Optional[GrokFastHyperparameters] = None
+        self, model: nn.Module, initial_config: GrokFastHyperparameters | None = None
     ) -> GrokFastHyperparameters:
         """Optimize GrokFast hyperparameters for specific model."""
         if initial_config is None:
@@ -224,7 +224,7 @@ class GrokFastConfigOptimizer:
 
         return optimized
 
-    def get_optimization_report(self) -> Dict[str, Any]:
+    def get_optimization_report(self) -> dict[str, Any]:
         """Get comprehensive optimization report."""
         if not self.optimization_history:
             return {"error": "No optimizations performed"}
@@ -246,7 +246,7 @@ class GrokFastValidator:
     def __init__(self):
         self.validation_results = []
 
-    def validate_configuration(self, config: GrokFastHyperparameters, model: nn.Module) -> Dict[str, Any]:
+    def validate_configuration(self, config: GrokFastHyperparameters, model: nn.Module) -> dict[str, Any]:
         """Comprehensive validation of GrokFast configuration."""
         model_size = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
@@ -278,7 +278,7 @@ class GrokFastValidator:
 
         return validation
 
-    def _validate_parameters(self, config: GrokFastHyperparameters, validation: Dict[str, Any]):
+    def _validate_parameters(self, config: GrokFastHyperparameters, validation: dict[str, Any]):
         """Validate individual parameters."""
         # Check alpha value
         if config.alpha > 0.995:
@@ -299,7 +299,7 @@ class GrokFastValidator:
             validation["compatibility_score"] *= 0.9
 
     def _validate_model_compatibility(
-        self, config: GrokFastHyperparameters, model: nn.Module, validation: Dict[str, Any]
+        self, config: GrokFastHyperparameters, model: nn.Module, validation: dict[str, Any]
     ):
         """Validate compatibility with model architecture."""
         model_size = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -314,7 +314,7 @@ class GrokFastValidator:
             validation["warnings"].append("Large model (>100M params) should use memory_efficient=True")
             validation["compatibility_score"] *= 0.8
 
-    def _validate_performance_targets(self, config: GrokFastHyperparameters, validation: Dict[str, Any]):
+    def _validate_performance_targets(self, config: GrokFastHyperparameters, validation: dict[str, Any]):
         """Validate performance targets are realistic."""
         perf_estimate = validation["performance_estimate"]
         target = config.target_acceleration
@@ -379,7 +379,7 @@ Validation:
 
 def create_optimized_grokfast_config(
     model: nn.Module, target_acceleration: float = 50.0, validate: bool = True
-) -> Tuple[GrokFastHyperparameters, Optional[Dict[str, Any]]]:
+) -> tuple[GrokFastHyperparameters, dict[str, Any] | None]:
     """Create optimized GrokFast configuration for a model."""
 
     # Initialize optimizer
@@ -402,7 +402,7 @@ def create_optimized_grokfast_config(
 
 
 def save_grokfast_config(
-    config: GrokFastHyperparameters, output_path: str, validation_result: Optional[Dict[str, Any]] = None
+    config: GrokFastHyperparameters, output_path: str, validation_result: dict[str, Any] | None = None
 ):
     """Save GrokFast configuration to file."""
     output_path = Path(output_path)
@@ -420,9 +420,9 @@ def save_grokfast_config(
     logger.info(f"GrokFast configuration saved to {output_path}")
 
 
-def load_grokfast_config(config_path: str) -> Tuple[GrokFastHyperparameters, Optional[Dict[str, Any]]]:
+def load_grokfast_config(config_path: str) -> tuple[GrokFastHyperparameters, dict[str, Any] | None]:
     """Load GrokFast configuration from file."""
-    with open(config_path, "r") as f:
+    with open(config_path) as f:
         config_data = json.load(f)
 
     config = GrokFastHyperparameters(**config_data["hyperparameters"])

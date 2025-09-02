@@ -10,9 +10,9 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from enum import Enum
 import logging
-from typing import Dict, List, Optional, Set, Any
+from typing import Any
 
-from ..privacy.onion_routing import OnionRouter, OnionCircuit
+from ..privacy.onion_routing import OnionCircuit, OnionRouter
 
 logger = logging.getLogger(__name__)
 
@@ -71,11 +71,11 @@ class OnionCircuitService:
         self.rotation_interval = timedelta(minutes=rotation_interval_minutes)
 
         # Circuit pools organized by privacy level
-        self.circuit_pools: Dict[PrivacyLevel, List[OnionCircuit]] = {level: [] for level in PrivacyLevel}
+        self.circuit_pools: dict[PrivacyLevel, list[OnionCircuit]] = {level: [] for level in PrivacyLevel}
 
         # Circuit metrics and tracking
-        self.circuit_metrics: Dict[str, CircuitMetrics] = {}
-        self.authenticated_clients: Set[str] = set()
+        self.circuit_metrics: dict[str, CircuitMetrics] = {}
+        self.authenticated_clients: set[str] = set()
 
         # Pool size targets per privacy level
         self.pool_targets = {
@@ -96,7 +96,7 @@ class OnionCircuitService:
         }
 
         self._running = False
-        self._background_tasks: Set[asyncio.Task] = set()
+        self._background_tasks: set[asyncio.Task] = set()
 
         logger.info("OnionCircuitService initialized")
 
@@ -157,8 +157,8 @@ class OnionCircuitService:
         self,
         privacy_level: PrivacyLevel,
         client_id: str,
-        preferred_path_length: Optional[int] = None,
-    ) -> Optional[OnionCircuit]:
+        preferred_path_length: int | None = None,
+    ) -> OnionCircuit | None:
         """
         Get an optimal circuit for the specified privacy level.
 
@@ -213,7 +213,7 @@ class OnionCircuitService:
                 age_minutes = (datetime.now(UTC) - metrics.created_at).total_seconds() / 60
                 metrics.health_score = max(0.1, 1.0 - (age_minutes / 60))  # Decay over 1 hour
 
-    def get_circuit_stats(self) -> Dict[str, Any]:
+    def get_circuit_stats(self) -> dict[str, Any]:
         """Get comprehensive circuit statistics."""
         pool_stats = {}
         for level, circuits in self.circuit_pools.items():
@@ -259,8 +259,8 @@ class OnionCircuitService:
     async def _create_circuit_for_level(
         self,
         privacy_level: PrivacyLevel,
-        preferred_path_length: Optional[int] = None,
-    ) -> Optional[OnionCircuit]:
+        preferred_path_length: int | None = None,
+    ) -> OnionCircuit | None:
         """Create a new circuit for the specified privacy level."""
         if not self.onion_router:
             return None
@@ -303,7 +303,7 @@ class OnionCircuitService:
             self.stats["circuit_failures"] += 1
             return None
 
-    def _select_optimal_circuit(self, circuits: List[OnionCircuit]) -> Optional[OnionCircuit]:
+    def _select_optimal_circuit(self, circuits: list[OnionCircuit]) -> OnionCircuit | None:
         """Select the optimal circuit based on load balancing."""
         if not circuits:
             return None
@@ -326,7 +326,7 @@ class OnionCircuitService:
         # Return circuit with lowest load score
         return min(active_circuits, key=circuit_load_score)
 
-    def _calculate_average_health(self, circuits: List[OnionCircuit]) -> float:
+    def _calculate_average_health(self, circuits: list[OnionCircuit]) -> float:
         """Calculate average health score for a circuit pool."""
         if not circuits:
             return 0.0

@@ -1,16 +1,16 @@
 """Cogment heads package - input/output heads and task adapters."""
 
-from .vocabulary_optimization import OptimizedVocabularyHeads, TiedVocabularyHeads, FactorizedVocabularyHeads
-from .image_head import ImageHead, ARCImageHead
-from .text_head import TextHead, CogmentTextHead
+from .image_head import ARCImageHead, ImageHead
 from .task_adapters import (
-    TaskAdapter,
-    ClassificationAdapter,
-    RegressionAdapter,
     ARCTaskAdapter,
-    TextGenerationAdapter,
+    ClassificationAdapter,
     MathTaskAdapter,
+    RegressionAdapter,
+    TaskAdapter,
+    TextGenerationAdapter,
 )
+from .text_head import CogmentTextHead, TextHead
+from .vocabulary_optimization import FactorizedVocabularyHeads, OptimizedVocabularyHeads, TiedVocabularyHeads
 
 __all__ = [
     # Vocabulary optimization

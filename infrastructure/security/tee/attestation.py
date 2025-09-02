@@ -22,7 +22,7 @@ import json
 import logging
 import secrets
 import struct
-from typing import Any, Dict, List, Optional
+from typing import Any
 import uuid
 
 # Cryptographic imports for attestation
@@ -103,11 +103,11 @@ class TEEQuote:
 
     # Timestamps
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
-    expires_at: Optional[datetime] = None
+    expires_at: datetime | None = None
 
     # Constitutional classification
-    constitutional_tier: Optional[ConstitutionalTier] = None
-    harm_categories: List[str] = field(default_factory=list)
+    constitutional_tier: ConstitutionalTier | None = None
+    harm_categories: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         """Initialize quote with expiration time."""
@@ -144,7 +144,7 @@ class AttestationResult:
     # Security assessment
     trust_score: float = 0.0  # 0.0 - 1.0
     security_level: int = 1  # 1-5 scale
-    capabilities: List[HardwareCapability] = field(default_factory=list)
+    capabilities: list[HardwareCapability] = field(default_factory=list)
 
     # Verification details
     measurements_valid: bool = False
@@ -163,7 +163,7 @@ class AttestationResult:
     error_message: str = ""
 
     # Evidence trail
-    verification_evidence: Dict[str, Any] = field(default_factory=dict)
+    verification_evidence: dict[str, Any] = field(default_factory=dict)
 
     def is_constitutional_compliant(self, required_tier: ConstitutionalTier) -> bool:
         """Check if attestation meets constitutional requirements."""
@@ -189,7 +189,7 @@ class ConstitutionalPolicy:
     version: str = "1.0"
 
     # Harm taxonomy categories
-    prohibited_categories: List[str] = field(
+    prohibited_categories: list[str] = field(
         default_factory=lambda: [
             "violence",
             "hate_speech",
@@ -203,7 +203,7 @@ class ConstitutionalPolicy:
 
     # Constitutional requirements
     required_tier: ConstitutionalTier = ConstitutionalTier.SILVER
-    required_capabilities: List[HardwareCapability] = field(
+    required_capabilities: list[HardwareCapability] = field(
         default_factory=lambda: [HardwareCapability.MEMORY_ENCRYPTION, HardwareCapability.REMOTE_ATTESTATION]
     )
 
@@ -399,9 +399,9 @@ class TEEAttestationManager:
         }
 
         # State management
-        self.active_attestations: Dict[str, AttestationResult] = {}
-        self.constitutional_policies: Dict[str, ConstitutionalPolicy] = {}
-        self.trusted_nodes: Dict[str, AttestationResult] = {}
+        self.active_attestations: dict[str, AttestationResult] = {}
+        self.constitutional_policies: dict[str, ConstitutionalPolicy] = {}
+        self.trusted_nodes: dict[str, AttestationResult] = {}
 
         # Default constitutional policy
         self.default_policy = ConstitutionalPolicy(
@@ -410,7 +410,7 @@ class TEEAttestationManager:
 
         logger.info("TEE Attestation Manager initialized")
 
-    async def detect_hardware_capabilities(self, node_id: str) -> Dict[TEEType, List[HardwareCapability]]:
+    async def detect_hardware_capabilities(self, node_id: str) -> dict[TEEType, list[HardwareCapability]]:
         """Detect available TEE hardware on a node."""
         # Simulated hardware detection
         capabilities = {}
@@ -461,7 +461,7 @@ class TEEAttestationManager:
         return quote
 
     async def verify_attestation(
-        self, node_id: str, quote: TEEQuote, policy: Optional[ConstitutionalPolicy] = None
+        self, node_id: str, quote: TEEQuote, policy: ConstitutionalPolicy | None = None
     ) -> AttestationResult:
         """Verify TEE attestation quote against constitutional policy."""
         policy = policy or self.default_policy
@@ -531,7 +531,7 @@ class TEEAttestationManager:
     async def validate_constitutional_workload(
         self,
         node_id: str,
-        workload_description: Dict[str, Any],
+        workload_description: dict[str, Any],
         required_tier: ConstitutionalTier = ConstitutionalTier.SILVER,
     ) -> bool:
         """Validate that a node can execute constitutional workload safely."""
@@ -560,7 +560,7 @@ class TEEAttestationManager:
             logger.warning(f"Workload safety check failed for node {node_id}")
             return False
 
-    async def refresh_attestation(self, node_id: str) -> Optional[AttestationResult]:
+    async def refresh_attestation(self, node_id: str) -> AttestationResult | None:
         """Refresh attestation for a node."""
         if node_id not in self.trusted_nodes:
             return None
@@ -582,11 +582,11 @@ class TEEAttestationManager:
             logger.warning(f"Attestation refresh failed for node {node_id}")
             return None
 
-    def get_attestation_status(self, node_id: str) -> Optional[AttestationResult]:
+    def get_attestation_status(self, node_id: str) -> AttestationResult | None:
         """Get current attestation status for a node."""
         return self.trusted_nodes.get(node_id)
 
-    def get_trusted_nodes_summary(self) -> Dict[str, Any]:
+    def get_trusted_nodes_summary(self) -> dict[str, Any]:
         """Get summary of trusted nodes and their capabilities."""
         summary = {
             "total_trusted_nodes": len(self.trusted_nodes),
@@ -678,7 +678,7 @@ class TEEAttestationManager:
 
         return security_levels.get(tee_type, 1)
 
-    def _get_tee_capabilities(self, tee_type: TEEType) -> List[HardwareCapability]:
+    def _get_tee_capabilities(self, tee_type: TEEType) -> list[HardwareCapability]:
         """Get capabilities for TEE type."""
         capabilities_map = {
             TEEType.INTEL_SGX: [
@@ -703,7 +703,7 @@ class TEEAttestationManager:
 
         return capabilities_map.get(tee_type, [])
 
-    def _check_workload_safety(self, harm_categories: List[str], attestation: AttestationResult) -> bool:
+    def _check_workload_safety(self, harm_categories: list[str], attestation: AttestationResult) -> bool:
         """Check if workload is safe to execute on node."""
         # High-risk categories require Gold tier
         high_risk_categories = ["violence", "illegal_activities", "privacy_violations"]
@@ -721,7 +721,7 @@ class TEEAttestationManager:
 
 
 # Global attestation manager instance
-_attestation_manager: Optional[TEEAttestationManager] = None
+_attestation_manager: TEEAttestationManager | None = None
 
 
 async def get_attestation_manager() -> TEEAttestationManager:
@@ -755,7 +755,7 @@ async def attest_fog_node(
 
 
 async def validate_constitutional_deployment(
-    node_id: str, workload_spec: Dict[str, Any], required_tier: ConstitutionalTier = ConstitutionalTier.SILVER
+    node_id: str, workload_spec: dict[str, Any], required_tier: ConstitutionalTier = ConstitutionalTier.SILVER
 ) -> bool:
     """Validate node can safely execute constitutional workload."""
     manager = await get_attestation_manager()
@@ -763,7 +763,7 @@ async def validate_constitutional_deployment(
     return await manager.validate_constitutional_workload(node_id, workload_spec, required_tier)
 
 
-async def get_trusted_nodes_for_tier(constitutional_tier: ConstitutionalTier) -> List[str]:
+async def get_trusted_nodes_for_tier(constitutional_tier: ConstitutionalTier) -> list[str]:
     """Get list of trusted nodes meeting constitutional tier requirement."""
     manager = await get_attestation_manager()
 

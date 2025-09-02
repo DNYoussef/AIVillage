@@ -20,10 +20,10 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from enum import Enum
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 import uuid
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import uvicorn
@@ -34,17 +34,17 @@ from .auction_engine import (
     create_federated_training_auction,
     get_auction_engine,
 )
+from .market_orchestrator import (
+    AllocationStrategy,
+    MarketOrchestrator,
+    TaskPriority,
+    get_market_orchestrator,
+)
 from .pricing_manager import (
     DynamicPricingManager,
     ResourceLane,
     UserSizeTier,
     get_pricing_manager,
-)
-from .market_orchestrator import (
-    MarketOrchestrator,
-    AllocationStrategy,
-    TaskPriority,
-    get_market_orchestrator,
 )
 
 logger = logging.getLogger(__name__)
@@ -98,8 +98,8 @@ class FederatedInferenceRequest(BaseModel):
     privacy_level: PrivacyLevel = Field(PrivacyLevel.MEDIUM, description="Privacy requirement level")
     max_latency_ms: float = Field(100.0, ge=1.0, le=5000.0, description="Maximum acceptable latency")
     max_budget: float = Field(100.0, ge=0.01, description="Maximum budget for the task")
-    preferred_regions: List[str] = Field(default_factory=list, description="Preferred geographic regions")
-    deadline_minutes: Optional[int] = Field(None, ge=1, le=1440, description="Task deadline in minutes")
+    preferred_regions: list[str] = Field(default_factory=list, description="Preferred geographic regions")
+    deadline_minutes: int | None = Field(None, ge=1, le=1440, description="Task deadline in minutes")
 
     class Config:
         schema_extra = {
@@ -130,8 +130,8 @@ class FederatedTrainingRequest(BaseModel):
     reliability_requirement: ReliabilityLevel = Field(ReliabilityLevel.HIGH, description="Reliability requirement")
     min_trust_score: float = Field(0.7, ge=0.0, le=1.0, description="Minimum trust score for participants")
     max_budget: float = Field(1000.0, ge=1.0, description="Maximum budget for training")
-    preferred_regions: List[str] = Field(default_factory=list, description="Preferred geographic regions")
-    deadline_hours: Optional[float] = Field(None, ge=1.0, le=720.0, description="Task deadline in hours")
+    preferred_regions: list[str] = Field(default_factory=list, description="Preferred geographic regions")
+    deadline_hours: float | None = Field(None, ge=1.0, le=720.0, description="Task deadline in hours")
 
     class Config:
         schema_extra = {
@@ -157,11 +157,11 @@ class ResourceQuoteRequest(BaseModel):
     user_tier: UserSizeTier = Field(..., description="User size tier")
     workload_type: WorkloadType = Field(..., description="Type of workload")
     model_size: ModelSize = Field(..., description="Model size")
-    requests_count: Optional[int] = Field(1, ge=1, description="Number of inference requests")
-    duration_hours: Optional[float] = Field(1.0, ge=0.1, description="Training duration hours")
+    requests_count: int | None = Field(1, ge=1, description="Number of inference requests")
+    duration_hours: float | None = Field(1.0, ge=0.1, description="Training duration hours")
     participants_needed: int = Field(1, ge=1, description="Required participants")
     privacy_level: PrivacyLevel = Field(PrivacyLevel.MEDIUM, description="Privacy level")
-    reliability_requirement: Optional[ReliabilityLevel] = Field(
+    reliability_requirement: ReliabilityLevel | None = Field(
         ReliabilityLevel.STANDARD, description="Reliability level"
     )
 
@@ -172,11 +172,11 @@ class AllocationStatusResponse(BaseModel):
     request_id: str
     status: str
     progress_percentage: float
-    estimated_completion_time: Optional[datetime]
-    allocated_nodes: List[Dict[str, Any]]
-    total_cost: Optional[float]
-    quality_metrics: Dict[str, float]
-    error_message: Optional[str]
+    estimated_completion_time: datetime | None
+    allocated_nodes: list[dict[str, Any]]
+    total_cost: float | None
+    quality_metrics: dict[str, float]
+    error_message: str | None
 
 
 class MarketplaceAPI:
@@ -201,12 +201,12 @@ class MarketplaceAPI:
         )
 
         # Market components
-        self.auction_engine: Optional[AuctionEngine] = None
-        self.pricing_manager: Optional[DynamicPricingManager] = None
-        self.market_orchestrator: Optional[MarketOrchestrator] = None
+        self.auction_engine: AuctionEngine | None = None
+        self.pricing_manager: DynamicPricingManager | None = None
+        self.market_orchestrator: MarketOrchestrator | None = None
 
         # Request tracking
-        self.active_requests: Dict[str, Dict[str, Any]] = {}
+        self.active_requests: dict[str, dict[str, Any]] = {}
 
         # Setup routes
         self._setup_routes()
@@ -244,7 +244,7 @@ class MarketplaceAPI:
         @self.app.post("/federated/inference/request", tags=["Federated Inference"])
         async def request_federated_inference(
             request: FederatedInferenceRequest, background_tasks: BackgroundTasks
-        ) -> Dict[str, Any]:
+        ) -> dict[str, Any]:
             """Request federated inference resources"""
 
             if not self.market_orchestrator:
@@ -298,7 +298,7 @@ class MarketplaceAPI:
         @self.app.post("/federated/training/request", tags=["Federated Training"])
         async def request_federated_training(
             request: FederatedTrainingRequest, background_tasks: BackgroundTasks
-        ) -> Dict[str, Any]:
+        ) -> dict[str, Any]:
             """Request federated training resources"""
 
             if not self.market_orchestrator:
@@ -352,7 +352,7 @@ class MarketplaceAPI:
 
         # Pricing endpoints
         @self.app.post("/pricing/quote", tags=["Pricing"])
-        async def get_pricing_quote(request: ResourceQuoteRequest) -> Dict[str, Any]:
+        async def get_pricing_quote(request: ResourceQuoteRequest) -> dict[str, Any]:
             """Get pricing quote for resources"""
 
             if not self.pricing_manager:
@@ -400,7 +400,7 @@ class MarketplaceAPI:
                 raise HTTPException(status_code=500, detail=str(e))
 
         @self.app.get("/pricing/tiers", tags=["Pricing"])
-        async def get_pricing_tiers() -> Dict[str, Any]:
+        async def get_pricing_tiers() -> dict[str, Any]:
             """Get information about available pricing tiers"""
 
             return {
@@ -491,7 +491,7 @@ class MarketplaceAPI:
                 raise HTTPException(status_code=500, detail=str(e))
 
         @self.app.get("/market/analytics", tags=["Market Analytics"])
-        async def get_market_analytics() -> Dict[str, Any]:
+        async def get_market_analytics() -> dict[str, Any]:
             """Get comprehensive market analytics"""
 
             try:
@@ -532,8 +532,8 @@ class MarketplaceAPI:
             duration_hours: float = 1.0,
             privacy_level: PrivacyLevel = PrivacyLevel.MEDIUM,
             max_latency_ms: float = 100.0,
-            reserve_price: Optional[float] = None,
-        ) -> Dict[str, Any]:
+            reserve_price: float | None = None,
+        ) -> dict[str, Any]:
             """Create auction for federated inference workload"""
 
             try:
@@ -566,8 +566,8 @@ class MarketplaceAPI:
             duration_hours: float,
             privacy_level: PrivacyLevel = PrivacyLevel.HIGH,
             reliability_requirement: ReliabilityLevel = ReliabilityLevel.HIGH,
-            reserve_price: Optional[float] = None,
-        ) -> Dict[str, Any]:
+            reserve_price: float | None = None,
+        ) -> dict[str, Any]:
             """Create auction for federated training workload"""
 
             try:
@@ -593,7 +593,7 @@ class MarketplaceAPI:
                 raise HTTPException(status_code=500, detail=str(e))
 
         @self.app.get("/auctions/{auction_id}/status", tags=["Auctions"])
-        async def get_auction_status(auction_id: str) -> Dict[str, Any]:
+        async def get_auction_status(auction_id: str) -> dict[str, Any]:
             """Get auction status and details"""
 
             if not self.auction_engine:
@@ -660,7 +660,7 @@ class MarketplaceAPI:
         }
         return progress_map.get(status, 0.0)
 
-    def _estimate_completion_time(self, status_info: Dict[str, Any]) -> Optional[datetime]:
+    def _estimate_completion_time(self, status_info: dict[str, Any]) -> datetime | None:
         """Estimate completion time based on status"""
         status = status_info.get("status", "")
 
@@ -680,7 +680,7 @@ class MarketplaceAPI:
 
         return datetime.now(UTC) + timedelta(minutes=minutes_remaining)
 
-    def _calculate_quality_metrics(self, status_info: Dict[str, Any]) -> Dict[str, float]:
+    def _calculate_quality_metrics(self, status_info: dict[str, Any]) -> dict[str, float]:
         """Calculate quality metrics from status info"""
         return {
             "trust_score": 0.8,  # Would calculate from actual allocations
@@ -689,7 +689,7 @@ class MarketplaceAPI:
             "privacy_score": 0.9,
         }
 
-    def _get_request_type_breakdown(self) -> Dict[str, int]:
+    def _get_request_type_breakdown(self) -> dict[str, int]:
         """Get breakdown of request types"""
         breakdown = {}
         for req_info in self.active_requests.values():
@@ -697,7 +697,7 @@ class MarketplaceAPI:
             breakdown[req_type] = breakdown.get(req_type, 0) + 1
         return breakdown
 
-    def _get_tier_usage_breakdown(self) -> Dict[str, int]:
+    def _get_tier_usage_breakdown(self) -> dict[str, int]:
         """Get breakdown of tier usage"""
         breakdown = {}
         for req_info in self.active_requests.values():
@@ -707,7 +707,7 @@ class MarketplaceAPI:
 
 
 # Global API instance
-_marketplace_api: Optional[MarketplaceAPI] = None
+_marketplace_api: MarketplaceAPI | None = None
 
 
 def get_marketplace_api() -> MarketplaceAPI:

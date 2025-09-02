@@ -18,12 +18,12 @@ import math
 import random
 import struct
 import time
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
-import numpy as np
+from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
-from cryptography.exceptions import InvalidSignature
+import numpy as np
 
 # Import reputation system for enhanced selection
 try:
@@ -82,9 +82,9 @@ class SelectionRound:
     epoch: int
     timestamp: float
     seed: bytes
-    selected_neighbors: List[str]
-    vrf_proofs: Dict[str, VRFProof]
-    topology_metrics: Dict[str, float]
+    selected_neighbors: list[str]
+    vrf_proofs: dict[str, VRFProof]
+    topology_metrics: dict[str, float]
 
 
 @dataclass
@@ -114,7 +114,7 @@ class VRFNeighborSelector:
     def __init__(
         self,
         node_id: str,
-        private_key: Optional[ec.EllipticCurvePrivateKey] = None,
+        private_key: ec.EllipticCurvePrivateKey | None = None,
         target_degree: int = 8,
         min_degree: int = 4,
         max_degree: int = 16,
@@ -141,20 +141,20 @@ class VRFNeighborSelector:
         )
 
         # Network state
-        self.known_nodes: Dict[str, NodeInfo] = {}
-        self.current_neighbors: Set[str] = set()
-        self.selection_history: List[SelectionRound] = []
-        self.topology_cache: Optional[TopologyMetrics] = None
+        self.known_nodes: dict[str, NodeInfo] = {}
+        self.current_neighbors: set[str] = set()
+        self.selection_history: list[SelectionRound] = []
+        self.topology_cache: TopologyMetrics | None = None
 
         # VRF state
         self.current_epoch = 0
         self.last_selection_time = 0.0
-        self.pending_verifications: Dict[str, VRFProof] = {}
+        self.pending_verifications: dict[str, VRFProof] = {}
 
         # Security tracking
         self.eclipse_attempts = 0
-        self.suspicious_patterns: List[Dict[str, Any]] = []
-        self.blacklisted_nodes: Set[str] = set()
+        self.suspicious_patterns: list[dict[str, Any]] = []
+        self.blacklisted_nodes: set[str] = set()
 
         # Configuration
         self.config = {
@@ -170,7 +170,7 @@ class VRFNeighborSelector:
         }
 
         # Reputation integration
-        self.reputation_engine: Optional[BayesianReputationEngine] = kwargs.get("reputation_engine")
+        self.reputation_engine: BayesianReputationEngine | None = kwargs.get("reputation_engine")
 
         # Monitoring
         self.status = VRFStatus.INITIALIZING
@@ -184,9 +184,9 @@ class VRFNeighborSelector:
         }
 
         # Background tasks
-        self._selection_task: Optional[asyncio.Task] = None
-        self._verification_task: Optional[asyncio.Task] = None
-        self._topology_monitor_task: Optional[asyncio.Task] = None
+        self._selection_task: asyncio.Task | None = None
+        self._verification_task: asyncio.Task | None = None
+        self._topology_monitor_task: asyncio.Task | None = None
 
         logger.info(f"VRF neighbor selector initialized for node {node_id}")
 
@@ -256,7 +256,7 @@ class VRFNeighborSelector:
                     setattr(node, key, value)
             node.last_seen = time.time()
 
-    async def select_neighbors(self, force_reselection: bool = False) -> List[str]:
+    async def select_neighbors(self, force_reselection: bool = False) -> list[str]:
         """
         Select neighbors using VRF for verifiable randomness.
 
@@ -320,7 +320,7 @@ class VRFNeighborSelector:
             self.status = VRFStatus.ERROR
             return list(self.current_neighbors)  # Return current neighbors on error
 
-    async def verify_selection(self, node_id: str, vrf_proof: VRFProof, claimed_neighbors: List[str]) -> bool:
+    async def verify_selection(self, node_id: str, vrf_proof: VRFProof, claimed_neighbors: list[str]) -> bool:
         """Verify another node's neighbor selection using their VRF proof."""
         try:
             # Verify VRF proof
@@ -422,7 +422,7 @@ class VRFNeighborSelector:
 
         return h.digest()
 
-    async def _perform_neighbor_selection(self, seed: bytes) -> List[str]:
+    async def _perform_neighbor_selection(self, seed: bytes) -> list[str]:
         """Perform actual neighbor selection using VRF seed."""
         # Filter eligible nodes
         eligible_nodes = self._get_eligible_nodes()
@@ -467,13 +467,13 @@ class VRFNeighborSelector:
 
         return selected
 
-    async def _simulate_neighbor_selection(self, seed: bytes, for_node_id: str) -> List[str]:
+    async def _simulate_neighbor_selection(self, seed: bytes, for_node_id: str) -> list[str]:
         """Simulate neighbor selection for verification purposes."""
         # This would use the same algorithm as _perform_neighbor_selection
         # but simulate it for another node's perspective
         return await self._perform_neighbor_selection(seed)
 
-    def _get_eligible_nodes(self) -> List[NodeInfo]:
+    def _get_eligible_nodes(self) -> list[NodeInfo]:
         """Get list of nodes eligible for selection."""
         current_time = time.time()
         eligible = []
@@ -540,7 +540,7 @@ class VRFNeighborSelector:
 
         return max(base_weight, 0.01)  # Minimum weight
 
-    async def _validate_topology_properties(self, selected_neighbors: List[str]) -> bool:
+    async def _validate_topology_properties(self, selected_neighbors: list[str]) -> bool:
         """Validate that selected neighbors maintain good topology properties."""
         # Check degree constraints
         if not (self.min_degree <= len(selected_neighbors) <= self.max_degree):
@@ -556,7 +556,7 @@ class VRFNeighborSelector:
 
         return True
 
-    async def _detect_eclipse_attempt(self, selected_neighbors: List[str]) -> bool:
+    async def _detect_eclipse_attempt(self, selected_neighbors: list[str]) -> bool:
         """Detect potential eclipse attack patterns with reputation integration."""
         # Check for suspicious clustering
         suspicious_count = 0
@@ -633,7 +633,7 @@ class VRFNeighborSelector:
 
         return False
 
-    async def _validate_expansion_properties(self, selected_neighbors: List[str]) -> bool:
+    async def _validate_expansion_properties(self, selected_neighbors: list[str]) -> bool:
         """Validate that selection maintains expander properties."""
         # Simplified expansion check
         # In a real implementation, this would perform graph analysis
@@ -651,7 +651,7 @@ class VRFNeighborSelector:
         diversity_ratio = len(unique_subnets) / len(selected_neighbors) if selected_neighbors else 0
         return diversity_ratio >= 0.5  # At least 50% subnet diversity
 
-    async def _adjust_selection_for_topology(self, selected_neighbors: List[str], seed: bytes) -> List[str]:
+    async def _adjust_selection_for_topology(self, selected_neighbors: list[str], seed: bytes) -> list[str]:
         """Adjust neighbor selection to improve topology properties."""
         # Remove worst nodes and replace with better candidates
         eligible_nodes = self._get_eligible_nodes()
@@ -679,7 +679,7 @@ class VRFNeighborSelector:
 
         return adjusted
 
-    async def _compute_topology_metrics(self) -> Dict[str, float]:
+    async def _compute_topology_metrics(self) -> dict[str, float]:
         """Compute current topology quality metrics."""
         if not self.current_neighbors:
             return {}
@@ -817,7 +817,7 @@ class VRFNeighborSelector:
             or len(self.current_neighbors) < self.min_degree
         )
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get comprehensive VRF system status."""
         return {
             "node_id": self.node_id,
@@ -834,11 +834,11 @@ class VRFNeighborSelector:
             "config": self.config.copy(),
         }
 
-    def get_neighbors(self) -> List[str]:
+    def get_neighbors(self) -> list[str]:
         """Get current neighbor list."""
         return list(self.current_neighbors)
 
-    def get_selection_proof(self) -> Optional[VRFProof]:
+    def get_selection_proof(self) -> VRFProof | None:
         """Get VRF proof for current selection."""
         if self.selection_history:
             latest_round = self.selection_history[-1]

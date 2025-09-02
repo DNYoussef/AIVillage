@@ -6,23 +6,24 @@ Comprehensive security mechanisms for distributed consensus protocols with advan
 Implements Byzantine fault tolerance, threshold cryptography, and zero-knowledge proofs.
 """
 
+from dataclasses import dataclass, field
+from enum import Enum
 import hashlib
 import hmac
 import json
 import logging
 import secrets
 import time
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 import uuid
+
 import numpy as np
 
 # Cryptographic libraries
 try:
-    from cryptography.hazmat.primitives import hashes, serialization
-    from cryptography.hazmat.primitives.asymmetric import rsa, padding
     from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
     CRYPTOGRAPHY_AVAILABLE = True
 except ImportError:
@@ -73,7 +74,7 @@ class ThresholdKey:
     private_key_share: bytes
     threshold: int
     total_parties: int
-    polynomial_coefficients: List[int] = field(default_factory=list)
+    polynomial_coefficients: list[int] = field(default_factory=list)
     verification_key: bytes = b""
 
 
@@ -86,10 +87,10 @@ class ConsensusMessage:
     message_type: str
     round_number: int
     view_number: int
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
     timestamp: float = field(default_factory=time.time)
-    signature: Optional[bytes] = None
-    proof: Optional[bytes] = None
+    signature: bytes | None = None
+    proof: bytes | None = None
 
 
 @dataclass
@@ -98,8 +99,8 @@ class AttackEvidence:
 
     attack_id: str
     attack_type: AttackType
-    suspected_nodes: Set[str]
-    evidence_data: Dict[str, Any]
+    suspected_nodes: set[str]
+    evidence_data: dict[str, Any]
     confidence_score: float
     detected_at: float = field(default_factory=time.time)
     verified: bool = False
@@ -114,14 +115,14 @@ class ConsensusRound:
     round_number: int
     view_number: int
     leader_id: str
-    participants: Set[str]
-    proposal: Optional[Dict[str, Any]] = None
-    votes: Dict[str, ConsensusMessage] = field(default_factory=dict)
-    commits: Dict[str, ConsensusMessage] = field(default_factory=dict)
+    participants: set[str]
+    proposal: dict[str, Any] | None = None
+    votes: dict[str, ConsensusMessage] = field(default_factory=dict)
+    commits: dict[str, ConsensusMessage] = field(default_factory=dict)
     start_time: float = field(default_factory=time.time)
-    end_time: Optional[float] = None
+    end_time: float | None = None
     status: str = "active"
-    security_violations: List[str] = field(default_factory=list)
+    security_violations: list[str] = field(default_factory=list)
 
 
 class ConsensusSecurityManager:
@@ -150,20 +151,20 @@ class ConsensusSecurityManager:
         self.byzantine_threshold = byzantine_threshold
 
         # Cryptographic materials
-        self.threshold_keys: Dict[str, ThresholdKey] = {}
-        self.master_public_key: Optional[bytes] = None
-        self.node_certificates: Dict[str, bytes] = {}
+        self.threshold_keys: dict[str, ThresholdKey] = {}
+        self.master_public_key: bytes | None = None
+        self.node_certificates: dict[str, bytes] = {}
 
         # Consensus state
-        self.current_round: Optional[ConsensusRound] = None
-        self.consensus_history: List[ConsensusRound] = []
-        self.participant_nodes: Dict[str, Dict[str, Any]] = {}
+        self.current_round: ConsensusRound | None = None
+        self.consensus_history: list[ConsensusRound] = []
+        self.participant_nodes: dict[str, dict[str, Any]] = {}
 
         # Security monitoring
-        self.attack_evidence: List[AttackEvidence] = []
-        self.node_reputations: Dict[str, float] = {}
-        self.message_cache: Dict[str, ConsensusMessage] = {}
-        self.timing_records: Dict[str, List[float]] = {}
+        self.attack_evidence: list[AttackEvidence] = []
+        self.node_reputations: dict[str, float] = {}
+        self.message_cache: dict[str, ConsensusMessage] = {}
+        self.timing_records: dict[str, list[float]] = {}
 
         # Protocol parameters
         self.security_params = {
@@ -192,7 +193,7 @@ class ConsensusSecurityManager:
 
         logger.info(f"Consensus Security Manager initialized for node {node_id}")
 
-    async def initialize_distributed_keys(self, participant_nodes: List[str], threshold: Optional[int] = None) -> bool:
+    async def initialize_distributed_keys(self, participant_nodes: list[str], threshold: int | None = None) -> bool:
         """Initialize distributed key generation for threshold signatures."""
 
         if not participant_nodes:
@@ -274,8 +275,8 @@ class ConsensusSecurityManager:
             return False
 
     async def create_threshold_signature(
-        self, message: bytes, signing_nodes: List[str]
-    ) -> Tuple[bool, Optional[bytes]]:
+        self, message: bytes, signing_nodes: list[str]
+    ) -> tuple[bool, bytes | None]:
         """Create a threshold signature using multiple nodes."""
 
         if len(signing_nodes) < self.security_params["signature_threshold"]:
@@ -325,7 +326,7 @@ class ConsensusSecurityManager:
             return False, None
 
     async def verify_threshold_signature(
-        self, message: bytes, signature: bytes, expected_signers: Optional[List[str]] = None
+        self, message: bytes, signature: bytes, expected_signers: list[str] | None = None
     ) -> bool:
         """Verify a threshold signature."""
 
@@ -357,8 +358,8 @@ class ConsensusSecurityManager:
             return False
 
     async def create_zero_knowledge_proof(
-        self, statement: Dict[str, Any], witness: Dict[str, Any]
-    ) -> Tuple[bool, Optional[bytes]]:
+        self, statement: dict[str, Any], witness: dict[str, Any]
+    ) -> tuple[bool, bytes | None]:
         """Create a zero-knowledge proof for statement validity."""
 
         try:
@@ -407,7 +408,7 @@ class ConsensusSecurityManager:
             return False, None
 
     async def verify_zero_knowledge_proof(
-        self, proof: bytes, expected_statement: Optional[Dict[str, Any]] = None
+        self, proof: bytes, expected_statement: dict[str, Any] | None = None
     ) -> bool:
         """Verify a zero-knowledge proof."""
 
@@ -444,7 +445,7 @@ class ConsensusSecurityManager:
             logger.error(f"Zero-knowledge proof verification failed: {e}")
             return False
 
-    async def detect_byzantine_behavior(self, consensus_round: ConsensusRound) -> List[AttackEvidence]:
+    async def detect_byzantine_behavior(self, consensus_round: ConsensusRound) -> list[AttackEvidence]:
         """Detect Byzantine behavior in consensus round."""
 
         detected_attacks = []
@@ -500,7 +501,7 @@ class ConsensusSecurityManager:
             logger.error(f"Byzantine behavior detection failed: {e}")
             return []
 
-    async def mitigate_attacks(self, attacks: List[AttackEvidence]) -> int:
+    async def mitigate_attacks(self, attacks: list[AttackEvidence]) -> int:
         """Mitigate detected consensus attacks."""
 
         mitigated_count = 0
@@ -548,8 +549,8 @@ class ConsensusSecurityManager:
         return mitigated_count
 
     async def validate_consensus_message(
-        self, message: ConsensusMessage, expected_round: Optional[int] = None, expected_view: Optional[int] = None
-    ) -> Tuple[bool, List[str]]:
+        self, message: ConsensusMessage, expected_round: int | None = None, expected_view: int | None = None
+    ) -> tuple[bool, list[str]]:
         """Validate a consensus protocol message."""
 
         validation_errors = []
@@ -606,14 +607,14 @@ class ConsensusSecurityManager:
 
     # Private helper methods
 
-    def _evaluate_polynomial(self, coefficients: List[int], x: int) -> int:
+    def _evaluate_polynomial(self, coefficients: list[int], x: int) -> int:
         """Evaluate polynomial at given point using Horner's method."""
         result = 0
         for coeff in reversed(coefficients):
             result = result * x + coeff
         return result % (2**256)  # Modular arithmetic
 
-    def _combine_public_keys(self, public_key_shares: List[bytes]) -> bytes:
+    def _combine_public_keys(self, public_key_shares: list[bytes]) -> bytes:
         """Combine public key shares into master public key."""
         # Simplified combination - in production would use proper elliptic curve operations
         combined = hashlib.sha256()
@@ -621,7 +622,7 @@ class ConsensusSecurityManager:
             combined.update(share)
         return combined.digest()
 
-    async def _create_partial_signature(self, message: bytes, threshold_key: ThresholdKey) -> Optional[bytes]:
+    async def _create_partial_signature(self, message: bytes, threshold_key: ThresholdKey) -> bytes | None:
         """Create partial signature using threshold key share."""
         try:
             if CRYPTOGRAPHY_AVAILABLE and len(threshold_key.private_key_share) > 32:
@@ -642,7 +643,7 @@ class ConsensusSecurityManager:
             logger.error(f"Partial signature creation failed: {e}")
             return None
 
-    async def _combine_partial_signatures(self, message: bytes, partial_signatures: List[Dict[str, Any]]) -> bytes:
+    async def _combine_partial_signatures(self, message: bytes, partial_signatures: list[dict[str, Any]]) -> bytes:
         """Combine partial signatures using Lagrange interpolation."""
         # Simplified combination - in production would use proper threshold signature schemes
         combined = hashlib.sha256()
@@ -661,7 +662,7 @@ class ConsensusSecurityManager:
         expected = hashlib.sha256(message + public_key).digest()
         return hmac.compare_digest(signature[:32], expected)
 
-    async def _detect_contradictory_messages(self, consensus_round: ConsensusRound) -> Dict[str, Dict[str, Any]]:
+    async def _detect_contradictory_messages(self, consensus_round: ConsensusRound) -> dict[str, dict[str, Any]]:
         """Detect nodes sending contradictory messages in the same round."""
         contradictions = {}
 
@@ -694,7 +695,7 @@ class ConsensusSecurityManager:
 
         return contradictions
 
-    async def _detect_timing_attacks(self, consensus_round: ConsensusRound) -> List[AttackEvidence]:
+    async def _detect_timing_attacks(self, consensus_round: ConsensusRound) -> list[AttackEvidence]:
         """Detect timing-based attacks."""
         attacks = []
 
@@ -729,7 +730,7 @@ class ConsensusSecurityManager:
 
         return attacks
 
-    async def _detect_collusion(self, consensus_round: ConsensusRound) -> List[AttackEvidence]:
+    async def _detect_collusion(self, consensus_round: ConsensusRound) -> list[AttackEvidence]:
         """Detect collusion patterns between nodes."""
         attacks = []
 
@@ -765,7 +766,7 @@ class ConsensusSecurityManager:
 
         return attacks
 
-    async def _detect_fork_attacks(self, consensus_round: ConsensusRound) -> List[AttackEvidence]:
+    async def _detect_fork_attacks(self, consensus_round: ConsensusRound) -> list[AttackEvidence]:
         """Detect fork attacks and equivocation."""
         attacks = []
 
@@ -808,7 +809,7 @@ class ConsensusSecurityManager:
 
         return attacks
 
-    async def _check_historical_agreement(self, nodes: List[str]) -> float:
+    async def _check_historical_agreement(self, nodes: list[str]) -> float:
         """Check historical agreement rate between nodes."""
         if len(self.consensus_history) < 5:
             return 0.5  # Not enough history
@@ -831,7 +832,7 @@ class ConsensusSecurityManager:
 
         return agreement_count / max(1, total_rounds)
 
-    async def _exclude_byzantine_nodes(self, suspected_nodes: Set[str]) -> bool:
+    async def _exclude_byzantine_nodes(self, suspected_nodes: set[str]) -> bool:
         """Exclude Byzantine nodes from consensus participation."""
         try:
             for node_id in suspected_nodes:
@@ -860,7 +861,7 @@ class ConsensusSecurityManager:
         logger.info("Diversified network connections to prevent eclipse attacks")
         return True
 
-    async def _apply_rate_limiting(self, suspected_nodes: Set[str]) -> bool:
+    async def _apply_rate_limiting(self, suspected_nodes: set[str]) -> bool:
         """Apply rate limiting to suspected DoS attackers."""
         try:
             for node_id in suspected_nodes:
@@ -926,7 +927,7 @@ class ConsensusSecurityManager:
 
         return await self.verify_zero_knowledge_proof(message.proof, statement)
 
-    async def _validate_protocol_specific(self, message: ConsensusMessage) -> List[str]:
+    async def _validate_protocol_specific(self, message: ConsensusMessage) -> list[str]:
         """Perform protocol-specific message validation."""
         errors = []
 
@@ -939,7 +940,7 @@ class ConsensusSecurityManager:
 
         return errors
 
-    async def _validate_raft_message(self, message: ConsensusMessage) -> List[str]:
+    async def _validate_raft_message(self, message: ConsensusMessage) -> list[str]:
         """Validate Raft-specific message constraints."""
         errors = []
 
@@ -957,7 +958,7 @@ class ConsensusSecurityManager:
 
         return errors
 
-    async def _validate_byzantine_message(self, message: ConsensusMessage) -> List[str]:
+    async def _validate_byzantine_message(self, message: ConsensusMessage) -> list[str]:
         """Validate Byzantine consensus message constraints."""
         errors = []
 
@@ -968,7 +969,7 @@ class ConsensusSecurityManager:
 
         return errors
 
-    async def _validate_pbft_message(self, message: ConsensusMessage) -> List[str]:
+    async def _validate_pbft_message(self, message: ConsensusMessage) -> list[str]:
         """Validate PBFT-specific message constraints."""
         errors = []
 
@@ -983,7 +984,7 @@ class ConsensusSecurityManager:
 
     # Public API methods
 
-    def get_security_stats(self) -> Dict[str, Any]:
+    def get_security_stats(self) -> dict[str, Any]:
         """Get comprehensive security statistics."""
         return {
             **self.security_stats,
@@ -1002,7 +1003,7 @@ class ConsensusSecurityManager:
         """Get reputation score for a node."""
         return self.node_reputations.get(node_id, 1.0)
 
-    def get_attack_summary(self) -> Dict[str, Any]:
+    def get_attack_summary(self) -> dict[str, Any]:
         """Get summary of detected attacks."""
         recent_attacks = [
             attack for attack in self.attack_evidence if time.time() - attack.detected_at < 86400  # Last 24 hours
@@ -1023,7 +1024,7 @@ class ConsensusSecurityManager:
             ),
         }
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Perform security system health check."""
         issues = []
 

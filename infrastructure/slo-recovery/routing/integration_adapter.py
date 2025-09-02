@@ -4,15 +4,16 @@ Integration with Flake Detector and GitHub Orchestrator data feeds
 Real-time data integration and routing coordination
 """
 
-import logging
-from typing import Dict, List, Optional, Any
+from abc import ABC, abstractmethod
+import asyncio
 from dataclasses import dataclass
 from datetime import datetime
-import asyncio
-import aiohttp
-from abc import ABC, abstractmethod
+import logging
+from typing import Any
 
-from .slo_recovery_router import SLORecoveryRouter, RoutingDecision
+import aiohttp
+
+from .slo_recovery_router import RoutingDecision, SLORecoveryRouter
 
 
 @dataclass
@@ -20,10 +21,10 @@ class FlakeDetectorData:
     """Data structure for Flake Detector integration"""
 
     detection_id: str
-    flake_patterns: List[Dict]
+    flake_patterns: list[dict]
     failure_probability: float
-    affected_tests: List[str]
-    root_cause_analysis: Dict
+    affected_tests: list[str]
+    root_cause_analysis: dict
     confidence_score: float
     timestamp: datetime
 
@@ -34,11 +35,11 @@ class GitHubOrchestratorData:
 
     orchestration_id: str
     repository: str
-    workflow_failures: List[Dict]
+    workflow_failures: list[dict]
     deployment_status: str
     branch: str
     commit_sha: str
-    failure_context: Dict
+    failure_context: dict
     timestamp: datetime
 
 
@@ -51,12 +52,12 @@ class DataFeedAdapter(ABC):
         pass
 
     @abstractmethod
-    async def poll_data(self) -> Optional[Any]:
+    async def poll_data(self) -> Any | None:
         """Poll for new data"""
         pass
 
     @abstractmethod
-    def transform_to_failure_data(self, raw_data: Any) -> Dict:
+    def transform_to_failure_data(self, raw_data: Any) -> dict:
         """Transform raw data to failure data format"""
         pass
 
@@ -89,7 +90,7 @@ class FlakeDetectorAdapter(DataFeedAdapter):
             self.logger.error(f"Failed to connect to Flake Detector: {e}")
             return False
 
-    async def poll_data(self) -> Optional[FlakeDetectorData]:
+    async def poll_data(self) -> FlakeDetectorData | None:
         """Poll for new flake detection data"""
         if not self.session:
             await self.connect()
@@ -124,7 +125,7 @@ class FlakeDetectorAdapter(DataFeedAdapter):
 
         return None
 
-    def transform_to_failure_data(self, flake_data: FlakeDetectorData) -> Dict:
+    def transform_to_failure_data(self, flake_data: FlakeDetectorData) -> dict:
         """Transform flake detection data to failure data format"""
 
         error_message = f"Flake detected in tests: {', '.join(flake_data.affected_tests[:3])}"
@@ -185,7 +186,7 @@ class GitHubOrchestratorAdapter(DataFeedAdapter):
             self.logger.error(f"Failed to connect to GitHub Orchestrator: {e}")
             return False
 
-    async def poll_data(self) -> Optional[GitHubOrchestratorData]:
+    async def poll_data(self) -> GitHubOrchestratorData | None:
         """Poll for GitHub workflow failures"""
         if not self.session:
             await self.connect()
@@ -221,7 +222,7 @@ class GitHubOrchestratorAdapter(DataFeedAdapter):
 
         return None
 
-    def transform_to_failure_data(self, github_data: GitHubOrchestratorData) -> Dict:
+    def transform_to_failure_data(self, github_data: GitHubOrchestratorData) -> dict:
         """Transform GitHub orchestrator data to failure data format"""
 
         error_message = f"GitHub workflow failure in {github_data.repository}"
@@ -369,7 +370,7 @@ class IntegrationCoordinator:
         except Exception as e:
             self.logger.error(f"Error executing coordination plan: {e}")
 
-    def get_integration_status(self) -> Dict:
+    def get_integration_status(self) -> dict:
         """Get status of all integrations"""
         status = {
             "running": self.running,
@@ -391,8 +392,8 @@ class IntegrationCoordinator:
 # Factory function for creating configured integration coordinator
 def create_integration_coordinator(
     slo_router: SLORecoveryRouter,
-    flake_detector_config: Optional[Dict] = None,
-    github_orchestrator_config: Optional[Dict] = None,
+    flake_detector_config: dict | None = None,
+    github_orchestrator_config: dict | None = None,
 ) -> IntegrationCoordinator:
     """Factory function to create configured integration coordinator"""
 

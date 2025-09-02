@@ -19,11 +19,11 @@ References:
 
 from collections import deque
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Literal
 import json
 import logging
+from pathlib import Path
 import time
+from typing import Any, Literal
 
 import numpy as np
 import torch
@@ -97,7 +97,7 @@ class EnhancedGrokFastOptimizer(Optimizer):
         self,
         model: nn.Module,
         base_optimizer: Optimizer,
-        config: Optional[EnhancedGrokFastConfig] = None,
+        config: EnhancedGrokFastConfig | None = None,
     ):
         """
         Initialize Enhanced GrokFast optimizer.
@@ -245,7 +245,7 @@ class EnhancedGrokFastOptimizer(Optimizer):
 
                 param_idx += 1
 
-    def _apply_ema_filter(self, param: nn.Parameter, state: Dict[str, Any]):
+    def _apply_ema_filter(self, param: nn.Parameter, state: dict[str, Any]):
         """Apply exponential moving average filter."""
         grad_ema = state["grad_ema"]
         step_count = state["step_count"]
@@ -264,7 +264,7 @@ class EnhancedGrokFastOptimizer(Optimizer):
         if self.config.memory_efficient:
             state["grad_ema"] = grad_ema.detach()
 
-    def _apply_ma_filter(self, param: nn.Parameter, state: Dict[str, Any]):
+    def _apply_ma_filter(self, param: nn.Parameter, state: dict[str, Any]):
         """Apply moving average filter."""
         grad_ma = state["grad_ma"]
 
@@ -284,7 +284,7 @@ class EnhancedGrokFastOptimizer(Optimizer):
 
                 param.grad.add_(avg_grad, alpha=self.current_lambda)
 
-    def _apply_hybrid_filter(self, param: nn.Parameter, state: Dict[str, Any]):
+    def _apply_hybrid_filter(self, param: nn.Parameter, state: dict[str, Any]):
         """Apply hybrid EMA + MA filter for maximum effectiveness."""
         # Apply EMA component
         self._apply_ema_filter(param, state)
@@ -384,7 +384,7 @@ class EnhancedGrokFastOptimizer(Optimizer):
             f"acceleration={acceleration}"
         )
 
-    def benchmark_acceleration(self, num_steps: int = 100) -> Dict[str, float]:
+    def benchmark_acceleration(self, num_steps: int = 100) -> dict[str, float]:
         """Benchmark acceleration compared to baseline optimizer."""
         logger.info(f"Benchmarking GrokFast acceleration over {num_steps} steps...")
 
@@ -454,7 +454,7 @@ class EnhancedGrokFastOptimizer(Optimizer):
 
         return benchmark_results
 
-    def get_comprehensive_stats(self) -> Dict[str, Any]:
+    def get_comprehensive_stats(self) -> dict[str, Any]:
         """Get comprehensive optimizer statistics."""
         stats = {
             "step_count": self.step_count,
@@ -553,8 +553,8 @@ def create_enhanced_grokfast_optimizer(
     base_optimizer_class: str = "adamw",
     learning_rate: float = 2e-4,
     weight_decay: float = 0.1,
-    betas: Tuple[float, float] = (0.9, 0.95),
-    config: Optional[EnhancedGrokFastConfig] = None,
+    betas: tuple[float, float] = (0.9, 0.95),
+    config: EnhancedGrokFastConfig | None = None,
     **kwargs,
 ) -> EnhancedGrokFastOptimizer:
     """Factory function to create enhanced GrokFast optimizer."""

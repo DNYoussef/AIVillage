@@ -6,14 +6,14 @@ including attack scenario generation, risk assessment, and security recommendati
 Integrates with BetaNet infrastructure for distributed security analysis.
 """
 
-import logging
-import time
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+import logging
 import secrets
 import statistics
-from datetime import datetime
+import time
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -67,10 +67,10 @@ class ThreatActor:
     actor_id: str
     name: str
     motivation: str  # financial, espionage, disruption, etc.
-    capabilities: List[str]  # technical skills and resources
+    capabilities: list[str]  # technical skills and resources
     resources: str  # nation-state, organized crime, individual, etc.
-    typical_targets: List[str]
-    attack_patterns: List[str]
+    typical_targets: list[str]
+    attack_patterns: list[str]
     sophistication_level: int  # 1-5 scale
 
 
@@ -86,10 +86,10 @@ class Asset:
     confidentiality_req: RiskLevel
     integrity_req: RiskLevel
     availability_req: RiskLevel
-    owners: List[str]
-    dependencies: List[str]
+    owners: list[str]
+    dependencies: list[str]
     location: str
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -99,15 +99,15 @@ class Vulnerability:
     vuln_id: str
     name: str
     description: str
-    affected_assets: List[str]
-    cwe_id: Optional[str] = None  # Common Weakness Enumeration
-    cvss_score: Optional[float] = None
+    affected_assets: list[str]
+    cwe_id: str | None = None  # Common Weakness Enumeration
+    cvss_score: float | None = None
     exploitability: RiskLevel = RiskLevel.MEDIUM
     impact: RiskLevel = RiskLevel.MEDIUM
     likelihood: float = 0.5  # 0.0 to 1.0
     discovery_date: float = field(default_factory=time.time)
     remediation_effort: str = "medium"  # low, medium, high
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -120,15 +120,15 @@ class ThreatScenario:
     threat_actor: str
     attack_vector: AttackVector
     threat_category: ThreatCategory
-    target_assets: List[str]
-    exploited_vulnerabilities: List[str]
-    attack_steps: List[Dict[str, Any]]
-    prerequisites: List[str]
-    indicators_of_compromise: List[str]
-    impact_assessment: Dict[str, Any]
+    target_assets: list[str]
+    exploited_vulnerabilities: list[str]
+    attack_steps: list[dict[str, Any]]
+    prerequisites: list[str]
+    indicators_of_compromise: list[str]
+    impact_assessment: dict[str, Any]
     likelihood_score: float
     risk_score: float
-    mitigations: List[str]
+    mitigations: list[str]
     residual_risk: float
     last_updated: float = field(default_factory=time.time)
 
@@ -145,12 +145,12 @@ class SecurityControl:
     effectiveness: float  # 0.0 to 1.0
     cost: str  # low, medium, high
     complexity: str  # low, medium, high
-    applicable_threats: List[str]
-    prerequisites: List[str]
+    applicable_threats: list[str]
+    prerequisites: list[str]
     maintenance_required: bool
     testing_frequency: str  # continuous, daily, weekly, monthly, quarterly
-    last_tested: Optional[float] = None
-    test_results: Dict[str, Any] = field(default_factory=dict)
+    last_tested: float | None = None
+    test_results: dict[str, Any] = field(default_factory=dict)
 
 
 class FederatedThreatDatabase:
@@ -163,7 +163,7 @@ class FederatedThreatDatabase:
         self.common_vulnerabilities = self._initialize_vulnerabilities()
         self.attack_patterns = self._initialize_attack_patterns()
 
-    def _initialize_threat_actors(self) -> Dict[str, ThreatActor]:
+    def _initialize_threat_actors(self) -> dict[str, ThreatActor]:
         """Initialize database of known threat actors"""
         return {
             "malicious_participant": ThreatActor(
@@ -208,7 +208,7 @@ class FederatedThreatDatabase:
             ),
         }
 
-    def _initialize_vulnerabilities(self) -> Dict[str, Vulnerability]:
+    def _initialize_vulnerabilities(self) -> dict[str, Vulnerability]:
         """Initialize common federated learning vulnerabilities"""
         return {
             "unencrypted_gradients": Vulnerability(
@@ -263,7 +263,7 @@ class FederatedThreatDatabase:
             ),
         }
 
-    def _initialize_attack_patterns(self) -> Dict[str, Dict[str, Any]]:
+    def _initialize_attack_patterns(self) -> dict[str, dict[str, Any]]:
         """Initialize federated learning attack patterns"""
         return {
             "gradient_inversion": {
@@ -328,10 +328,10 @@ class ThreatModelingEngine:
 
     def __init__(self, threat_db: FederatedThreatDatabase):
         self.threat_db = threat_db
-        self.assets: Dict[str, Asset] = {}
-        self.vulnerabilities: Dict[str, Vulnerability] = {}
-        self.threat_scenarios: Dict[str, ThreatScenario] = {}
-        self.security_controls: Dict[str, SecurityControl] = {}
+        self.assets: dict[str, Asset] = {}
+        self.vulnerabilities: dict[str, Vulnerability] = {}
+        self.threat_scenarios: dict[str, ThreatScenario] = {}
+        self.security_controls: dict[str, SecurityControl] = {}
         self.risk_appetite = {
             "confidentiality": RiskLevel.LOW,
             "integrity": RiskLevel.VERY_LOW,
@@ -408,7 +408,7 @@ class ThreatModelingEngine:
 
         return min(1.0, base_likelihood)
 
-    async def generate_threat_scenarios(self, asset_id: str) -> List[ThreatScenario]:
+    async def generate_threat_scenarios(self, asset_id: str) -> list[ThreatScenario]:
         """Generate threat scenarios for a specific asset"""
         if asset_id not in self.assets:
             raise ValueError(f"Asset {asset_id} not found")
@@ -438,8 +438,8 @@ class ThreatModelingEngine:
         asset: Asset,
         actor: ThreatActor,
         pattern_id: str,
-        pattern: Dict[str, Any],
-        vulnerabilities: List[Vulnerability],
+        pattern: dict[str, Any],
+        vulnerabilities: list[Vulnerability],
     ) -> ThreatScenario:
         """Create detailed threat scenario"""
         scenario_id = f"TS_{asset.asset_id}_{actor.actor_id}_{pattern_id}_{secrets.token_hex(4)}"
@@ -477,7 +477,7 @@ class ThreatModelingEngine:
 
         return scenario
 
-    def _is_vulnerability_relevant_to_pattern(self, vulnerability: Vulnerability, pattern: Dict[str, Any]) -> bool:
+    def _is_vulnerability_relevant_to_pattern(self, vulnerability: Vulnerability, pattern: dict[str, Any]) -> bool:
         """Check if vulnerability is relevant to attack pattern"""
         pattern_name = pattern["name"].lower()
         vuln_name = vulnerability.name.lower()
@@ -493,7 +493,7 @@ class ThreatModelingEngine:
         return False
 
     def _calculate_scenario_likelihood(
-        self, actor: ThreatActor, vulnerabilities: List[Vulnerability], asset: Asset
+        self, actor: ThreatActor, vulnerabilities: list[Vulnerability], asset: Asset
     ) -> float:
         """Calculate likelihood of threat scenario"""
         if not vulnerabilities:
@@ -514,8 +514,8 @@ class ThreatModelingEngine:
         return min(1.0, likelihood)
 
     def _assess_scenario_impact(
-        self, asset: Asset, pattern: Dict[str, Any], vulnerabilities: List[Vulnerability]
-    ) -> Dict[str, float]:
+        self, asset: Asset, pattern: dict[str, Any], vulnerabilities: list[Vulnerability]
+    ) -> dict[str, float]:
         """Assess impact of threat scenario"""
         impact_assessment = {"confidentiality": 0.0, "integrity": 0.0, "availability": 0.0, "privacy": 0.0}
 
@@ -543,7 +543,7 @@ class ThreatModelingEngine:
 
         return impact_assessment
 
-    def _determine_attack_vector(self, pattern: Dict[str, Any]) -> AttackVector:
+    def _determine_attack_vector(self, pattern: dict[str, Any]) -> AttackVector:
         """Determine primary attack vector from pattern"""
         pattern_name = pattern["name"].lower()
 
@@ -556,7 +556,7 @@ class ThreatModelingEngine:
         else:
             return AttackVector.SYSTEM
 
-    def _determine_threat_category(self, pattern: Dict[str, Any]) -> ThreatCategory:
+    def _determine_threat_category(self, pattern: dict[str, Any]) -> ThreatCategory:
         """Determine primary threat category from pattern"""
         impact = pattern.get("impact", {})
 
@@ -571,7 +571,7 @@ class ThreatModelingEngine:
         else:
             return ThreatCategory.AUTHENTICITY
 
-    def _expand_attack_steps(self, base_steps: List[str], asset: Asset) -> List[Dict[str, Any]]:
+    def _expand_attack_steps(self, base_steps: list[str], asset: Asset) -> list[dict[str, Any]]:
         """Expand attack steps with asset-specific details"""
         expanded_steps = []
 
@@ -588,7 +588,7 @@ class ThreatModelingEngine:
 
         return expanded_steps
 
-    async def recommend_mitigations(self, scenario_id: str) -> List[SecurityControl]:
+    async def recommend_mitigations(self, scenario_id: str) -> list[SecurityControl]:
         """Recommend security controls for a threat scenario"""
         if scenario_id not in self.threat_scenarios:
             raise ValueError(f"Threat scenario {scenario_id} not found")
@@ -613,7 +613,7 @@ class ThreatModelingEngine:
         logger.info(f"Generated {len(recommendations)} mitigation recommendations for {scenario.name}")
         return recommendations
 
-    def _get_applicable_controls(self, scenario: ThreatScenario) -> List[SecurityControl]:
+    def _get_applicable_controls(self, scenario: ThreatScenario) -> list[SecurityControl]:
         """Get security controls applicable to threat scenario"""
         # Define standard security controls for federated learning
         standard_controls = [
@@ -699,7 +699,7 @@ class ThreatModelingEngine:
 
         return applicable_controls
 
-    def _prioritize_controls(self, controls: List[SecurityControl], scenario: ThreatScenario) -> List[SecurityControl]:
+    def _prioritize_controls(self, controls: list[SecurityControl], scenario: ThreatScenario) -> list[SecurityControl]:
         """Prioritize security controls by effectiveness and feasibility"""
 
         def calculate_priority_score(control: SecurityControl) -> float:
@@ -727,7 +727,7 @@ class ThreatModelingEngine:
         prioritized = sorted(controls, key=calculate_priority_score, reverse=True)
         return prioritized
 
-    def _calculate_residual_risk(self, scenario: ThreatScenario, mitigations: List[SecurityControl]) -> float:
+    def _calculate_residual_risk(self, scenario: ThreatScenario, mitigations: list[SecurityControl]) -> float:
         """Calculate residual risk after applying mitigations"""
         if not mitigations:
             return scenario.risk_score
@@ -744,7 +744,7 @@ class ThreatModelingEngine:
         residual_risk = scenario.risk_score * (1.0 - combined_effectiveness)
         return max(0.0, residual_risk)
 
-    async def generate_threat_model_report(self, scope: Optional[List[str]] = None) -> Dict[str, Any]:
+    async def generate_threat_model_report(self, scope: list[str] | None = None) -> dict[str, Any]:
         """Generate comprehensive threat modeling report"""
         # Filter scope if specified
         if scope:
@@ -801,7 +801,7 @@ class ThreatModelingEngine:
 
         return report
 
-    def _analyze_risk_landscape(self, scenarios: Dict[str, ThreatScenario]) -> Dict[str, Any]:
+    def _analyze_risk_landscape(self, scenarios: dict[str, ThreatScenario]) -> dict[str, Any]:
         """Analyze overall risk landscape"""
         if not scenarios:
             return {"overall_risk_level": "VERY_LOW", "high_risk_count": 0}
@@ -842,7 +842,7 @@ class ThreatModelingEngine:
             },
         }
 
-    def _analyze_vulnerabilities(self) -> Dict[str, Any]:
+    def _analyze_vulnerabilities(self) -> dict[str, Any]:
         """Analyze vulnerability landscape"""
         if not self.vulnerabilities:
             return {"critical_count": 0, "high_count": 0}
@@ -873,7 +873,7 @@ class ThreatModelingEngine:
             },
         }
 
-    def _analyze_mitigation_coverage(self, scenarios: Dict[str, ThreatScenario]) -> Dict[str, Any]:
+    def _analyze_mitigation_coverage(self, scenarios: dict[str, ThreatScenario]) -> dict[str, Any]:
         """Analyze mitigation coverage across scenarios"""
         if not scenarios:
             return {"overall_coverage": 0.0}
@@ -902,7 +902,7 @@ class ThreatModelingEngine:
             },
         }
 
-    async def _generate_strategic_recommendations(self, scenarios: Dict[str, ThreatScenario]) -> List[Dict[str, Any]]:
+    async def _generate_strategic_recommendations(self, scenarios: dict[str, ThreatScenario]) -> list[dict[str, Any]]:
         """Generate strategic security recommendations"""
         recommendations = []
 

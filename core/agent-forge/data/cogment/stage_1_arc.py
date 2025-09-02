@@ -10,14 +10,14 @@ ARC (Abstraction and Reasoning Corpus) with heavy augmentation:
 Purpose: Visual pattern recognition and logical reasoning with grokking via augmentation.
 """
 
+from dataclasses import dataclass
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Tuple, Any, Optional
-from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 try:
     from datasets import load_dataset
@@ -47,14 +47,14 @@ class ARCDataConfig:
     use_huggingface_arc: bool = True
     use_concept_arc: bool = True
     use_synthetic_arc: bool = True
-    local_arc_path: Optional[str] = None
+    local_arc_path: str | None = None
 
     # Augmentation settings
     augmentations_per_task: int = 300
     augmentation_seed: int = 42
 
     # Training settings
-    max_tasks: Optional[int] = None  # None = use all
+    max_tasks: int | None = None  # None = use all
     sequence_length: int = 512
 
     # Task filtering
@@ -73,7 +73,7 @@ class ARCTaskProcessor:
     def __init__(self, config: ARCDataConfig):
         self.config = config
 
-    def validate_arc_task(self, task: Dict[str, Any]) -> bool:
+    def validate_arc_task(self, task: dict[str, Any]) -> bool:
         """Validate ARC task format and constraints."""
         try:
             # Check basic structure
@@ -97,7 +97,7 @@ class ARCTaskProcessor:
             logger.debug(f"Task validation failed: {e}")
             return False
 
-    def _validate_example(self, example: Dict[str, Any]) -> bool:
+    def _validate_example(self, example: dict[str, Any]) -> bool:
         """Validate a single ARC example."""
         # Check required fields
         if "input" not in example:
@@ -113,7 +113,7 @@ class ARCTaskProcessor:
 
         return True
 
-    def _validate_grid(self, grid: List[List[int]]) -> bool:
+    def _validate_grid(self, grid: list[list[int]]) -> bool:
         """Validate ARC grid format and constraints."""
         if not isinstance(grid, list) or not grid:
             return False
@@ -144,7 +144,7 @@ class ARCTaskProcessor:
 
         return True
 
-    def process_task_for_training(self, task: Dict[str, Any], task_id: str = None) -> Dict[str, Any]:
+    def process_task_for_training(self, task: dict[str, Any], task_id: str = None) -> dict[str, Any]:
         """Process ARC task into training format."""
         # Add metadata
         processed_task = {
@@ -161,7 +161,7 @@ class ARCTaskProcessor:
 
         return processed_task
 
-    def _get_task_colors(self, task: Dict[str, Any]) -> List[int]:
+    def _get_task_colors(self, task: dict[str, Any]) -> list[int]:
         """Get unique colors used in task."""
         colors = set()
 
@@ -173,7 +173,7 @@ class ARCTaskProcessor:
 
         return sorted(list(colors))
 
-    def _get_task_grid_sizes(self, task: Dict[str, Any]) -> List[Tuple[int, int]]:
+    def _get_task_grid_sizes(self, task: dict[str, Any]) -> list[tuple[int, int]]:
         """Get unique grid sizes in task."""
         sizes = set()
 
@@ -192,7 +192,7 @@ class ARCDataLoader:
         self.config = config
         self.processor = ARCTaskProcessor(config)
 
-    def load_huggingface_arc(self) -> List[Dict[str, Any]]:
+    def load_huggingface_arc(self) -> list[dict[str, Any]]:
         """Load ARC from HuggingFace datasets."""
         if not self.config.use_huggingface_arc or load_dataset is None:
             return []
@@ -229,7 +229,7 @@ class ARCDataLoader:
             logger.error(f"Failed to load HuggingFace ARC: {e}")
             return []
 
-    def _convert_hf_arc_to_task(self, item: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _convert_hf_arc_to_task(self, item: dict[str, Any]) -> dict[str, Any] | None:
         """Convert HuggingFace ARC item to standard ARC task format."""
         try:
             # This is a simplified conversion - real ARC tasks have different structure
@@ -260,7 +260,7 @@ class ARCDataLoader:
             logger.debug(f"Failed to convert HF ARC item: {e}")
             return None
 
-    def load_local_arc(self) -> List[Dict[str, Any]]:
+    def load_local_arc(self) -> list[dict[str, Any]]:
         """Load ARC from local files."""
         if not self.config.local_arc_path:
             return []
@@ -272,7 +272,7 @@ class ARCDataLoader:
             if arc_path.exists():
                 # Look for JSON files
                 for json_file in arc_path.glob("*.json"):
-                    with open(json_file, "r") as f:
+                    with open(json_file) as f:
                         task_data = json.load(f)
 
                     if self.processor.validate_arc_task(task_data):
@@ -286,7 +286,7 @@ class ARCDataLoader:
 
         return tasks
 
-    def generate_synthetic_arc(self, num_tasks: int = 50) -> List[Dict[str, Any]]:
+    def generate_synthetic_arc(self, num_tasks: int = 50) -> list[dict[str, Any]]:
         """Generate synthetic ARC-like tasks."""
         if not self.config.use_synthetic_arc:
             return []
@@ -309,7 +309,7 @@ class ARCDataLoader:
 
         return tasks
 
-    def _generate_single_synthetic_task(self, task_id: int) -> Dict[str, Any]:
+    def _generate_single_synthetic_task(self, task_id: int) -> dict[str, Any]:
         """Generate a single synthetic ARC task."""
         np.random.seed(self.config.augmentation_seed + task_id)
 
@@ -352,7 +352,7 @@ class ARCDataLoader:
 class ARCVisualDataset(Dataset):
     """Complete ARC Visual Reasoning dataset for Stage 1."""
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: dict[str, Any] = None):
         self.config = ARCDataConfig(**(config or {}))
         self.loader = ARCDataLoader(self.config)
 
@@ -373,7 +373,7 @@ class ARCVisualDataset(Dataset):
 
         logger.info(f"ARC dataset initialized with {len(self)} total samples")
 
-    def _load_all_tasks(self) -> List[Dict[str, Any]]:
+    def _load_all_tasks(self) -> list[dict[str, Any]]:
         """Load tasks from all configured sources."""
         all_tasks = []
 
@@ -396,7 +396,7 @@ class ARCVisualDataset(Dataset):
         logger.info(f"Loaded {len(all_tasks)} base ARC tasks")
         return all_tasks
 
-    def _generate_all_augmentations(self) -> List[Dict[str, Any]]:
+    def _generate_all_augmentations(self) -> list[dict[str, Any]]:
         """Generate augmentations for all base tasks."""
         all_augmented = []
 
@@ -420,7 +420,7 @@ class ARCVisualDataset(Dataset):
             # Estimate based on augmentation rate
             return len(self.base_tasks) * self.config.augmentations_per_task
 
-    def __getitem__(self, idx: int) -> Dict[str, Any]:
+    def __getitem__(self, idx: int) -> dict[str, Any]:
         if self.config.cache_augmentations and self.augmented_tasks:
             # Use cached augmentations
             return self.augmented_tasks[idx]
@@ -447,7 +447,7 @@ class ARCVisualDataset(Dataset):
         """Get DataLoader for this dataset."""
         return DataLoader(self, batch_size=batch_size, shuffle=shuffle, collate_fn=self._collate_fn)
 
-    def _collate_fn(self, batch: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _collate_fn(self, batch: list[dict[str, Any]]) -> dict[str, Any]:
         """Collate function for batching ARC tasks."""
         return {
             "tasks": batch,  # Keep full task structure
@@ -456,7 +456,7 @@ class ARCVisualDataset(Dataset):
             "metadata": [task.get("metadata", {}) for task in batch],
         }
 
-    def get_task_statistics(self) -> Dict[str, Any]:
+    def get_task_statistics(self) -> dict[str, Any]:
         """Get statistics about the dataset."""
         if not self.base_tasks:
             return {}
@@ -512,7 +512,7 @@ class ARCVisualDataset(Dataset):
         return success_rate > 0.8  # 80% minimum success rate
 
 
-def create_arc_dataset(config: Dict[str, Any] = None) -> ARCVisualDataset:
+def create_arc_dataset(config: dict[str, Any] = None) -> ARCVisualDataset:
     """Factory function to create ARC visual dataset."""
     dataset = ARCVisualDataset(config)
 

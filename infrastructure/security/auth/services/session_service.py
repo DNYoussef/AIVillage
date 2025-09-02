@@ -6,11 +6,11 @@ EnhancedSecureAPIServer God class to follow Single Responsibility Principle.
 """
 
 import asyncio
+from datetime import datetime, timedelta
 import json
 import logging
 import secrets
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     import redis.asyncio as redis
@@ -19,7 +19,7 @@ try:
 except ImportError:
     REDIS_AVAILABLE = False
 
-from ..interfaces import ISessionManager, SessionData, DeviceInfo
+from ..interfaces import DeviceInfo, ISessionManager, SessionData
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class SessionService(ISessionManager):
     dedicated session management functionality with proper separation of concerns.
     """
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: dict[str, Any] = None):
         """Initialize session service."""
         self.config = config or {}
 
@@ -53,15 +53,15 @@ class SessionService(ISessionManager):
         self.cleanup_interval = self.config.get("cleanup_interval_minutes", 30) * 60
 
         # Connection
-        self.redis_client: Optional[redis.Redis] = None
+        self.redis_client: redis.Redis | None = None
 
         # Fallback storage for when Redis is not available
-        self.memory_sessions: Dict[str, SessionData] = {}
-        self.user_sessions_map: Dict[str, List[str]] = {}
+        self.memory_sessions: dict[str, SessionData] = {}
+        self.user_sessions_map: dict[str, list[str]] = {}
         self.token_revocation_set: set[str] = set()
 
         # Background tasks
-        self._cleanup_task: Optional[asyncio.Task] = None
+        self._cleanup_task: asyncio.Task | None = None
         self._running = False
 
     async def initialize(self) -> None:
@@ -99,10 +99,10 @@ class SessionService(ISessionManager):
         self,
         user_id: str,
         device_info: DeviceInfo,
-        roles: List[str] = None,
-        permissions: List[str] = None,
-        tenant_id: Optional[str] = None,
-        metadata: Dict[str, Any] = None,
+        roles: list[str] = None,
+        permissions: list[str] = None,
+        tenant_id: str | None = None,
+        metadata: dict[str, Any] = None,
     ) -> str:
         """Create new user session."""
         try:
@@ -143,7 +143,7 @@ class SessionService(ISessionManager):
             logger.error(f"Session creation error: {e}")
             raise SessionError(f"Failed to create session: {e}")
 
-    async def get_session(self, session_id: str) -> Optional[SessionData]:
+    async def get_session(self, session_id: str) -> SessionData | None:
         """Get session by ID."""
         try:
             if self.redis_client:
@@ -234,7 +234,7 @@ class SessionService(ISessionManager):
             logger.error(f"User session revocation error: {e}")
             return 0
 
-    async def get_user_sessions(self, user_id: str) -> List[SessionData]:
+    async def get_user_sessions(self, user_id: str) -> list[SessionData]:
         """Get all active sessions for user."""
         try:
             user_sessions = await self._get_user_sessions_internal(user_id)
@@ -336,7 +336,7 @@ class SessionService(ISessionManager):
             logger.error(f"Suspicious activity detection error: {e}")
             return False
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Health check for session manager."""
         try:
             health = {
@@ -402,7 +402,7 @@ class SessionService(ISessionManager):
 
         await pipe.execute()
 
-    async def _get_session_redis(self, session_id: str) -> Optional[SessionData]:
+    async def _get_session_redis(self, session_id: str) -> SessionData | None:
         """Get session from Redis."""
         session_key = f"{self.session_prefix}{session_id}"
         session_dict = await self.redis_client.hgetall(session_key)
@@ -450,7 +450,7 @@ class SessionService(ISessionManager):
         if session_data.session_id not in self.user_sessions_map[user_id]:
             self.user_sessions_map[user_id].append(session_data.session_id)
 
-    async def _get_session_memory(self, session_id: str) -> Optional[SessionData]:
+    async def _get_session_memory(self, session_id: str) -> SessionData | None:
         """Get session from memory."""
         return self.memory_sessions.get(session_id)
 
@@ -467,21 +467,21 @@ class SessionService(ISessionManager):
 
     # Helper methods
 
-    async def _get_session_data_internal(self, session_id: str) -> Optional[SessionData]:
+    async def _get_session_data_internal(self, session_id: str) -> SessionData | None:
         """Get session data object (internal method)."""
         if self.redis_client:
             return await self._get_session_redis(session_id)
         else:
             return await self._get_session_memory(session_id)
 
-    async def _get_user_sessions_internal(self, user_id: str) -> List[SessionData]:
+    async def _get_user_sessions_internal(self, user_id: str) -> list[SessionData]:
         """Get all sessions for user (internal method)."""
         if self.redis_client:
             return await self._get_user_sessions_redis(user_id)
         else:
             return await self._get_user_sessions_memory(user_id)
 
-    async def _get_user_sessions_redis(self, user_id: str) -> List[SessionData]:
+    async def _get_user_sessions_redis(self, user_id: str) -> list[SessionData]:
         """Get user sessions from Redis."""
         user_sessions_key = f"{self.user_sessions_prefix}{user_id}"
         session_ids = await self.redis_client.smembers(user_sessions_key)
@@ -494,7 +494,7 @@ class SessionService(ISessionManager):
 
         return sessions
 
-    async def _get_user_sessions_memory(self, user_id: str) -> List[SessionData]:
+    async def _get_user_sessions_memory(self, user_id: str) -> list[SessionData]:
         """Get user sessions from memory."""
         session_ids = self.user_sessions_map.get(user_id, [])
 

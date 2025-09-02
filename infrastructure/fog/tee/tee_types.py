@@ -4,10 +4,11 @@ TEE Types and Data Structures
 Defines core types and data structures for the TEE runtime system.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Union, Callable
+from typing import Any, Union
 from uuid import uuid4
 
 

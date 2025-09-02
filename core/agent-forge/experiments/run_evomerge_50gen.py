@@ -5,10 +5,10 @@ DEPRECATED: This file has moved to packages/agent_forge/experiments/run_evomerge
 This wrapper maintains backward compatibility and will be removed on September 20, 2025.
 """
 
-import warnings
-import sys
 import os
 from pathlib import Path
+import sys
+import warnings
 
 # Issue deprecation warning
 warnings.warn(

@@ -39,25 +39,22 @@ mfa_service = container.get_mfa_service()
 - **MFAService**: TOTP, SMS, email, and backup code authentication
 """
 
+from .container import AuthContainer
+from .handlers import AuthHandlers, MFAHandlers, SessionHandlers
 from .interfaces import (
-    IAuthenticationService,
-    ISessionManager,
-    IMFAService,
     AuthCredentials,
     AuthResult,
-    TokenValidationResult,
-    SessionData,
     DeviceInfo,
+    IAuthenticationService,
+    IMFAService,
+    ISessionManager,
+    MFAMethodType,
     MFASetupResult,
     MFAStatus,
-    MFAMethodType,
+    SessionData,
+    TokenValidationResult,
 )
-
-from .services import AuthenticationService, SessionService, MFAService
-
-from .handlers import AuthHandlers, MFAHandlers, SessionHandlers
-
-from .container import AuthContainer
+from .services import AuthenticationService, MFAService, SessionService
 
 # Version info
 __version__ = "1.0.0"

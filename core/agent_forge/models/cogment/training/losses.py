@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import List, Optional, Tuple, Dict, Any
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -42,10 +42,10 @@ class DeepSupervisionLoss(nn.Module):
 
     def forward(
         self,
-        step_logits: List[torch.Tensor],  # List of [B, N, vocab_size] for each step
+        step_logits: list[torch.Tensor],  # List of [B, N, vocab_size] for each step
         targets: torch.Tensor,  # [B, N] target tokens
-        step_weights: Optional[List[float]] = None,  # Optional custom weights per step
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        step_weights: list[float] | None = None,  # Optional custom weights per step
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Compute deep supervision loss across all refinement steps.
 
@@ -117,9 +117,9 @@ class ResidualImprovementLoss(nn.Module):
 
     def forward(
         self,
-        step_logits: List[torch.Tensor],  # [B, N, vocab_size] for each step
+        step_logits: list[torch.Tensor],  # [B, N, vocab_size] for each step
         targets: torch.Tensor,  # [B, N] target tokens
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Compute residual improvement loss.
 
@@ -204,7 +204,7 @@ class ConsistencyLoss(nn.Module):
         self,
         original_logits: torch.Tensor,  # [B, N, vocab_size]
         augmented_logits: torch.Tensor,  # [B, N, vocab_size]
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Compute consistency loss between original and augmented predictions.
 
@@ -273,7 +273,7 @@ class PonderLoss(nn.Module):
         self.warmup_steps = warmup_steps
         self.current_step = 0
 
-    def get_current_ponder_cost(self, step: Optional[int] = None) -> float:
+    def get_current_ponder_cost(self, step: int | None = None) -> float:
         """Get current ponder cost based on training schedule."""
         if step is not None:
             self.current_step = step
@@ -301,8 +301,8 @@ class PonderLoss(nn.Module):
         return cost
 
     def forward(
-        self, ponder_costs: torch.Tensor, step: Optional[int] = None  # [B] or [B, N] expected computation steps
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        self, ponder_costs: torch.Tensor, step: int | None = None  # [B] or [B, N] expected computation steps
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Compute ponder loss for ACT computation cost.
 
@@ -366,7 +366,7 @@ class CogmentLoss(nn.Module):
         final_ponder_cost: float = 0.02,
         ponder_schedule: str = "linear",
         # Stage-specific scaling
-        stage_weights: Optional[Dict[int, Dict[str, float]]] = None,
+        stage_weights: dict[int, dict[str, float]] | None = None,
     ):
         super().__init__()
 
@@ -431,14 +431,14 @@ class CogmentLoss(nn.Module):
 
     def forward(
         self,
-        step_logits: List[torch.Tensor],  # Predictions at each refinement step
+        step_logits: list[torch.Tensor],  # Predictions at each refinement step
         targets: torch.Tensor,  # Target tokens [B, N]
         ponder_costs: torch.Tensor,  # ACT ponder costs [B] or [B, N]
-        augmented_logits: Optional[torch.Tensor] = None,  # Augmented predictions for consistency
+        augmented_logits: torch.Tensor | None = None,  # Augmented predictions for consistency
         stage: int = 1,  # Current training stage (1-4)
-        step: Optional[int] = None,  # Training step for scheduling
+        step: int | None = None,  # Training step for scheduling
         return_components: bool = False,  # Return individual loss components
-    ) -> Tuple[torch.Tensor, Dict[str, Any]]:
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
         """
         Compute combined Cogment loss.
 

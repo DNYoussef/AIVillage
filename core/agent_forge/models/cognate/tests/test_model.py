@@ -10,19 +10,21 @@ This module tests the core Cognate model implementation including:
 - Save/load functionality
 """
 
-import unittest
-import tempfile
-from pathlib import Path
-import torch
 import logging
+import os
+from pathlib import Path
 
 # Import the canonical Cognate implementation
 import sys
-import os
+import tempfile
+import unittest
+
+import torch
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from cognate_model import CognateModel, CognateConfig, create_cognate_model
+from cognate_model import CognateConfig, CognateModel, create_cognate_model
+
 from config.cognate_config import CognateModelConfig
 
 logger = logging.getLogger(__name__)

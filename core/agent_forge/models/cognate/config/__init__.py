@@ -6,15 +6,15 @@ including validation, loading from files, and environment-specific configuration
 """
 
 from .cognate_config import (
-    CognateModelConfig,
-    TrainingConfig,
-    MemoryConfig,
     ACTConfig,
+    CognateModelConfig,
+    MemoryConfig,
+    TrainingConfig,
+    create_default_config,
     load_config,
+    merge_configs,
     save_config,
     validate_config,
-    create_default_config,
-    merge_configs,
 )
 
 __all__ = [

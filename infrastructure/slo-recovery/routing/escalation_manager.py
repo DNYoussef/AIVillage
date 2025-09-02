@@ -4,15 +4,14 @@ Human intervention procedures and automated escalation triggers
 Target: Minimize escalations while ensuring critical issues get attention
 """
 
-import logging
-from typing import Dict, List, Optional
 from dataclasses import dataclass
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+import logging
 
 from .breach_classifier import BreachClassification, BreachSeverity
-from .strategy_selector import StrategySelection
 from .parallel_coordinator import CoordinationPlan
+from .strategy_selector import StrategySelection
 
 
 class EscalationLevel(Enum):
@@ -40,13 +39,13 @@ class EscalationRule:
     rule_id: str
     name: str
     trigger: EscalationTrigger
-    conditions: List[str]
+    conditions: list[str]
     escalation_level: EscalationLevel
-    time_threshold_minutes: Optional[int]
-    failure_count_threshold: Optional[int]
-    confidence_threshold: Optional[float]
-    auto_actions: List[str]
-    notification_targets: List[str]
+    time_threshold_minutes: int | None
+    failure_count_threshold: int | None
+    confidence_threshold: float | None
+    auto_actions: list[str]
+    notification_targets: list[str]
     escalation_message_template: str
 
 
@@ -56,13 +55,13 @@ class EscalationEvent:
     trigger: EscalationTrigger
     escalation_level: EscalationLevel
     breach_classification: BreachClassification
-    strategy_selection: Optional[StrategySelection]
-    coordination_plan: Optional[CoordinationPlan]
+    strategy_selection: StrategySelection | None
+    coordination_plan: CoordinationPlan | None
     trigger_time: datetime
-    escalation_data: Dict
-    resolution_actions: List[str]
-    resolution_time: Optional[datetime] = None
-    human_assignee: Optional[str] = None
+    escalation_data: dict
+    resolution_actions: list[str]
+    resolution_time: datetime | None = None
+    human_assignee: str | None = None
     status: str = "open"
 
 
@@ -78,7 +77,7 @@ class EscalationManager:
         self.escalation_history = []
         self.notification_handlers = {}
 
-    def _initialize_escalation_rules(self) -> List[EscalationRule]:
+    def _initialize_escalation_rules(self) -> list[EscalationRule]:
         """Initialize escalation rules with thresholds and actions"""
 
         return [
@@ -225,10 +224,10 @@ class EscalationManager:
     def evaluate_escalation_triggers(
         self,
         breach_classification: BreachClassification,
-        strategy_selection: Optional[StrategySelection] = None,
-        coordination_plan: Optional[CoordinationPlan] = None,
-        execution_context: Optional[Dict] = None,
-    ) -> List[EscalationEvent]:
+        strategy_selection: StrategySelection | None = None,
+        coordination_plan: CoordinationPlan | None = None,
+        execution_context: dict | None = None,
+    ) -> list[EscalationEvent]:
         """
         Evaluate all escalation rules and create events for triggered rules
         """
@@ -259,10 +258,10 @@ class EscalationManager:
     def _build_evaluation_context(
         self,
         breach_classification: BreachClassification,
-        strategy_selection: Optional[StrategySelection],
-        coordination_plan: Optional[CoordinationPlan],
-        execution_context: Optional[Dict],
-    ) -> Dict:
+        strategy_selection: StrategySelection | None,
+        coordination_plan: CoordinationPlan | None,
+        execution_context: dict | None,
+    ) -> dict:
         """Build context for rule evaluation"""
 
         context = {
@@ -312,7 +311,7 @@ class EscalationManager:
 
         return context
 
-    def _evaluate_rule_conditions(self, rule: EscalationRule, context: Dict) -> bool:
+    def _evaluate_rule_conditions(self, rule: EscalationRule, context: dict) -> bool:
         """Evaluate whether rule conditions are met"""
 
         try:
@@ -337,7 +336,7 @@ class EscalationManager:
             self.logger.error(f"Error evaluating escalation rule {rule.rule_id}: {e}")
             return False
 
-    def _evaluate_condition_expression(self, condition: str, context: Dict) -> bool:
+    def _evaluate_condition_expression(self, condition: str, context: dict) -> bool:
         """Evaluate a single condition expression safely"""
 
         try:
@@ -359,9 +358,9 @@ class EscalationManager:
         self,
         rule: EscalationRule,
         breach_classification: BreachClassification,
-        strategy_selection: Optional[StrategySelection],
-        coordination_plan: Optional[CoordinationPlan],
-        context: Dict,
+        strategy_selection: StrategySelection | None,
+        coordination_plan: CoordinationPlan | None,
+        context: dict,
     ) -> EscalationEvent:
         """Create escalation event from triggered rule"""
 
@@ -466,7 +465,7 @@ class EscalationManager:
         """Pause automated recovery (placeholder)"""
         self.logger.info(f"Pausing automated recovery for event {event.event_id}")
 
-    def generate_escalation_procedures(self) -> Dict:
+    def generate_escalation_procedures(self) -> dict:
         """Generate escalation procedures for output"""
 
         procedures = {
@@ -562,7 +561,7 @@ class EscalationManager:
         }
         return slas.get(level, 60)
 
-    def _get_level_approvals(self, level: EscalationLevel) -> List[str]:
+    def _get_level_approvals(self, level: EscalationLevel) -> list[str]:
         """Get required approvals for escalation level"""
         approvals = {
             EscalationLevel.NONE: [],
@@ -597,7 +596,7 @@ class EscalationManager:
         }
         return durations.get(action, 2)
 
-    def _get_escalation_path(self, target: str) -> List[str]:
+    def _get_escalation_path(self, target: str) -> list[str]:
         """Get escalation path for notification target"""
         # This would be configured based on organizational structure
         return ["primary_contact", "backup_contact", "manager"]

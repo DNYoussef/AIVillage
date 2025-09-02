@@ -14,10 +14,10 @@ Integrates with Agent 4's curriculum system to provide:
 Designed for accelerated grokking through progressive curriculum training.
 """
 
-import logging
 from dataclasses import dataclass
-from typing import Dict, Any, Optional
 from enum import Enum
+import logging
+from typing import Any
 
 from torch.utils.data import DataLoader
 
@@ -57,7 +57,7 @@ class StageDataConfig:
 
     stage: int
     dataset_type: str
-    config: Dict[str, Any]
+    config: dict[str, Any]
     batch_size: int
     sequence_length: int
     augmentation_enabled: bool = False
@@ -84,9 +84,9 @@ class CogmentDataManager:
 
     def __init__(
         self,
-        curriculum: Optional[FourStageCurriculum] = None,
+        curriculum: FourStageCurriculum | None = None,
         loading_strategy: DataLoadingStrategy = DataLoadingStrategy.HYBRID,
-        base_config: Optional[Dict[str, Any]] = None,
+        base_config: dict[str, Any] | None = None,
     ):
 
         self.curriculum = curriculum or self._create_default_curriculum()
@@ -94,13 +94,13 @@ class CogmentDataManager:
         self.base_config = base_config or {}
 
         # Stage dataset mapping
-        self.stage_datasets: Dict[int, Any] = {}
-        self.stage_loaders: Dict[int, DataLoader] = {}
-        self.stage_configs: Dict[int, StageDataConfig] = {}
+        self.stage_datasets: dict[int, Any] = {}
+        self.stage_loaders: dict[int, DataLoader] = {}
+        self.stage_configs: dict[int, StageDataConfig] = {}
 
         # Performance tracking
-        self.load_times: Dict[int, float] = {}
-        self.dataset_stats: Dict[int, Dict[str, Any]] = {}
+        self.load_times: dict[int, float] = {}
+        self.dataset_stats: dict[int, dict[str, Any]] = {}
 
         # Initialize stage configurations
         self._initialize_stage_configs()
@@ -278,7 +278,7 @@ class CogmentDataManager:
             logger.error(f"Failed to load Stage {stage} dataset: {e}")
             raise
 
-    def _get_dataset_statistics(self, dataset: Any, stage: int) -> Dict[str, Any]:
+    def _get_dataset_statistics(self, dataset: Any, stage: int) -> dict[str, Any]:
         """Collect statistics about a dataset."""
         stats = {"stage": stage, "size": len(dataset), "dataset_type": self.stage_configs[stage].dataset_type}
 
@@ -331,7 +331,7 @@ class CogmentDataManager:
 
         return self.get_stage_loader(stage_num)
 
-    def apply_augmentations(self, batch: Dict[str, Any], stage: int) -> Dict[str, Any]:
+    def apply_augmentations(self, batch: dict[str, Any], stage: int) -> dict[str, Any]:
         """Apply stage-appropriate augmentations to a batch."""
         stage_config = self.stage_configs[stage]
 
@@ -378,7 +378,7 @@ class CogmentDataManager:
             logger.error(f"Validation failed for Stage {stage}: {e}")
             return False
 
-    def get_comprehensive_stats(self) -> Dict[str, Any]:
+    def get_comprehensive_stats(self) -> dict[str, Any]:
         """Get comprehensive statistics about all loaded datasets."""
         stats = {
             "loading_strategy": self.loading_strategy.value,
@@ -427,7 +427,7 @@ class CogmentDataManager:
             if stage in self.stage_loaders:
                 del self.stage_loaders[stage]
 
-    def get_training_schedule_integration(self) -> Dict[str, Any]:
+    def get_training_schedule_integration(self) -> dict[str, Any]:
         """Get integration info for Agent 4's training schedule."""
         return {
             "data_manager_ready": True,
@@ -498,9 +498,9 @@ class CogmentDataManager:
 
 
 def create_cogment_data_manager(
-    curriculum: Optional[Any] = None,
+    curriculum: Any | None = None,
     loading_strategy: DataLoadingStrategy = DataLoadingStrategy.HYBRID,
-    base_config: Optional[Dict[str, Any]] = None,
+    base_config: dict[str, Any] | None = None,
 ) -> CogmentDataManager:
     """Factory function to create Cogment data manager."""
 

@@ -4,16 +4,16 @@ Provides MFA functionality including TOTP, SMS, email, and backup codes.
 Extracted from the EnhancedSecureAPIServer God class for better modularity.
 """
 
+import base64
+import hashlib
 import logging
 import secrets
-from typing import List, Optional
-import hashlib
-import base64
 
 try:
+    from io import BytesIO
+
     import pyotp
     import qrcode
-    from io import BytesIO
 
     TOTP_AVAILABLE = True
 except ImportError:
@@ -87,7 +87,7 @@ class MFAService(IMFAService):
             logger.error(f"TOTP setup failed for user {user_id}: {e}")
             return MFASetupResult(success=False, error_message=f"TOTP setup failed: {e}")
 
-    def verify_mfa(self, user_id: str, method: MFAMethodType, token: str, secret: Optional[str] = None) -> bool:
+    def verify_mfa(self, user_id: str, method: MFAMethodType, token: str, secret: str | None = None) -> bool:
         """Verify MFA token."""
         try:
             if method == MFAMethodType.TOTP:
@@ -134,7 +134,7 @@ class MFAService(IMFAService):
             logger.error(f"Failed to get MFA status for user {user_id}: {e}")
             return MFAStatus()
 
-    def generate_backup_codes(self, user_id: str, count: int = 10) -> List[str]:
+    def generate_backup_codes(self, user_id: str, count: int = 10) -> list[str]:
         """Generate backup codes for user."""
         try:
             codes = []
@@ -220,7 +220,7 @@ class MFAService(IMFAService):
             logger.error(f"Failed to enable TOTP for user {user_id}: {e}")
             return False
 
-    def _verify_totp(self, user_id: str, token: str, secret: Optional[str] = None) -> bool:
+    def _verify_totp(self, user_id: str, token: str, secret: str | None = None) -> bool:
         """Verify TOTP token."""
         try:
             if not TOTP_AVAILABLE:
@@ -292,7 +292,7 @@ class MFAService(IMFAService):
             logger.error(f"QR code generation failed: {e}")
             return ""
 
-    def get_user_totp_secret(self, user_id: str) -> Optional[str]:
+    def get_user_totp_secret(self, user_id: str) -> str | None:
         """Get TOTP secret for user (for internal use)."""
         user_data = self.user_mfa_data.get(user_id, {})
         return user_data.get("totp_secret")

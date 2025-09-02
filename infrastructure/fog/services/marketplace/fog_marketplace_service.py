@@ -9,24 +9,24 @@ Manages the fog computing service marketplace including:
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from decimal import Decimal
+from typing import Any
 
-from ..interfaces.base_service import BaseFogService, ServiceStatus, ServiceHealthCheck
-from ...marketplace.fog_marketplace import FogMarketplace, ServiceOffering, ServiceRequest, ServiceType, ServiceTier
+from ...marketplace.fog_marketplace import FogMarketplace, ServiceOffering, ServiceRequest, ServiceTier, ServiceType
 from ...scheduler.enhanced_sla_tiers import EnhancedSLATierManager, SLAMetrics, SLATier
+from ..interfaces.base_service import BaseFogService, ServiceHealthCheck, ServiceStatus
 
 
 class FogMarketplaceService(BaseFogService):
     """Service for managing fog computing marketplace"""
 
-    def __init__(self, service_name: str, config: Dict[str, Any], event_bus):
+    def __init__(self, service_name: str, config: dict[str, Any], event_bus):
         super().__init__(service_name, config, event_bus)
 
         # Core components
-        self.marketplace: Optional[FogMarketplace] = None
-        self.sla_tier_manager: Optional[EnhancedSLATierManager] = None
+        self.marketplace: FogMarketplace | None = None
+        self.sla_tier_manager: EnhancedSLATierManager | None = None
 
         # Marketplace configuration
         self.marketplace_config = config.get("marketplace", {})
@@ -132,7 +132,7 @@ class FogMarketplaceService(BaseFogService):
                 metrics=self.metrics.copy(),
             )
 
-    async def register_service_offering(self, provider_id: str, offering_data: Dict[str, Any]) -> bool:
+    async def register_service_offering(self, provider_id: str, offering_data: dict[str, Any]) -> bool:
         """Register a new service offering in the marketplace"""
         try:
             if not self.marketplace:
@@ -180,7 +180,7 @@ class FogMarketplaceService(BaseFogService):
             self.logger.error(f"Failed to register service offering: {e}")
             return False
 
-    async def submit_service_request(self, customer_id: str, request_data: Dict[str, Any]) -> Optional[str]:
+    async def submit_service_request(self, customer_id: str, request_data: dict[str, Any]) -> str | None:
         """Submit a service request to the marketplace"""
         try:
             if not self.marketplace:
@@ -218,8 +218,8 @@ class FogMarketplaceService(BaseFogService):
             return None
 
     async def provision_sla_service(
-        self, service_id: str, tier: str, available_devices: List[Dict[str, Any]], service_config: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, service_id: str, tier: str, available_devices: list[dict[str, Any]], service_config: dict[str, Any]
+    ) -> dict[str, Any]:
         """Provision a service with specific SLA requirements"""
         try:
             if not self.sla_tier_manager:
@@ -252,7 +252,7 @@ class FogMarketplaceService(BaseFogService):
             self.logger.error(f"Failed to provision SLA service: {e}")
             return {"success": False, "error": str(e)}
 
-    async def validate_sla_compliance(self, service_id: str, metrics_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def validate_sla_compliance(self, service_id: str, metrics_data: dict[str, Any]) -> dict[str, Any]:
         """Validate SLA compliance for a service"""
         try:
             if not self.sla_tier_manager:
@@ -280,7 +280,7 @@ class FogMarketplaceService(BaseFogService):
             self.logger.error(f"Failed to validate SLA compliance: {e}")
             return {"compliant": False, "error": str(e)}
 
-    async def get_marketplace_stats(self) -> Dict[str, Any]:
+    async def get_marketplace_stats(self) -> dict[str, Any]:
         """Get comprehensive marketplace statistics"""
         try:
             stats = self.metrics.copy()
@@ -435,7 +435,7 @@ class FogMarketplaceService(BaseFogService):
                 self.logger.error(f"Analytics task error: {e}")
                 await asyncio.sleep(120)
 
-    async def _handle_sla_violation_remediation(self, service_id: str, compliance_result: Dict[str, Any]):
+    async def _handle_sla_violation_remediation(self, service_id: str, compliance_result: dict[str, Any]):
         """Handle SLA violation remediation"""
         try:
             violations = compliance_result.get("violations", [])

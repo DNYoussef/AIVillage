@@ -8,16 +8,18 @@ Integration: Complete analytics integration with all AIVillage systems
 """
 
 import asyncio
-import logging
-import json
-from datetime import datetime
-from typing import Dict, List, Optional, Any, Callable, Tuple, Union
-from dataclasses import dataclass, asdict
-from enum import Enum
-import uuid
-import numpy as np
 from collections import defaultdict, deque
+from collections.abc import Callable
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from enum import Enum
+import json
+import logging
 import statistics
+from typing import Any
+import uuid
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -62,13 +64,13 @@ class MetricDataPoint:
 
     metric_name: str
     component: AnalyticsComponent
-    value: Union[float, int, str]
+    value: float | int | str
     metric_type: MetricType
     timestamp: datetime
-    labels: Dict[str, str]
-    metadata: Dict[str, Any]
+    labels: dict[str, str]
+    metadata: dict[str, Any]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "timestamp": self.timestamp.isoformat()}
 
 
@@ -85,10 +87,10 @@ class PerformanceAlert:
     threshold_value: float
     current_value: float
     triggered_at: datetime
-    resolved_at: Optional[datetime]
-    metadata: Dict[str, Any]
+    resolved_at: datetime | None
+    metadata: dict[str, Any]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             **asdict(self),
             "triggered_at": self.triggered_at.isoformat(),
@@ -103,14 +105,14 @@ class AnalyticsDashboard:
     dashboard_id: str
     name: str
     description: str
-    components: List[AnalyticsComponent]
-    metrics: List[str]
+    components: list[AnalyticsComponent]
+    metrics: list[str]
     refresh_interval: int  # seconds
-    charts: List[Dict[str, Any]]
-    filters: Dict[str, Any]
+    charts: list[dict[str, Any]]
+    filters: dict[str, Any]
     created_at: datetime
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "created_at": self.created_at.isoformat()}
 
 
@@ -127,29 +129,29 @@ class RealTimePerformanceAnalytics:
     - Cost and resource optimization insights
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self.config = config or {}
 
         # Metric storage and processing
-        self.metrics_buffer: Dict[str, deque] = defaultdict(lambda: deque(maxlen=10000))
-        self.metrics_aggregates: Dict[str, Dict[str, float]] = defaultdict(dict)
-        self.metric_schemas: Dict[str, Dict[str, Any]] = {}
+        self.metrics_buffer: dict[str, deque] = defaultdict(lambda: deque(maxlen=10000))
+        self.metrics_aggregates: dict[str, dict[str, float]] = defaultdict(dict)
+        self.metric_schemas: dict[str, dict[str, Any]] = {}
 
         # Alert management
-        self.alert_rules: Dict[str, Dict[str, Any]] = {}
-        self.active_alerts: Dict[str, PerformanceAlert] = {}
-        self.alert_history: List[PerformanceAlert] = []
+        self.alert_rules: dict[str, dict[str, Any]] = {}
+        self.active_alerts: dict[str, PerformanceAlert] = {}
+        self.alert_history: list[PerformanceAlert] = []
 
         # Dashboard management
-        self.dashboards: Dict[str, AnalyticsDashboard] = {}
+        self.dashboards: dict[str, AnalyticsDashboard] = {}
 
         # Real-time processing
-        self.processing_pipelines: Dict[str, Callable] = {}
-        self.anomaly_detectors: Dict[str, Any] = {}
-        self.predictive_models: Dict[str, Any] = {}
+        self.processing_pipelines: dict[str, Callable] = {}
+        self.anomaly_detectors: dict[str, Any] = {}
+        self.predictive_models: dict[str, Any] = {}
 
         # System integrations
-        self.component_connectors: Dict[AnalyticsComponent, Any] = {}
+        self.component_connectors: dict[AnalyticsComponent, Any] = {}
 
         # Performance optimization
         self.optimization_engine = OptimizationEngine()
@@ -158,10 +160,10 @@ class RealTimePerformanceAnalytics:
 
         # Background processing
         self.analytics_active = False
-        self.collection_tasks: List[asyncio.Task] = []
+        self.collection_tasks: list[asyncio.Task] = []
 
         # WebSocket connections for real-time updates
-        self.websocket_connections: List[Any] = []
+        self.websocket_connections: list[Any] = []
 
     async def initialize(self) -> bool:
         """
@@ -207,7 +209,7 @@ class RealTimePerformanceAnalytics:
         metric_type: MetricType,
         description: str = "",
         unit: str = "",
-        labels: Optional[List[str]] = None,
+        labels: list[str] | None = None,
     ) -> bool:
         """
         Register new metric for collection.
@@ -249,9 +251,9 @@ class RealTimePerformanceAnalytics:
     async def record_metric(
         self,
         metric_name: str,
-        value: Union[float, int],
-        labels: Optional[Dict[str, str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        value: float | int,
+        labels: dict[str, str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
         """
         Record metric value with real-time processing.
@@ -297,7 +299,7 @@ class RealTimePerformanceAnalytics:
             logger.error(f"Failed to record metric {metric_name}: {e}")
             return False
 
-    async def create_alert_rule(self, rule_config: Dict[str, Any]) -> Optional[str]:
+    async def create_alert_rule(self, rule_config: dict[str, Any]) -> str | None:
         """
         Create new alert rule.
 
@@ -331,7 +333,7 @@ class RealTimePerformanceAnalytics:
             logger.error(f"Failed to create alert rule: {e}")
             return None
 
-    async def create_dashboard(self, dashboard_config: Dict[str, Any]) -> Optional[AnalyticsDashboard]:
+    async def create_dashboard(self, dashboard_config: dict[str, Any]) -> AnalyticsDashboard | None:
         """
         Create analytics dashboard.
 
@@ -362,8 +364,8 @@ class RealTimePerformanceAnalytics:
             return None
 
     async def get_metrics_data(
-        self, metric_names: List[str], time_range: Optional[Tuple[datetime, datetime]] = None, aggregation: str = "raw"
-    ) -> Dict[str, Any]:
+        self, metric_names: list[str], time_range: tuple[datetime, datetime] | None = None, aggregation: str = "raw"
+    ) -> dict[str, Any]:
         """
         Get metrics data with optional time range and aggregation.
 
@@ -408,7 +410,7 @@ class RealTimePerformanceAnalytics:
             logger.error(f"Failed to get metrics data: {e}")
             return {"error": str(e)}
 
-    async def get_system_performance_summary(self) -> Dict[str, Any]:
+    async def get_system_performance_summary(self) -> dict[str, Any]:
         """
         Get comprehensive system performance summary.
 

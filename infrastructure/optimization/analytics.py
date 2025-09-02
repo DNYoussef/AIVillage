@@ -28,13 +28,13 @@ Key Features:
 - Cross-component dependency analysis and optimization
 """
 
-import logging
-import time
-import statistics
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any, Tuple
 from enum import Enum
+import logging
+import statistics
+import time
+from typing import Any
 
 # Import consolidated components (profiling functionality moved to monitoring.py)
 # from .profiler import PerformanceProfiler, ProfileResult, ProfilerConfig, ComponentProfile, BottleneckType, BottleneckAnalysis
@@ -73,7 +73,7 @@ class BottleneckAnalysis:
     component: str
     impact_score: float  # 0.0 to 1.0
     recommendation: str
-    metrics: Dict[str, float] = field(default_factory=dict)
+    metrics: dict[str, float] = field(default_factory=dict)
 
 
 # Mock profiler for analytics usage
@@ -137,11 +137,11 @@ class OptimizationParameter:
     current_value: Any
     min_value: Any
     max_value: Any
-    step_size: Optional[Any] = None
+    step_size: Any | None = None
     parameter_type: str = "continuous"  # "continuous", "discrete", "categorical"
     description: str = ""
     impact_weight: float = 1.0
-    archaeological_insights: Dict[str, Any] = field(default_factory=dict)
+    archaeological_insights: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -149,16 +149,16 @@ class OptimizationResult:
     """Results from an optimization run."""
 
     strategy_used: OptimizationStrategy
-    parameters_optimized: Dict[str, Any]
+    parameters_optimized: dict[str, Any]
     performance_improvement: float  # Percentage improvement
-    objectives_achieved: Dict[OptimizationObjective, float]
+    objectives_achieved: dict[OptimizationObjective, float]
     optimization_time: float
     iterations_completed: int
     convergence_achieved: bool
-    validation_results: Dict[str, Any] = field(default_factory=dict)
-    recommendations: List[str] = field(default_factory=list)
-    rollback_plan: Dict[str, Any] = field(default_factory=dict)
-    archaeological_insights: Dict[str, Any] = field(default_factory=dict)
+    validation_results: dict[str, Any] = field(default_factory=dict)
+    recommendations: list[str] = field(default_factory=list)
+    rollback_plan: dict[str, Any] = field(default_factory=dict)
+    archaeological_insights: dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
 
 
@@ -168,15 +168,15 @@ class ComponentAnalysisResult:
 
     component_name: str
     component_type: str  # "transport", "protocol", "discovery", "manager"
-    profile_results: List[ProfileResult]
-    performance_baseline: Dict[str, float]
-    bottlenecks: List[BottleneckAnalysis]
-    optimization_recommendations: List[str]
+    profile_results: list[ProfileResult]
+    performance_baseline: dict[str, float]
+    bottlenecks: list[BottleneckAnalysis]
+    optimization_recommendations: list[str]
     performance_score: float  # 0.0 to 10.0
     analysis_timestamp: float
-    dependencies: List[str] = field(default_factory=list)
-    interaction_patterns: Dict[str, Any] = field(default_factory=dict)
-    archaeological_enhancements: Dict[str, Any] = field(default_factory=dict)
+    dependencies: list[str] = field(default_factory=list)
+    interaction_patterns: dict[str, Any] = field(default_factory=dict)
+    archaeological_enhancements: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -185,14 +185,14 @@ class SystemAnalysisResult:
 
     total_components_analyzed: int
     system_performance_score: float
-    critical_bottlenecks: List[BottleneckAnalysis]
-    cross_component_issues: List[str]
-    optimization_priority_matrix: Dict[str, List[str]]
-    performance_regression_alerts: List[str]
+    critical_bottlenecks: list[BottleneckAnalysis]
+    cross_component_issues: list[str]
+    optimization_priority_matrix: dict[str, list[str]]
+    performance_regression_alerts: list[str]
     analysis_summary: str
-    component_results: List[ComponentAnalysisResult] = field(default_factory=list)
-    predictive_insights: Dict[str, Any] = field(default_factory=dict)
-    archaeological_findings: Dict[str, Any] = field(default_factory=dict)
+    component_results: list[ComponentAnalysisResult] = field(default_factory=list)
+    predictive_insights: dict[str, Any] = field(default_factory=dict)
+    archaeological_findings: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -202,10 +202,10 @@ class PerformanceTrend:
     metric_name: str
     trend_direction: str  # "improving", "degrading", "stable"
     trend_strength: float  # 0.0 to 1.0
-    predicted_values: List[float]
-    confidence_interval: Tuple[float, float]
-    anomalies_detected: List[Dict[str, Any]]
-    recommendations: List[str]
+    predicted_values: list[float]
+    confidence_interval: tuple[float, float]
+    anomalies_detected: list[dict[str, Any]]
+    recommendations: list[str]
 
 
 @dataclass
@@ -249,7 +249,7 @@ class ArchaeologicalOptimizer:
         self.archaeological_insights = self._load_archaeological_insights()
         self.optimization_patterns = self._extract_optimization_patterns()
 
-    def _load_archaeological_insights(self) -> Dict[str, Any]:
+    def _load_archaeological_insights(self) -> dict[str, Any]:
         """Load archaeological insights from branch analysis."""
         return {
             "nat_traversal_optimizations": {
@@ -279,7 +279,7 @@ class ArchaeologicalOptimizer:
             },
         }
 
-    def _extract_optimization_patterns(self) -> Dict[str, Any]:
+    def _extract_optimization_patterns(self) -> dict[str, Any]:
         """Extract optimization patterns from archaeological analysis."""
         return {
             "parameter_ranges": {
@@ -296,8 +296,8 @@ class ArchaeologicalOptimizer:
         }
 
     async def apply_archaeological_optimizations(
-        self, component_name: str, current_params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, component_name: str, current_params: dict[str, Any]
+    ) -> dict[str, Any]:
         """Apply archaeological optimizations to component parameters."""
         optimized_params = current_params.copy()
 
@@ -333,7 +333,7 @@ class TrendAnalyzer:
         self.trend_history = defaultdict(deque)
         self.anomaly_detector = AnomalyDetector(config)
 
-    def analyze_trend(self, metric_name: str, values: List[float]) -> PerformanceTrend:
+    def analyze_trend(self, metric_name: str, values: list[float]) -> PerformanceTrend:
         """Analyze performance trend for a metric."""
         if len(values) < 3:
             return PerformanceTrend(
@@ -371,7 +371,7 @@ class TrendAnalyzer:
             recommendations=recommendations,
         )
 
-    def _calculate_trend(self, values: List[float]) -> Tuple[str, float]:
+    def _calculate_trend(self, values: list[float]) -> tuple[str, float]:
         """Calculate trend direction and strength."""
         if len(values) < 2:
             return "stable", 0.0
@@ -402,7 +402,7 @@ class TrendAnalyzer:
         else:
             return "degrading" if "latency" not in values[0].__class__.__name__.lower() else "improving", abs(slope)
 
-    def _predict_future_values(self, values: List[float]) -> List[float]:
+    def _predict_future_values(self, values: list[float]) -> list[float]:
         """Predict future values using simple exponential smoothing."""
         if len(values) < 3:
             return [values[-1]] * self.config.prediction_horizon if values else []
@@ -422,7 +422,7 @@ class TrendAnalyzer:
 
         return predictions
 
-    def _calculate_confidence_interval(self, historical: List[float], predicted: List[float]) -> Tuple[float, float]:
+    def _calculate_confidence_interval(self, historical: list[float], predicted: list[float]) -> tuple[float, float]:
         """Calculate confidence interval for predictions."""
         if len(historical) < 3:
             return (0.0, 0.0)
@@ -438,8 +438,8 @@ class TrendAnalyzer:
         return (avg_prediction - confidence_margin, avg_prediction + confidence_margin)
 
     def _generate_trend_recommendations(
-        self, metric_name: str, trend_direction: str, trend_strength: float, anomalies: List[Dict[str, Any]]
-    ) -> List[str]:
+        self, metric_name: str, trend_direction: str, trend_strength: float, anomalies: list[dict[str, Any]]
+    ) -> list[str]:
         """Generate trend-based recommendations."""
         recommendations = []
 
@@ -466,7 +466,7 @@ class AnomalyDetector:
         self.config = config
         self.baselines = defaultdict(dict)
 
-    def detect_anomalies(self, metric_name: str, values: List[float]) -> List[Dict[str, Any]]:
+    def detect_anomalies(self, metric_name: str, values: list[float]) -> list[dict[str, Any]]:
         """Detect anomalies in performance metrics."""
         if len(values) < 5:
             return []
@@ -527,8 +527,8 @@ class PredictiveOptimizer:
         self.optimization_history = []
 
     async def predict_optimization_impact(
-        self, component_name: str, proposed_changes: Dict[str, Any]
-    ) -> Dict[str, float]:
+        self, component_name: str, proposed_changes: dict[str, Any]
+    ) -> dict[str, float]:
         """Predict the impact of proposed optimizations."""
 
         # Get historical patterns for this component
@@ -557,8 +557,8 @@ class PredictiveOptimizer:
         return impact_predictions
 
     async def _predict_using_archaeological_insights(
-        self, component_name: str, proposed_changes: Dict[str, Any]
-    ) -> Dict[str, float]:
+        self, component_name: str, proposed_changes: dict[str, Any]
+    ) -> dict[str, float]:
         """Predict impact using archaeological insights when no historical data available."""
         predictions = {}
 
@@ -574,7 +574,7 @@ class PredictiveOptimizer:
 
         return predictions
 
-    def _calculate_change_magnitude(self, proposed_changes: Dict[str, Any]) -> float:
+    def _calculate_change_magnitude(self, proposed_changes: dict[str, Any]) -> float:
         """Calculate the magnitude of proposed changes."""
         if not proposed_changes:
             return 1.0
@@ -583,7 +583,7 @@ class PredictiveOptimizer:
         magnitude = 1.0
 
         for param, value in proposed_changes.items():
-            if isinstance(value, (int, float)):
+            if isinstance(value, int | float):
                 # Normalize change magnitude (simplified)
                 if value > 1:
                     magnitude *= min(2.0, value / 100.0)  # Cap at 2x
@@ -596,7 +596,7 @@ class PredictiveOptimizer:
 class PerformanceAnalytics:
     """Main performance analytics and optimization engine."""
 
-    def __init__(self, config: Optional[AnalyticsConfig] = None):
+    def __init__(self, config: AnalyticsConfig | None = None):
         self.config = config or AnalyticsConfig()
 
         # Initialize components
@@ -674,7 +674,7 @@ class PerformanceAnalytics:
         self,
         component_name: str,
         strategy: OptimizationStrategy = OptimizationStrategy.ARCHAEOLOGICAL,
-        objectives: List[OptimizationObjective] = None,
+        objectives: list[OptimizationObjective] = None,
     ) -> OptimizationResult:
         """Optimize individual component performance using archaeological insights."""
 
@@ -703,7 +703,7 @@ class PerformanceAnalytics:
         # Apply other optimization strategies
         return await self._perform_optimization(component_name, parameters, strategy, objectives)
 
-    async def _discover_and_analyze_components(self) -> List[ComponentAnalysisResult]:
+    async def _discover_and_analyze_components(self) -> list[ComponentAnalysisResult]:
         """Discover and analyze P2P components."""
         component_results = []
 
@@ -746,8 +746,8 @@ class PerformanceAnalytics:
         return component_results
 
     async def _analyze_category_components(
-        self, category: str, category_info: Dict[str, Any]
-    ) -> List[ComponentAnalysisResult]:
+        self, category: str, category_info: dict[str, Any]
+    ) -> list[ComponentAnalysisResult]:
         """Analyze components in a specific category."""
         results = []
 
@@ -790,7 +790,7 @@ class PerformanceAnalytics:
         else:
             return "utility"
 
-    def _generate_mock_baseline(self, component_name: str) -> Dict[str, float]:
+    def _generate_mock_baseline(self, component_name: str) -> dict[str, float]:
         """Generate mock performance baseline."""
         # Use component name hash for consistent mock data
         import hashlib
@@ -808,7 +808,7 @@ class PerformanceAnalytics:
             "avg_network_kb": 10 + (hash_val % 20),
         }
 
-    def _generate_mock_bottlenecks(self, component_name: str) -> List[BottleneckAnalysis]:
+    def _generate_mock_bottlenecks(self, component_name: str) -> list[BottleneckAnalysis]:
         """Generate mock bottlenecks for testing."""
         bottlenecks = []
 
@@ -839,7 +839,7 @@ class PerformanceAnalytics:
 
         return bottlenecks
 
-    def _generate_mock_recommendations(self, component_name: str) -> List[str]:
+    def _generate_mock_recommendations(self, component_name: str) -> list[str]:
         """Generate mock optimization recommendations."""
         recommendations = []
 
@@ -870,7 +870,7 @@ class PerformanceAnalytics:
         score = 3.0 + (hash_val % 600) / 100.0
         return min(9.0, score)
 
-    async def _extract_component_archaeological_insights(self, component_name: str) -> Dict[str, Any]:
+    async def _extract_component_archaeological_insights(self, component_name: str) -> dict[str, Any]:
         """Extract archaeological insights for component."""
         insights = {}
 
@@ -899,7 +899,7 @@ class PerformanceAnalytics:
 
         return insights
 
-    def _calculate_system_performance_score(self, component_results: List[ComponentAnalysisResult]) -> float:
+    def _calculate_system_performance_score(self, component_results: list[ComponentAnalysisResult]) -> float:
         """Calculate overall system performance score."""
         if not component_results:
             return 0.0
@@ -908,8 +908,8 @@ class PerformanceAnalytics:
         return sum(scores) / len(scores)
 
     def _identify_critical_bottlenecks(
-        self, component_results: List[ComponentAnalysisResult]
-    ) -> List[BottleneckAnalysis]:
+        self, component_results: list[ComponentAnalysisResult]
+    ) -> list[BottleneckAnalysis]:
         """Identify critical bottlenecks across all components."""
         critical_bottlenecks = []
 
@@ -923,7 +923,7 @@ class PerformanceAnalytics:
 
         return critical_bottlenecks[:10]  # Return top 10
 
-    def _analyze_cross_component_issues(self, component_results: List[ComponentAnalysisResult]) -> List[str]:
+    def _analyze_cross_component_issues(self, component_results: list[ComponentAnalysisResult]) -> list[str]:
         """Analyze issues spanning multiple components."""
         issues = []
 
@@ -956,8 +956,8 @@ class PerformanceAnalytics:
         return issues
 
     def _generate_optimization_priority_matrix(
-        self, component_results: List[ComponentAnalysisResult]
-    ) -> Dict[str, List[str]]:
+        self, component_results: list[ComponentAnalysisResult]
+    ) -> dict[str, list[str]]:
         """Generate optimization priority matrix."""
         priority_matrix = {"critical": [], "high": [], "medium": [], "low": []}
 
@@ -973,7 +973,7 @@ class PerformanceAnalytics:
 
         return priority_matrix
 
-    def _check_performance_regressions(self, component_results: List[ComponentAnalysisResult]) -> List[str]:
+    def _check_performance_regressions(self, component_results: list[ComponentAnalysisResult]) -> list[str]:
         """Check for performance regressions."""
         alerts = []
 
@@ -994,7 +994,7 @@ class PerformanceAnalytics:
 
         return alerts
 
-    async def _generate_predictive_insights(self, component_results: List[ComponentAnalysisResult]) -> Dict[str, Any]:
+    async def _generate_predictive_insights(self, component_results: list[ComponentAnalysisResult]) -> dict[str, Any]:
         """Generate predictive insights."""
         insights = {
             "performance_trends": [],
@@ -1023,8 +1023,8 @@ class PerformanceAnalytics:
         return insights
 
     async def _extract_archaeological_findings(
-        self, component_results: List[ComponentAnalysisResult]
-    ) -> Dict[str, Any]:
+        self, component_results: list[ComponentAnalysisResult]
+    ) -> dict[str, Any]:
         """Extract archaeological findings from analysis."""
         findings = {
             "optimization_opportunities": [],
@@ -1069,10 +1069,10 @@ class PerformanceAnalytics:
     def _generate_analysis_summary(
         self,
         system_score: float,
-        critical_bottlenecks: List[BottleneckAnalysis],
-        cross_component_issues: List[str],
-        predictive_insights: Dict[str, Any],
-        archaeological_findings: Dict[str, Any],
+        critical_bottlenecks: list[BottleneckAnalysis],
+        cross_component_issues: list[str],
+        predictive_insights: dict[str, Any],
+        archaeological_findings: dict[str, Any],
     ) -> str:
         """Generate comprehensive analysis summary."""
 
@@ -1104,7 +1104,7 @@ class PerformanceAnalytics:
 
         return "\n".join(summary_parts)
 
-    async def _extract_component_parameters(self, component_name: str) -> Dict[str, OptimizationParameter]:
+    async def _extract_component_parameters(self, component_name: str) -> dict[str, OptimizationParameter]:
         """Extract optimizable parameters for a component."""
         parameters = {}
 
@@ -1165,7 +1165,7 @@ class PerformanceAnalytics:
         return parameters
 
     async def _perform_archaeological_optimization(
-        self, component_name: str, parameters: Dict[str, OptimizationParameter]
+        self, component_name: str, parameters: dict[str, OptimizationParameter]
     ) -> OptimizationResult:
         """Perform optimization using archaeological insights."""
 
@@ -1213,7 +1213,7 @@ class PerformanceAnalytics:
             archaeological_insights=archaeological_insights,
         )
 
-    def _calculate_archaeological_improvement(self, component_name: str, optimized_params: Dict[str, Any]) -> float:
+    def _calculate_archaeological_improvement(self, component_name: str, optimized_params: dict[str, Any]) -> float:
         """Calculate expected improvement from archaeological optimizations."""
 
         # Base improvement rates from archaeological analysis
@@ -1246,9 +1246,9 @@ class PerformanceAnalytics:
     async def _perform_optimization(
         self,
         component_name: str,
-        parameters: Dict[str, OptimizationParameter],
+        parameters: dict[str, OptimizationParameter],
         strategy: OptimizationStrategy,
-        objectives: Optional[List[OptimizationObjective]],
+        objectives: list[OptimizationObjective] | None,
     ) -> OptimizationResult:
         """Perform optimization using specified strategy."""
 
@@ -1259,26 +1259,26 @@ class PerformanceAnalytics:
 # Convenience factory functions
 
 
-def create_performance_analytics(config: Optional[AnalyticsConfig] = None) -> PerformanceAnalytics:
+def create_performance_analytics(config: AnalyticsConfig | None = None) -> PerformanceAnalytics:
     """Create a performance analytics engine with archaeological enhancements."""
     return PerformanceAnalytics(config)
 
 
-def create_trend_analyzer(config: Optional[AnalyticsConfig] = None) -> TrendAnalyzer:
+def create_trend_analyzer(config: AnalyticsConfig | None = None) -> TrendAnalyzer:
     """Create a trend analyzer for performance forecasting."""
     return TrendAnalyzer(config or AnalyticsConfig())
 
 
-def create_anomaly_detector(config: Optional[AnalyticsConfig] = None) -> AnomalyDetector:
+def create_anomaly_detector(config: AnalyticsConfig | None = None) -> AnomalyDetector:
     """Create an anomaly detector for performance monitoring."""
     return AnomalyDetector(config or AnalyticsConfig())
 
 
-def create_predictive_optimizer(config: Optional[AnalyticsConfig] = None) -> PredictiveOptimizer:
+def create_predictive_optimizer(config: AnalyticsConfig | None = None) -> PredictiveOptimizer:
     """Create a predictive optimizer using historical patterns."""
     return PredictiveOptimizer(config or AnalyticsConfig())
 
 
-def create_archaeological_optimizer(config: Optional[AnalyticsConfig] = None) -> ArchaeologicalOptimizer:
+def create_archaeological_optimizer(config: AnalyticsConfig | None = None) -> ArchaeologicalOptimizer:
     """Create an archaeological optimizer using 81-branch insights."""
     return ArchaeologicalOptimizer(config or AnalyticsConfig())

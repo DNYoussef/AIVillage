@@ -16,8 +16,8 @@ References:
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
 import logging
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -309,7 +309,7 @@ class GrokFastOptimizer(Optimizer):
                 f"grad_norm={recent_grad_norms[-1]:.2f}"
             )
 
-    def get_grokfast_stats(self) -> Dict[str, Any]:
+    def get_grokfast_stats(self) -> dict[str, Any]:
         """Get GrokFast optimizer statistics."""
         stats = {
             "current_lambda": self.lamb,
@@ -362,7 +362,7 @@ def create_grokfast_optimizer(
     learning_rate: float = 1e-4,
     weight_decay: float = 0.01,
     betas: tuple = (0.9, 0.999),
-    grokfast_config: Optional[GrokFastConfig] = None,
+    grokfast_config: GrokFastConfig | None = None,
     **kwargs,
 ) -> GrokFastOptimizer:
     """
@@ -416,8 +416,9 @@ def create_grokfast_optimizer(
 
 if __name__ == "__main__":
     # Test GrokFast optimizer
-    import torch.nn as nn
     import logging
+
+    import torch.nn as nn
 
     logging.basicConfig(level=logging.INFO)
 

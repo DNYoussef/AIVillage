@@ -27,15 +27,15 @@ Key Features:
 """
 
 import asyncio
-import logging
-import time
-import threading
-import gc
-import weakref
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any, Tuple
 from enum import Enum
+import gc
+import logging
+import threading
+import time
+from typing import Any
+import weakref
 
 # System imports for resource monitoring
 try:
@@ -137,8 +137,8 @@ class ResourceAllocation:
     owner_id: str
     priority: int
     created_at: float
-    expires_at: Optional[float] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    expires_at: float | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def is_expired(self) -> bool:
         """Check if allocation has expired."""
@@ -201,7 +201,7 @@ class MemoryManager:
         self.lock = threading.RLock()
 
     async def allocate_memory(
-        self, allocation_id: str, size_bytes: int, owner_id: str, priority: int = 1, expires_in: Optional[float] = None
+        self, allocation_id: str, size_bytes: int, owner_id: str, priority: int = 1, expires_in: float | None = None
     ) -> bool:
         """Allocate memory with pressure management."""
         try:
@@ -269,7 +269,7 @@ class MemoryManager:
             logger.error(f"Memory deallocation failed: {e}")
             return False
 
-    async def register_tensor(self, tensor_obj: Any, owner_id: str, size_bytes: Optional[int] = None):
+    async def register_tensor(self, tensor_obj: Any, owner_id: str, size_bytes: int | None = None):
         """Archaeological Enhancement: Register tensor for memory tracking."""
         if not self.config.enable_tensor_optimization:
             return
@@ -291,7 +291,7 @@ class MemoryManager:
         except Exception as e:
             logger.error(f"Tensor registration failed: {e}")
 
-    async def cleanup_tensors(self) -> Dict[str, Any]:
+    async def cleanup_tensors(self) -> dict[str, Any]:
         """Archaeological Enhancement: Cleanup unused tensor references."""
         if not self.config.enable_tensor_optimization:
             return {"cleaned": 0, "memory_freed": 0}
@@ -334,7 +334,7 @@ class MemoryManager:
             logger.error(f"Tensor cleanup failed: {e}")
             return cleanup_stats
 
-    async def _force_tensor_cleanup(self, cleanup_stats: Dict[str, Any]):
+    async def _force_tensor_cleanup(self, cleanup_stats: dict[str, Any]):
         """Force cleanup of old tensors during memory pressure."""
         current_time = time.time()
         old_tensors = []
@@ -455,7 +455,7 @@ class MemoryManager:
         else:
             return 0.5  # 50% default assumption
 
-    def get_memory_stats(self) -> Dict[str, Any]:
+    def get_memory_stats(self) -> dict[str, Any]:
         """Get comprehensive memory statistics."""
         return {
             "total_allocations": len(self.allocations),
@@ -489,7 +489,7 @@ class CPUManager:
         cpu_percentage: float,
         owner_id: str,
         priority: int = 1,
-        preferred_cores: Optional[List[int]] = None,
+        preferred_cores: list[int] | None = None,
     ) -> bool:
         """Allocate CPU resources with affinity control."""
         try:
@@ -558,7 +558,7 @@ class CPUManager:
             logger.error(f"CPU deallocation failed: {e}")
             return False
 
-    async def _assign_cpu_cores(self, preferred_cores: Optional[List[int]], priority: int) -> List[int]:
+    async def _assign_cpu_cores(self, preferred_cores: list[int] | None, priority: int) -> list[int]:
         """Assign CPU cores based on availability and priority."""
         assigned_cores = []
 
@@ -621,7 +621,7 @@ class CPUManager:
         else:
             return 25.0  # Default assumption
 
-    def get_cpu_stats(self) -> Dict[str, Any]:
+    def get_cpu_stats(self) -> dict[str, Any]:
         """Get comprehensive CPU statistics."""
         return {
             "cpu_cores": self.cpu_cores,
@@ -765,7 +765,7 @@ class NetworkResourceManager:
 
         logger.info(f"Throttling freed {freed_bandwidth} bps bandwidth")
 
-    def get_network_stats(self) -> Dict[str, Any]:
+    def get_network_stats(self) -> dict[str, Any]:
         """Get comprehensive network statistics."""
         utilization = (self.total_allocated_bandwidth / self.config.network_bandwidth_limit) * 100
 
@@ -793,7 +793,7 @@ class ResourceLimiter:
         self.limit_violations = defaultdict(int)
         self.emergency_actions_taken = defaultdict(list)
 
-    async def check_resource_limits(self, resource_metrics: Dict[ResourceType, ResourceMetrics]) -> Dict[str, Any]:
+    async def check_resource_limits(self, resource_metrics: dict[ResourceType, ResourceMetrics]) -> dict[str, Any]:
         """Check resource limits and trigger appropriate responses."""
         limit_status = {"violations": [], "warnings": [], "emergency_actions": [], "overall_status": "normal"}
 
@@ -894,7 +894,7 @@ class ResourceLimiter:
             logger.error(f"Emergency action failed for {resource_type}: {e}")
             return f"emergency_action_failed_{resource_type.value}"
 
-    def get_limit_stats(self) -> Dict[str, Any]:
+    def get_limit_stats(self) -> dict[str, Any]:
         """Get resource limit statistics."""
         return {
             "resource_limits": {rt.value: limits for rt, limits in self.resource_limits.items()},
@@ -906,7 +906,7 @@ class ResourceLimiter:
 class ResourceManager:
     """Archaeological Enhancement: Main resource management orchestrator."""
 
-    def __init__(self, config: Optional[ResourceManagerConfig] = None):
+    def __init__(self, config: ResourceManagerConfig | None = None):
         self.config = config or ResourceManagerConfig()
 
         # Initialize component managers
@@ -939,8 +939,8 @@ class ResourceManager:
             raise
 
     async def allocate_resources(
-        self, allocation_id: str, resource_requirements: Dict[ResourceType, float], owner_id: str, priority: int = 1
-    ) -> Dict[ResourceType, bool]:
+        self, allocation_id: str, resource_requirements: dict[ResourceType, float], owner_id: str, priority: int = 1
+    ) -> dict[ResourceType, bool]:
         """Allocate multiple resources atomically."""
         allocation_results = {}
         successful_allocations = []
@@ -985,8 +985,8 @@ class ResourceManager:
             return {rt: False for rt in resource_requirements.keys()}
 
     async def deallocate_resources(
-        self, allocation_id: str, resource_types: List[ResourceType]
-    ) -> Dict[ResourceType, bool]:
+        self, allocation_id: str, resource_types: list[ResourceType]
+    ) -> dict[ResourceType, bool]:
         """Deallocate multiple resources."""
         deallocation_results = {}
 
@@ -1009,7 +1009,7 @@ class ResourceManager:
             logger.error(f"Resource deallocation failed for {allocation_id}: {e}")
             return {rt: False for rt in resource_types}
 
-    async def _rollback_allocations(self, successful_allocations: List[Tuple[ResourceType, str]]):
+    async def _rollback_allocations(self, successful_allocations: list[tuple[ResourceType, str]]):
         """Rollback successful allocations in case of partial failure."""
         for resource_type, alloc_id in successful_allocations:
             try:
@@ -1126,7 +1126,7 @@ class ResourceManager:
                 logger.error(f"Emergency monitoring error: {e}")
                 await asyncio.sleep(5)
 
-    async def _collect_system_metrics(self) -> Dict[ResourceType, ResourceMetrics]:
+    async def _collect_system_metrics(self) -> dict[ResourceType, ResourceMetrics]:
         """Collect comprehensive system metrics."""
         metrics = {}
 
@@ -1180,7 +1180,7 @@ class ResourceManager:
 
         return metrics
 
-    async def _process_limit_violations(self, limit_status: Dict[str, Any]):
+    async def _process_limit_violations(self, limit_status: dict[str, Any]):
         """Process resource limit violations and generate alerts."""
         if limit_status["violations"] or limit_status["warnings"]:
             alert = {
@@ -1210,7 +1210,7 @@ class ResourceManager:
         elif resource_type == ResourceType.NETWORK:
             await self.network_manager._throttle_low_priority_connections()
 
-    async def get_system_status(self) -> Dict[str, Any]:
+    async def get_system_status(self) -> dict[str, Any]:
         """Get comprehensive system status."""
         return {
             "timestamp": time.time(),
@@ -1250,7 +1250,7 @@ class ResourceManager:
         logger.info("Resource Manager shutdown complete")
 
 
-def create_resource_manager(config: Optional[ResourceManagerConfig] = None) -> ResourceManager:
+def create_resource_manager(config: ResourceManagerConfig | None = None) -> ResourceManager:
     """Create a new resource manager with archaeological enhancements."""
     return ResourceManager(config)
 

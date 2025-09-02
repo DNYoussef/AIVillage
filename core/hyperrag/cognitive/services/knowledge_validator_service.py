@@ -7,12 +7,12 @@ and learning from validation feedback to improve future proposals.
 Extracted from GraphFixer to follow single responsibility principle.
 """
 
-from typing import Any, Dict, List, Union, Set
 from datetime import datetime, timedelta
+from typing import Any
 
-from ..graph_fixer import DetectedGap, ProposedNode, ProposedRelationship, GapType
+from ..graph_fixer import DetectedGap, GapType, ProposedNode, ProposedRelationship
+from ..interfaces.base_service import AsyncServiceMixin, CacheableMixin, ServiceConfig
 from ..interfaces.service_interfaces import IKnowledgeValidatorService
-from ..interfaces.base_service import ServiceConfig, CacheableMixin, AsyncServiceMixin
 
 
 class KnowledgeValidatorService(IKnowledgeValidatorService, CacheableMixin, AsyncServiceMixin):
@@ -62,7 +62,7 @@ class KnowledgeValidatorService(IKnowledgeValidatorService, CacheableMixin, Asyn
         self.clear_cache()
         self._initialized = False
 
-    async def validate_consistency(self, proposals: List[Union[ProposedNode, ProposedRelationship]]) -> Dict[str, bool]:
+    async def validate_consistency(self, proposals: list[ProposedNode | ProposedRelationship]) -> dict[str, bool]:
         """
         Validate consistency of proposals with existing knowledge.
 
@@ -107,7 +107,7 @@ class KnowledgeValidatorService(IKnowledgeValidatorService, CacheableMixin, Asyn
             self.logger.exception(f"Consistency validation failed: {e}")
             return {proposal.id: False for proposal in proposals}
 
-    async def check_conflicts(self, proposal: Union[ProposedNode, ProposedRelationship]) -> List[str]:
+    async def check_conflicts(self, proposal: ProposedNode | ProposedRelationship) -> list[str]:
         """
         Check for conflicts with existing knowledge.
 
@@ -164,7 +164,7 @@ class KnowledgeValidatorService(IKnowledgeValidatorService, CacheableMixin, Asyn
             return False
 
     async def learn_from_validation(
-        self, proposal: Union[ProposedNode, ProposedRelationship], is_accepted: bool
+        self, proposal: ProposedNode | ProposedRelationship, is_accepted: bool
     ) -> None:
         """
         Learn from validation feedback to improve future proposals.
@@ -219,7 +219,7 @@ class KnowledgeValidatorService(IKnowledgeValidatorService, CacheableMixin, Asyn
 
     # Private implementation methods
 
-    async def _apply_validation_rule(self, proposal: Union[ProposedNode, ProposedRelationship], rule: str) -> bool:
+    async def _apply_validation_rule(self, proposal: ProposedNode | ProposedRelationship, rule: str) -> bool:
         """Apply a specific validation rule to a proposal."""
         try:
             if rule == "no_self_references":
@@ -240,13 +240,13 @@ class KnowledgeValidatorService(IKnowledgeValidatorService, CacheableMixin, Asyn
             self.logger.exception(f"Validation rule {rule} failed: {e}")
             return False
 
-    async def _check_no_self_references(self, proposal: Union[ProposedNode, ProposedRelationship]) -> bool:
+    async def _check_no_self_references(self, proposal: ProposedNode | ProposedRelationship) -> bool:
         """Check that proposals don't create self-references."""
         if isinstance(proposal, ProposedRelationship):
             return proposal.source_id != proposal.target_id
         return True  # Nodes can't self-reference
 
-    async def _check_no_circular_dependencies(self, proposal: Union[ProposedNode, ProposedRelationship]) -> bool:
+    async def _check_no_circular_dependencies(self, proposal: ProposedNode | ProposedRelationship) -> bool:
         """Check for circular dependencies (simplified)."""
         if isinstance(proposal, ProposedRelationship):
             # Check if adding this relationship would create a cycle
@@ -263,7 +263,7 @@ class KnowledgeValidatorService(IKnowledgeValidatorService, CacheableMixin, Asyn
         visited = set()
         return not await self._has_path_dfs(proposal.target_id, proposal.source_id, visited)
 
-    async def _has_path_dfs(self, start: str, target: str, visited: Set[str]) -> bool:
+    async def _has_path_dfs(self, start: str, target: str, visited: set[str]) -> bool:
         """DFS to check if path exists between nodes."""
         if start == target:
             return True
@@ -283,7 +283,7 @@ class KnowledgeValidatorService(IKnowledgeValidatorService, CacheableMixin, Asyn
 
         return False
 
-    async def _check_trust_score_consistency(self, proposal: Union[ProposedNode, ProposedRelationship]) -> bool:
+    async def _check_trust_score_consistency(self, proposal: ProposedNode | ProposedRelationship) -> bool:
         """Check trust score consistency."""
         if isinstance(proposal, ProposedNode):
             # Trust scores should be reasonable
@@ -292,7 +292,7 @@ class KnowledgeValidatorService(IKnowledgeValidatorService, CacheableMixin, Asyn
             # Relationship strength should be reasonable
             return 0.0 <= proposal.relation_strength <= 1.0
 
-    async def _check_semantic_coherence(self, proposal: Union[ProposedNode, ProposedRelationship]) -> bool:
+    async def _check_semantic_coherence(self, proposal: ProposedNode | ProposedRelationship) -> bool:
         """Check semantic coherence of proposal."""
         # Basic checks for content quality
         if isinstance(proposal, ProposedNode):
@@ -300,7 +300,7 @@ class KnowledgeValidatorService(IKnowledgeValidatorService, CacheableMixin, Asyn
         else:
             return proposal.relation_type and len(proposal.relation_type.strip()) > 0
 
-    async def _check_structural_validity(self, proposal: Union[ProposedNode, ProposedRelationship]) -> bool:
+    async def _check_structural_validity(self, proposal: ProposedNode | ProposedRelationship) -> bool:
         """Check structural validity of proposal."""
         # Check required fields and value ranges
         if isinstance(proposal, ProposedNode):
@@ -318,7 +318,7 @@ class KnowledgeValidatorService(IKnowledgeValidatorService, CacheableMixin, Asyn
                 and 0.0 <= proposal.confidence <= 1.0
             )
 
-    async def _validate_against_existing_knowledge(self, proposal: Union[ProposedNode, ProposedRelationship]) -> bool:
+    async def _validate_against_existing_knowledge(self, proposal: ProposedNode | ProposedRelationship) -> bool:
         """Validate proposal against existing knowledge in the graph."""
         if not self.config.trust_graph:
             return True  # Can't validate without graph
@@ -371,7 +371,7 @@ class KnowledgeValidatorService(IKnowledgeValidatorService, CacheableMixin, Asyn
 
         return True
 
-    async def _check_node_conflicts(self, proposal: ProposedNode) -> List[str]:
+    async def _check_node_conflicts(self, proposal: ProposedNode) -> list[str]:
         """Check for conflicts specific to node proposals."""
         conflicts = []
 
@@ -390,7 +390,7 @@ class KnowledgeValidatorService(IKnowledgeValidatorService, CacheableMixin, Asyn
 
         return conflicts
 
-    async def _check_relationship_conflicts(self, proposal: ProposedRelationship) -> List[str]:
+    async def _check_relationship_conflicts(self, proposal: ProposedRelationship) -> list[str]:
         """Check for conflicts specific to relationship proposals."""
         conflicts = []
 
@@ -489,7 +489,7 @@ class KnowledgeValidatorService(IKnowledgeValidatorService, CacheableMixin, Asyn
 
         return True
 
-    async def _extract_proposal_pattern(self, proposal: Union[ProposedNode, ProposedRelationship]) -> Dict[str, Any]:
+    async def _extract_proposal_pattern(self, proposal: ProposedNode | ProposedRelationship) -> dict[str, Any]:
         """Extract pattern from proposal for learning."""
         if isinstance(proposal, ProposedNode):
             return {
@@ -547,7 +547,7 @@ class KnowledgeValidatorService(IKnowledgeValidatorService, CacheableMixin, Asyn
             if len(self.learning_data[key]) > max_entries:
                 self.learning_data[key] = self.learning_data[key][-max_entries:]
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get service statistics."""
         return {
             "validations_performed": self.stats["validations_performed"],

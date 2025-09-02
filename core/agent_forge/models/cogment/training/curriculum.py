@@ -11,11 +11,10 @@ Replaces HRRM's 3-phase approach with enhanced curriculum designed for accelerat
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Any
-
+import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +69,7 @@ class StageConfig:
     # Data augmentation
     augmentation_enabled: bool = False
     augmentation_rate: float = 0.0
-    augmentation_types: List[str] = field(default_factory=list)
+    augmentation_types: list[str] = field(default_factory=list)
 
     # Evaluation criteria
     convergence_patience: int = 500
@@ -78,7 +77,7 @@ class StageConfig:
     max_ponder_cost: float = 4.0
 
     # Stage-specific settings
-    extra_config: Dict[str, Any] = field(default_factory=dict)
+    extra_config: dict[str, Any] = field(default_factory=dict)
 
 
 class FourStageCurriculum:
@@ -93,11 +92,11 @@ class FourStageCurriculum:
     def __init__(self):
         self.stages = self._create_default_stages()
         self.current_stage = CurriculumStage.SANITY
-        self.stage_history: List[Dict[str, Any]] = []
+        self.stage_history: list[dict[str, Any]] = []
 
         logger.info(f"Initialized 4-stage curriculum with {len(self.stages)} stages")
 
-    def _create_default_stages(self) -> Dict[CurriculumStage, StageConfig]:
+    def _create_default_stages(self) -> dict[CurriculumStage, StageConfig]:
         """Create default configuration for all curriculum stages."""
 
         stages = {}
@@ -325,7 +324,7 @@ class FourStageCurriculum:
         """Get configuration for the current stage."""
         return self.get_stage_config(self.current_stage)
 
-    def advance_stage(self, metrics: Dict[str, float]) -> bool:
+    def advance_stage(self, metrics: dict[str, float]) -> bool:
         """
         Check if conditions are met to advance to the next stage.
 
@@ -383,7 +382,7 @@ class FourStageCurriculum:
         logger.info(f"Manually setting stage to {stage.name}")
         self.current_stage = stage
 
-    def get_stage_progression(self) -> List[Tuple[CurriculumStage, str, bool]]:
+    def get_stage_progression(self) -> list[tuple[CurriculumStage, str, bool]]:
         """Get progression status for all stages."""
         progression = []
         completed_stages = {record["stage"] for record in self.stage_history if record["completed"]}
@@ -404,7 +403,7 @@ class FourStageCurriculum:
 
         return progression
 
-    def get_training_schedule(self, stage: Optional[CurriculumStage] = None) -> Dict[str, Any]:
+    def get_training_schedule(self, stage: CurriculumStage | None = None) -> dict[str, Any]:
         """
         Get comprehensive training schedule for a stage.
 
@@ -466,7 +465,7 @@ class FourStageCurriculum:
         """Check if the entire curriculum has been completed."""
         return self.current_stage == CurriculumStage.LONG_CONTEXT and len(self.stage_history) == len(CurriculumStage)
 
-    def get_curriculum_summary(self) -> Dict[str, Any]:
+    def get_curriculum_summary(self) -> dict[str, Any]:
         """Get comprehensive curriculum status summary."""
         progression = self.get_stage_progression()
         completed_count = sum(1 for _, _, is_completed in progression if is_completed)

@@ -4,12 +4,12 @@ Provides centralized configuration management for all security components
 with environment-based overrides and validation.
 """
 
-import os
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+import os
+from typing import Any
 
-from .interfaces import SecurityLevel, AuthenticationMethod
 from .exceptions import SecurityConfigurationError
+from .interfaces import AuthenticationMethod, SecurityLevel
 
 
 @dataclass
@@ -35,13 +35,13 @@ class EncryptionConfig:
 class AuthenticationConfig:
     """Authentication configuration."""
 
-    methods: List[AuthenticationMethod] = field(default_factory=lambda: [AuthenticationMethod.TOKEN])
+    methods: list[AuthenticationMethod] = field(default_factory=lambda: [AuthenticationMethod.TOKEN])
     token_expiry_hours: int = 24
     refresh_token_expiry_days: int = 30
     max_failed_attempts: int = 5
     lockout_duration_minutes: int = 30
     require_mfa: bool = False
-    mfa_methods: List[str] = field(default_factory=lambda: ["TOTP"])
+    mfa_methods: list[str] = field(default_factory=lambda: ["TOTP"])
     session_timeout_minutes: int = 60
 
     def __post_init__(self):
@@ -59,7 +59,7 @@ class AuthorizationConfig:
 
     enable_rbac: bool = True
     default_role: str = "user"
-    admin_roles: List[str] = field(default_factory=lambda: ["admin", "super_admin"])
+    admin_roles: list[str] = field(default_factory=lambda: ["admin", "super_admin"])
     permission_cache_ttl: int = 300  # 5 minutes
     enable_resource_isolation: bool = True
     tenant_isolation: bool = True
@@ -82,7 +82,7 @@ class ThreatDetectionConfig:
     reputation_decay_rate: float = 0.01
     enable_ip_blocking: bool = True
     enable_geo_blocking: bool = False
-    blocked_countries: List[str] = field(default_factory=list)
+    blocked_countries: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         """Validate threat detection configuration."""
@@ -117,7 +117,7 @@ class NetworkSecurityConfig:
     tls_version: str = "1.3"
     enable_hsts: bool = True
     enable_cors: bool = True
-    allowed_origins: List[str] = field(default_factory=lambda: ["https://localhost:3000"])
+    allowed_origins: list[str] = field(default_factory=lambda: ["https://localhost:3000"])
     enable_csp: bool = True
     csp_policy: str = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
 
@@ -130,7 +130,7 @@ class NetworkSecurityConfig:
 class SecurityConfiguration:
     """Main security configuration manager."""
 
-    def __init__(self, config_dict: Optional[Dict[str, Any]] = None):
+    def __init__(self, config_dict: dict[str, Any] | None = None):
         """Initialize security configuration."""
         self.config_dict = config_dict or {}
 
@@ -280,7 +280,7 @@ class SecurityConfiguration:
         """Get current security level."""
         return self.security_level
 
-    def get_encryption_config(self) -> Dict[str, Any]:
+    def get_encryption_config(self) -> dict[str, Any]:
         """Get encryption configuration."""
         return {
             "algorithm": self.encryption.algorithm,
@@ -290,7 +290,7 @@ class SecurityConfiguration:
             "enable_perfect_forward_secrecy": self.encryption.enable_perfect_forward_secrecy,
         }
 
-    def get_authentication_config(self) -> Dict[str, Any]:
+    def get_authentication_config(self) -> dict[str, Any]:
         """Get authentication configuration."""
         return {
             "methods": [method.value for method in self.authentication.methods],
@@ -303,7 +303,7 @@ class SecurityConfiguration:
             "session_timeout_minutes": self.authentication.session_timeout_minutes,
         }
 
-    def get_authorization_config(self) -> Dict[str, Any]:
+    def get_authorization_config(self) -> dict[str, Any]:
         """Get authorization configuration."""
         return {
             "enable_rbac": self.authorization.enable_rbac,
@@ -332,7 +332,7 @@ class SecurityConfiguration:
 
         return feature_map.get(feature, False)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Export configuration as dictionary."""
         return {
             "security_level": self.security_level.value,

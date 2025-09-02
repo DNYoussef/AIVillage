@@ -20,14 +20,14 @@ and tools/ci-cd/monitoring/performance_dashboard.py infrastructure.
 """
 
 import asyncio
-import json
-import logging
-import time
 from collections import defaultdict, deque
 from dataclasses import asdict, dataclass
 from datetime import datetime
+import json
+import logging
 from pathlib import Path
-from typing import Any, Dict, Optional
+import time
+from typing import Any
 
 # Import existing dashboard infrastructure
 try:
@@ -43,9 +43,9 @@ except ImportError:
     HAS_STREAMLIT = False
 
 # Import optimization infrastructure components
-from .network_optimizer import SecurityEnhancedNetworkOptimizer
 from .analytics import PerformanceAnalytics
 from .monitoring import PerformanceMonitor
+from .network_optimizer import SecurityEnhancedNetworkOptimizer
 from .resource_manager import ResourceManager
 
 logger = logging.getLogger(__name__)
@@ -59,17 +59,17 @@ class OptimizationDashboardMetrics:
 
     # Network Optimization Metrics
     network_optimizations_active: int = 0
-    network_protocols_used: Dict[str, int] = None
+    network_protocols_used: dict[str, int] = None
     avg_latency_ms: float = 0.0
     bandwidth_utilization_percent: float = 0.0
     packet_loss_rate: float = 0.0
 
     # Security Protocol Metrics
-    security_protocols_used: Dict[str, int] = None
+    security_protocols_used: dict[str, int] = None
     ech_handshakes_successful: int = 0
     noise_sessions_active: int = 0
     avg_handshake_time_ms: float = 0.0
-    security_level_distribution: Dict[str, int] = None
+    security_level_distribution: dict[str, int] = None
 
     # P2P Infrastructure Metrics
     bitchat_peers_connected: int = 0
@@ -105,7 +105,7 @@ class EnhancedOptimizationDashboard:
     performance_dashboard.py while adding new optimization metrics.
     """
 
-    def __init__(self, data_dir: Optional[Path] = None, update_interval: float = 5.0):
+    def __init__(self, data_dir: Path | None = None, update_interval: float = 5.0):
         """
         Initialize enhanced dashboard.
 
@@ -121,14 +121,14 @@ class EnhancedOptimizationDashboard:
         self.last_update = 0.0
 
         # Component references (set via register_components)
-        self.network_optimizer: Optional[SecurityEnhancedNetworkOptimizer] = None
-        self.performance_analytics: Optional[PerformanceAnalytics] = None
-        self.performance_monitor: Optional[PerformanceMonitor] = None
-        self.resource_manager: Optional[ResourceManager] = None
+        self.network_optimizer: SecurityEnhancedNetworkOptimizer | None = None
+        self.performance_analytics: PerformanceAnalytics | None = None
+        self.performance_monitor: PerformanceMonitor | None = None
+        self.resource_manager: ResourceManager | None = None
 
         # Dashboard state
         self.dashboard_active = False
-        self.dashboard_task: Optional[asyncio.Task] = None
+        self.dashboard_task: asyncio.Task | None = None
 
         logger.info(f"Enhanced optimization dashboard initialized - Data dir: {self.data_dir}")
 
@@ -252,7 +252,7 @@ class EnhancedOptimizationDashboard:
             logger.error(f"Error collecting comprehensive metrics: {e}")
             return metrics  # Return partial metrics
 
-    async def _collect_network_optimizer_metrics(self) -> Dict[str, Any]:
+    async def _collect_network_optimizer_metrics(self) -> dict[str, Any]:
         """Collect network optimizer specific metrics."""
         stats = {
             "active_optimizations": len(self.network_optimizer.active_optimizations),
@@ -286,7 +286,7 @@ class EnhancedOptimizationDashboard:
 
         return stats
 
-    async def _collect_analytics_metrics(self) -> Dict[str, Any]:
+    async def _collect_analytics_metrics(self) -> dict[str, Any]:
         """Collect performance analytics metrics."""
         stats = {"insights_applied": 0, "nat_success_rate": 0.0, "multiplexing_efficiency": 0.0}
 
@@ -305,7 +305,7 @@ class EnhancedOptimizationDashboard:
 
         return stats
 
-    async def _collect_resource_metrics(self) -> Dict[str, Any]:
+    async def _collect_resource_metrics(self) -> dict[str, Any]:
         """Collect resource manager metrics."""
         stats = {"memory_efficiency": 0.0, "cpu_efficiency": 0.0, "allocation_success_rate": 0.0}
 
@@ -335,7 +335,7 @@ class EnhancedOptimizationDashboard:
 
         return stats
 
-    async def _collect_p2p_infrastructure_metrics(self) -> Dict[str, Any]:
+    async def _collect_p2p_infrastructure_metrics(self) -> dict[str, Any]:
         """Collect P2P infrastructure metrics (BitChat, BetaNet, Fog)."""
         stats = {"bitchat_peers": 0, "betanet_circuits": 0, "fog_nodes": 0}
 
@@ -357,7 +357,7 @@ class EnhancedOptimizationDashboard:
 
         return stats
 
-    def _count_security_protocols(self, security_status: Dict[str, Any]) -> Dict[str, int]:
+    def _count_security_protocols(self, security_status: dict[str, Any]) -> dict[str, int]:
         """Count usage of security protocols."""
         protocol_counts = defaultdict(int)
 
@@ -367,7 +367,7 @@ class EnhancedOptimizationDashboard:
 
         return dict(protocol_counts)
 
-    def _get_security_level_distribution(self, security_status: Dict[str, Any]) -> Dict[str, int]:
+    def _get_security_level_distribution(self, security_status: dict[str, Any]) -> dict[str, int]:
         """Get distribution of security levels."""
         distribution = defaultdict(int)
 
@@ -401,7 +401,7 @@ class EnhancedOptimizationDashboard:
         except Exception as e:
             logger.error(f"Failed to save metrics to disk: {e}")
 
-    def generate_dashboard_html(self, output_file: Optional[Path] = None) -> str:
+    def generate_dashboard_html(self, output_file: Path | None = None) -> str:
         """Generate HTML dashboard building on existing admin dashboard."""
         if output_file is None:
             output_file = self.data_dir / "optimization_dashboard.html"
@@ -417,7 +417,7 @@ class EnhancedOptimizationDashboard:
         logger.info(f"Generated enhanced dashboard HTML: {output_file}")
         return str(output_file)
 
-    def _generate_enhanced_dashboard_html(self, metrics: Optional[OptimizationDashboardMetrics]) -> str:
+    def _generate_enhanced_dashboard_html(self, metrics: OptimizationDashboardMetrics | None) -> str:
         """Generate enhanced HTML dashboard content."""
         return f"""<!DOCTYPE html>
 <html lang="en">
@@ -544,7 +544,7 @@ class EnhancedOptimizationDashboard:
 </body>
 </html>"""
 
-    def _generate_network_optimization_card(self, metrics: Optional[OptimizationDashboardMetrics]) -> str:
+    def _generate_network_optimization_card(self, metrics: OptimizationDashboardMetrics | None) -> str:
         """Generate network optimization metrics card."""
         if not metrics:
             return self._generate_no_data_card("Network Optimization")
@@ -576,7 +576,7 @@ class EnhancedOptimizationDashboard:
             </div>
         </div>"""
 
-    def _generate_security_protocols_card(self, metrics: Optional[OptimizationDashboardMetrics]) -> str:
+    def _generate_security_protocols_card(self, metrics: OptimizationDashboardMetrics | None) -> str:
         """Generate security protocols metrics card."""
         if not metrics:
             return self._generate_no_data_card("Security Protocols")
@@ -611,7 +611,7 @@ class EnhancedOptimizationDashboard:
             </div>
         </div>"""
 
-    def _generate_p2p_infrastructure_card(self, metrics: Optional[OptimizationDashboardMetrics]) -> str:
+    def _generate_p2p_infrastructure_card(self, metrics: OptimizationDashboardMetrics | None) -> str:
         """Generate P2P infrastructure metrics card."""
         if not metrics:
             return self._generate_no_data_card("P2P Infrastructure")
@@ -637,7 +637,7 @@ class EnhancedOptimizationDashboard:
             </div>
         </div>"""
 
-    def _generate_resource_management_card(self, metrics: Optional[OptimizationDashboardMetrics]) -> str:
+    def _generate_resource_management_card(self, metrics: OptimizationDashboardMetrics | None) -> str:
         """Generate resource management metrics card."""
         if not metrics:
             return self._generate_no_data_card("Resource Management")
@@ -659,7 +659,7 @@ class EnhancedOptimizationDashboard:
             </div>
         </div>"""
 
-    def _generate_archaeological_enhancements_card(self, metrics: Optional[OptimizationDashboardMetrics]) -> str:
+    def _generate_archaeological_enhancements_card(self, metrics: OptimizationDashboardMetrics | None) -> str:
         """Generate archaeological enhancements metrics card."""
         if not metrics:
             return self._generate_no_data_card("Archaeological Enhancements")
@@ -681,7 +681,7 @@ class EnhancedOptimizationDashboard:
             </div>
         </div>"""
 
-    def _generate_performance_analytics_card(self, metrics: Optional[OptimizationDashboardMetrics]) -> str:
+    def _generate_performance_analytics_card(self, metrics: OptimizationDashboardMetrics | None) -> str:
         """Generate performance analytics overview card."""
         if not metrics:
             return self._generate_no_data_card("Performance Analytics")
@@ -727,7 +727,7 @@ class EnhancedOptimizationDashboard:
             </div>
         </div>"""
 
-    def get_dashboard_metrics_summary(self) -> Dict[str, Any]:
+    def get_dashboard_metrics_summary(self) -> dict[str, Any]:
         """Get summary of dashboard metrics for API integration."""
         if not self.metrics_history:
             return {"error": "No metrics available"}
@@ -766,7 +766,7 @@ async def create_enhanced_dashboard(
     performance_analytics: PerformanceAnalytics,
     performance_monitor: PerformanceMonitor,
     resource_manager: ResourceManager,
-    data_dir: Optional[Path] = None,
+    data_dir: Path | None = None,
 ) -> EnhancedOptimizationDashboard:
     """Create and initialize enhanced optimization dashboard."""
     dashboard = EnhancedOptimizationDashboard(data_dir=data_dir)
@@ -784,7 +784,7 @@ async def create_enhanced_dashboard(
     return dashboard
 
 
-def integrate_with_existing_dashboards(dashboard_dir: Path = None) -> Dict[str, str]:
+def integrate_with_existing_dashboards(dashboard_dir: Path = None) -> dict[str, str]:
     """Integrate with existing dashboard infrastructure."""
     if dashboard_dir is None:
         dashboard_dir = Path("./tools/ci-cd/monitoring")

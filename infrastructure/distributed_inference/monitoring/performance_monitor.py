@@ -17,14 +17,9 @@ from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum, auto
-import json
 import logging
 import statistics
-import time
-from typing import Any, Dict, List, Optional, Tuple, Union
-
-import numpy as np
-from pydantic import BaseModel
+from typing import Any
 
 # Archaeological metadata
 ARCHAEOLOGICAL_METADATA = {
@@ -96,7 +91,7 @@ class MetricDataPoint:
     metric_type: MetricType
     value: float
     source_id: str  # node_id, request_id, etc.
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     
     # Archaeological enhancements
     archaeological_score: float = 0.5
@@ -109,10 +104,10 @@ class PerformanceThreshold:
     threshold_type: ThresholdType
     warning_threshold: float
     critical_threshold: float
-    emergency_threshold: Optional[float] = None
+    emergency_threshold: float | None = None
     
     # Adaptive thresholds
-    baseline_value: Optional[float] = None
+    baseline_value: float | None = None
     deviation_multiplier: float = 2.0
     
     # Archaeological enhancement
@@ -133,7 +128,7 @@ class PerformanceAlert:
     
     # Archaeological enhancement
     predicted: bool = False
-    archaeological_pattern: Optional[str] = None
+    archaeological_pattern: str | None = None
     confidence: float = 1.0
 
 @dataclass
@@ -142,11 +137,11 @@ class PerformanceTrend:
     metric_type: MetricType
     trend_direction: str  # "increasing", "decreasing", "stable", "volatile"
     trend_strength: float  # 0.0 to 1.0
-    predicted_value: Optional[float] = None
+    predicted_value: float | None = None
     confidence: float = 0.5
     
     # Archaeological enhancement
-    archaeological_pattern_match: Optional[str] = None
+    archaeological_pattern_match: str | None = None
     historical_accuracy: float = 0.0
 
 class PerformanceMonitor:
@@ -161,24 +156,24 @@ class PerformanceMonitor:
     - Performance trend analysis and forecasting
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize the performance monitor."""
         self.config = config or {}
         self.archaeological_metadata = ARCHAEOLOGICAL_METADATA
         
         # Metric storage
-        self.metrics_buffer: Dict[str, deque] = defaultdict(lambda: deque(maxlen=10000))
-        self.aggregated_metrics: Dict[str, Dict[str, float]] = defaultdict(dict)
+        self.metrics_buffer: dict[str, deque] = defaultdict(lambda: deque(maxlen=10000))
+        self.aggregated_metrics: dict[str, dict[str, float]] = defaultdict(dict)
         
         # Thresholds and alerts
-        self.thresholds: Dict[MetricType, PerformanceThreshold] = {}
-        self.active_alerts: Dict[str, PerformanceAlert] = {}
+        self.thresholds: dict[MetricType, PerformanceThreshold] = {}
+        self.active_alerts: dict[str, PerformanceAlert] = {}
         self.alert_history: deque = deque(maxlen=1000)
         
         # Archaeological components
-        self.archaeological_patterns: Dict[str, Any] = {}
-        self.pattern_predictions: Dict[str, Any] = {}
-        self.baseline_models: Dict[MetricType, Any] = {}
+        self.archaeological_patterns: dict[str, Any] = {}
+        self.pattern_predictions: dict[str, Any] = {}
+        self.baseline_models: dict[MetricType, Any] = {}
         
         # Configuration
         self.monitoring_interval = self.config.get("monitoring_interval_seconds", 10)
@@ -193,7 +188,7 @@ class PerformanceMonitor:
         # Initialize default thresholds
         self._initialize_default_thresholds()
         
-        logger.info(f"📊 PerformanceMonitor initialized with archaeological metadata")
+        logger.info("📊 PerformanceMonitor initialized with archaeological metadata")
         logger.info(f"🎯 Innovation Score: {self.archaeological_metadata['innovation_score']}")
         
     async def start(self):
@@ -252,7 +247,7 @@ class PerformanceMonitor:
         metric_type: MetricType,
         value: float,
         source_id: str,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: dict[str, Any] | None = None
     ):
         """Record a performance metric."""
         try:
@@ -281,9 +276,9 @@ class PerformanceMonitor:
             
     async def get_current_metrics(
         self,
-        metric_types: Optional[List[MetricType]] = None,
-        source_ids: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+        metric_types: list[MetricType] | None = None,
+        source_ids: list[str] | None = None
+    ) -> dict[str, Any]:
         """Get current performance metrics."""
         try:
             metrics = {}
@@ -326,7 +321,7 @@ class PerformanceMonitor:
         metric_type: MetricType,
         source_id: str,
         hours: int = 1
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Get historical metrics for analysis."""
         try:
             metric_key = f"{metric_type.value}:{source_id}"
@@ -359,8 +354,8 @@ class PerformanceMonitor:
             
     async def get_performance_trends(
         self,
-        metric_types: Optional[List[MetricType]] = None
-    ) -> Dict[str, PerformanceTrend]:
+        metric_types: list[MetricType] | None = None
+    ) -> dict[str, PerformanceTrend]:
         """Analyze performance trends using archaeological algorithms."""
         try:
             trends = {}
@@ -387,8 +382,8 @@ class PerformanceMonitor:
             
     async def get_active_alerts(
         self,
-        severity_filter: Optional[AlertSeverity] = None
-    ) -> List[Dict[str, Any]]:
+        severity_filter: AlertSeverity | None = None
+    ) -> list[dict[str, Any]]:
         """Get currently active performance alerts."""
         try:
             alerts = []
@@ -422,7 +417,7 @@ class PerformanceMonitor:
         metric_type: MetricType,
         source_id: str,
         prediction_minutes: int = 30
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Predict future performance using archaeological algorithms."""
         try:
             if not self.archaeological_metadata["feature_flags"].get("PREDICTIVE_ANALYTICS_ENABLED", False):
@@ -465,7 +460,7 @@ class PerformanceMonitor:
         metric_type: MetricType,
         warning_threshold: float,
         critical_threshold: float,
-        emergency_threshold: Optional[float] = None,
+        emergency_threshold: float | None = None,
         threshold_type: ThresholdType = ThresholdType.STATIC
     ):
         """Set performance threshold for a metric type."""
@@ -490,7 +485,7 @@ class PerformanceMonitor:
         except Exception as e:
             logger.error(f"❌ Failed to set threshold: {e}")
             
-    async def get_monitoring_statistics(self) -> Dict[str, Any]:
+    async def get_monitoring_statistics(self) -> dict[str, Any]:
         """Get comprehensive monitoring statistics."""
         try:
             total_metrics = sum(len(buffer) for buffer in self.metrics_buffer.values())
@@ -701,7 +696,7 @@ class PerformanceMonitor:
         except Exception as e:
             logger.error(f"❌ Threshold check failed: {e}")
             
-    async def _analyze_metric_trend(self, metric_type: MetricType) -> Optional[PerformanceTrend]:
+    async def _analyze_metric_trend(self, metric_type: MetricType) -> PerformanceTrend | None:
         """Analyze trend for a specific metric type."""
         try:
             # Collect all data points for this metric type
@@ -753,7 +748,7 @@ class PerformanceMonitor:
             logger.error(f"❌ Trend analysis failed: {e}")
             return None
             
-    def _calculate_trend(self, values: List[float]) -> Tuple[str, float]:
+    def _calculate_trend(self, values: list[float]) -> tuple[str, float]:
         """Calculate trend direction and strength."""
         try:
             if len(values) < 3:
@@ -793,10 +788,10 @@ class PerformanceMonitor:
             
     async def _archaeological_predict(
         self,
-        values: List[float],
-        timestamps: List[float],
+        values: list[float],
+        timestamps: list[float],
         prediction_seconds: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Archaeological prediction algorithm."""
         try:
             if len(values) < 5:

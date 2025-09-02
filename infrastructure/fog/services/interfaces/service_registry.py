@@ -5,10 +5,10 @@ Manages service discovery, dependency injection, and service lifecycle coordinat
 Implements the Service Locator pattern with dependency injection capabilities.
 """
 
-from typing import Any, Dict, List, Optional, Type, TypeVar
 import logging
-from .base_service import BaseFogService, ServiceStatus, EventBus
+from typing import Any, TypeVar
 
+from .base_service import BaseFogService, EventBus, ServiceStatus
 
 T = TypeVar("T", bound=BaseFogService)
 
@@ -16,7 +16,7 @@ T = TypeVar("T", bound=BaseFogService)
 class ServiceDependency:
     """Service dependency specification"""
 
-    def __init__(self, service_type: Type[BaseFogService], required: bool = True, lazy: bool = False):
+    def __init__(self, service_type: type[BaseFogService], required: bool = True, lazy: bool = False):
         self.service_type = service_type
         self.required = required
         self.lazy = lazy  # Lazy loading - resolve when first accessed
@@ -27,13 +27,13 @@ class ServiceRegistry:
 
     def __init__(self, event_bus: EventBus):
         self.event_bus = event_bus
-        self.services: Dict[str, BaseFogService] = {}
-        self.service_types: Dict[Type[BaseFogService], str] = {}
-        self.dependencies: Dict[str, List[ServiceDependency]] = {}
-        self.startup_order: List[str] = []
+        self.services: dict[str, BaseFogService] = {}
+        self.service_types: dict[type[BaseFogService], str] = {}
+        self.dependencies: dict[str, list[ServiceDependency]] = {}
+        self.startup_order: list[str] = []
         self.logger = logging.getLogger(f"{__name__}.ServiceRegistry")
 
-    def register_service(self, service: BaseFogService, dependencies: Optional[List[ServiceDependency]] = None):
+    def register_service(self, service: BaseFogService, dependencies: list[ServiceDependency] | None = None):
         """Register a service with optional dependencies"""
         service_name = service.service_name
 
@@ -50,22 +50,22 @@ class ServiceRegistry:
 
         self.logger.info(f"Registered service: {service_name}")
 
-    def get_service(self, service_name: str) -> Optional[BaseFogService]:
+    def get_service(self, service_name: str) -> BaseFogService | None:
         """Get a service by name"""
         return self.services.get(service_name)
 
-    def get_service_by_type(self, service_type: Type[T]) -> Optional[T]:
+    def get_service_by_type(self, service_type: type[T]) -> T | None:
         """Get a service by type"""
         service_name = self.service_types.get(service_type)
         if service_name:
             return self.services.get(service_name)
         return None
 
-    def get_all_services(self) -> Dict[str, BaseFogService]:
+    def get_all_services(self) -> dict[str, BaseFogService]:
         """Get all registered services"""
         return self.services.copy()
 
-    def resolve_dependencies(self) -> List[str]:
+    def resolve_dependencies(self) -> list[str]:
         """Resolve service dependencies and return startup order"""
         # Topological sort to determine startup order
         visited = set()
@@ -150,7 +150,7 @@ class ServiceRegistry:
 
         return success
 
-    async def _stop_started_services(self, started_services: List[str]):
+    async def _stop_started_services(self, started_services: list[str]):
         """Stop services that were successfully started (for cleanup)"""
         for service_name in reversed(started_services):
             service = self.services[service_name]
@@ -159,7 +159,7 @@ class ServiceRegistry:
             except Exception as e:
                 self.logger.error(f"Error stopping service {service_name} during cleanup: {e}")
 
-    def get_service_status(self) -> Dict[str, Any]:
+    def get_service_status(self) -> dict[str, Any]:
         """Get status of all services"""
         status = {"total_services": len(self.services), "running_services": 0, "error_services": 0, "services": {}}
 
@@ -203,17 +203,17 @@ class ServiceRegistry:
 class ServiceFactory:
     """Factory for creating configured services"""
 
-    def __init__(self, registry: ServiceRegistry, base_config: Dict[str, Any]):
+    def __init__(self, registry: ServiceRegistry, base_config: dict[str, Any]):
         self.registry = registry
         self.base_config = base_config
         self.logger = logging.getLogger(f"{__name__}.ServiceFactory")
 
     def create_service(
         self,
-        service_class: Type[T],
+        service_class: type[T],
         service_name: str,
-        service_config: Optional[Dict[str, Any]] = None,
-        dependencies: Optional[List[ServiceDependency]] = None,
+        service_config: dict[str, Any] | None = None,
+        dependencies: list[ServiceDependency] | None = None,
     ) -> T:
         """Create and register a service"""
         # Merge configuration

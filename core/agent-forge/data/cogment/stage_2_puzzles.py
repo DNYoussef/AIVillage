@@ -10,14 +10,14 @@ Structured algorithmic puzzles for logical reasoning:
 Purpose: Train structured reasoning and search discipline for ACT refinement.
 """
 
+from dataclasses import dataclass
+from enum import Enum
 import logging
 import random
-from dataclasses import dataclass
-from typing import Dict, List, Tuple, Any, Optional
-from enum import Enum
+from typing import Any
 
 import numpy as np
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 logger = logging.getLogger(__name__)
 
@@ -45,13 +45,13 @@ class PuzzleConfig:
     seed: int = 42
 
     # Sudoku-specific
-    sudoku_givens_range: Dict[DifficultyLevel, Tuple[int, int]] = None
+    sudoku_givens_range: dict[DifficultyLevel, tuple[int, int]] = None
 
     # Maze-specific
-    maze_sizes: Dict[DifficultyLevel, List[Tuple[int, int]]] = None
+    maze_sizes: dict[DifficultyLevel, list[tuple[int, int]]] = None
 
     # ListOps-specific
-    listops_depth_range: Dict[DifficultyLevel, Tuple[int, int]] = None
+    listops_depth_range: dict[DifficultyLevel, tuple[int, int]] = None
 
     def __post_init__(self):
         if self.sudoku_givens_range is None:
@@ -84,7 +84,7 @@ class SudokuGenerator:
         random.seed(config.seed)
         np.random.seed(config.seed)
 
-    def generate_samples(self) -> List[Dict[str, Any]]:
+    def generate_samples(self) -> list[dict[str, Any]]:
         """Generate Sudoku puzzle samples."""
         samples = []
 
@@ -108,7 +108,7 @@ class SudokuGenerator:
         logger.info(f"Generated {len(samples)} Sudoku puzzles ({self.config.difficulty.name})")
         return samples
 
-    def _generate_sudoku_puzzle(self) -> Tuple[np.ndarray, np.ndarray]:
+    def _generate_sudoku_puzzle(self) -> tuple[np.ndarray, np.ndarray]:
         """Generate a single Sudoku puzzle and solution."""
         # Start with a complete valid solution
         solution = self._generate_complete_sudoku()
@@ -147,7 +147,7 @@ class SudokuGenerator:
 
         return puzzle, solution
 
-    def _generate_complete_sudoku(self) -> Optional[np.ndarray]:
+    def _generate_complete_sudoku(self) -> np.ndarray | None:
         """Generate a complete valid Sudoku solution."""
         grid = np.zeros((9, 9), dtype=int)
 
@@ -181,7 +181,7 @@ class SudokuGenerator:
 
         return False
 
-    def _find_empty_cell(self, grid: np.ndarray) -> Optional[Tuple[int, int]]:
+    def _find_empty_cell(self, grid: np.ndarray) -> tuple[int, int] | None:
         """Find an empty cell in the grid."""
         for i in range(9):
             for j in range(9):
@@ -258,7 +258,7 @@ class MazeGenerator:
         random.seed(config.seed)
         np.random.seed(config.seed)
 
-    def generate_samples(self) -> List[Dict[str, Any]]:
+    def generate_samples(self) -> list[dict[str, Any]]:
         """Generate maze samples."""
         samples = []
         available_sizes = self.config.maze_sizes[self.config.difficulty]
@@ -287,7 +287,7 @@ class MazeGenerator:
         logger.info(f"Generated {len(samples)} maze puzzles ({self.config.difficulty.name})")
         return samples
 
-    def _generate_maze_with_solution(self, height: int, width: int) -> Tuple[np.ndarray, List[Tuple[int, int]]]:
+    def _generate_maze_with_solution(self, height: int, width: int) -> tuple[np.ndarray, list[tuple[int, int]]]:
         """Generate maze and find optimal path."""
         # Generate maze using recursive backtracking
         maze = np.ones((height, width), dtype=int)  # 1 = wall, 0 = path
@@ -327,8 +327,8 @@ class MazeGenerator:
                     self._carve_maze(maze, nx, ny)
 
     def _find_shortest_path(
-        self, maze: np.ndarray, start: Tuple[int, int], end: Tuple[int, int]
-    ) -> Optional[List[Tuple[int, int]]]:
+        self, maze: np.ndarray, start: tuple[int, int], end: tuple[int, int]
+    ) -> list[tuple[int, int]] | None:
         """Find shortest path using BFS."""
         from collections import deque
 
@@ -358,8 +358,8 @@ class MazeGenerator:
         return None
 
     def _create_simple_path(
-        self, maze: np.ndarray, start: Tuple[int, int], end: Tuple[int, int]
-    ) -> List[Tuple[int, int]]:
+        self, maze: np.ndarray, start: tuple[int, int], end: tuple[int, int]
+    ) -> list[tuple[int, int]]:
         """Create a simple path when maze generation fails."""
         # Clear a simple path
         sx, sy = start
@@ -403,7 +403,7 @@ class MazeGenerator:
 
         return "\n".join(lines)
 
-    def _format_maze_solution(self, path: List[Tuple[int, int]]) -> str:
+    def _format_maze_solution(self, path: list[tuple[int, int]]) -> str:
         """Format maze solution as target string."""
         moves = []
 
@@ -432,7 +432,7 @@ class ListOpsGenerator:
 
         self.operations = ["MAX", "MIN", "MEDIAN", "SUM_MOD", "COUNT"]
 
-    def generate_samples(self) -> List[Dict[str, Any]]:
+    def generate_samples(self) -> list[dict[str, Any]]:
         """Generate ListOps samples."""
         samples = []
 
@@ -460,7 +460,7 @@ class ListOpsGenerator:
         logger.info(f"Generated {len(samples)} ListOps expressions ({self.config.difficulty.name})")
         return samples
 
-    def _generate_listops_expression(self, max_depth: int) -> Tuple[str, Optional[int]]:
+    def _generate_listops_expression(self, max_depth: int) -> tuple[str, int | None]:
         """Generate a nested ListOps expression."""
         expression = self._build_expression(max_depth)
 
@@ -559,7 +559,7 @@ class ListOpsGenerator:
 class AlgorithmicPuzzleDataset(Dataset):
     """Complete algorithmic puzzle dataset for Stage 2."""
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: dict[str, Any] = None):
         self.config = config or {}
         self.samples_per_type = self.config.get("samples_per_type", 50)
         self.difficulties = self.config.get("difficulties", [DifficultyLevel.EASY, DifficultyLevel.MEDIUM])
@@ -603,14 +603,14 @@ class AlgorithmicPuzzleDataset(Dataset):
     def __len__(self) -> int:
         return len(self.samples)
 
-    def __getitem__(self, idx: int) -> Dict[str, Any]:
+    def __getitem__(self, idx: int) -> dict[str, Any]:
         return self.samples[idx]
 
     def get_data_loader(self, batch_size: int = 6, shuffle: bool = True) -> DataLoader:
         """Get DataLoader for this dataset."""
         return DataLoader(self, batch_size=batch_size, shuffle=shuffle, collate_fn=self._collate_fn)
 
-    def _collate_fn(self, batch: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _collate_fn(self, batch: list[dict[str, Any]]) -> dict[str, Any]:
         """Collate function for batching."""
         return {
             "inputs": [item["input"] for item in batch],
@@ -620,7 +620,7 @@ class AlgorithmicPuzzleDataset(Dataset):
             "metadata": [item["metadata"] for item in batch],
         }
 
-    def get_task_distribution(self) -> Dict[str, Dict[str, int]]:
+    def get_task_distribution(self) -> dict[str, dict[str, int]]:
         """Get distribution of tasks by type and difficulty."""
         distribution = {}
 
@@ -651,7 +651,7 @@ class AlgorithmicPuzzleDataset(Dataset):
         return True
 
 
-def create_puzzle_dataset(config: Dict[str, Any] = None) -> AlgorithmicPuzzleDataset:
+def create_puzzle_dataset(config: dict[str, Any] = None) -> AlgorithmicPuzzleDataset:
     """Factory function to create algorithmic puzzle dataset."""
     dataset = AlgorithmicPuzzleDataset(config)
 

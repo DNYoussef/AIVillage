@@ -15,12 +15,11 @@ with Phase 1 emergency triage system for comprehensive fault management.
 import asyncio
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum, auto
 import json
 import logging
-import statistics
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 import uuid
 
 # Import Phase 1 emergency triage integration
@@ -102,8 +101,8 @@ class FaultEvent:
     fault_type: FaultType
     severity: FaultSeverity
     state: FaultState
-    affected_nodes: List[str]
-    affected_services: List[str]
+    affected_nodes: list[str]
+    affected_services: list[str]
     description: str
     detection_timestamp: datetime = field(default_factory=datetime.now)
     
@@ -114,31 +113,31 @@ class FaultEvent:
     
     # Archaeological enhancement
     predicted: bool = False
-    archaeological_pattern_id: Optional[str] = None
-    phase1_triage_score: Optional[float] = None
+    archaeological_pattern_id: str | None = None
+    phase1_triage_score: float | None = None
     
     # Evidence and context
-    evidence: Dict[str, Any] = field(default_factory=dict)
-    context: Dict[str, Any] = field(default_factory=dict)
+    evidence: dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
     
     # Lifecycle tracking
-    confirmed_at: Optional[datetime] = None
-    isolated_at: Optional[datetime] = None
-    resolved_at: Optional[datetime] = None
+    confirmed_at: datetime | None = None
+    isolated_at: datetime | None = None
+    resolved_at: datetime | None = None
 
 @dataclass
 class FaultPattern:
     """Archaeological fault pattern definition."""
     pattern_id: str
     pattern_name: str
-    fault_types: List[FaultType]
+    fault_types: list[FaultType]
     detection_algorithm: str
-    archaeological_basis: Dict[str, Any]
+    archaeological_basis: dict[str, Any]
     
     # Pattern characteristics
-    temporal_signature: Dict[str, float] = field(default_factory=dict)
-    spatial_signature: Dict[str, float] = field(default_factory=dict)
-    causal_factors: List[str] = field(default_factory=list)
+    temporal_signature: dict[str, float] = field(default_factory=dict)
+    spatial_signature: dict[str, float] = field(default_factory=dict)
+    causal_factors: list[str] = field(default_factory=list)
     
     # Performance metrics
     accuracy: float = 0.0
@@ -152,7 +151,7 @@ class FaultPrediction:
     prediction_id: str
     predicted_fault_type: FaultType
     predicted_severity: FaultSeverity
-    target_nodes: List[str]
+    target_nodes: list[str]
     probability: float
     time_horizon_minutes: int
     confidence: float
@@ -174,28 +173,28 @@ class FaultDetector:
     - Intelligent fault isolation and recovery coordination
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize the fault detector."""
         self.config = config or {}
         self.archaeological_metadata = ARCHAEOLOGICAL_METADATA
         
         # Core fault tracking
-        self.active_faults: Dict[str, FaultEvent] = {}
+        self.active_faults: dict[str, FaultEvent] = {}
         self.fault_history: deque = deque(maxlen=10000)
-        self.fault_patterns: Dict[str, FaultPattern] = {}
-        self.fault_predictions: Dict[str, FaultPrediction] = {}
+        self.fault_patterns: dict[str, FaultPattern] = {}
+        self.fault_predictions: dict[str, FaultPrediction] = {}
         
         # Detection state
-        self.node_states: Dict[str, Dict[str, Any]] = {}
-        self.service_states: Dict[str, Dict[str, Any]] = {}
-        self.detection_metrics: Dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
+        self.node_states: dict[str, dict[str, Any]] = {}
+        self.service_states: dict[str, dict[str, Any]] = {}
+        self.detection_metrics: dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
         
         # Archaeological components
-        self.archaeological_patterns: Dict[str, Any] = {}
-        self.byzantine_fault_detectors: Dict[str, Any] = {}
+        self.archaeological_patterns: dict[str, Any] = {}
+        self.byzantine_fault_detectors: dict[str, Any] = {}
         
         # Phase 1 integration
-        self.emergency_triage: Optional[EmergencyTriageSystem] = None
+        self.emergency_triage: EmergencyTriageSystem | None = None
         
         # Configuration
         self.detection_interval = self.config.get("detection_interval_seconds", 10)
@@ -214,7 +213,7 @@ class FaultDetector:
             "phase1_escalations": 0
         }
         
-        logger.info(f"🔍 FaultDetector initialized with archaeological metadata")
+        logger.info("🔍 FaultDetector initialized with archaeological metadata")
         logger.info(f"📊 Innovation Score: {self.archaeological_metadata['innovation_score']}")
         
     async def start(self):
@@ -279,7 +278,7 @@ class FaultDetector:
             
         logger.info("✅ Fault Detector stopped")
         
-    async def register_node(self, node_id: str, initial_state: Optional[Dict[str, Any]] = None):
+    async def register_node(self, node_id: str, initial_state: dict[str, Any] | None = None):
         """Register a node for fault detection monitoring."""
         try:
             self.node_states[node_id] = {
@@ -298,7 +297,7 @@ class FaultDetector:
     async def update_node_state(
         self,
         node_id: str,
-        state_update: Dict[str, Any]
+        state_update: dict[str, Any]
     ):
         """Update node state for fault detection."""
         try:
@@ -324,9 +323,9 @@ class FaultDetector:
     async def report_fault(
         self,
         fault_type: FaultType,
-        affected_nodes: List[str],
+        affected_nodes: list[str],
         description: str,
-        evidence: Optional[Dict[str, Any]] = None,
+        evidence: dict[str, Any] | None = None,
         severity: FaultSeverity = FaultSeverity.MEDIUM
     ) -> str:
         """Report a detected fault."""
@@ -367,9 +366,9 @@ class FaultDetector:
             
     async def get_active_faults(
         self,
-        severity_filter: Optional[FaultSeverity] = None,
-        node_filter: Optional[List[str]] = None
-    ) -> List[Dict[str, Any]]:
+        severity_filter: FaultSeverity | None = None,
+        node_filter: list[str] | None = None
+    ) -> list[dict[str, Any]]:
         """Get currently active faults."""
         try:
             faults = []
@@ -411,7 +410,7 @@ class FaultDetector:
         self,
         time_horizon_minutes: int = 60,
         min_probability: float = 0.5
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Get fault predictions using archaeological algorithms."""
         try:
             predictions = []
@@ -484,7 +483,7 @@ class FaultDetector:
             logger.error(f"❌ Failed to resolve fault {fault_id}: {e}")
             return False
             
-    async def get_fault_statistics(self) -> Dict[str, Any]:
+    async def get_fault_statistics(self) -> dict[str, Any]:
         """Get comprehensive fault detection statistics."""
         try:
             active_fault_count = len(self.active_faults)
@@ -738,9 +737,9 @@ class FaultDetector:
     async def _detect_fault(
         self,
         fault_type: FaultType,
-        affected_nodes: List[str],
+        affected_nodes: list[str],
         description: str,
-        evidence: Dict[str, Any]
+        evidence: dict[str, Any]
     ):
         """Detect and register a fault."""
         try:
@@ -834,7 +833,7 @@ class FaultDetector:
             
     # Utility Methods
     
-    def _find_similar_fault(self, fault_type: FaultType, affected_nodes: List[str]) -> Optional[FaultEvent]:
+    def _find_similar_fault(self, fault_type: FaultType, affected_nodes: list[str]) -> FaultEvent | None:
         """Find existing similar fault."""
         for fault in self.active_faults.values():
             if (fault.fault_type == fault_type and
@@ -843,7 +842,7 @@ class FaultDetector:
                 return fault
         return None
         
-    def _determine_fault_severity(self, fault_type: FaultType, evidence: Dict[str, Any]) -> FaultSeverity:
+    def _determine_fault_severity(self, fault_type: FaultType, evidence: dict[str, Any]) -> FaultSeverity:
         """Determine fault severity based on type and evidence."""
         severity_mapping = {
             FaultType.NODE_FAILURE: FaultSeverity.HIGH,
@@ -864,7 +863,7 @@ class FaultDetector:
             
         return base_severity
         
-    async def _calculate_node_health_score(self, node_id: str, state_update: Dict[str, Any]) -> float:
+    async def _calculate_node_health_score(self, node_id: str, state_update: dict[str, Any]) -> float:
         """Calculate archaeological health score for a node."""
         base_score = 1.0
         
@@ -888,7 +887,7 @@ class FaultDetector:
             
         return max(base_score, 0.0)
         
-    async def _match_archaeological_pattern(self, fault_event: FaultEvent) -> Optional[Dict[str, Any]]:
+    async def _match_archaeological_pattern(self, fault_event: FaultEvent) -> dict[str, Any] | None:
         """Match fault against archaeological patterns."""
         best_match = None
         best_confidence = 0.0
@@ -908,7 +907,7 @@ class FaultDetector:
     async def _calculate_pattern_match_confidence(
         self,
         fault_event: FaultEvent,
-        pattern: Dict[str, Any]
+        pattern: dict[str, Any]
     ) -> float:
         """Calculate confidence for pattern matching."""
         # Simplified pattern matching - would be more sophisticated in production

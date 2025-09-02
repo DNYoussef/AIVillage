@@ -24,7 +24,7 @@ import logging
 from pathlib import Path
 import secrets
 import sys
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 import uuid
 
 # Import torch at the top level to ensure it's available everywhere
@@ -179,12 +179,12 @@ websocket_connections = set()
 # =============================================================================
 
 
-def get_models_from_phase(phase_name: str) -> List[Dict[str, Any]]:
+def get_models_from_phase(phase_name: str) -> list[dict[str, Any]]:
     """Get all models produced by a specific phase."""
     return [model for model in model_storage.values() if model.get("phase_name") == phase_name]
 
 
-def get_latest_model_from_phase(phase_name: str) -> Optional[Dict[str, Any]]:
+def get_latest_model_from_phase(phase_name: str) -> dict[str, Any] | None:
     """Get the most recent model from a phase (winner model)."""
     phase_models = get_models_from_phase(phase_name)
     if not phase_models:
@@ -197,7 +197,7 @@ def get_latest_model_from_phase(phase_name: str) -> Optional[Dict[str, Any]]:
     return max(phase_models, key=lambda m: m.get("created_at", ""))
 
 
-def create_model_handoff(from_phase: str, to_phase: str, model_data: Dict[str, Any]) -> str:
+def create_model_handoff(from_phase: str, to_phase: str, model_data: dict[str, Any]) -> str:
     """Create a model handoff from one phase to another."""
     handoff_id = str(uuid.uuid4())
     model_data.update(
@@ -214,7 +214,7 @@ def create_model_handoff(from_phase: str, to_phase: str, model_data: Dict[str, A
     return handoff_id
 
 
-def validate_phase_prerequisites(phase_name: str) -> Tuple[bool, str, List[Dict[str, Any]]]:
+def validate_phase_prerequisites(phase_name: str) -> tuple[bool, str, list[dict[str, Any]]]:
     """Validate that required models are available from previous phases."""
     phase_requirements = {
         "Cognate": (None, 0),  # No prerequisites
@@ -567,8 +567,8 @@ async def execute_real_cognate_training(task_id: str, parameters: dict[str, Any]
 
     try:
         # Import the complete pretraining system
-        import sys
         from pathlib import Path
+        import sys
 
         # Add cognate pretraining path
         cognate_path = Path(__file__).parent.parent.parent / "core" / "agent_forge" / "phases" / "cognate_pretrain"
@@ -1093,8 +1093,8 @@ async def execute_evomerge_phase(task_id: str, parameters: dict[str, Any]):
 
     try:
         # Import the real EvoMerge implementation
-        import sys
         from pathlib import Path
+        import sys
 
         # Add core agent_forge path
         agent_forge_path = Path(__file__).parent.parent.parent / "core" / "agent_forge"
@@ -1110,7 +1110,7 @@ async def execute_evomerge_phase(task_id: str, parameters: dict[str, Any]):
             if str(agent_forge_dir) not in sys.path:
                 sys.path.insert(0, str(agent_forge_dir))
 
-            from phases.evomerge import EvoMergePhase, EvoMergeConfig
+            from phases.evomerge import EvoMergeConfig, EvoMergePhase
 
             logger.info("✅ Successfully imported real EvoMerge system")
         except (ImportError, NameError) as e:
@@ -2963,7 +2963,7 @@ async def load_existing_models_on_startup():
         models_summary_file = cognate_models_dir / "models_summary.json"
 
         if models_summary_file.exists():
-            with open(models_summary_file, "r") as f:
+            with open(models_summary_file) as f:
                 models_data = json.load(f)
 
             models = models_data.get("models", [])

@@ -10,11 +10,12 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from enum import Enum
 import logging
-from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from ..privacy.onion_routing import OnionRouter, OnionCircuit, NodeType, HiddenService
 from ..privacy.mixnet_integration import NymMixnetClient
-from ..privacy.onion_circuit_service import OnionCircuitService, PrivacyLevel as CircuitPrivacyLevel
+from ..privacy.onion_circuit_service import OnionCircuitService
+from ..privacy.onion_circuit_service import PrivacyLevel as CircuitPrivacyLevel
+from ..privacy.onion_routing import HiddenService, NodeType, OnionCircuit, OnionRouter
 
 if TYPE_CHECKING:
     from .fog_coordinator import FogCoordinator
@@ -46,7 +47,7 @@ class PrivacyAwareTask:
     task_id: str
     privacy_level: PrivacyLevel
     task_data: bytes
-    compute_requirements: Dict[str, Any]
+    compute_requirements: dict[str, Any]
     client_id: str
 
     # Privacy settings
@@ -57,11 +58,11 @@ class PrivacyAwareTask:
 
     # Circuit preferences
     min_circuit_hops: int = 3
-    preferred_regions: List[str] = field(default_factory=list)
-    excluded_nodes: Set[str] = field(default_factory=set)
+    preferred_regions: list[str] = field(default_factory=list)
+    excluded_nodes: set[str] = field(default_factory=set)
 
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
-    expires_at: Optional[datetime] = None
+    expires_at: datetime | None = None
 
 
 @dataclass
@@ -71,12 +72,12 @@ class PrivacyAwareService:
     service_id: str
     service_type: str
     privacy_level: PrivacyLevel
-    onion_address: Optional[str] = None
-    circuit_id: Optional[str] = None
-    hidden_service: Optional[HiddenService] = None
+    onion_address: str | None = None
+    circuit_id: str | None = None
+    hidden_service: HiddenService | None = None
 
     # Service configuration
-    ports: Dict[int, int] = field(default_factory=dict)
+    ports: dict[int, int] = field(default_factory=dict)
     access_control: bool = False
     authentication_required: bool = False
 
@@ -114,15 +115,15 @@ class FogOnionCoordinator:
         self.max_circuits = max_circuits
 
         # Components
-        self.onion_router: Optional[OnionRouter] = None
-        self.mixnet_client: Optional[NymMixnetClient] = None
-        self.circuit_service: Optional[OnionCircuitService] = None
+        self.onion_router: OnionRouter | None = None
+        self.mixnet_client: NymMixnetClient | None = None
+        self.circuit_service: OnionCircuitService | None = None
 
         # Task and service management
-        self.privacy_tasks: Dict[str, PrivacyAwareTask] = {}
-        self.privacy_services: Dict[str, PrivacyAwareService] = {}
-        self.task_circuits: Dict[str, OnionCircuit] = {}
-        self.service_circuits: Dict[str, OnionCircuit] = {}
+        self.privacy_tasks: dict[str, PrivacyAwareTask] = {}
+        self.privacy_services: dict[str, PrivacyAwareService] = {}
+        self.task_circuits: dict[str, OnionCircuit] = {}
+        self.service_circuits: dict[str, OnionCircuit] = {}
 
         # Statistics
         self.stats = {
@@ -134,7 +135,7 @@ class FogOnionCoordinator:
         }
 
         self._running = False
-        self._background_tasks: Set[asyncio.Task] = set()
+        self._background_tasks: set[asyncio.Task] = set()
 
         logger.info(f"FogOnionCoordinator initialized: {node_id}")
 
@@ -275,9 +276,9 @@ class FogOnionCoordinator:
         service_id: str,
         service_type: str,
         privacy_level: PrivacyLevel,
-        ports: Dict[int, int],
+        ports: dict[int, int],
         authentication_required: bool = False,
-    ) -> Optional[PrivacyAwareService]:
+    ) -> PrivacyAwareService | None:
         """Create a privacy-aware fog service."""
         if not self._running or not self.onion_router:
             return None
@@ -380,14 +381,14 @@ class FogOnionCoordinator:
             logger.error(f"Error sending private gossip to {recipient_id}: {e}")
             return False
 
-    async def get_service_by_onion_address(self, onion_address: str) -> Optional[PrivacyAwareService]:
+    async def get_service_by_onion_address(self, onion_address: str) -> PrivacyAwareService | None:
         """Get service by its onion address."""
         for service in self.privacy_services.values():
             if service.onion_address == onion_address:
                 return service
         return None
 
-    async def get_coordinator_stats(self) -> Dict[str, Any]:
+    async def get_coordinator_stats(self) -> dict[str, Any]:
         """Get comprehensive coordinator statistics."""
         onion_stats = {}
         if self.onion_router:

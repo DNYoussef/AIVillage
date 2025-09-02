@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import torch
-import torch.nn as nn
-from typing import Optional, Dict, List
 import json
 from pathlib import Path
+
+import torch
+import torch.nn as nn
 
 
 class TextHead(nn.Module):
@@ -17,7 +17,7 @@ class TextHead(nn.Module):
         self.d_model = d_model
         self.vocab_size = vocab_size
 
-    def forward(self, input_ids: torch.Tensor, attention_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor | None = None) -> torch.Tensor:
         """Convert tokenized text to d_model representations."""
         # Base implementation - should be overridden by subclasses
         # For now, return zero tensor with correct shape
@@ -93,8 +93,8 @@ class CogmentTextHead(TextHead):
     def forward(
         self,
         input_ids: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        position_ids: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
+        position_ids: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """
         Convert token IDs to embeddings.
@@ -188,8 +188,8 @@ class SharedEmbeddingTextHead(TextHead):
     def forward(
         self,
         input_ids: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        position_ids: Optional[torch.Tensor] = None,
+        attention_mask: torch.Tensor | None = None,
+        position_ids: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Forward pass with shared embeddings."""
         B, seq_len = input_ids.shape
@@ -228,7 +228,7 @@ class SimpleTokenizer:
     is not available or for lightweight deployment.
     """
 
-    def __init__(self, vocab_path: Optional[Path] = None, vocab_size: int = 16000):
+    def __init__(self, vocab_path: Path | None = None, vocab_size: int = 16000):
         self.vocab_size = vocab_size
 
         # Special tokens (must match TextHead)
@@ -261,13 +261,13 @@ class SimpleTokenizer:
         self.bos_token_id = self.special_tokens["<s>"]
         self.eos_token_id = self.special_tokens["</s>"]
 
-    def _load_vocab(self, vocab_path: Path) -> Dict[str, int]:
+    def _load_vocab(self, vocab_path: Path) -> dict[str, int]:
         """Load vocabulary from JSON file."""
-        with open(vocab_path, "r") as f:
+        with open(vocab_path) as f:
             data = json.load(f)
         return data.get("vocab", {})
 
-    def _create_default_vocab(self) -> Dict[str, int]:
+    def _create_default_vocab(self) -> dict[str, int]:
         """Create default vocabulary with special tokens and common subwords."""
         vocab = self.special_tokens.copy()
 
@@ -322,7 +322,7 @@ class SimpleTokenizer:
 
         return vocab
 
-    def encode(self, text: str, max_length: Optional[int] = None) -> List[int]:
+    def encode(self, text: str, max_length: int | None = None) -> list[int]:
         """
         Encode text to token IDs.
 
@@ -361,7 +361,7 @@ class SimpleTokenizer:
 
         return tokens
 
-    def decode(self, token_ids: List[int]) -> str:
+    def decode(self, token_ids: list[int]) -> str:
         """Decode token IDs to text."""
         tokens = []
         for token_id in token_ids:
@@ -377,11 +377,11 @@ class SimpleTokenizer:
 
     def batch_encode(
         self,
-        texts: List[str],
-        max_length: Optional[int] = None,
+        texts: list[str],
+        max_length: int | None = None,
         padding: bool = True,
         return_tensors: str = "pt",
-    ) -> Dict[str, torch.Tensor]:
+    ) -> dict[str, torch.Tensor]:
         """Batch encode texts with padding."""
         encoded = [self.encode(text, max_length) for text in texts]
 

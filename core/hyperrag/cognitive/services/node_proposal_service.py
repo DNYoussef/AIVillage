@@ -7,12 +7,12 @@ Calculates existence probabilities and utility scores for proposals.
 Extracted from GraphFixer to follow single responsibility principle.
 """
 
+from typing import Any
 import uuid
-from typing import Any, Dict, List, Set
 
-from ..graph_fixer import DetectedGap, ProposedNode, GapType
+from ..graph_fixer import DetectedGap, GapType, ProposedNode
+from ..interfaces.base_service import AsyncServiceMixin, CacheableMixin, ServiceConfig
 from ..interfaces.service_interfaces import INodeProposalService
-from ..interfaces.base_service import ServiceConfig, CacheableMixin, AsyncServiceMixin
 
 
 class NodeProposalService(INodeProposalService, CacheableMixin, AsyncServiceMixin):
@@ -52,7 +52,7 @@ class NodeProposalService(INodeProposalService, CacheableMixin, AsyncServiceMixi
         self.clear_cache()
         self._initialized = False
 
-    async def propose_nodes(self, gaps: List[DetectedGap]) -> List[ProposedNode]:
+    async def propose_nodes(self, gaps: list[DetectedGap]) -> list[ProposedNode]:
         """
         Generate node proposals for detected gaps.
 
@@ -174,7 +174,7 @@ class NodeProposalService(INodeProposalService, CacheableMixin, AsyncServiceMixi
 
     # Private implementation methods
 
-    async def _propose_missing_nodes(self, gap: DetectedGap) -> List[ProposedNode]:
+    async def _propose_missing_nodes(self, gap: DetectedGap) -> list[ProposedNode]:
         """Propose nodes for missing node gaps."""
         proposals = []
 
@@ -201,7 +201,7 @@ class NodeProposalService(INodeProposalService, CacheableMixin, AsyncServiceMixi
             self.logger.exception(f"Missing node proposal failed: {e}")
             return []
 
-    async def _propose_bridging_nodes(self, gap: DetectedGap) -> List[ProposedNode]:
+    async def _propose_bridging_nodes(self, gap: DetectedGap) -> list[ProposedNode]:
         """Propose nodes to bridge isolated clusters."""
         proposals = []
 
@@ -230,7 +230,7 @@ class NodeProposalService(INodeProposalService, CacheableMixin, AsyncServiceMixi
             self.logger.exception(f"Bridging node proposal failed: {e}")
             return []
 
-    async def _propose_path_nodes(self, gap: DetectedGap) -> List[ProposedNode]:
+    async def _propose_path_nodes(self, gap: DetectedGap) -> list[ProposedNode]:
         """Propose nodes to complete reasoning paths."""
         proposals = []
 
@@ -260,7 +260,7 @@ class NodeProposalService(INodeProposalService, CacheableMixin, AsyncServiceMixi
             self.logger.exception(f"Path node proposal failed: {e}")
             return []
 
-    async def _get_neighboring_concepts(self, node_ids: List[str]) -> Set[str]:
+    async def _get_neighboring_concepts(self, node_ids: list[str]) -> set[str]:
         """Get concepts from nodes neighboring the given nodes."""
         neighboring_concepts = set()
 
@@ -283,7 +283,7 @@ class NodeProposalService(INodeProposalService, CacheableMixin, AsyncServiceMixi
 
         return neighboring_concepts
 
-    async def _create_bridging_proposal(self, gap: DetectedGap, concepts: List[str]) -> ProposedNode:
+    async def _create_bridging_proposal(self, gap: DetectedGap, concepts: list[str]) -> ProposedNode:
         """Create a proposal for a bridging concept."""
         bridging_concept = f"bridge_concept_for_{concepts[0]}_and_{concepts[1]}"
 
@@ -308,7 +308,7 @@ class NodeProposalService(INodeProposalService, CacheableMixin, AsyncServiceMixi
 
         return proposal
 
-    async def _generate_context_proposals(self, gap: DetectedGap) -> List[ProposedNode]:
+    async def _generate_context_proposals(self, gap: DetectedGap) -> list[ProposedNode]:
         """Generate proposals based on gap context."""
         proposals = []
 
@@ -376,12 +376,12 @@ class NodeProposalService(INodeProposalService, CacheableMixin, AsyncServiceMixi
             return 0.8
         return 0.6
 
-    async def _rank_proposals(self, proposals: List[ProposedNode]) -> List[ProposedNode]:
+    async def _rank_proposals(self, proposals: list[ProposedNode]) -> list[ProposedNode]:
         """Rank proposals by utility and confidence."""
         proposals.sort(key=lambda p: (p.utility_score * p.confidence * p.existence_probability), reverse=True)
         return proposals
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get service statistics."""
         return {
             "nodes_proposed": self.stats["nodes_proposed"],

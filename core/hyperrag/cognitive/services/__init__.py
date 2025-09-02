@@ -15,12 +15,12 @@ and resolution:
 - KnowledgeValidatorService: Validates consistency and learns from feedback
 """
 
-from .gap_detection_service import GapDetectionService
-from .node_proposal_service import NodeProposalService
-from .relationship_analyzer_service import RelationshipAnalyzerService
 from .confidence_calculator_service import ConfidenceCalculatorService
+from .gap_detection_service import GapDetectionService
 from .graph_analytics_service import GraphAnalyticsService
 from .knowledge_validator_service import KnowledgeValidatorService
+from .node_proposal_service import NodeProposalService
+from .relationship_analyzer_service import RelationshipAnalyzerService
 
 __all__ = [
     "GapDetectionService",

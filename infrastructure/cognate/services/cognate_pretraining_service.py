@@ -7,13 +7,14 @@ Completely separate from general agent training workflows.
 """
 
 import asyncio
+from dataclasses import asdict, dataclass
 import json
 import logging
 import math
-import time
-from dataclasses import dataclass, asdict
-from typing import Dict, List, Optional, Tuple, Any
 from pathlib import Path
+import time
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -74,8 +75,8 @@ class CognateTrainingState:
     loss: float = 0.0
     perplexity: float = 0.0
     act_usage: float = 0.0
-    ltm_attention_weights: List[float] = None
-    grokfast_momentum: Dict[str, torch.Tensor] = None
+    ltm_attention_weights: list[float] = None
+    grokfast_momentum: dict[str, torch.Tensor] = None
     learning_rate: float = 0.0
     throughput: float = 0.0
     phase: str = "initialization"
@@ -100,8 +101,8 @@ class CognateAttention(nn.Module):
         self.scale = self.d_head**-0.5
 
     def forward(
-        self, x: torch.Tensor, mask: Optional[torch.Tensor] = None, ltm_memory: Optional[torch.Tensor] = None
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        self, x: torch.Tensor, mask: torch.Tensor | None = None, ltm_memory: torch.Tensor | None = None
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         batch_size, seq_len, d_model = x.shape
 
         q = self.q_proj(x).view(batch_size, seq_len, self.n_heads, self.d_head).transpose(1, 2)
@@ -144,7 +145,7 @@ class CognateACTLayer(nn.Module):
         self.max_steps = config.act_max_steps
         self.penalty = config.act_penalty
 
-    def forward(self, x: torch.Tensor, layer_fn) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    def forward(self, x: torch.Tensor, layer_fn) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         batch_size, seq_len, d_model = x.shape
 
         # Initialize states
@@ -213,8 +214,8 @@ class CognateTransformerLayer(nn.Module):
         self.act_layer = CognateACTLayer(config)
 
     def forward(
-        self, x: torch.Tensor, mask: Optional[torch.Tensor] = None, ltm_memory: Optional[torch.Tensor] = None
-    ) -> Tuple[torch.Tensor, Dict[str, Any]]:
+        self, x: torch.Tensor, mask: torch.Tensor | None = None, ltm_memory: torch.Tensor | None = None
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
 
         def attention_block(x_input):
             attn_out, attn_weights = self.attention(self.norm1(x_input), mask, ltm_memory)
@@ -244,7 +245,7 @@ class CognateLTMMemory(nn.Module):
         self.memory_proj = nn.Linear(config.d_model, config.d_model)
         self.gate = nn.Linear(config.d_model * 2, 1)
 
-    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         batch_size, seq_len, d_model = x.shape
 
         # Project memory
@@ -302,8 +303,8 @@ class CognateModel(nn.Module):
             torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
 
     def forward(
-        self, input_ids: torch.Tensor, attention_mask: Optional[torch.Tensor] = None
-    ) -> Dict[str, torch.Tensor]:
+        self, input_ids: torch.Tensor, attention_mask: torch.Tensor | None = None
+    ) -> dict[str, torch.Tensor]:
         batch_size, seq_len = input_ids.shape
         device = input_ids.device
 
@@ -336,7 +337,7 @@ class CognateDataset(Dataset):
         self.max_length = max_length
         self.samples = self._load_dataset()
 
-    def _load_dataset(self) -> List[Dict[str, Any]]:
+    def _load_dataset(self) -> list[dict[str, Any]]:
         """Load dataset samples based on type"""
         # This is a placeholder - in practice, load actual datasets
         samples = []
@@ -675,7 +676,7 @@ class CognatePretrainingService:
             logger.error(f"Failed to load checkpoint: {e}")
             raise
 
-    async def get_training_metrics(self) -> Dict[str, Any]:
+    async def get_training_metrics(self) -> dict[str, Any]:
         """Get current training metrics"""
         metrics = {
             "state": asdict(self.state),
@@ -685,7 +686,7 @@ class CognatePretrainingService:
         }
         return metrics
 
-    async def _emit_websocket_event(self, event_type: str, data: Dict[str, Any]):
+    async def _emit_websocket_event(self, event_type: str, data: dict[str, Any]):
         """Emit WebSocket event to connected clients"""
         if not self.websocket_clients:
             return

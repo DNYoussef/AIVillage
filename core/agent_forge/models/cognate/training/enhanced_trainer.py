@@ -12,12 +12,12 @@ This module extends the original Cognate trainer with:
 Backward compatibility is maintained with the original trainer interface.
 """
 
-from dataclasses import dataclass, asdict
-from pathlib import Path
+from dataclasses import asdict, dataclass
 import json
 import logging
+from pathlib import Path
 import time
-from typing import Any, Dict, Optional, Union
+from typing import Any
 import warnings
 
 import torch
@@ -26,11 +26,11 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 
 try:
-    from torch.amp import autocast, GradScaler
+    from torch.amp import GradScaler, autocast
 except ImportError:
     # Fallback for older PyTorch versions
     try:
-        from torch.cuda.amp import autocast, GradScaler
+        from torch.cuda.amp import GradScaler, autocast
     except ImportError:
         # Mock implementations for compatibility
         def autocast(*args, **kwargs):
@@ -69,11 +69,11 @@ try:
     if grokfast_path not in sys.path:
         sys.path.append(grokfast_path)
 
-    from grokfast_enhanced import EnhancedGrokFastOptimizer, EnhancedGrokFastConfig, create_enhanced_grokfast_optimizer
     from grokfast_config_manager import (
         GrokFastHyperparameters,
         create_optimized_grokfast_config,
     )
+    from grokfast_enhanced import EnhancedGrokFastConfig, EnhancedGrokFastOptimizer, create_enhanced_grokfast_optimizer
 
     GROKFAST_AVAILABLE = True
     logger.info("Successfully imported local enhanced GrokFast components")
@@ -86,8 +86,8 @@ except ImportError as e:
 
 # Import existing Cognate components
 try:
-    from ..config.cognate_config import CognateModelConfig, TrainingConfig
     from ..cognate_model import CognateModel
+    from ..config.cognate_config import CognateModelConfig, TrainingConfig
 except ImportError:
     warnings.warn("Cognate model components not available, using mock implementations")
 
@@ -145,7 +145,7 @@ class EnhancedTrainingMetrics:
     baseline_step_time: float = 0.0
     enhanced_step_time: float = 0.0
 
-    def to_dict(self) -> Dict[str, float]:
+    def to_dict(self) -> dict[str, float]:
         """Convert metrics to dictionary."""
         return {
             "total_loss": self.total_loss,
@@ -233,11 +233,11 @@ class EnhancedCognateTrainer:
     def __init__(
         self,
         model: CognateModel,
-        config: Union[EnhancedCognateTrainingConfig, TrainingConfig],
-        train_dataset: Optional[Dataset] = None,
-        eval_dataset: Optional[Dataset] = None,
+        config: EnhancedCognateTrainingConfig | TrainingConfig,
+        train_dataset: Dataset | None = None,
+        eval_dataset: Dataset | None = None,
         output_dir: str = "./enhanced_cognate_training",
-        resume_from_checkpoint: Optional[str] = None,
+        resume_from_checkpoint: str | None = None,
     ):
         self.model = model
 
@@ -375,7 +375,7 @@ class EnhancedCognateTrainer:
             except Exception as e:
                 logger.warning(f"Gradient checkpointing failed: {e}")
 
-    def train(self) -> Dict[str, Any]:
+    def train(self) -> dict[str, Any]:
         """Enhanced training loop with comprehensive acceleration monitoring."""
         logger.info("Starting enhanced Cognate training...")
 
@@ -462,7 +462,7 @@ class EnhancedCognateTrainer:
 
         return final_results
 
-    def _enhanced_training_step(self, batch: Dict[str, torch.Tensor]) -> EnhancedTrainingMetrics:
+    def _enhanced_training_step(self, batch: dict[str, torch.Tensor]) -> EnhancedTrainingMetrics:
         """Enhanced training step with comprehensive metrics."""
         step_start = time.time()
 
@@ -585,7 +585,7 @@ class EnhancedCognateTrainer:
 
         logger.info(log_msg)
 
-    def _compile_final_results(self, total_loss: float, total_time: float) -> Dict[str, Any]:
+    def _compile_final_results(self, total_loss: float, total_time: float) -> dict[str, Any]:
         """Compile comprehensive final results."""
         results = {
             "total_steps": self.global_step,
@@ -614,7 +614,7 @@ class EnhancedCognateTrainer:
 
         return results
 
-    def _save_enhanced_results(self, results: Dict[str, Any]):
+    def _save_enhanced_results(self, results: dict[str, Any]):
         """Save comprehensive enhanced results."""
         # Save main results
         with open(self.output_dir / "enhanced_training_results.json", "w") as f:
@@ -714,7 +714,7 @@ class EnhancedCognateTrainer:
 def create_enhanced_cognate_trainer(
     model: CognateModel,
     train_dataset: Dataset,
-    eval_dataset: Optional[Dataset] = None,
+    eval_dataset: Dataset | None = None,
     target_acceleration: float = 50.0,
     output_dir: str = "./enhanced_cognate_training",
     **config_kwargs,

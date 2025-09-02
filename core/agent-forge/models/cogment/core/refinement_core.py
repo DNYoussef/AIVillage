@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
+from hrrm.common.transformer_blocks import RMSNorm, SwiGLU
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Tuple, Optional
-
-from hrrm.common.transformer_blocks import RMSNorm, SwiGLU
 
 
 class MemoryGate(nn.Module):
@@ -23,7 +21,7 @@ class MemoryGate(nn.Module):
         self.gate_proj = nn.Linear(2 * d_model, d_model)  # Fixed: concat of hidden_states + memory_context
         self.norm = RMSNorm(d_model)
 
-    def forward(self, hidden_states: torch.Tensor, memory: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(self, hidden_states: torch.Tensor, memory: torch.Tensor | None = None) -> torch.Tensor:
         """
         Apply memory-gated fusion.
 
@@ -112,9 +110,9 @@ class RefinementCore(nn.Module):
     def forward(
         self,
         hidden_states: torch.Tensor,  # [B, N, d_model]
-        memory: Optional[torch.Tensor] = None,  # [B, M, ltm_dim]
+        memory: torch.Tensor | None = None,  # [B, M, ltm_dim]
         step: int = 0,  # Current refinement step
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Forward pass through refinement core.
 
@@ -184,7 +182,7 @@ class RefinementOutput:
         delta_logits: torch.Tensor,
         halt_prob: torch.Tensor,
         refined_states: torch.Tensor,
-        combined_logits: Optional[torch.Tensor] = None,
+        combined_logits: torch.Tensor | None = None,
     ):
         self.y_logits = y_logits
         self.delta_logits = delta_logits

@@ -5,9 +5,10 @@ token refresh, and registration. Extracted from the EnhancedSecureAPIServer.
 """
 
 import logging
+
 from aiohttp import web, web_request
 
-from ..interfaces import IAuthenticationService, IMFAService, AuthCredentials, MFAMethodType
+from ..interfaces import AuthCredentials, IAuthenticationService, IMFAService, MFAMethodType
 
 logger = logging.getLogger(__name__)
 

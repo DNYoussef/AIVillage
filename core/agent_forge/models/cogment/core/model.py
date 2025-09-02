@@ -3,18 +3,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional, List, Dict
 
+from hrrm.common.param_math import count_params
+from hrrm.common.transformer_blocks import CausalSelfAttention, RMSNorm, SwiGLU
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from hrrm.common.transformer_blocks import CausalSelfAttention, RMSNorm, SwiGLU
-from hrrm.common.param_math import count_params
-
+from .act_halting import ACTHalting, ACTLoss
 from .config import CogmentConfig
 from .refinement_core import RefinementCore, RefinementOutput
-from .act_halting import ACTHalting, ACTLoss
 
 
 @dataclass
@@ -22,23 +20,23 @@ class CogmentOutput:
     """Output from Cogment model."""
 
     logits: torch.Tensor  # Final prediction logits [B, N, vocab_size]
-    loss: Optional[torch.Tensor] = None  # Total loss (task + ponder)
+    loss: torch.Tensor | None = None  # Total loss (task + ponder)
 
     # ACT information
-    ponder_cost: Optional[torch.Tensor] = None  # Average computation steps [B]
-    halt_weights: Optional[torch.Tensor] = None  # Step weights for averaging [B, T]
+    ponder_cost: torch.Tensor | None = None  # Average computation steps [B]
+    halt_weights: torch.Tensor | None = None  # Step weights for averaging [B, T]
 
     # Refinement information
-    refinement_outputs: Optional[List[RefinementOutput]] = None  # All refinement steps
-    memory_states: Optional[torch.Tensor] = None  # Final memory states
+    refinement_outputs: list[RefinementOutput] | None = None  # All refinement steps
+    memory_states: torch.Tensor | None = None  # Final memory states
 
     # Loss breakdown
-    task_loss: Optional[torch.Tensor] = None  # Task-specific loss
-    ponder_loss: Optional[torch.Tensor] = None  # Ponder cost loss
+    task_loss: torch.Tensor | None = None  # Task-specific loss
+    ponder_loss: torch.Tensor | None = None  # Ponder cost loss
 
     # Debug information
-    num_steps: Optional[torch.Tensor] = None  # Actual steps taken [B]
-    halt_probs: Optional[torch.Tensor] = None  # All halt probabilities [B, T]
+    num_steps: torch.Tensor | None = None  # Actual steps taken [B]
+    halt_probs: torch.Tensor | None = None  # All halt probabilities [B, T]
 
 
 class TransformerBlock(nn.Module):
@@ -62,7 +60,7 @@ class TransformerBlock(nn.Module):
         # Dropout
         self.dropout = nn.Dropout(config.dropout)
 
-    def forward(self, x: torch.Tensor, attn_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, attn_mask: torch.Tensor | None = None) -> torch.Tensor:
         """Standard transformer block forward pass."""
         # Attention with residual
         attn_out = self.attn(self.attn_norm(x), attn_mask)
@@ -94,7 +92,7 @@ class CogmentBackbone(nn.Module):
         # Initialize embeddings
         nn.init.normal_(self.token_embedding.weight, std=0.02)
 
-    def forward(self, input_ids: torch.Tensor, attn_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(self, input_ids: torch.Tensor, attn_mask: torch.Tensor | None = None) -> torch.Tensor:
         """
         Forward pass through transformer backbone.
 
@@ -148,10 +146,10 @@ class Cogment(nn.Module):
     def forward(
         self,
         input_ids: torch.Tensor,  # [B, N]
-        labels: Optional[torch.Tensor] = None,  # [B, N]
-        attn_mask: Optional[torch.Tensor] = None,  # [B, N, N]
-        memory: Optional[torch.Tensor] = None,  # [B, M, ltm_dim]
-        max_refinement_steps: Optional[int] = None,  # Override default steps
+        labels: torch.Tensor | None = None,  # [B, N]
+        attn_mask: torch.Tensor | None = None,  # [B, N, N]
+        memory: torch.Tensor | None = None,  # [B, M, ltm_dim]
+        max_refinement_steps: int | None = None,  # Override default steps
         return_refinement_details: bool = False,  # Return detailed step info
     ) -> CogmentOutput:
         """
@@ -278,10 +276,10 @@ class Cogment(nn.Module):
         input_ids: torch.Tensor,
         max_length: int = 100,
         temperature: float = 1.0,
-        top_k: Optional[int] = None,
-        top_p: Optional[float] = None,
+        top_k: int | None = None,
+        top_p: float | None = None,
         do_sample: bool = True,
-        memory: Optional[torch.Tensor] = None,
+        memory: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """
         Generate text using Cogment with adaptive computation.
@@ -350,7 +348,7 @@ class Cogment(nn.Module):
         """Count total trainable parameters."""
         return count_params(self)
 
-    def parameter_breakdown(self) -> Dict[str, int]:
+    def parameter_breakdown(self) -> dict[str, int]:
         """Get detailed parameter breakdown by component."""
         breakdown = {
             "backbone": count_params(self.backbone),

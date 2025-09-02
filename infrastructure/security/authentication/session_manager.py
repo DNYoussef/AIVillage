@@ -5,10 +5,10 @@ validation, expiration, and cleanup functionality.
 """
 
 import asyncio
+from datetime import datetime, timedelta
 import logging
 import secrets
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     import redis.asyncio as redis
@@ -31,12 +31,12 @@ class SessionData:
         user_id: str,
         created_at: datetime,
         last_activity: datetime,
-        device_info: Dict[str, Any],
-        roles: List[str] = None,
-        permissions: List[str] = None,
-        tenant_id: Optional[str] = None,
+        device_info: dict[str, Any],
+        roles: list[str] = None,
+        permissions: list[str] = None,
+        tenant_id: str | None = None,
         is_active: bool = True,
-        metadata: Dict[str, Any] = None,
+        metadata: dict[str, Any] = None,
     ):
         self.session_id = session_id
         self.user_id = user_id
@@ -49,7 +49,7 @@ class SessionData:
         self.is_active = is_active
         self.metadata = metadata or {}
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "session_id": self.session_id,
@@ -65,7 +65,7 @@ class SessionData:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SessionData":
+    def from_dict(cls, data: dict[str, Any]) -> "SessionData":
         """Create from dictionary."""
         return cls(
             session_id=data["session_id"],
@@ -84,7 +84,7 @@ class SessionData:
 class SessionManager:
     """Session manager with Redis backend."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         self.config = config
 
         # Redis configuration
@@ -98,14 +98,14 @@ class SessionManager:
         self.cleanup_interval = config.get("cleanup_interval_minutes", 30) * 60
 
         # Connection
-        self.redis_client: Optional[redis.Redis] = None
+        self.redis_client: redis.Redis | None = None
 
         # Fallback storage for when Redis is not available
-        self.memory_sessions: Dict[str, SessionData] = {}
-        self.user_sessions: Dict[str, List[str]] = {}
+        self.memory_sessions: dict[str, SessionData] = {}
+        self.user_sessions: dict[str, list[str]] = {}
 
         # Background tasks
-        self._cleanup_task: Optional[asyncio.Task] = None
+        self._cleanup_task: asyncio.Task | None = None
         self._running = False
 
     async def initialize(self):
@@ -142,12 +142,12 @@ class SessionManager:
     async def create_session(
         self,
         user_id: str,
-        device_info: Dict[str, Any],
-        roles: List[str] = None,
-        permissions: List[str] = None,
-        tenant_id: Optional[str] = None,
-        metadata: Dict[str, Any] = None,
-    ) -> Dict[str, Any]:
+        device_info: dict[str, Any],
+        roles: list[str] = None,
+        permissions: list[str] = None,
+        tenant_id: str | None = None,
+        metadata: dict[str, Any] = None,
+    ) -> dict[str, Any]:
         """Create new user session."""
         try:
             # Generate session ID
@@ -193,7 +193,7 @@ class SessionManager:
             logger.error(f"Session creation error: {e}")
             raise SessionError(f"Failed to create session: {e}")
 
-    async def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:
+    async def get_session(self, session_id: str) -> dict[str, Any] | None:
         """Get session by ID."""
         try:
             if self.redis_client:
@@ -279,7 +279,7 @@ class SessionManager:
             logger.error(f"User session revocation error: {e}")
             return 0
 
-    async def get_user_sessions(self, user_id: str) -> List[Dict[str, Any]]:
+    async def get_user_sessions(self, user_id: str) -> list[dict[str, Any]]:
         """Get all active sessions for user."""
         try:
             user_sessions = await self._get_user_sessions(user_id)
@@ -309,7 +309,7 @@ class SessionManager:
             logger.error(f"Session cleanup error: {e}")
             return 0
 
-    async def get_session_stats(self) -> Dict[str, Any]:
+    async def get_session_stats(self) -> dict[str, Any]:
         """Get session statistics."""
         try:
             if self.redis_client:
@@ -342,7 +342,7 @@ class SessionManager:
 
         await pipe.execute()
 
-    async def _get_session_redis(self, session_id: str) -> Optional[SessionData]:
+    async def _get_session_redis(self, session_id: str) -> SessionData | None:
         """Get session from Redis."""
         session_key = f"{self.session_prefix}{session_id}"
         session_dict = await self.redis_client.hgetall(session_key)
@@ -380,7 +380,7 @@ class SessionManager:
 
         return cleaned_count
 
-    async def _get_session_stats_redis(self) -> Dict[str, Any]:
+    async def _get_session_stats_redis(self) -> dict[str, Any]:
         """Get session statistics from Redis."""
         session_pattern = f"{self.session_prefix}*"
         user_pattern = f"{self.user_sessions_prefix}*"
@@ -412,7 +412,7 @@ class SessionManager:
         if session_data.session_id not in self.user_sessions[user_id]:
             self.user_sessions[user_id].append(session_data.session_id)
 
-    async def _get_session_memory(self, session_id: str) -> Optional[SessionData]:
+    async def _get_session_memory(self, session_id: str) -> SessionData | None:
         """Get session from memory."""
         return self.memory_sessions.get(session_id)
 
@@ -442,7 +442,7 @@ class SessionManager:
 
         return len(expired_sessions)
 
-    async def _get_session_stats_memory(self) -> Dict[str, Any]:
+    async def _get_session_stats_memory(self) -> dict[str, Any]:
         """Get session statistics from memory."""
         return {
             "active_sessions": len(self.memory_sessions),
@@ -452,21 +452,21 @@ class SessionManager:
 
     # Helper methods
 
-    async def _get_session_data(self, session_id: str) -> Optional[SessionData]:
+    async def _get_session_data(self, session_id: str) -> SessionData | None:
         """Get session data object."""
         if self.redis_client:
             return await self._get_session_redis(session_id)
         else:
             return await self._get_session_memory(session_id)
 
-    async def _get_user_sessions(self, user_id: str) -> List[SessionData]:
+    async def _get_user_sessions(self, user_id: str) -> list[SessionData]:
         """Get all sessions for user."""
         if self.redis_client:
             return await self._get_user_sessions_redis(user_id)
         else:
             return await self._get_user_sessions_memory(user_id)
 
-    async def _get_user_sessions_redis(self, user_id: str) -> List[SessionData]:
+    async def _get_user_sessions_redis(self, user_id: str) -> list[SessionData]:
         """Get user sessions from Redis."""
         user_sessions_key = f"{self.user_sessions_prefix}{user_id}"
         session_ids = await self.redis_client.smembers(user_sessions_key)
@@ -479,7 +479,7 @@ class SessionManager:
 
         return sessions
 
-    async def _get_user_sessions_memory(self, user_id: str) -> List[SessionData]:
+    async def _get_user_sessions_memory(self, user_id: str) -> list[SessionData]:
         """Get user sessions from memory."""
         session_ids = self.user_sessions.get(user_id, [])
 

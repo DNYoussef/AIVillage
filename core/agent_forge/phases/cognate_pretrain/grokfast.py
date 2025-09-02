@@ -1,18 +1,19 @@
 from collections import deque
-from typing import Dict, Optional, Literal
+from typing import Literal
+
 import torch
 import torch.nn as nn
 
 
 def gradfilter_ma(
     m: nn.Module,
-    grads: Optional[Dict[str, deque]] = None,
+    grads: dict[str, deque] | None = None,
     window_size: int = 100,
     lamb: float = 5.0,
     filter_type: Literal["mean", "sum"] = "mean",
     warmup: bool = True,
     trigger: bool = False,  # For ablation study.
-) -> Dict[str, deque]:
+) -> dict[str, deque]:
     if grads is None:
         grads = {
             n: deque(maxlen=window_size) for n, p in m.named_parameters() if p.requires_grad and p.grad is not None
@@ -37,10 +38,10 @@ def gradfilter_ma(
 
 def gradfilter_ema(
     m: nn.Module,
-    grads: Optional[Dict[str, torch.Tensor]] = None,
+    grads: dict[str, torch.Tensor] | None = None,
     alpha: float = 0.98,
     lamb: float = 2.0,
-) -> Dict[str, torch.Tensor]:
+) -> dict[str, torch.Tensor]:
     if grads is None:
         grads = {n: p.grad.data.detach() for n, p in m.named_parameters() if p.requires_grad and p.grad is not None}
 

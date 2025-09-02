@@ -12,15 +12,16 @@ This service focuses specifically on:
 Completely separate from Cognate pretraining service.
 """
 
-import asyncio
-import logging
-import uuid
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, Any, List, Optional, Callable
-from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
+import asyncio
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
+import logging
+from pathlib import Path
+from typing import Any
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -77,17 +78,17 @@ class AgentTrainingConfig:
 
     # Task and environment configuration
     task_complexity: str = "intermediate"  # basic, intermediate, advanced
-    environment_types: List[str] = field(default_factory=lambda: ["simulation", "interactive"])
-    communication_protocols: List[str] = field(default_factory=lambda: ["direct", "broadcast"])
+    environment_types: list[str] = field(default_factory=lambda: ["simulation", "interactive"])
+    communication_protocols: list[str] = field(default_factory=lambda: ["direct", "broadcast"])
 
     # Multi-agent settings
     max_agents: int = 4
     coordination_strategy: str = "hierarchical"  # hierarchical, mesh, star
 
     # Fine-tuning parameters
-    base_model_path: Optional[str] = None
-    freeze_layers: List[int] = field(default_factory=list)
-    fine_tune_layers: List[str] = field(default_factory=lambda: ["attention", "output"])
+    base_model_path: str | None = None
+    freeze_layers: list[int] = field(default_factory=list)
+    fine_tune_layers: list[str] = field(default_factory=lambda: ["attention", "output"])
 
 
 @dataclass
@@ -97,11 +98,11 @@ class AgentTrainingProgress:
     progress: float
     message: str
     phase_name: str = "Agent Training"
-    episode: Optional[int] = None
-    total_episodes: Optional[int] = None
-    reward: Optional[float] = None
-    success_rate: Optional[float] = None
-    coordination_score: Optional[float] = None
+    episode: int | None = None
+    total_episodes: int | None = None
+    reward: float | None = None
+    success_rate: float | None = None
+    coordination_score: float | None = None
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
 
@@ -117,20 +118,20 @@ class AgentArtifacts:
     created_at: str
     training_status: str
     specialization: str
-    environment_types: List[str]
-    training_stats: Dict[str, Any]
+    environment_types: list[str]
+    training_stats: dict[str, Any]
 
     # Agent-specific features
-    communication_protocols: List[str]
-    coordination_capabilities: List[str]
-    task_competencies: List[str]
+    communication_protocols: list[str]
+    coordination_capabilities: list[str]
+    task_competencies: list[str]
 
     # File paths
-    artifacts: Dict[str, str] = field(default_factory=dict)
+    artifacts: dict[str, str] = field(default_factory=dict)
 
     # Performance metrics
-    capabilities: List[str] = field(default_factory=list)
-    performance_metrics: Dict[str, float] = field(default_factory=dict)
+    capabilities: list[str] = field(default_factory=list)
+    performance_metrics: dict[str, float] = field(default_factory=dict)
 
 
 class AgentProgressEmitter(ABC):
@@ -151,7 +152,7 @@ class AgentEnvironmentLoader(ABC):
     """Abstract interface for loading training environments."""
 
     @abstractmethod
-    async def setup_environment(self, env_type: str, config: Dict[str, Any]) -> str:
+    async def setup_environment(self, env_type: str, config: dict[str, Any]) -> str:
         """Setup a training environment."""
         pass
 
@@ -161,7 +162,7 @@ class AgentEnvironmentLoader(ABC):
         pass
 
     @abstractmethod
-    def get_environment_results(self) -> Dict[str, bool]:
+    def get_environment_results(self) -> dict[str, bool]:
         """Get results of environment setup."""
         pass
 
@@ -175,7 +176,7 @@ class AgentModelTrainer(ABC):
         agent_name: str,
         config: AgentTrainingConfig,
         progress_callback: Callable[[int, int, float, float, float], None],
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Train a single agent and return training statistics."""
         pass
 
@@ -197,7 +198,7 @@ class AgentForgeTrainingService:
         progress_emitter: AgentProgressEmitter,
         environment_loader: AgentEnvironmentLoader,
         agent_trainer: AgentModelTrainer,
-        config: Optional[AgentTrainingConfig] = None,
+        config: AgentTrainingConfig | None = None,
     ):
         """Initialize agent training service with injected dependencies."""
         self.progress_emitter = progress_emitter
@@ -206,17 +207,17 @@ class AgentForgeTrainingService:
         self.config = config or AgentTrainingConfig()
 
         # Training state
-        self.active_training_sessions: Dict[str, Dict[str, Any]] = {}
-        self.agent_storage: Dict[str, AgentArtifacts] = {}
+        self.active_training_sessions: dict[str, dict[str, Any]] = {}
+        self.agent_storage: dict[str, AgentArtifacts] = {}
 
         logger.info("AgentForgeTrainingService initialized for agent behavior training")
 
     async def start_agent_training_session(
         self,
         task_id: str,
-        training_parameters: Dict[str, Any],
-        agent_specifications: Optional[List[Dict[str, Any]]] = None,
-    ) -> Dict[str, Any]:
+        training_parameters: dict[str, Any],
+        agent_specifications: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
         """
         Start a new agent training session.
 
@@ -266,7 +267,7 @@ class AgentForgeTrainingService:
 
         return session_info
 
-    async def execute_agent_training_pipeline(self, task_id: str) -> List[AgentArtifacts]:
+    async def execute_agent_training_pipeline(self, task_id: str) -> list[AgentArtifacts]:
         """
         Execute the complete agent training pipeline for a session.
 
@@ -306,7 +307,7 @@ class AgentForgeTrainingService:
             logger.error(f"Agent training session {task_id} failed: {e}")
             raise
 
-    async def _prepare_training_environments(self, task_id: str) -> Dict[str, bool]:
+    async def _prepare_training_environments(self, task_id: str) -> dict[str, bool]:
         """Prepare training environments for agents."""
         session = self.active_training_sessions[task_id]
 
@@ -361,7 +362,7 @@ class AgentForgeTrainingService:
         session["environment_results"] = environment_results
         return environment_results
 
-    async def _train_agents(self, task_id: str) -> List[AgentArtifacts]:
+    async def _train_agents(self, task_id: str) -> list[AgentArtifacts]:
         """Train individual agents for the session."""
         session = self.active_training_sessions[task_id]
         agent_specifications = session["agent_specifications"]
@@ -441,7 +442,7 @@ class AgentForgeTrainingService:
 
         return trained_agents
 
-    async def _train_multi_agent_coordination(self, task_id: str, trained_agents: List[AgentArtifacts]) -> None:
+    async def _train_multi_agent_coordination(self, task_id: str, trained_agents: list[AgentArtifacts]) -> None:
         """Train multi-agent coordination and communication."""
         if len(trained_agents) < 2:
             return
@@ -481,10 +482,10 @@ class AgentForgeTrainingService:
 
     async def _create_agent_artifacts(
         self,
-        agent_spec: Dict[str, Any],
+        agent_spec: dict[str, Any],
         agent_index: int,
-        training_stats: Dict[str, Any],
-        environment_results: Dict[str, bool],
+        training_stats: dict[str, Any],
+        environment_results: dict[str, bool],
     ) -> AgentArtifacts:
         """Create agent artifacts from training results."""
         agent_id = f"trained_{agent_spec['name']}_{uuid.uuid4().hex[:8]}"
@@ -568,7 +569,7 @@ class AgentForgeTrainingService:
         total_params = embedding_params + layer_params + output_params
         return int(total_params)
 
-    async def _finalize_agent_training(self, task_id: str, trained_agents: List[AgentArtifacts]) -> None:
+    async def _finalize_agent_training(self, task_id: str, trained_agents: list[AgentArtifacts]) -> None:
         """Finalize agent training session."""
         session = self.active_training_sessions[task_id]
 
@@ -600,15 +601,15 @@ class AgentForgeTrainingService:
         logger.info(f"✅ Agent training session {task_id} finalized: {session_summary}")
 
     # Session management methods
-    async def get_agent_training_status(self, task_id: str) -> Optional[Dict[str, Any]]:
+    async def get_agent_training_status(self, task_id: str) -> dict[str, Any] | None:
         """Get current status of an agent training session."""
         return self.active_training_sessions.get(task_id)
 
-    async def list_trained_agents(self) -> List[AgentArtifacts]:
+    async def list_trained_agents(self) -> list[AgentArtifacts]:
         """Get list of all trained agents."""
         return list(self.agent_storage.values())
 
-    async def get_agent_artifacts(self, agent_id: str) -> Optional[AgentArtifacts]:
+    async def get_agent_artifacts(self, agent_id: str) -> AgentArtifacts | None:
         """Get artifacts for a specific trained agent."""
         return self.agent_storage.get(agent_id)
 
@@ -638,8 +639,8 @@ class MockAgentProgressEmitter(AgentProgressEmitter):
     """Mock progress emitter for agent training testing."""
 
     def __init__(self):
-        self.progress_events: List[AgentTrainingProgress] = []
-        self.agent_events: List[AgentArtifacts] = []
+        self.progress_events: list[AgentTrainingProgress] = []
+        self.agent_events: list[AgentArtifacts] = []
 
     async def emit_progress(self, progress: AgentTrainingProgress) -> None:
         """Emit a progress update."""
@@ -657,9 +658,9 @@ class MockAgentEnvironmentLoader(AgentEnvironmentLoader):
 
     def __init__(self, base_path: str = "./mock_agent_environments"):
         self.base_path = Path(base_path)
-        self.environment_results: Dict[str, bool] = {}
+        self.environment_results: dict[str, bool] = {}
 
-    async def setup_environment(self, env_type: str, config: Dict[str, Any]) -> str:
+    async def setup_environment(self, env_type: str, config: dict[str, Any]) -> str:
         """Simulate environment setup."""
         await asyncio.sleep(0.3)
 
@@ -677,7 +678,7 @@ class MockAgentEnvironmentLoader(AgentEnvironmentLoader):
         logger.info(f"Mock created multi-agent scenario: {scenario_path}")
         return scenario_path
 
-    def get_environment_results(self) -> Dict[str, bool]:
+    def get_environment_results(self) -> dict[str, bool]:
         """Get results of environment setup."""
         return self.environment_results.copy()
 
@@ -690,7 +691,7 @@ class MockAgentModelTrainer(AgentModelTrainer):
         agent_name: str,
         config: AgentTrainingConfig,
         progress_callback: Callable[[int, int, float, float, float], None],
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Simulate agent training with realistic progress."""
         total_episodes = config.max_episodes
         current_reward = 0.1  # Starting reward

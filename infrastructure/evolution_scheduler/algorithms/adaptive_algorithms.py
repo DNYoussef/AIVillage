@@ -10,15 +10,16 @@ This module provides advanced evolutionary algorithms with adaptive parameters,
 multi-objective optimization, and performance-guided evolution strategies.
 """
 
-import numpy as np
-import logging
-from typing import Dict, List, Tuple, Any, Optional, Callable
+from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-import random
-from abc import ABC, abstractmethod
+import logging
 import math
+import random
+from typing import Any
 
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +37,8 @@ class ObjectiveFunction:
     name: str
     weight: float
     objective: OptimizationObjective
-    target_value: Optional[float] = None
-    current_best: Optional[float] = None
+    target_value: float | None = None
+    current_best: float | None = None
 
 
 @dataclass
@@ -64,37 +65,37 @@ class EvolutionAlgorithm(ABC):
         self.stagnation_counter = 0
         
     @abstractmethod
-    def initialize_population(self, problem_config: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def initialize_population(self, problem_config: dict[str, Any]) -> list[dict[str, Any]]:
         """Initialize the population."""
         pass
     
     @abstractmethod
-    def evaluate_fitness(self, individual: Dict[str, Any], problem_config: Dict[str, Any]) -> float:
+    def evaluate_fitness(self, individual: dict[str, Any], problem_config: dict[str, Any]) -> float:
         """Evaluate fitness of an individual."""
         pass
     
     @abstractmethod
-    def selection(self, population: List[Dict[str, Any]], fitness_scores: List[float]) -> List[Dict[str, Any]]:
+    def selection(self, population: list[dict[str, Any]], fitness_scores: list[float]) -> list[dict[str, Any]]:
         """Select parents for reproduction."""
         pass
     
     @abstractmethod
-    def crossover(self, parent1: Dict[str, Any], parent2: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def crossover(self, parent1: dict[str, Any], parent2: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
         """Perform crossover between two parents."""
         pass
     
     @abstractmethod
-    def mutation(self, individual: Dict[str, Any], problem_config: Dict[str, Any]) -> Dict[str, Any]:
+    def mutation(self, individual: dict[str, Any], problem_config: dict[str, Any]) -> dict[str, Any]:
         """Mutate an individual."""
         pass
     
     def evolve(
         self, 
-        problem_config: Dict[str, Any], 
+        problem_config: dict[str, Any], 
         max_generations: int,
-        fitness_threshold: Optional[float] = None,
-        progress_callback: Optional[Callable] = None
-    ) -> Tuple[Dict[str, Any], float, List[float]]:
+        fitness_threshold: float | None = None,
+        progress_callback: Callable | None = None
+    ) -> tuple[dict[str, Any], float, list[float]]:
         """
         Main evolution loop.
         
@@ -181,7 +182,7 @@ class EvolutionAlgorithm(ABC):
         
         return best_individual, best_fitness, convergence_history
     
-    def _calculate_diversity(self, population: List[Dict[str, Any]]) -> float:
+    def _calculate_diversity(self, population: list[dict[str, Any]]) -> float:
         """Calculate population diversity."""
         if len(population) < 2:
             return 0.0
@@ -198,7 +199,7 @@ class EvolutionAlgorithm(ABC):
         
         return total_distance / pair_count if pair_count > 0 else 0.0
     
-    def _individual_distance(self, ind1: Dict[str, Any], ind2: Dict[str, Any]) -> float:
+    def _individual_distance(self, ind1: dict[str, Any], ind2: dict[str, Any]) -> float:
         """Calculate distance between two individuals."""
         distance = 0.0
         count = 0
@@ -206,13 +207,13 @@ class EvolutionAlgorithm(ABC):
         for key in set(ind1.keys()) | set(ind2.keys()):
             if key in ind1 and key in ind2:
                 val1, val2 = ind1[key], ind2[key]
-                if isinstance(val1, (int, float)) and isinstance(val2, (int, float)):
+                if isinstance(val1, int | float) and isinstance(val2, int | float):
                     distance += abs(val1 - val2)
                     count += 1
         
         return distance / count if count > 0 else 0.0
     
-    def _is_stagnating(self, convergence_history: List[Dict[str, Any]]) -> bool:
+    def _is_stagnating(self, convergence_history: list[dict[str, Any]]) -> bool:
         """Check if evolution is stagnating."""
         if len(convergence_history) < self.parameters.stagnation_threshold:
             return False
@@ -222,7 +223,7 @@ class EvolutionAlgorithm(ABC):
         
         return improvement < 1e-6
     
-    def _inject_diversity(self, population: List[Dict[str, Any]], problem_config: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _inject_diversity(self, population: list[dict[str, Any]], problem_config: dict[str, Any]) -> list[dict[str, Any]]:
         """Inject diversity into stagnating population."""
         # Replace bottom 20% with random individuals
         replacement_count = int(len(population) * 0.2)
@@ -231,7 +232,7 @@ class EvolutionAlgorithm(ABC):
         # Keep top 80%
         return population[:-replacement_count] + new_individuals
     
-    def _adapt_parameters(self, fitness_scores: List[float], population: List[Dict[str, Any]]) -> None:
+    def _adapt_parameters(self, fitness_scores: list[float], population: list[dict[str, Any]]) -> None:
         """Adapt algorithm parameters based on current state."""
         diversity = self._calculate_diversity(population)
         fitness_variance = np.var(fitness_scores)
@@ -258,7 +259,7 @@ class AdaptiveGeneticAlgorithm(EvolutionAlgorithm):
         super().__init__(parameters)
         self.gene_mutation_probabilities = {}
     
-    def initialize_population(self, problem_config: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def initialize_population(self, problem_config: dict[str, Any]) -> list[dict[str, Any]]:
         """Initialize population with diverse individuals."""
         population = []
         parameters = problem_config.get('parameters', {})
@@ -268,7 +269,7 @@ class AdaptiveGeneticAlgorithm(EvolutionAlgorithm):
             individual = {}
             
             for param_name, param_value in parameters.items():
-                if isinstance(param_value, (int, float)):
+                if isinstance(param_value, int | float):
                     constraint = constraints.get(param_name, {})
                     min_val = constraint.get('min', param_value * 0.1)
                     max_val = constraint.get('max', param_value * 2.0)
@@ -286,7 +287,7 @@ class AdaptiveGeneticAlgorithm(EvolutionAlgorithm):
         
         return population
     
-    def evaluate_fitness(self, individual: Dict[str, Any], problem_config: Dict[str, Any]) -> float:
+    def evaluate_fitness(self, individual: dict[str, Any], problem_config: dict[str, Any]) -> float:
         """
         Evaluate fitness using multi-objective optimization.
         
@@ -308,14 +309,14 @@ class AdaptiveGeneticAlgorithm(EvolutionAlgorithm):
         
         return total_fitness / total_weight if total_weight > 0 else 0.0
     
-    def _evaluate_single_objective(self, individual: Dict[str, Any], problem_config: Dict[str, Any]) -> float:
+    def _evaluate_single_objective(self, individual: dict[str, Any], problem_config: dict[str, Any]) -> float:
         """Evaluate single objective fitness."""
         # Mock fitness evaluation - in production, this would interface with model training
         fitness = 0.0
         target_metrics = problem_config.get('target_metrics', {})
         
         for param_name, param_value in individual.items():
-            if isinstance(param_value, (int, float)) and param_name in target_metrics:
+            if isinstance(param_value, int | float) and param_name in target_metrics:
                 target = target_metrics[param_name]
                 normalized_distance = abs(param_value - target) / max(abs(target), 1.0)
                 fitness += 1.0 - normalized_distance
@@ -325,12 +326,12 @@ class AdaptiveGeneticAlgorithm(EvolutionAlgorithm):
         
         return max(0.0, fitness)
     
-    def _evaluate_objective(self, individual: Dict[str, Any], objective: Dict[str, Any], problem_config: Dict[str, Any]) -> float:
+    def _evaluate_objective(self, individual: dict[str, Any], objective: dict[str, Any], problem_config: dict[str, Any]) -> float:
         """Evaluate a specific objective."""
         # Placeholder for objective-specific evaluation
         return self._evaluate_single_objective(individual, problem_config)
     
-    def selection(self, population: List[Dict[str, Any]], fitness_scores: List[float]) -> List[Dict[str, Any]]:
+    def selection(self, population: list[dict[str, Any]], fitness_scores: list[float]) -> list[dict[str, Any]]:
         """
         Tournament selection with adaptive tournament size.
         """
@@ -345,7 +346,7 @@ class AdaptiveGeneticAlgorithm(EvolutionAlgorithm):
         
         return parents
     
-    def crossover(self, parent1: Dict[str, Any], parent2: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def crossover(self, parent1: dict[str, Any], parent2: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
         """
         Adaptive crossover with multiple strategies.
         """
@@ -361,7 +362,7 @@ class AdaptiveGeneticAlgorithm(EvolutionAlgorithm):
         strategy = random.choice(crossover_strategies)
         return strategy(parent1, parent2)
     
-    def _uniform_crossover(self, parent1: Dict[str, Any], parent2: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def _uniform_crossover(self, parent1: dict[str, Any], parent2: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
         """Uniform crossover."""
         child1, child2 = parent1.copy(), parent2.copy()
         
@@ -371,24 +372,24 @@ class AdaptiveGeneticAlgorithm(EvolutionAlgorithm):
         
         return child1, child2
     
-    def _arithmetic_crossover(self, parent1: Dict[str, Any], parent2: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def _arithmetic_crossover(self, parent1: dict[str, Any], parent2: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
         """Arithmetic crossover for numerical parameters."""
         child1, child2 = parent1.copy(), parent2.copy()
         alpha = random.random()
         
         for key in parent1.keys():
-            if isinstance(parent1[key], (int, float)) and isinstance(parent2[key], (int, float)):
+            if isinstance(parent1[key], int | float) and isinstance(parent2[key], int | float):
                 child1[key] = alpha * parent1[key] + (1 - alpha) * parent2[key]
                 child2[key] = alpha * parent2[key] + (1 - alpha) * parent1[key]
         
         return child1, child2
     
-    def _blx_alpha_crossover(self, parent1: Dict[str, Any], parent2: Dict[str, Any], alpha: float = 0.5) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def _blx_alpha_crossover(self, parent1: dict[str, Any], parent2: dict[str, Any], alpha: float = 0.5) -> tuple[dict[str, Any], dict[str, Any]]:
         """BLX-α crossover."""
         child1, child2 = parent1.copy(), parent2.copy()
         
         for key in parent1.keys():
-            if isinstance(parent1[key], (int, float)) and isinstance(parent2[key], (int, float)):
+            if isinstance(parent1[key], int | float) and isinstance(parent2[key], int | float):
                 val1, val2 = parent1[key], parent2[key]
                 min_val, max_val = min(val1, val2), max(val1, val2)
                 range_val = max_val - min_val
@@ -402,7 +403,7 @@ class AdaptiveGeneticAlgorithm(EvolutionAlgorithm):
         
         return child1, child2
     
-    def mutation(self, individual: Dict[str, Any], problem_config: Dict[str, Any]) -> Dict[str, Any]:
+    def mutation(self, individual: dict[str, Any], problem_config: dict[str, Any]) -> dict[str, Any]:
         """
         Adaptive mutation with gene-specific probabilities.
         """
@@ -414,7 +415,7 @@ class AdaptiveGeneticAlgorithm(EvolutionAlgorithm):
             gene_mutation_prob = self.gene_mutation_probabilities.get(key, self.parameters.mutation_rate)
             
             if random.random() < gene_mutation_prob:
-                if isinstance(value, (int, float)):
+                if isinstance(value, int | float):
                     mutated[key] = self._mutate_numerical(key, value, constraints.get(key, {}))
                 elif isinstance(value, bool):
                     mutated[key] = not value
@@ -424,7 +425,7 @@ class AdaptiveGeneticAlgorithm(EvolutionAlgorithm):
         
         return mutated
     
-    def _mutate_numerical(self, param_name: str, value: float, constraints: Dict[str, Any]) -> float:
+    def _mutate_numerical(self, param_name: str, value: float, constraints: dict[str, Any]) -> float:
         """Mutate numerical parameter with adaptive strength."""
         min_val = constraints.get('min', value * 0.1)
         max_val = constraints.get('max', value * 2.0)
@@ -457,33 +458,33 @@ class DifferentialEvolution(EvolutionAlgorithm):
         ]
         self.strategy_success_rates = [0.5] * len(self.strategies)
     
-    def initialize_population(self, problem_config: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def initialize_population(self, problem_config: dict[str, Any]) -> list[dict[str, Any]]:
         """Initialize population for DE."""
         return AdaptiveGeneticAlgorithm(self.parameters).initialize_population(problem_config)
     
-    def evaluate_fitness(self, individual: Dict[str, Any], problem_config: Dict[str, Any]) -> float:
+    def evaluate_fitness(self, individual: dict[str, Any], problem_config: dict[str, Any]) -> float:
         """Evaluate fitness (same as GA)."""
         return AdaptiveGeneticAlgorithm(self.parameters).evaluate_fitness(individual, problem_config)
     
-    def selection(self, population: List[Dict[str, Any]], fitness_scores: List[float]) -> List[Dict[str, Any]]:
+    def selection(self, population: list[dict[str, Any]], fitness_scores: list[float]) -> list[dict[str, Any]]:
         """DE uses different selection mechanism during evolution."""
         return population  # Not used in standard DE
     
-    def crossover(self, parent1: Dict[str, Any], parent2: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def crossover(self, parent1: dict[str, Any], parent2: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
         """DE crossover (not used - DE has its own mutation/crossover)."""
         return parent1, parent2
     
-    def mutation(self, individual: Dict[str, Any], problem_config: Dict[str, Any]) -> Dict[str, Any]:
+    def mutation(self, individual: dict[str, Any], problem_config: dict[str, Any]) -> dict[str, Any]:
         """DE mutation (handled in evolve method)."""
         return individual
     
     def evolve(
         self, 
-        problem_config: Dict[str, Any], 
+        problem_config: dict[str, Any], 
         max_generations: int,
-        fitness_threshold: Optional[float] = None,
-        progress_callback: Optional[Callable] = None
-    ) -> Tuple[Dict[str, Any], float, List[float]]:
+        fitness_threshold: float | None = None,
+        progress_callback: Callable | None = None
+    ) -> tuple[dict[str, Any], float, list[float]]:
         """
         DE evolution with adaptive strategy selection.
         """
@@ -568,7 +569,7 @@ class DifferentialEvolution(EvolutionAlgorithm):
         probabilities = [rate / total_rate for rate in self.strategy_success_rates]
         return np.random.choice(len(self.strategies), p=probabilities)
     
-    def _update_strategy_success_rates(self, improvements: List[int]) -> None:
+    def _update_strategy_success_rates(self, improvements: list[int]) -> None:
         """Update strategy success rates based on improvements."""
         total_improvements = sum(improvements)
         if total_improvements == 0:
@@ -593,7 +594,7 @@ class DifferentialEvolution(EvolutionAlgorithm):
         else:
             self.CR = 0.7  # More exploitation
     
-    def _de_rand_1(self, population: List[Dict[str, Any]], target_idx: int, best: Dict[str, Any], problem_config: Dict[str, Any]) -> Dict[str, Any]:
+    def _de_rand_1(self, population: list[dict[str, Any]], target_idx: int, best: dict[str, Any], problem_config: dict[str, Any]) -> dict[str, Any]:
         """DE/rand/1 strategy."""
         # Select three random individuals different from target
         candidates = [i for i in range(len(population)) if i != target_idx]
@@ -602,7 +603,7 @@ class DifferentialEvolution(EvolutionAlgorithm):
         # Create mutant vector
         mutant = {}
         for key in population[target_idx].keys():
-            if isinstance(population[r1][key], (int, float)):
+            if isinstance(population[r1][key], int | float):
                 mutant[key] = population[r1][key] + self.F * (population[r2][key] - population[r3][key])
             else:
                 mutant[key] = population[r1][key]
@@ -610,21 +611,21 @@ class DifferentialEvolution(EvolutionAlgorithm):
         # Apply crossover
         return self._de_crossover(population[target_idx], mutant, problem_config)
     
-    def _de_best_1(self, population: List[Dict[str, Any]], target_idx: int, best: Dict[str, Any], problem_config: Dict[str, Any]) -> Dict[str, Any]:
+    def _de_best_1(self, population: list[dict[str, Any]], target_idx: int, best: dict[str, Any], problem_config: dict[str, Any]) -> dict[str, Any]:
         """DE/best/1 strategy."""
         candidates = [i for i in range(len(population)) if i != target_idx]
         r1, r2 = random.sample(candidates, 2)
         
         mutant = {}
         for key in population[target_idx].keys():
-            if isinstance(best[key], (int, float)):
+            if isinstance(best[key], int | float):
                 mutant[key] = best[key] + self.F * (population[r1][key] - population[r2][key])
             else:
                 mutant[key] = best[key]
         
         return self._de_crossover(population[target_idx], mutant, problem_config)
     
-    def _de_current_to_best_1(self, population: List[Dict[str, Any]], target_idx: int, best: Dict[str, Any], problem_config: Dict[str, Any]) -> Dict[str, Any]:
+    def _de_current_to_best_1(self, population: list[dict[str, Any]], target_idx: int, best: dict[str, Any], problem_config: dict[str, Any]) -> dict[str, Any]:
         """DE/current-to-best/1 strategy."""
         candidates = [i for i in range(len(population)) if i != target_idx]
         r1, r2 = random.sample(candidates, 2)
@@ -633,14 +634,14 @@ class DifferentialEvolution(EvolutionAlgorithm):
         mutant = {}
         
         for key in target.keys():
-            if isinstance(target[key], (int, float)):
+            if isinstance(target[key], int | float):
                 mutant[key] = target[key] + self.F * (best[key] - target[key]) + self.F * (population[r1][key] - population[r2][key])
             else:
                 mutant[key] = target[key]
         
         return self._de_crossover(target, mutant, problem_config)
     
-    def _de_crossover(self, target: Dict[str, Any], mutant: Dict[str, Any], problem_config: Dict[str, Any]) -> Dict[str, Any]:
+    def _de_crossover(self, target: dict[str, Any], mutant: dict[str, Any], problem_config: dict[str, Any]) -> dict[str, Any]:
         """DE crossover operation."""
         trial = target.copy()
         constraints = problem_config.get('constraints', {})
@@ -654,7 +655,7 @@ class DifferentialEvolution(EvolutionAlgorithm):
                 trial[key] = mutant[key]
                 
                 # Apply constraints
-                if isinstance(trial[key], (int, float)) and key in constraints:
+                if isinstance(trial[key], int | float) and key in constraints:
                     constraint = constraints[key]
                     min_val = constraint.get('min', float('-inf'))
                     max_val = constraint.get('max', float('inf'))
@@ -688,11 +689,11 @@ class ParticleSwarmOptimization:
     
     def optimize(
         self,
-        problem_config: Dict[str, Any],
+        problem_config: dict[str, Any],
         max_iterations: int = 100,
-        fitness_threshold: Optional[float] = None,
-        progress_callback: Optional[Callable] = None
-    ) -> Tuple[Dict[str, Any], float, List[float]]:
+        fitness_threshold: float | None = None,
+        progress_callback: Callable | None = None
+    ) -> tuple[dict[str, Any], float, list[float]]:
         """
         PSO optimization loop.
         """
@@ -736,7 +737,7 @@ class ParticleSwarmOptimization:
         
         return self.global_best, self.global_best_fitness, convergence_history
     
-    def _initialize_swarm(self, problem_config: Dict[str, Any]) -> None:
+    def _initialize_swarm(self, problem_config: dict[str, Any]) -> None:
         """Initialize particle swarm."""
         parameters = problem_config.get('parameters', {})
         constraints = problem_config.get('constraints', {})
@@ -750,7 +751,7 @@ class ParticleSwarmOptimization:
             velocity = {}
             
             for param_name, param_value in parameters.items():
-                if isinstance(param_value, (int, float)):
+                if isinstance(param_value, int | float):
                     constraint = constraints.get(param_name, {})
                     min_val = constraint.get('min', param_value * 0.1)
                     max_val = constraint.get('max', param_value * 2.0)
@@ -766,12 +767,12 @@ class ParticleSwarmOptimization:
             self.velocities.append(velocity)
             self.personal_bests.append({'position': particle.copy(), 'fitness': float('-inf')})
     
-    def _evaluate_particle(self, particle: Dict[str, Any], problem_config: Dict[str, Any]) -> float:
+    def _evaluate_particle(self, particle: dict[str, Any], problem_config: dict[str, Any]) -> float:
         """Evaluate particle fitness."""
         # Use same evaluation as GA
         return AdaptiveGeneticAlgorithm(EvolutionParameters()).evaluate_fitness(particle, problem_config)
     
-    def _update_particle(self, particle_idx: int, problem_config: Dict[str, Any]) -> None:
+    def _update_particle(self, particle_idx: int, problem_config: dict[str, Any]) -> None:
         """Update particle velocity and position."""
         particle = self.particles[particle_idx]
         velocity = self.velocities[particle_idx]
@@ -779,7 +780,7 @@ class ParticleSwarmOptimization:
         constraints = problem_config.get('constraints', {})
         
         for param_name in particle.keys():
-            if isinstance(particle[param_name], (int, float)):
+            if isinstance(particle[param_name], int | float):
                 # Update velocity
                 r1, r2 = random.random(), random.random()
                 
@@ -802,7 +803,7 @@ class ParticleSwarmOptimization:
 # Factory function for creating evolution algorithms
 def create_evolution_algorithm(
     strategy_name: str,
-    parameters: Optional[EvolutionParameters] = None
+    parameters: EvolutionParameters | None = None
 ) -> EvolutionAlgorithm:
     """
     Factory function to create evolution algorithms.
@@ -828,7 +829,7 @@ def create_evolution_algorithm(
 
 
 # Utility functions for multi-objective optimization
-def pareto_dominance(fitness1: List[float], fitness2: List[float]) -> int:
+def pareto_dominance(fitness1: list[float], fitness2: list[float]) -> int:
     """
     Check Pareto dominance between two fitness vectors.
     
@@ -854,7 +855,7 @@ def pareto_dominance(fitness1: List[float], fitness2: List[float]) -> int:
         return 0
 
 
-def non_dominated_sort(population: List[Dict[str, Any]], fitness_matrix: List[List[float]]) -> List[List[int]]:
+def non_dominated_sort(population: list[dict[str, Any]], fitness_matrix: list[list[float]]) -> list[list[int]]:
     """
     Non-dominated sorting for multi-objective optimization.
     
@@ -899,7 +900,7 @@ def non_dominated_sort(population: List[Dict[str, Any]], fitness_matrix: List[Li
     return fronts[:-1]  # Remove empty last front
 
 
-def crowding_distance(fitness_matrix: List[List[float]], front_indices: List[int]) -> List[float]:
+def crowding_distance(fitness_matrix: list[list[float]], front_indices: list[int]) -> list[float]:
     """
     Calculate crowding distance for individuals in a front.
     """

@@ -3,23 +3,23 @@ Constitutional Machine-Only Moderation Pipeline
 Real-time content analysis with constitutional harm classification and automated policy enforcement
 """
 
-import logging
-import time
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Any
+import logging
+import time
+from typing import Any
 from uuid import uuid4
 
-from infrastructure.ml.constitutional.harm_classifier import ConstitutionalHarmClassifier
+from infrastructure.constitutional.governance.pricing import ConstitutionalPricing
+from infrastructure.constitutional.moderation.appeals import AppealsManager
+from infrastructure.constitutional.moderation.escalation import EscalationManager
 from infrastructure.constitutional.moderation.policy_enforcement import PolicyEnforcement
 from infrastructure.constitutional.moderation.response_actions import ResponseActions
-from infrastructure.constitutional.moderation.escalation import EscalationManager
-from infrastructure.constitutional.moderation.appeals import AppealsManager
+from infrastructure.constitutional.transparency.audit_logger import TransparencyLogger
 from infrastructure.fog.security.tee_integration import TEESecurityManager
 from infrastructure.fog.workload.router import WorkloadRouter
-from infrastructure.constitutional.governance.pricing import ConstitutionalPricing
-from infrastructure.constitutional.transparency.audit_logger import TransparencyLogger
+from infrastructure.ml.constitutional.harm_classifier import ConstitutionalHarmClassifier
 
 logger = logging.getLogger(__name__)
 
@@ -51,9 +51,9 @@ class ContentAnalysis:
 
     content_id: str
     harm_level: str  # H0, H1, H2, H3
-    harm_categories: List[str]
+    harm_categories: list[str]
     confidence_score: float
-    constitutional_concerns: Dict[str, Any]
+    constitutional_concerns: dict[str, Any]
     viewpoint_bias_score: float
     timestamp: datetime
     processing_time_ms: int
@@ -67,11 +67,11 @@ class ModerationResult:
     decision: ModerationDecision
     harm_analysis: ContentAnalysis
     policy_rationale: str
-    response_actions: List[str]
+    response_actions: list[str]
     tier_level: str  # Bronze, Silver, Gold
     requires_escalation: bool
     appeal_eligible: bool
-    audit_trail: Dict[str, Any]
+    audit_trail: dict[str, Any]
     transparency_score: float
 
 
@@ -107,7 +107,7 @@ class ConstitutionalModerationPipeline:
         logger.info("Constitutional Moderation Pipeline initialized")
 
     async def process_content(
-        self, content: str, content_type: str, user_tier: str = "Bronze", context: Dict[str, Any] = None
+        self, content: str, content_type: str, user_tier: str = "Bronze", context: dict[str, Any] = None
     ) -> ModerationResult:
         """
         Process content through constitutional moderation pipeline
@@ -177,7 +177,7 @@ class ConstitutionalModerationPipeline:
             return await self._create_error_result(content_id, str(e), user_tier)
 
     async def _analyze_constitutional_harm(
-        self, content_id: str, content: str, content_type: str, context: Dict[str, Any]
+        self, content_id: str, content: str, content_type: str, context: dict[str, Any]
     ) -> ContentAnalysis:
         """Analyze content for constitutional harm using ML classifier"""
         start_time = time.time()
@@ -219,7 +219,7 @@ class ConstitutionalModerationPipeline:
                 processing_time_ms=int((time.time() - start_time) * 1000),
             )
 
-    async def _extract_constitutional_concerns(self, content: str, classification_result: Any) -> Dict[str, Any]:
+    async def _extract_constitutional_concerns(self, content: str, classification_result: Any) -> dict[str, Any]:
         """Extract specific constitutional concerns from analysis"""
         concerns = {}
 
@@ -322,7 +322,7 @@ class ConstitutionalModerationPipeline:
 
     def _build_audit_trail(
         self, content_id: str, harm_analysis: ContentAnalysis, enforcement_result: Any, processing_time_ms: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Build comprehensive audit trail for transparency"""
         return {
             "content_id": content_id,
@@ -438,7 +438,7 @@ class ConstitutionalModerationPipeline:
             transparency_score=0.5,
         )
 
-    async def get_pipeline_metrics(self) -> Dict[str, Any]:
+    async def get_pipeline_metrics(self) -> dict[str, Any]:
         """Get current pipeline performance metrics"""
         return {
             "processing_statistics": self.processing_stats,
@@ -469,7 +469,7 @@ class ConstitutionalModerationPipeline:
         # Implementation would query recent decisions
         return 0.85  # Placeholder
 
-    async def process_appeal(self, content_id: str, appeal_reason: str, user_tier: str) -> Dict[str, Any]:
+    async def process_appeal(self, content_id: str, appeal_reason: str, user_tier: str) -> dict[str, Any]:
         """Process constitutional appeal for moderation decision"""
         return await self.appeals_manager.process_appeal(content_id, appeal_reason, user_tier)
 

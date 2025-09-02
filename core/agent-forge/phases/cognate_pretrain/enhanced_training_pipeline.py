@@ -19,12 +19,12 @@ This will train Cognate models with enhanced GrokFast and provide detailed
 performance analysis demonstrating acceleration improvements.
 """
 
-from dataclasses import dataclass, asdict
-from pathlib import Path
-from typing import Any, Dict, Optional
+from dataclasses import asdict, dataclass
 import json
 import logging
+from pathlib import Path
 import time
+from typing import Any
 import warnings
 
 import numpy as np
@@ -33,11 +33,11 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
 
 try:
-    from torch.amp import autocast, GradScaler
+    from torch.amp import GradScaler, autocast
 except ImportError:
     # Fallback for older PyTorch versions
     try:
-        from torch.cuda.amp import autocast, GradScaler
+        from torch.cuda.amp import GradScaler, autocast
     except ImportError:
         # Mock implementations for compatibility
         def autocast(*args, **kwargs):
@@ -294,7 +294,7 @@ class EnhancedCognateTrainer:
         """Create training dataset."""
         return EnhancedCognateDataset(self.config, size)
 
-    def train(self) -> Dict[str, Any]:
+    def train(self) -> dict[str, Any]:
         """Enhanced training loop with comprehensive benchmarking."""
         logger.info("Starting enhanced Cognate training with GrokFast acceleration...")
 
@@ -370,7 +370,7 @@ class EnhancedCognateTrainer:
 
         return results
 
-    def _training_step(self, batch: Dict[str, torch.Tensor]) -> float:
+    def _training_step(self, batch: dict[str, torch.Tensor]) -> float:
         """Enhanced training step with mixed precision and gradient accumulation."""
         # Move batch to device
         input_ids = batch["input_ids"].to(self.device)
@@ -437,7 +437,7 @@ class EnhancedCognateTrainer:
             f"acceleration={acceleration}"
         )
 
-    def _save_training_results(self, results: Dict[str, Any]):
+    def _save_training_results(self, results: dict[str, Any]):
         """Save comprehensive training results."""
         output_dir = Path(self.config.output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -456,7 +456,7 @@ class EnhancedCognateTrainer:
         logger.info(f"Training results saved to {output_dir}")
 
 
-def run_acceleration_benchmark(config: Optional[EnhancedTrainingConfig] = None) -> Dict[str, Any]:
+def run_acceleration_benchmark(config: EnhancedTrainingConfig | None = None) -> dict[str, Any]:
     """
     Run comprehensive acceleration benchmark comparing different GrokFast configurations.
 

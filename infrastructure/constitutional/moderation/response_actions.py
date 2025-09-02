@@ -3,11 +3,11 @@ Constitutional Response Actions System
 Implements automated response actions for constitutional moderation decisions
 """
 
-import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Any
+import logging
+from typing import Any
 from uuid import uuid4
 
 logger = logging.getLogger(__name__)
@@ -45,12 +45,12 @@ class ResponseAction:
     action_type: ActionType
     content_id: str
     description: str
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
     status: ActionStatus
     created_at: datetime
-    executed_at: Optional[datetime] = None
-    result: Optional[Dict[str, Any]] = None
-    constitutional_rationale: Optional[str] = None
+    executed_at: datetime | None = None
+    result: dict[str, Any] | None = None
+    constitutional_rationale: str | None = None
 
 
 @dataclass
@@ -58,10 +58,10 @@ class ActionPlan:
     """Complete action plan for content moderation decision"""
 
     content_id: str
-    actions: List[ResponseAction]
+    actions: list[ResponseAction]
     tier_level: str
-    constitutional_considerations: Dict[str, Any]
-    execution_order: List[str]
+    constitutional_considerations: dict[str, Any]
+    execution_order: list[str]
     total_actions: int
 
 
@@ -79,7 +79,7 @@ class ResponseActions:
 
         logger.info("Constitutional Response Actions initialized")
 
-    def _load_action_templates(self) -> Dict[str, Dict[str, Any]]:
+    def _load_action_templates(self) -> dict[str, dict[str, Any]]:
         """Load response action templates"""
         return {
             "h0_allow": {
@@ -148,7 +148,7 @@ class ResponseActions:
             },
         }
 
-    def _load_tier_configurations(self) -> Dict[str, Dict[str, Any]]:
+    def _load_tier_configurations(self) -> dict[str, dict[str, Any]]:
         """Load tier-specific configurations"""
         return {
             "Bronze": {
@@ -180,7 +180,7 @@ class ResponseActions:
             },
         }
 
-    def _load_constitutional_safeguards(self) -> Dict[str, Any]:
+    def _load_constitutional_safeguards(self) -> dict[str, Any]:
         """Load constitutional safeguards for response actions"""
         return {
             "first_amendment": {
@@ -288,8 +288,8 @@ class ResponseActions:
             return "escalate"  # Safe default
 
     async def _apply_tier_modifications(
-        self, base_actions: List[Dict[str, Any]], tier_config: Dict[str, Any], enforcement_result: Any
-    ) -> List[Dict[str, Any]]:
+        self, base_actions: list[dict[str, Any]], tier_config: dict[str, Any], enforcement_result: Any
+    ) -> list[dict[str, Any]]:
         """Apply tier-specific modifications to actions"""
 
         modified_actions = []
@@ -342,8 +342,8 @@ class ResponseActions:
         return modified_actions
 
     async def _apply_constitutional_safeguards(
-        self, actions: List[Dict[str, Any]], constitutional_analysis: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        self, actions: list[dict[str, Any]], constitutional_analysis: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Apply constitutional safeguards to response actions"""
 
         safeguarded_actions = []
@@ -388,7 +388,7 @@ class ResponseActions:
     async def _create_response_action(
         self,
         content_id: str,
-        action_config: Dict[str, Any],
+        action_config: dict[str, Any],
         harm_analysis: Any,
         enforcement_result: Any,
         user_tier: str,
@@ -417,7 +417,7 @@ class ResponseActions:
         )
 
     async def _generate_constitutional_rationale(
-        self, action_config: Dict[str, Any], constitutional_analysis: Dict[str, Any]
+        self, action_config: dict[str, Any], constitutional_analysis: dict[str, Any]
     ) -> str:
         """Generate constitutional rationale for action"""
 
@@ -456,7 +456,7 @@ class ResponseActions:
         return " | ".join(rationale_parts) if rationale_parts else "Standard constitutional compliance"
 
     async def _generate_action_description(
-        self, action_config: Dict[str, Any], harm_analysis: Any, user_tier: str
+        self, action_config: dict[str, Any], harm_analysis: Any, user_tier: str
     ) -> str:
         """Generate human-readable action description"""
 
@@ -501,7 +501,7 @@ class ResponseActions:
 
         return f"Execute {action_type.value} action with constitutional protections"
 
-    def _determine_execution_order(self, actions: List[ResponseAction]) -> List[str]:
+    def _determine_execution_order(self, actions: list[ResponseAction]) -> list[str]:
         """Determine optimal execution order for actions"""
 
         # Sort by priority (lower number = higher priority)
@@ -510,8 +510,8 @@ class ResponseActions:
         return [action.action_id for action in sorted_actions]
 
     async def execute_actions(
-        self, content_id: str, action_ids: List[str], harm_analysis: Any, user_tier: str
-    ) -> Dict[str, Any]:
+        self, content_id: str, action_ids: list[str], harm_analysis: Any, user_tier: str
+    ) -> dict[str, Any]:
         """
         Execute the determined response actions
 
@@ -583,7 +583,7 @@ class ResponseActions:
 
     async def _execute_single_action(
         self, action: ResponseAction, harm_analysis: Any, user_tier: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Execute a single response action"""
 
         action_type = action.action_type
@@ -618,7 +618,7 @@ class ResponseActions:
         else:
             raise ValueError(f"Unknown action type: {action_type}")
 
-    async def _execute_notification(self, action: ResponseAction, harm_analysis: Any, user_tier: str) -> Dict[str, Any]:
+    async def _execute_notification(self, action: ResponseAction, harm_analysis: Any, user_tier: str) -> dict[str, Any]:
         """Execute user notification action"""
         # Implementation would integrate with notification system
         return {
@@ -628,7 +628,7 @@ class ResponseActions:
             "appeal_rights_notified": action.parameters.get("appeal_rights_notification", False),
         }
 
-    async def _execute_warning(self, action: ResponseAction, harm_analysis: Any, user_tier: str) -> Dict[str, Any]:
+    async def _execute_warning(self, action: ResponseAction, harm_analysis: Any, user_tier: str) -> dict[str, Any]:
         """Execute warning action"""
         return {
             "warning_issued": True,
@@ -636,7 +636,7 @@ class ResponseActions:
             "constitutional_protections_noted": True,
         }
 
-    async def _execute_restriction(self, action: ResponseAction, harm_analysis: Any, user_tier: str) -> Dict[str, Any]:
+    async def _execute_restriction(self, action: ResponseAction, harm_analysis: Any, user_tier: str) -> dict[str, Any]:
         """Execute content restriction action"""
         return {
             "restriction_applied": True,
@@ -647,7 +647,7 @@ class ResponseActions:
             ),
         }
 
-    async def _execute_quarantine(self, action: ResponseAction, harm_analysis: Any, user_tier: str) -> Dict[str, Any]:
+    async def _execute_quarantine(self, action: ResponseAction, harm_analysis: Any, user_tier: str) -> dict[str, Any]:
         """Execute content quarantine action"""
         return {
             "quarantine_applied": True,
@@ -656,7 +656,7 @@ class ResponseActions:
             "review_scheduled": True,
         }
 
-    async def _execute_block(self, action: ResponseAction, harm_analysis: Any, user_tier: str) -> Dict[str, Any]:
+    async def _execute_block(self, action: ResponseAction, harm_analysis: Any, user_tier: str) -> dict[str, Any]:
         """Execute content block action"""
         return {
             "block_applied": True,
@@ -665,7 +665,7 @@ class ResponseActions:
             "appeal_process_available": True,
         }
 
-    async def _execute_monitoring(self, action: ResponseAction, harm_analysis: Any, user_tier: str) -> Dict[str, Any]:
+    async def _execute_monitoring(self, action: ResponseAction, harm_analysis: Any, user_tier: str) -> dict[str, Any]:
         """Execute monitoring action"""
         return {
             "monitoring_activated": True,
@@ -674,7 +674,7 @@ class ResponseActions:
             "viewpoint_bias_monitoring": action.parameters.get("viewpoint_bias_monitoring", False),
         }
 
-    async def _execute_escalation(self, action: ResponseAction, harm_analysis: Any, user_tier: str) -> Dict[str, Any]:
+    async def _execute_escalation(self, action: ResponseAction, harm_analysis: Any, user_tier: str) -> dict[str, Any]:
         """Execute escalation action"""
         return {
             "escalation_created": True,
@@ -685,7 +685,7 @@ class ResponseActions:
 
     async def _execute_appeal_notification(
         self, action: ResponseAction, harm_analysis: Any, user_tier: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Execute appeal notification action"""
         return {
             "appeal_notification_sent": True,
@@ -696,7 +696,7 @@ class ResponseActions:
 
     async def _execute_transparency_logging(
         self, action: ResponseAction, harm_analysis: Any, user_tier: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Execute transparency logging action"""
         return {
             "transparency_log_created": True,
@@ -733,7 +733,7 @@ class ResponseActions:
         """Add action to active tracking"""
         self.active_actions[action.action_id] = action
 
-    def get_action_status(self, action_id: str) -> Optional[ActionStatus]:
+    def get_action_status(self, action_id: str) -> ActionStatus | None:
         """Get status of specific action"""
         if action_id in self.active_actions:
             return self.active_actions[action_id].status

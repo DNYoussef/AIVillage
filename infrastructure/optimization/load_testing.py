@@ -20,26 +20,27 @@ Archaeological Integration: Validates all consolidated components from Phase 3A
 """
 
 import asyncio
-import json
-import logging
-import statistics
-import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 from enum import Enum
+import json
+import logging
+from pathlib import Path
+import statistics
+import time
+from typing import Any
+
+from .monitoring import PerformanceMonitor
 
 # Import optimization infrastructure for testing
 from .network_optimizer import (
-    SecurityEnhancedNetworkOptimizer,
-    SecurityProtocol,
     NetworkProtocol,
     QualityOfService,
+    SecurityEnhancedNetworkOptimizer,
+    SecurityProtocol,
 )
 from .resource_manager import ResourceManager
-from .monitoring import PerformanceMonitor
 
 logger = logging.getLogger(__name__)
 
@@ -78,8 +79,8 @@ class LoadTestConfig:
     ramp_down_time_seconds: float = 30.0
 
     # Protocol-specific settings
-    target_protocols: List[NetworkProtocol] = field(default_factory=list)
-    security_protocols: List[SecurityProtocol] = field(default_factory=list)
+    target_protocols: list[NetworkProtocol] = field(default_factory=list)
+    security_protocols: list[SecurityProtocol] = field(default_factory=list)
 
     # Performance thresholds
     max_latency_ms: float = 1000.0
@@ -107,7 +108,7 @@ class LoadTestResult:
     test_type: LoadTestType
     status: LoadTestStatus
     start_time: float
-    end_time: Optional[float] = None
+    end_time: float | None = None
 
     # Performance metrics
     total_requests: int = 0
@@ -132,15 +133,15 @@ class LoadTestResult:
     peak_network_mbps: float = 0.0
 
     # Protocol-specific metrics
-    protocol_performance: Dict[str, Dict[str, float]] = field(default_factory=dict)
-    security_handshake_times: Dict[str, float] = field(default_factory=dict)
+    protocol_performance: dict[str, dict[str, float]] = field(default_factory=dict)
+    security_handshake_times: dict[str, float] = field(default_factory=dict)
 
     # Errors and issues
-    error_details: List[Dict[str, Any]] = field(default_factory=list)
-    performance_violations: List[Dict[str, Any]] = field(default_factory=list)
+    error_details: list[dict[str, Any]] = field(default_factory=list)
+    performance_violations: list[dict[str, Any]] = field(default_factory=list)
 
     # Regression analysis
-    baseline_comparison: Optional[Dict[str, Any]] = None
+    baseline_comparison: dict[str, Any] | None = None
     regression_detected: bool = False
 
     def calculate_duration_seconds(self) -> float:
@@ -164,7 +165,7 @@ class NetworkProtocolLoadTester:
 
     def __init__(self, network_optimizer: SecurityEnhancedNetworkOptimizer):
         self.network_optimizer = network_optimizer
-        self.active_connections: Dict[str, Any] = {}
+        self.active_connections: dict[str, Any] = {}
 
     async def run_protocol_load_test(self, config: LoadTestConfig) -> LoadTestResult:
         """Run comprehensive network protocol load test."""
@@ -432,7 +433,7 @@ class ComprehensiveLoadTester:
         network_optimizer: SecurityEnhancedNetworkOptimizer,
         resource_manager: ResourceManager,
         performance_monitor: PerformanceMonitor,
-        results_dir: Optional[Path] = None,
+        results_dir: Path | None = None,
     ):
         """Initialize comprehensive load tester."""
         self.network_optimizer = network_optimizer
@@ -446,8 +447,8 @@ class ComprehensiveLoadTester:
         self.security_tester = SecurityProtocolLoadTester(network_optimizer)
 
         # Test execution state
-        self.active_tests: Dict[str, LoadTestResult] = {}
-        self.baseline_results: Dict[str, LoadTestResult] = {}
+        self.active_tests: dict[str, LoadTestResult] = {}
+        self.baseline_results: dict[str, LoadTestResult] = {}
 
         # Load existing baselines
         self._load_baseline_results()
@@ -457,7 +458,7 @@ class ComprehensiveLoadTester:
         baseline_file = self.results_dir / "baseline_results.json"
         if baseline_file.exists():
             try:
-                with open(baseline_file, "r") as f:
+                with open(baseline_file) as f:
                     baseline_data = json.load(f)
 
                 for test_name, data in baseline_data.items():
@@ -498,7 +499,7 @@ class ComprehensiveLoadTester:
         except Exception as e:
             logger.error(f"Could not save baseline results: {e}")
 
-    async def run_comprehensive_load_test(self, configs: List[LoadTestConfig]) -> List[LoadTestResult]:
+    async def run_comprehensive_load_test(self, configs: list[LoadTestConfig]) -> list[LoadTestResult]:
         """Run comprehensive load testing suite."""
         logger.info(f"Starting comprehensive load testing with {len(configs)} test configurations")
 
@@ -758,7 +759,7 @@ class ComprehensiveLoadTester:
         except Exception as e:
             logger.error(f"Could not save test result: {e}")
 
-    def generate_load_test_report(self, results: List[LoadTestResult]) -> str:
+    def generate_load_test_report(self, results: list[LoadTestResult]) -> str:
         """Generate comprehensive load test report."""
         report_lines = []
 
@@ -831,7 +832,7 @@ class ComprehensiveLoadTester:
 # Factory Functions and Test Suites
 
 
-def create_standard_load_test_suite() -> List[LoadTestConfig]:
+def create_standard_load_test_suite() -> list[LoadTestConfig]:
     """Create standard load testing suite."""
     return [
         # Network Protocol Tests
@@ -863,7 +864,7 @@ def create_standard_load_test_suite() -> List[LoadTestConfig]:
     ]
 
 
-def create_stress_test_suite() -> List[LoadTestConfig]:
+def create_stress_test_suite() -> list[LoadTestConfig]:
     """Create stress testing suite."""
     return [
         # High load network test
@@ -894,7 +895,7 @@ async def run_optimization_load_tests(
     resource_manager: ResourceManager,
     performance_monitor: PerformanceMonitor,
     test_suite: str = "standard",
-) -> List[LoadTestResult]:
+) -> list[LoadTestResult]:
     """Run optimization infrastructure load tests."""
 
     # Create comprehensive load tester

@@ -8,11 +8,11 @@ CRITICAL ISSUE ADDRESSED:
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Tuple, Optional
-from abc import ABC, abstractmethod
 
 
 class VocabularyHeadBase(nn.Module, ABC):
@@ -24,7 +24,7 @@ class VocabularyHeadBase(nn.Module, ABC):
         self.vocab_size = vocab_size
 
     @abstractmethod
-    def forward(self, hidden_states: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, hidden_states: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Forward pass returning (y_logits, delta_logits)."""
         pass
 
@@ -73,7 +73,7 @@ class TiedVocabularyHeads(VocabularyHeadBase):
         nn.init.zeros_(self.y_bias)
         nn.init.zeros_(self.delta_bias)
 
-    def forward(self, hidden_states: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, hidden_states: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Forward pass with tied vocabulary heads.
 
@@ -145,7 +145,7 @@ class FactorizedVocabularyHeads(VocabularyHeadBase):
         for layer in [self.y_down, self.y_up, self.delta_down, self.delta_up]:
             nn.init.xavier_uniform_(layer.weight)
 
-    def forward(self, hidden_states: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, hidden_states: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Forward pass with factorized heads.
 
@@ -217,7 +217,7 @@ class ReducedVocabHeads(VocabularyHeadBase):
         nn.init.xavier_uniform_(self.y_head.weight)
         nn.init.xavier_uniform_(self.delta_head.weight)
 
-    def forward(self, hidden_states: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, hidden_states: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Standard forward pass with reduced vocabulary."""
         y_logits = self.y_head(hidden_states)
         delta_logits = self.delta_head(hidden_states) * self.delta_scale
@@ -239,9 +239,9 @@ class OptimizedVocabularyHeads(nn.Module):
         d_model: int,
         vocab_size: int,
         strategy: str = "tied",  # "tied", "factorized", "reduced"
-        bottleneck_dim: Optional[int] = None,
+        bottleneck_dim: int | None = None,
         delta_scale: float = 0.1,
-        parameter_budget: Optional[int] = None,
+        parameter_budget: int | None = None,
     ):
         super().__init__()
 
@@ -282,7 +282,7 @@ class OptimizedVocabularyHeads(nn.Module):
         else:
             return "reduced"  # Last resort
 
-    def forward(self, hidden_states: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, hidden_states: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Forward pass through selected vocabulary heads."""
         return self.vocab_heads(hidden_states)
 

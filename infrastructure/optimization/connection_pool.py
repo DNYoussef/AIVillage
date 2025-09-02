@@ -27,15 +27,16 @@ Key Features:
 """
 
 import asyncio
-import logging
-import time
 from collections import deque
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Any, Callable, AsyncContextManager
+from collections.abc import Callable
 from contextlib import asynccontextmanager
+from dataclasses import dataclass
 from enum import Enum
-from weakref import WeakKeyDictionary
+import logging
 import statistics
+import time
+from typing import Any, AsyncContextManager
+from weakref import WeakKeyDictionary
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +109,7 @@ class PoolStats:
     average_request_time: float
     peak_connections: int
     emergency_activations: int
-    last_emergency: Optional[float] = None
+    last_emergency: float | None = None
 
 
 @dataclass
@@ -365,10 +366,10 @@ class PooledConnection:
 class ConnectionPoolManager:
     """Archaeological Enhancement: Advanced connection pool with emergency triage and optimization."""
 
-    def __init__(self, connection_factory: Callable, config: Optional[PoolConfig] = None):
+    def __init__(self, connection_factory: Callable, config: PoolConfig | None = None):
         self.connection_factory = connection_factory
         self.config = config or PoolConfig()
-        self.connections: Dict[str, PooledConnection] = {}
+        self.connections: dict[str, PooledConnection] = {}
         self.idle_connections: deque = deque()
         self.active_connections: set = set()
         self.failed_connections: set = set()
@@ -398,9 +399,9 @@ class ConnectionPoolManager:
         self.scaling_predictor = ConnectionScalingPredictor()
 
         # Background tasks
-        self.health_check_task: Optional[asyncio.Task] = None
-        self.cleanup_task: Optional[asyncio.Task] = None
-        self.monitoring_task: Optional[asyncio.Task] = None
+        self.health_check_task: asyncio.Task | None = None
+        self.cleanup_task: asyncio.Task | None = None
+        self.monitoring_task: asyncio.Task | None = None
 
         self.lock = asyncio.Lock()
         self.shutdown_event = asyncio.Event()
@@ -424,7 +425,7 @@ class ConnectionPoolManager:
 
             logger.info(f"Connection pool initialized with {len(self.connections)} connections")
 
-    async def _create_connection(self, connection_id: Optional[str] = None) -> PooledConnection:
+    async def _create_connection(self, connection_id: str | None = None) -> PooledConnection:
         """Create a new pooled connection."""
         if connection_id is None:
             connection_id = f"conn_{int(time.time()*1000)}"
@@ -777,7 +778,7 @@ class ConnectionScalingPredictor:
         self.trend_weight = 0.7
         self.seasonal_weight = 0.3
 
-    def predict_usage(self, usage_history: List[int]) -> float:
+    def predict_usage(self, usage_history: list[int]) -> float:
         """Predict future connection usage based on historical patterns."""
         if len(usage_history) < 3:
             return float(usage_history[-1]) if usage_history else 0.0
@@ -800,7 +801,7 @@ class ConnectionScalingPredictor:
         return max(0.0, prediction)
 
 
-def create_connection_pool(connection_factory: Callable, config: Optional[PoolConfig] = None) -> ConnectionPoolManager:
+def create_connection_pool(connection_factory: Callable, config: PoolConfig | None = None) -> ConnectionPoolManager:
     """Create a new connection pool manager."""
     return ConnectionPoolManager(connection_factory, config)
 

@@ -5,6 +5,7 @@ revocation, and management. Extracted from the EnhancedSecureAPIServer.
 """
 
 import logging
+
 from aiohttp import web, web_request
 
 from ..interfaces import ISessionManager

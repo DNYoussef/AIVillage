@@ -18,11 +18,11 @@ Key Features:
 """
 
 import asyncio
-import logging
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+import logging
+from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 # Import Phase 1 authentication if available
@@ -36,12 +36,11 @@ except ImportError:
         def __call__(self):
             return {"sub": "development", "roles": ["admin"]}
     
-    TokenPayload = Dict[str, Any]
+    TokenPayload = dict[str, Any]
 
 from infrastructure.distributed_inference.core.distributed_inference_manager import (
+    NodeStatus,
     get_distributed_inference_manager,
-    InferenceStatus,
-    NodeStatus
 )
 
 logger = logging.getLogger(__name__)
@@ -57,12 +56,12 @@ jwt_auth = JWTBearer() if auth_available else JWTBearer()
 class SubmitInferenceRequest(BaseModel):
     """Request model for submitting distributed inference."""
     model_name: str = Field(..., description="Name of the model to use for inference")
-    input_data: Dict[str, Any] = Field(..., description="Input data for inference")
-    parameters: Optional[Dict[str, Any]] = Field(
+    input_data: dict[str, Any] = Field(..., description="Input data for inference")
+    parameters: dict[str, Any] | None = Field(
         default_factory=dict, 
         description="Optional parameters for inference"
     )
-    priority: Optional[str] = Field(
+    priority: str | None = Field(
         default="normal", 
         description="Request priority (low, normal, high)"
     )
@@ -75,9 +74,9 @@ class SubmitInferenceRequest(BaseModel):
 class InferenceResponse(BaseModel):
     """Response model for inference operations."""
     success: bool
-    data: Optional[Dict[str, Any]] = None
+    data: dict[str, Any] | None = None
     message: str
-    archaeological_metadata: Optional[Dict[str, Any]] = None
+    archaeological_metadata: dict[str, Any] | None = None
 
 
 class NodeRegistrationRequest(BaseModel):
@@ -86,7 +85,7 @@ class NodeRegistrationRequest(BaseModel):
     port: int = Field(..., description="Node port", ge=1, le=65535)
     total_memory: int = Field(..., description="Total memory in MB", gt=0)
     gpu_count: int = Field(default=0, description="Number of GPUs", ge=0)
-    gpu_memory: Optional[List[int]] = Field(
+    gpu_memory: list[int] | None = Field(
         default_factory=list, 
         description="Memory per GPU in MB"
     )
@@ -96,7 +95,7 @@ class NodeRegistrationRequest(BaseModel):
         description="Network bandwidth in Mbps",
         gt=0
     )
-    archaeological_features: Optional[Dict[str, Any]] = Field(
+    archaeological_features: dict[str, Any] | None = Field(
         default_factory=dict,
         description="Archaeological feature support information"
     )
@@ -107,7 +106,7 @@ class NodeHeartbeatRequest(BaseModel):
     available_memory: int = Field(..., description="Available memory in MB", ge=0)
     current_load: float = Field(..., description="Current load (0.0-1.0)", ge=0.0, le=1.0)
     active_tasks: int = Field(default=0, description="Number of active tasks", ge=0)
-    archaeological_status: Optional[Dict[str, Any]] = Field(
+    archaeological_status: dict[str, Any] | None = Field(
         default_factory=dict,
         description="Archaeological optimization status"
     )
@@ -387,7 +386,7 @@ async def update_node_heartbeat(
 
 @router.get("/nodes", response_model=InferenceResponse)
 async def list_compute_nodes(
-    status_filter: Optional[str] = None,
+    status_filter: str | None = None,
     token: TokenPayload = Depends(jwt_auth)
 ):
     """

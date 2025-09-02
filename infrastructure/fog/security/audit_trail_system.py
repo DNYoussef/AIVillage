@@ -7,16 +7,16 @@ Includes compliance reporting, anomaly detection, and forensic analysis tools.
 """
 
 import asyncio
+from collections import defaultdict, deque
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from enum import Enum
 import hashlib
 import json
 import logging
-import time
-from dataclasses import dataclass, field
-from datetime import datetime, UTC
-from enum import Enum
-from typing import Any, Dict, List, Optional
 import secrets
-from collections import defaultdict, deque
+import time
+from typing import Any
 
 from ..proof.betanet_anchor import BetanetAnchorService
 
@@ -71,16 +71,16 @@ class AuditEvent:
     event_type: EventType
     severity: EventSeverity
     source_node: str
-    target_node: Optional[str]
+    target_node: str | None
     actor: str  # Who performed the action
     action: str  # What action was performed
     resource: str  # What resource was affected
     outcome: str  # Success, failure, partial
-    details: Dict[str, Any]
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    checksum: Optional[str] = None
-    parent_event_id: Optional[str] = None  # For event chains
-    correlation_id: Optional[str] = None  # For related events
+    details: dict[str, Any]
+    metadata: dict[str, Any] = field(default_factory=dict)
+    checksum: str | None = None
+    parent_event_id: str | None = None  # For event chains
+    correlation_id: str | None = None  # For related events
 
     def __post_init__(self):
         """Calculate checksum after initialization"""
@@ -121,11 +121,11 @@ class ComplianceRule:
     framework: ComplianceFramework
     rule_name: str
     description: str
-    event_patterns: List[Dict[str, Any]]  # Patterns that trigger this rule
-    required_fields: List[str]
+    event_patterns: list[dict[str, Any]]  # Patterns that trigger this rule
+    required_fields: list[str]
     retention_period_days: int
     notification_required: bool
-    automated_response: Optional[str] = None
+    automated_response: str | None = None
 
 
 @dataclass
@@ -136,9 +136,9 @@ class ForensicQuery:
     analyst: str
     query_type: str
     time_range: Tuple[float, float]
-    filters: Dict[str, Any]
-    nodes_of_interest: List[str]
-    event_types: List[EventType]
+    filters: dict[str, Any]
+    nodes_of_interest: list[str]
+    event_types: list[EventType]
     correlation_analysis: bool = False
     pattern_detection: bool = False
     created_at: float = field(default_factory=time.time)
@@ -151,12 +151,12 @@ class AnomalyPattern:
     pattern_id: str
     pattern_type: str
     description: str
-    affected_nodes: List[str]
+    affected_nodes: list[str]
     time_window: Tuple[float, float]
     severity: EventSeverity
     confidence: float  # 0.0 to 1.0
-    evidence_events: List[str]  # Event IDs
-    statistical_metrics: Dict[str, float]
+    evidence_events: list[str]  # Event IDs
+    statistical_metrics: dict[str, float]
     detected_at: float = field(default_factory=time.time)
 
 
@@ -166,7 +166,7 @@ class EventBuffer:
     def __init__(self, max_size: int = 10000):
         self.max_size = max_size
         self.buffer = deque(maxlen=max_size)
-        self.event_index: Dict[str, int] = {}  # event_id -> buffer position
+        self.event_index: dict[str, int] = {}  # event_id -> buffer position
         self.lock = asyncio.Lock()
 
     async def add_event(self, event: AuditEvent):
@@ -182,7 +182,7 @@ class EventBuffer:
             self.buffer.append(event)
             self.event_index[event.event_id] = len(self.buffer) - 1
 
-    async def get_event(self, event_id: str) -> Optional[AuditEvent]:
+    async def get_event(self, event_id: str) -> AuditEvent | None:
         """Retrieve event by ID"""
         async with self.lock:
             if event_id in self.event_index:
@@ -191,18 +191,18 @@ class EventBuffer:
                     return self.buffer[position]
         return None
 
-    async def get_recent_events(self, count: int = 100) -> List[AuditEvent]:
+    async def get_recent_events(self, count: int = 100) -> list[AuditEvent]:
         """Get most recent events"""
         async with self.lock:
             return list(self.buffer)[-count:]
 
     async def search_events(
         self,
-        time_range: Optional[Tuple[float, float]] = None,
-        event_types: Optional[List[EventType]] = None,
-        severity: Optional[EventSeverity] = None,
-        nodes: Optional[List[str]] = None,
-    ) -> List[AuditEvent]:
+        time_range: Tuple[float, float] | None = None,
+        event_types: list[EventType] | None = None,
+        severity: EventSeverity | None = None,
+        nodes: list[str] | None = None,
+    ) -> list[AuditEvent]:
         """Search events with filters"""
         async with self.lock:
             results = []
@@ -233,9 +233,9 @@ class ComplianceEngine:
     """Engine for compliance monitoring and reporting"""
 
     def __init__(self):
-        self.compliance_rules: Dict[str, ComplianceRule] = {}
-        self.rule_violations: List[Dict[str, Any]] = []
-        self.compliance_reports: Dict[str, Dict[str, Any]] = {}
+        self.compliance_rules: dict[str, ComplianceRule] = {}
+        self.rule_violations: list[dict[str, Any]] = []
+        self.compliance_reports: dict[str, dict[str, Any]] = {}
         self._initialize_standard_rules()
 
     def _initialize_standard_rules(self):
@@ -298,7 +298,7 @@ class ComplianceEngine:
         self.compliance_rules[rule.rule_id] = rule
         logger.info(f"Added compliance rule: {rule.rule_name} ({rule.framework.value})")
 
-    async def check_compliance(self, event: AuditEvent) -> List[Dict[str, Any]]:
+    async def check_compliance(self, event: AuditEvent) -> list[dict[str, Any]]:
         """Check event against compliance rules"""
         violations = []
 
@@ -318,7 +318,7 @@ class ComplianceEngine:
                 return True
         return False
 
-    async def _matches_pattern(self, event: AuditEvent, pattern: Dict[str, Any]) -> bool:
+    async def _matches_pattern(self, event: AuditEvent, pattern: dict[str, Any]) -> bool:
         """Check if event matches specific pattern"""
         for key, expected_value in pattern.items():
             if key == "event_type":
@@ -340,7 +340,7 @@ class ComplianceEngine:
 
         return True
 
-    async def _validate_compliance(self, event: AuditEvent, rule: ComplianceRule) -> Optional[Dict[str, Any]]:
+    async def _validate_compliance(self, event: AuditEvent, rule: ComplianceRule) -> dict[str, Any] | None:
         """Validate event compliance with rule"""
         violations = []
 
@@ -376,8 +376,8 @@ class ComplianceEngine:
         return None
 
     async def generate_compliance_report(
-        self, framework: ComplianceFramework, time_range: Tuple[float, float], events: List[AuditEvent]
-    ) -> Dict[str, Any]:
+        self, framework: ComplianceFramework, time_range: Tuple[float, float], events: list[AuditEvent]
+    ) -> dict[str, Any]:
         """Generate compliance report"""
         framework_rules = [rule for rule in self.compliance_rules.values() if rule.framework == framework]
 
@@ -444,9 +444,9 @@ class AnomalyDetectionEngine:
     """Engine for detecting anomalous patterns in audit logs"""
 
     def __init__(self):
-        self.baseline_metrics: Dict[str, Dict[str, float]] = {}
-        self.detected_anomalies: Dict[str, AnomalyPattern] = {}
-        self.detection_rules: Dict[str, Dict[str, Any]] = {}
+        self.baseline_metrics: dict[str, dict[str, float]] = {}
+        self.detected_anomalies: dict[str, AnomalyPattern] = {}
+        self.detection_rules: dict[str, dict[str, Any]] = {}
         self._initialize_detection_rules()
 
     def _initialize_detection_rules(self):
@@ -483,7 +483,7 @@ class AnomalyDetectionEngine:
             },
         }
 
-    async def update_baseline_metrics(self, events: List[AuditEvent]):
+    async def update_baseline_metrics(self, events: list[AuditEvent]):
         """Update baseline metrics from historical events"""
         logger.info("Updating baseline metrics for anomaly detection")
 
@@ -512,8 +512,8 @@ class AnomalyDetectionEngine:
         logger.info(f"Updated baselines for {len(self.baseline_metrics)} event types")
 
     async def detect_anomalies(
-        self, recent_events: List[AuditEvent], time_window_minutes: int = 60
-    ) -> List[AnomalyPattern]:
+        self, recent_events: list[AuditEvent], time_window_minutes: int = 60
+    ) -> list[AnomalyPattern]:
         """Detect anomalies in recent events"""
         current_time = time.time()
         window_start = current_time - (time_window_minutes * 60)
@@ -533,8 +533,8 @@ class AnomalyDetectionEngine:
         return detected_anomalies
 
     async def _apply_detection_rule(
-        self, rule_id: str, rule: Dict[str, Any], events: List[AuditEvent]
-    ) -> Optional[AnomalyPattern]:
+        self, rule_id: str, rule: dict[str, Any], events: list[AuditEvent]
+    ) -> AnomalyPattern | None:
         """Apply specific detection rule"""
         # Filter events by rule criteria
         filtered_events = []
@@ -580,7 +580,7 @@ class AnomalyDetectionEngine:
         return None
 
     async def _create_anomaly_pattern(
-        self, rule_id: str, rule: Dict[str, Any], events: List[AuditEvent], anomaly_type: str
+        self, rule_id: str, rule: dict[str, Any], events: list[AuditEvent], anomaly_type: str
     ) -> AnomalyPattern:
         """Create anomaly pattern from detected anomaly"""
         pattern_id = f"{rule_id}_{anomaly_type}_{secrets.token_hex(4)}"
@@ -633,8 +633,8 @@ class ForensicAnalysisEngine:
     """Engine for forensic analysis of audit logs"""
 
     def __init__(self):
-        self.queries: Dict[str, ForensicQuery] = {}
-        self.analysis_results: Dict[str, Dict[str, Any]] = {}
+        self.queries: dict[str, ForensicQuery] = {}
+        self.analysis_results: dict[str, dict[str, Any]] = {}
 
     async def create_forensic_query(self, query: ForensicQuery) -> str:
         """Create forensic analysis query"""
@@ -642,7 +642,7 @@ class ForensicAnalysisEngine:
         logger.info(f"Created forensic query {query.query_id} by analyst {query.analyst}")
         return query.query_id
 
-    async def execute_forensic_analysis(self, query_id: str, events: List[AuditEvent]) -> Dict[str, Any]:
+    async def execute_forensic_analysis(self, query_id: str, events: list[AuditEvent]) -> dict[str, Any]:
         """Execute forensic analysis query"""
         if query_id not in self.queries:
             raise ValueError(f"Forensic query {query_id} not found")
@@ -691,7 +691,7 @@ class ForensicAnalysisEngine:
 
         return analysis_result
 
-    async def _filter_events_for_query(self, events: List[AuditEvent], query: ForensicQuery) -> List[AuditEvent]:
+    async def _filter_events_for_query(self, events: list[AuditEvent], query: ForensicQuery) -> list[AuditEvent]:
         """Filter events based on query criteria"""
         filtered = []
 
@@ -734,7 +734,7 @@ class ForensicAnalysisEngine:
 
         return filtered
 
-    async def _generate_event_summary(self, events: List[AuditEvent]) -> Dict[str, Any]:
+    async def _generate_event_summary(self, events: list[AuditEvent]) -> dict[str, Any]:
         """Generate summary statistics for events"""
         if not events:
             return {"total": 0}
@@ -765,7 +765,7 @@ class ForensicAnalysisEngine:
             "integrity_status": "verified" if all(event.verify_integrity() for event in events) else "compromised",
         }
 
-    async def _generate_timeline(self, events: List[AuditEvent]) -> List[Dict[str, Any]]:
+    async def _generate_timeline(self, events: list[AuditEvent]) -> list[dict[str, Any]]:
         """Generate chronological timeline of significant events"""
         # Sort events by timestamp
         sorted_events = sorted(events, key=lambda x: x.timestamp)
@@ -788,7 +788,7 @@ class ForensicAnalysisEngine:
 
         return timeline
 
-    async def _analyze_nodes(self, events: List[AuditEvent], nodes_of_interest: List[str]) -> Dict[str, Any]:
+    async def _analyze_nodes(self, events: list[AuditEvent], nodes_of_interest: list[str]) -> dict[str, Any]:
         """Analyze node behavior patterns"""
         node_stats = defaultdict(
             lambda: {
@@ -844,7 +844,7 @@ class ForensicAnalysisEngine:
             ),
         }
 
-    async def _detect_forensic_patterns(self, events: List[AuditEvent]) -> Dict[str, Any]:
+    async def _detect_forensic_patterns(self, events: list[AuditEvent]) -> dict[str, Any]:
         """Detect forensic patterns in filtered events"""
         patterns = {
             "privilege_escalation": await self._detect_privilege_escalation(events),
@@ -855,7 +855,7 @@ class ForensicAnalysisEngine:
 
         return patterns
 
-    async def _detect_privilege_escalation(self, events: List[AuditEvent]) -> List[Dict[str, Any]]:
+    async def _detect_privilege_escalation(self, events: list[AuditEvent]) -> list[dict[str, Any]]:
         """Detect privilege escalation patterns"""
         escalation_patterns = []
 
@@ -892,7 +892,7 @@ class ForensicAnalysisEngine:
 
         return escalation_patterns
 
-    async def _detect_data_exfiltration(self, events: List[AuditEvent]) -> List[Dict[str, Any]]:
+    async def _detect_data_exfiltration(self, events: list[AuditEvent]) -> list[dict[str, Any]]:
         """Detect data exfiltration patterns"""
         exfiltration_patterns = []
 
@@ -924,7 +924,7 @@ class ForensicAnalysisEngine:
 
         return exfiltration_patterns
 
-    async def _detect_lateral_movement(self, events: List[AuditEvent]) -> List[Dict[str, Any]]:
+    async def _detect_lateral_movement(self, events: list[AuditEvent]) -> list[dict[str, Any]]:
         """Detect lateral movement patterns"""
         lateral_patterns = []
 
@@ -958,7 +958,7 @@ class ForensicAnalysisEngine:
 
         return lateral_patterns
 
-    async def _detect_persistence_mechanisms(self, events: List[AuditEvent]) -> List[Dict[str, Any]]:
+    async def _detect_persistence_mechanisms(self, events: list[AuditEvent]) -> list[dict[str, Any]]:
         """Detect persistence mechanism patterns"""
         persistence_patterns = []
 
@@ -981,7 +981,7 @@ class ForensicAnalysisEngine:
 
         return persistence_patterns
 
-    async def _perform_correlation_analysis(self, events: List[AuditEvent]) -> Dict[str, Any]:
+    async def _perform_correlation_analysis(self, events: list[AuditEvent]) -> dict[str, Any]:
         """Perform correlation analysis on events"""
         correlation_results = {
             "temporal_correlations": await self._find_temporal_correlations(events),
@@ -991,7 +991,7 @@ class ForensicAnalysisEngine:
 
         return correlation_results
 
-    async def _find_temporal_correlations(self, events: List[AuditEvent]) -> List[Dict[str, Any]]:
+    async def _find_temporal_correlations(self, events: list[AuditEvent]) -> list[dict[str, Any]]:
         """Find temporally correlated events"""
         correlations = []
 
@@ -1026,7 +1026,7 @@ class ForensicAnalysisEngine:
 
         return correlations
 
-    async def _find_actor_correlations(self, events: List[AuditEvent]) -> Dict[str, Any]:
+    async def _find_actor_correlations(self, events: list[AuditEvent]) -> dict[str, Any]:
         """Find correlations between actors"""
         actor_interactions = defaultdict(lambda: defaultdict(int))
 
@@ -1064,7 +1064,7 @@ class ForensicAnalysisEngine:
             ],
         }
 
-    async def _find_resource_correlations(self, events: List[AuditEvent]) -> Dict[str, Any]:
+    async def _find_resource_correlations(self, events: list[AuditEvent]) -> dict[str, Any]:
         """Find correlations between accessed resources"""
         resource_access_patterns = defaultdict(lambda: defaultdict(int))
 
@@ -1120,8 +1120,8 @@ class ForensicAnalysisEngine:
         }
 
     async def _generate_forensic_recommendations(
-        self, events: List[AuditEvent], analysis_result: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        self, events: list[AuditEvent], analysis_result: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Generate forensic investigation recommendations"""
         recommendations = []
 
@@ -1200,7 +1200,7 @@ class AuditTrailSystem:
     Main audit trail system coordinating all components
     """
 
-    def __init__(self, node_id: str, betanet_anchor: Optional[BetanetAnchorService] = None):
+    def __init__(self, node_id: str, betanet_anchor: BetanetAnchorService | None = None):
         self.node_id = node_id
         self.betanet_anchor = betanet_anchor
 
@@ -1211,7 +1211,7 @@ class AuditTrailSystem:
         self.forensic_engine = ForensicAnalysisEngine()
 
         # Storage and archival
-        self.archived_events: List[AuditEvent] = []
+        self.archived_events: list[AuditEvent] = []
         self.audit_statistics = {
             "events_logged": 0,
             "events_archived": 0,
@@ -1229,7 +1229,7 @@ class AuditTrailSystem:
         }
 
         # Background tasks
-        self._background_tasks: List[asyncio.Task] = []
+        self._background_tasks: list[asyncio.Task] = []
 
     async def initialize(self):
         """Initialize audit trail system"""
@@ -1256,9 +1256,9 @@ class AuditTrailSystem:
         action: str,
         resource: str,
         outcome: str,
-        details: Optional[Dict[str, Any]] = None,
-        target_node: Optional[str] = None,
-        correlation_id: Optional[str] = None,
+        details: dict[str, Any] | None = None,
+        target_node: str | None = None,
+        correlation_id: str | None = None,
     ) -> str:
         """Log audit event"""
         event_id = f"{self.node_id}_{event_type.value}_{int(time.time() * 1000)}_{secrets.token_hex(4)}"
@@ -1325,12 +1325,12 @@ class AuditTrailSystem:
 
     async def query_events(
         self,
-        time_range: Optional[Tuple[float, float]] = None,
-        event_types: Optional[List[EventType]] = None,
-        severity: Optional[EventSeverity] = None,
-        nodes: Optional[List[str]] = None,
+        time_range: Tuple[float, float] | None = None,
+        event_types: list[EventType] | None = None,
+        severity: EventSeverity | None = None,
+        nodes: list[str] | None = None,
         limit: int = 1000,
-    ) -> List[AuditEvent]:
+    ) -> list[AuditEvent]:
         """Query audit events with filters"""
         # Search in buffer
         buffer_events = await self.event_buffer.search_events(time_range, event_types, severity, nodes)
@@ -1358,7 +1358,7 @@ class AuditTrailSystem:
 
     async def generate_compliance_report(
         self, framework: ComplianceFramework, time_range: Tuple[float, float]
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate compliance report"""
         # Get all events in time range
         all_events = await self.query_events(time_range=time_range, limit=10000)
@@ -1368,7 +1368,7 @@ class AuditTrailSystem:
 
         return report
 
-    async def detect_anomalies(self, time_window_minutes: int = 60) -> List[AnomalyPattern]:
+    async def detect_anomalies(self, time_window_minutes: int = 60) -> list[AnomalyPattern]:
         """Detect anomalies in recent events"""
         recent_events = await self.event_buffer.get_recent_events(1000)
         anomalies = await self.anomaly_detector.detect_anomalies(recent_events, time_window_minutes)
@@ -1384,9 +1384,9 @@ class AuditTrailSystem:
         analyst: str,
         query_type: str,
         time_range: Tuple[float, float],
-        filters: Optional[Dict[str, Any]] = None,
-        nodes_of_interest: Optional[List[str]] = None,
-        event_types: Optional[List[EventType]] = None,
+        filters: dict[str, Any] | None = None,
+        nodes_of_interest: list[str] | None = None,
+        event_types: list[EventType] | None = None,
     ) -> str:
         """Create forensic analysis query"""
         query_id = f"forensic_{analyst}_{int(time.time())}_{secrets.token_hex(4)}"
@@ -1408,7 +1408,7 @@ class AuditTrailSystem:
 
         return query_id
 
-    async def execute_forensic_analysis(self, query_id: str) -> Dict[str, Any]:
+    async def execute_forensic_analysis(self, query_id: str) -> dict[str, Any]:
         """Execute forensic analysis"""
         # Get all events for analysis
         all_events = await self.query_events(limit=50000)  # Large limit for comprehensive analysis
@@ -1499,7 +1499,7 @@ class AuditTrailSystem:
 
         logger.info("Audit trail system shutdown complete")
 
-    def get_system_statistics(self) -> Dict[str, Any]:
+    def get_system_statistics(self) -> dict[str, Any]:
         """Get audit system statistics"""
         return {
             "node_id": self.node_id,
@@ -1532,7 +1532,7 @@ class AuditTrailSystem:
 
 # Factory function for system creation
 def create_audit_trail_system(
-    node_id: str, betanet_anchor: Optional[BetanetAnchorService] = None, config: Optional[Dict[str, Any]] = None
+    node_id: str, betanet_anchor: BetanetAnchorService | None = None, config: dict[str, Any] | None = None
 ) -> AuditTrailSystem:
     """
     Factory function to create audit trail system

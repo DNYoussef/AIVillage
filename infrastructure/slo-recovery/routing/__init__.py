@@ -19,24 +19,18 @@ Target Performance:
 - Escalation Rate: <15%
 """
 
-from .breach_classifier import BreachClassifier, BreachClassification, BreachSeverity, FailureCategory
-
-from .strategy_selector import StrategySelector, StrategySelection, RecoveryStrategy, AgentType
-
-from .parallel_coordinator import ParallelCoordinator, CoordinationPlan, AgentExecution, CoordinationStatus
-
-from .escalation_manager import EscalationManager, EscalationEvent, EscalationLevel, EscalationTrigger
-
-from .slo_recovery_router import SLORecoveryRouter, RoutingDecision
-
+from .breach_classifier import BreachClassification, BreachClassifier, BreachSeverity, FailureCategory
+from .escalation_manager import EscalationEvent, EscalationLevel, EscalationManager, EscalationTrigger
 from .integration_adapter import (
-    IntegrationCoordinator,
     FlakeDetectorAdapter,
     GitHubOrchestratorAdapter,
+    IntegrationCoordinator,
     create_integration_coordinator,
 )
-
-from .validation_optimizer import ValidationOptimizer, ValidationMetrics, OptimizationResult
+from .parallel_coordinator import AgentExecution, CoordinationPlan, CoordinationStatus, ParallelCoordinator
+from .slo_recovery_router import RoutingDecision, SLORecoveryRouter
+from .strategy_selector import AgentType, RecoveryStrategy, StrategySelection, StrategySelector
+from .validation_optimizer import OptimizationResult, ValidationMetrics, ValidationOptimizer
 
 __version__ = "1.0.0"
 

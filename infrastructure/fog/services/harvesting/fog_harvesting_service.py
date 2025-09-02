@@ -9,23 +9,23 @@ Manages mobile compute harvesting coordination including:
 """
 
 import asyncio
-from typing import Any, Dict, Optional
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from ..interfaces.base_service import BaseFogService, ServiceStatus, ServiceHealthCheck
-from ...compute.harvest_manager import FogHarvestManager, HarvestPolicy, DeviceCapabilities
+from ...compute.harvest_manager import DeviceCapabilities, FogHarvestManager, HarvestPolicy
 from ...edge.mobile.resource_manager import MobileResourceManager
+from ..interfaces.base_service import BaseFogService, ServiceHealthCheck, ServiceStatus
 
 
 class FogHarvestingService(BaseFogService):
     """Service for managing fog computing resource harvesting"""
 
-    def __init__(self, service_name: str, config: Dict[str, Any], event_bus):
+    def __init__(self, service_name: str, config: dict[str, Any], event_bus):
         super().__init__(service_name, config, event_bus)
 
         # Core components
-        self.harvest_manager: Optional[FogHarvestManager] = None
-        self.resource_manager: Optional[MobileResourceManager] = None
+        self.harvest_manager: FogHarvestManager | None = None
+        self.resource_manager: MobileResourceManager | None = None
 
         # Harvesting configuration
         self.harvest_config = config.get("harvest", {})
@@ -135,7 +135,7 @@ class FogHarvestingService(BaseFogService):
             )
 
     async def register_mobile_device(
-        self, device_id: str, capabilities: Dict[str, Any], initial_state: Dict[str, Any]
+        self, device_id: str, capabilities: dict[str, Any], initial_state: dict[str, Any]
     ) -> bool:
         """Register a mobile device for harvesting"""
         try:
@@ -176,7 +176,7 @@ class FogHarvestingService(BaseFogService):
             self.logger.error(f"Failed to register device {device_id}: {e}")
             return False
 
-    async def assign_compute_task(self, request_data: Dict[str, Any]) -> Optional[str]:
+    async def assign_compute_task(self, request_data: dict[str, Any]) -> str | None:
         """Assign a compute task to an available device"""
         try:
             if not self.harvest_manager:
@@ -203,7 +203,7 @@ class FogHarvestingService(BaseFogService):
             self.logger.error(f"Failed to assign compute task: {e}")
             return None
 
-    async def get_harvesting_stats(self) -> Dict[str, Any]:
+    async def get_harvesting_stats(self) -> dict[str, Any]:
         """Get comprehensive harvesting statistics"""
         try:
             stats = self.metrics.copy()

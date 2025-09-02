@@ -5,6 +5,7 @@ Extracted from the EnhancedSecureAPIServer for better modularity.
 """
 
 import logging
+
 from aiohttp import web, web_request
 
 from ..interfaces import IMFAService, MFAMethodType

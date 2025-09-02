@@ -4,15 +4,14 @@ Intelligent problem classification and remedy selection with 92.8%+ success rate
 Coordinates breach classification, strategy selection, parallel routing, and escalation
 """
 
-import logging
-from typing import Dict, List
 from dataclasses import dataclass
 from datetime import datetime
+import logging
 
-from .breach_classifier import BreachClassifier, BreachClassification
-from .strategy_selector import StrategySelector, StrategySelection
-from .parallel_coordinator import ParallelCoordinator, CoordinationPlan
-from .escalation_manager import EscalationManager, EscalationEvent
+from .breach_classifier import BreachClassification, BreachClassifier
+from .escalation_manager import EscalationEvent, EscalationManager
+from .parallel_coordinator import CoordinationPlan, ParallelCoordinator
+from .strategy_selector import StrategySelection, StrategySelector
 
 
 @dataclass
@@ -21,7 +20,7 @@ class RoutingDecision:
     breach_classification: BreachClassification
     strategy_selection: StrategySelection
     coordination_plan: CoordinationPlan
-    escalation_events: List[EscalationEvent]
+    escalation_events: list[EscalationEvent]
     routing_confidence: float
     estimated_recovery_time: int
     success_probability: float
@@ -58,7 +57,7 @@ class SLORecoveryRouter:
         self.target_mttr_minutes = 30
         self.confidence_threshold = 0.75
 
-    async def route_to_remedies(self, failure_data: Dict) -> RoutingDecision:
+    async def route_to_remedies(self, failure_data: dict) -> RoutingDecision:
         """
         Main routing function: Route failures to optimal remedies
 
@@ -253,23 +252,23 @@ class SLORecoveryRouter:
         if len(self.routing_history) > 1000:
             self.routing_history = self.routing_history[-1000:]
 
-    def generate_breach_classification_matrix(self) -> Dict:
+    def generate_breach_classification_matrix(self) -> dict:
         """Generate breach classification matrix for output"""
         return self.breach_classifier.generate_classification_matrix()
 
-    def generate_recovery_strategy_selection(self) -> Dict:
+    def generate_recovery_strategy_selection(self) -> dict:
         """Generate recovery strategy selection mapping for output"""
         return self.strategy_selector.generate_strategy_selection_map()
 
-    def generate_parallel_routing_plan(self, coordination_plan: CoordinationPlan) -> Dict:
+    def generate_parallel_routing_plan(self, coordination_plan: CoordinationPlan) -> dict:
         """Generate parallel routing plan for output"""
         return self.parallel_coordinator.generate_routing_plan(coordination_plan)
 
-    def generate_escalation_procedures(self) -> Dict:
+    def generate_escalation_procedures(self) -> dict:
         """Generate escalation procedures for output"""
         return self.escalation_manager.generate_escalation_procedures()
 
-    def get_routing_analytics(self) -> Dict:
+    def get_routing_analytics(self) -> dict:
         """Get routing performance analytics"""
 
         analytics = {
@@ -301,7 +300,7 @@ class SLORecoveryRouter:
 
         return analytics
 
-    def _analyze_routing_patterns(self) -> Dict:
+    def _analyze_routing_patterns(self) -> dict:
         """Analyze patterns in routing decisions"""
 
         recent_routes = self.routing_history[-100:]  # Last 100 routes
@@ -353,7 +352,7 @@ class SLORecoveryRouter:
 
         return patterns
 
-    def _identify_improvement_opportunities(self) -> List[str]:
+    def _identify_improvement_opportunities(self) -> list[str]:
         """Identify opportunities for routing improvement"""
 
         opportunities = []

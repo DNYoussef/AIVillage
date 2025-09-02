@@ -3,10 +3,10 @@ Constitutional Policy Enforcement System
 Implements tier-based constitutional policy enforcement with automated decision making
 """
 
-import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Any
+import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +38,9 @@ class EnforcementResult:
 
     decision: PolicyDecision
     rationale: str
-    constitutional_analysis: Dict[str, Any]
-    tier_modifications: Dict[str, Any]
-    monitoring_requirements: List[str]
+    constitutional_analysis: dict[str, Any]
+    tier_modifications: dict[str, Any]
+    monitoring_requirements: list[str]
     confidence_score: float
 
 
@@ -57,7 +57,7 @@ class PolicyEnforcement:
 
         logger.info("Constitutional Policy Enforcement initialized")
 
-    def _load_constitutional_guidelines(self) -> Dict[str, Any]:
+    def _load_constitutional_guidelines(self) -> dict[str, Any]:
         """Load constitutional guidelines for content moderation"""
         return {
             ConstitutionalPrinciple.FIRST_AMENDMENT: {
@@ -106,7 +106,7 @@ class PolicyEnforcement:
             },
         }
 
-    def _load_tier_policies(self) -> Dict[str, Dict[str, Any]]:
+    def _load_tier_policies(self) -> dict[str, dict[str, Any]]:
         """Load tier-specific policy configurations"""
         return {
             "Bronze": {
@@ -142,7 +142,7 @@ class PolicyEnforcement:
         }
 
     async def evaluate_content(
-        self, harm_analysis: Any, user_tier: str, context: Dict[str, Any] = None
+        self, harm_analysis: Any, user_tier: str, context: dict[str, Any] = None
     ) -> EnforcementResult:
         """
         Evaluate content and determine policy enforcement action
@@ -204,8 +204,8 @@ class PolicyEnforcement:
             return await self._create_safe_enforcement_result(harm_analysis, user_tier, str(e))
 
     async def _analyze_constitutional_implications(
-        self, harm_analysis: Any, user_tier: str, context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, harm_analysis: Any, user_tier: str, context: dict[str, Any]
+    ) -> dict[str, Any]:
         """Analyze constitutional implications of content and potential restrictions"""
 
         analysis = {
@@ -235,7 +235,7 @@ class PolicyEnforcement:
 
         return analysis
 
-    async def _analyze_first_amendment_implications(self, harm_analysis: Any) -> Dict[str, Any]:
+    async def _analyze_first_amendment_implications(self, harm_analysis: Any) -> dict[str, Any]:
         """Analyze First Amendment implications"""
         guidelines = self.constitutional_guidelines[ConstitutionalPrinciple.FIRST_AMENDMENT]
 
@@ -262,7 +262,7 @@ class PolicyEnforcement:
             }
         }
 
-    async def _analyze_viewpoint_neutrality(self, harm_analysis: Any) -> Dict[str, Any]:
+    async def _analyze_viewpoint_neutrality(self, harm_analysis: Any) -> dict[str, Any]:
         """Analyze viewpoint neutrality requirements"""
 
         # Check viewpoint bias score
@@ -284,7 +284,7 @@ class PolicyEnforcement:
             }
         }
 
-    async def _analyze_due_process_requirements(self, harm_analysis: Any, user_tier: str) -> Dict[str, Any]:
+    async def _analyze_due_process_requirements(self, harm_analysis: Any, user_tier: str) -> dict[str, Any]:
         """Analyze due process requirements based on content and tier"""
 
         requirements = []
@@ -317,7 +317,7 @@ class PolicyEnforcement:
             }
         }
 
-    async def _analyze_prior_restraint_implications(self, harm_analysis: Any) -> Dict[str, Any]:
+    async def _analyze_prior_restraint_implications(self, harm_analysis: Any) -> dict[str, Any]:
         """Analyze prior restraint constitutional implications"""
 
         # Prior restraint is presumptively unconstitutional
@@ -343,7 +343,7 @@ class PolicyEnforcement:
         }
 
     async def _apply_harm_level_policy(
-        self, harm_analysis: Any, constitutional_analysis: Dict[str, Any], user_tier: str
+        self, harm_analysis: Any, constitutional_analysis: dict[str, Any], user_tier: str
     ) -> PolicyDecision:
         """Apply harm level specific policies"""
 
@@ -385,8 +385,8 @@ class PolicyEnforcement:
         return PolicyDecision.ESCALATE
 
     async def _apply_tier_modifications(
-        self, initial_decision: PolicyDecision, constitutional_analysis: Dict[str, Any], user_tier: str
-    ) -> Dict[str, Any]:
+        self, initial_decision: PolicyDecision, constitutional_analysis: dict[str, Any], user_tier: str
+    ) -> dict[str, Any]:
         """Apply tier-specific modifications to policy decision"""
 
         self.tier_policies[user_tier]
@@ -429,8 +429,8 @@ class PolicyEnforcement:
     async def _determine_final_decision(
         self,
         initial_decision: PolicyDecision,
-        tier_modifications: Dict[str, Any],
-        constitutional_analysis: Dict[str, Any],
+        tier_modifications: dict[str, Any],
+        constitutional_analysis: dict[str, Any],
     ) -> PolicyDecision:
         """Determine final policy decision after tier modifications"""
 
@@ -453,7 +453,7 @@ class PolicyEnforcement:
         return final_decision
 
     async def _generate_policy_rationale(
-        self, decision: PolicyDecision, harm_analysis: Any, constitutional_analysis: Dict[str, Any], user_tier: str
+        self, decision: PolicyDecision, harm_analysis: Any, constitutional_analysis: dict[str, Any], user_tier: str
     ) -> str:
         """Generate comprehensive policy rationale"""
 
@@ -501,7 +501,7 @@ class PolicyEnforcement:
 
     async def _determine_monitoring_requirements(
         self, decision: PolicyDecision, harm_analysis: Any, user_tier: str
-    ) -> List[str]:
+    ) -> list[str]:
         """Determine ongoing monitoring requirements"""
 
         monitoring = []
@@ -534,7 +534,7 @@ class PolicyEnforcement:
         return monitoring
 
     async def _calculate_enforcement_confidence(
-        self, harm_analysis: Any, constitutional_analysis: Dict[str, Any], decision: PolicyDecision
+        self, harm_analysis: Any, constitutional_analysis: dict[str, Any], decision: PolicyDecision
     ) -> float:
         """Calculate confidence score for enforcement decision"""
 
@@ -603,10 +603,10 @@ class PolicyEnforcement:
         """Get current policy version"""
         return self.policy_version
 
-    def get_constitutional_guidelines(self) -> Dict[str, Any]:
+    def get_constitutional_guidelines(self) -> dict[str, Any]:
         """Get current constitutional guidelines"""
         return self.constitutional_guidelines.copy()
 
-    def get_tier_policies(self) -> Dict[str, Dict[str, Any]]:
+    def get_tier_policies(self) -> dict[str, dict[str, Any]]:
         """Get current tier policies"""
         return self.tier_policies.copy()

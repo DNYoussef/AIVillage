@@ -4,8 +4,8 @@
 import argparse
 import json
 import logging
-import time
 from pathlib import Path
+import time
 
 import numpy as np
 import torch

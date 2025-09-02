@@ -4,25 +4,25 @@ Implements various authentication providers following clean architecture princip
 with dependency injection and clear separation of concerns.
 """
 
+from datetime import datetime, timedelta
 import hashlib
 import hmac
 import logging
 import time
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from ..core.interfaces import (
-    IAuthenticationProvider,
-    SecurityContext,
-    SecurityResult,
-    AuthenticationMethod,
-)
 from ..core.exceptions import (
     TokenError,
 )
+from ..core.interfaces import (
+    AuthenticationMethod,
+    IAuthenticationProvider,
+    SecurityContext,
+    SecurityResult,
+)
+from .mfa_service import MFAService
 from .session_manager import SessionManager
 from .token_manager import TokenManager
-from .mfa_service import MFAService
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 class BaseAuthenticationProvider:
     """Base authentication provider with common functionality."""
 
-    def __init__(self, session_manager: SessionManager, token_manager: TokenManager, config: Dict[str, Any]):
+    def __init__(self, session_manager: SessionManager, token_manager: TokenManager, config: dict[str, Any]):
         self.session_manager = session_manager
         self.token_manager = token_manager
         self.config = config
@@ -39,7 +39,7 @@ class BaseAuthenticationProvider:
         self.lockout_duration = config.get("lockout_duration_minutes", 30) * 60
 
         # Track failed attempts
-        self.failed_attempts: Dict[str, List[float]] = {}
+        self.failed_attempts: dict[str, list[float]] = {}
 
     def _is_locked_out(self, identifier: str) -> bool:
         """Check if identifier is locked out."""
@@ -67,7 +67,7 @@ class BaseAuthenticationProvider:
             del self.failed_attempts[identifier]
 
     async def _create_security_context(
-        self, user_id: str, session_data: Dict[str, Any], device_info: Dict[str, Any]
+        self, user_id: str, session_data: dict[str, Any], device_info: dict[str, Any]
     ) -> SecurityContext:
         """Create security context from authentication data."""
         return SecurityContext(
@@ -92,7 +92,7 @@ class TokenAuthenticationProvider(BaseAuthenticationProvider, IAuthenticationPro
         session_manager: SessionManager,
         token_manager: TokenManager,
         user_store: Any,  # Abstract user store interface
-        config: Dict[str, Any],
+        config: dict[str, Any],
     ):
         super().__init__(session_manager, token_manager, config)
         self.user_store = user_store
@@ -101,7 +101,7 @@ class TokenAuthenticationProvider(BaseAuthenticationProvider, IAuthenticationPro
         self.token_expiry_hours = config.get("token_expiry_hours", 24)
         self.refresh_expiry_days = config.get("refresh_token_expiry_days", 30)
 
-    async def authenticate(self, credentials: Dict[str, Any], context: Dict[str, Any]) -> SecurityResult:
+    async def authenticate(self, credentials: dict[str, Any], context: dict[str, Any]) -> SecurityResult:
         """Authenticate user with username/password."""
         try:
             username = credentials.get("username")
@@ -208,7 +208,7 @@ class TokenAuthenticationProvider(BaseAuthenticationProvider, IAuthenticationPro
             logger.error(f"Token revocation error: {e}")
             return SecurityResult(success=False, message="Token revocation failed", error_code="REVOKE_ERROR")
 
-    async def create_session(self, user_id: str, device_info: Dict[str, Any]) -> SecurityResult:
+    async def create_session(self, user_id: str, device_info: dict[str, Any]) -> SecurityResult:
         """Create new user session."""
         try:
             # Get user data
@@ -279,7 +279,7 @@ class TokenAuthenticationProvider(BaseAuthenticationProvider, IAuthenticationPro
             logger.error(f"Session validation error: {e}")
             return SecurityResult(success=False, message="Session validation failed", error_code="SESSION_ERROR")
 
-    async def _verify_password(self, password: str, password_hash: str, salt: Optional[str] = None) -> bool:
+    async def _verify_password(self, password: str, password_hash: str, salt: str | None = None) -> bool:
         """Verify password against hash."""
         try:
             if salt:
@@ -306,7 +306,7 @@ class MFAAuthenticationProvider(BaseAuthenticationProvider):
         session_manager: SessionManager,
         token_manager: TokenManager,
         mfa_service: MFAService,
-        config: Dict[str, Any],
+        config: dict[str, Any],
     ):
         super().__init__(session_manager, token_manager, config)
         self.mfa_service = mfa_service
@@ -330,7 +330,7 @@ class MFAAuthenticationProvider(BaseAuthenticationProvider):
             logger.error(f"MFA verification error: {e}")
             return SecurityResult(success=False, message="MFA verification failed", error_code="MFA_ERROR")
 
-    async def setup_mfa(self, user_id: str, method: str, contact_info: Optional[str] = None) -> SecurityResult:
+    async def setup_mfa(self, user_id: str, method: str, contact_info: str | None = None) -> SecurityResult:
         """Set up MFA for user."""
         try:
             setup_data = await self.mfa_service.setup_mfa(user_id, method, contact_info)
@@ -350,7 +350,7 @@ class CertificateAuthenticationProvider(BaseAuthenticationProvider):
         session_manager: SessionManager,
         token_manager: TokenManager,
         certificate_store: Any,
-        config: Dict[str, Any],
+        config: dict[str, Any],
     ):
         super().__init__(session_manager, token_manager, config)
         self.certificate_store = certificate_store

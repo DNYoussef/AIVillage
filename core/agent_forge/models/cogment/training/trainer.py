@@ -7,25 +7,26 @@ Replaces HRRM's training approach with enhanced loss functions and stage-specifi
 
 from __future__ import annotations
 
-import logging
-import time
 from dataclasses import dataclass
+import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any, Union
+import time
+from typing import Any
 
 import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
+from ..core.config import CogmentConfig
+
 # Import Cogment components
 from ..core.model import Cogment, CogmentOutput
-from ..core.config import CogmentConfig
+from .curriculum import FourStageCurriculum, StageConfig
+from .evaluator import EvaluationMetrics, StageEvaluator
+from .grokfast_integration import GrokFastConfig, SelectiveGrokFastManager
 
 # Import training components
 from .losses import CogmentLoss
-from .curriculum import FourStageCurriculum, StageConfig
-from .grokfast_integration import SelectiveGrokFastManager, GrokFastConfig
-from .evaluator import StageEvaluator, EvaluationMetrics
 
 logger = logging.getLogger(__name__)
 
@@ -37,22 +38,22 @@ class MultiOptimizerConfig:
     # Core refinement optimizer
     core_lr: float = 3e-4
     core_weight_decay: float = 0.01
-    core_betas: Tuple[float, float] = (0.9, 0.95)
+    core_betas: tuple[float, float] = (0.9, 0.95)
 
     # Memory optimizer
     memory_lr: float = 1e-4
     memory_weight_decay: float = 0.001
-    memory_betas: Tuple[float, float] = (0.9, 0.999)
+    memory_betas: tuple[float, float] = (0.9, 0.999)
 
     # ACT halting optimizer
     halting_lr: float = 5e-4
     halting_weight_decay: float = 0.01
-    halting_betas: Tuple[float, float] = (0.9, 0.95)
+    halting_betas: tuple[float, float] = (0.9, 0.95)
 
     # Other components optimizer
     other_lr: float = 2e-4
     other_weight_decay: float = 0.01
-    other_betas: Tuple[float, float] = (0.9, 0.95)
+    other_betas: tuple[float, float] = (0.9, 0.95)
 
     # Scheduler parameters
     scheduler_type: str = "cosine"  # 'cosine', 'linear', 'constant'
@@ -137,8 +138,8 @@ class CogmentTrainer:
         # Training state
         self.current_step = 0
         self.current_epoch = 0
-        self.best_metrics: Dict[str, float] = {}
-        self.training_history: List[Dict[str, Any]] = []
+        self.best_metrics: dict[str, float] = {}
+        self.training_history: list[dict[str, Any]] = []
 
         # AMP scaler for mixed precision
         self.scaler = torch.cuda.amp.GradScaler() if config.use_amp and torch.cuda.is_available() else None
@@ -148,7 +149,7 @@ class CogmentTrainer:
 
         logger.info(f"Initialized CogmentTrainer with {sum(p.numel() for p in model.parameters()):,} parameters")
 
-    def _setup_optimizers(self) -> Dict[str, optim.Optimizer]:
+    def _setup_optimizers(self) -> dict[str, optim.Optimizer]:
         """Setup separate optimizers for different model components."""
         opt_config = self.config.optimizer_config
         optimizers = {}
@@ -209,7 +210,7 @@ class CogmentTrainer:
 
         return optimizers
 
-    def _setup_schedulers(self) -> Dict[str, Any]:
+    def _setup_schedulers(self) -> dict[str, Any]:
         """Setup learning rate schedulers for each optimizer."""
         schedulers = {}
         opt_config = self.config.optimizer_config
@@ -256,7 +257,7 @@ class CogmentTrainer:
 
         return manager
 
-    def training_step(self, batch: Dict[str, torch.Tensor], stage_config: StageConfig) -> Dict[str, float]:
+    def training_step(self, batch: dict[str, torch.Tensor], stage_config: StageConfig) -> dict[str, float]:
         """Perform a single training step."""
         self.model.train()
 
@@ -332,9 +333,9 @@ class CogmentTrainer:
         self,
         input_ids: torch.Tensor,
         labels: torch.Tensor,
-        augmented_ids: Optional[torch.Tensor],
+        augmented_ids: torch.Tensor | None,
         stage_config: StageConfig,
-    ) -> Tuple[torch.Tensor, Dict[str, Any]]:
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
         """Forward pass with stage-specific configuration."""
         # Set stage-specific model parameters
         max_steps = stage_config.max_refinement_steps
@@ -387,7 +388,7 @@ class CogmentTrainer:
             if reset_count > 0:
                 logger.info(f"Consolidated {reset_count} memory slots")
 
-    def evaluate(self, eval_dataloader: DataLoader, stage_config: Optional[StageConfig] = None) -> EvaluationMetrics:
+    def evaluate(self, eval_dataloader: DataLoader, stage_config: StageConfig | None = None) -> EvaluationMetrics:
         """Evaluate model on validation data."""
         self.model.eval()
 
@@ -441,7 +442,7 @@ class CogmentTrainer:
 
         return metrics
 
-    def train(self, train_dataloader: DataLoader, eval_dataloader: Optional[DataLoader] = None) -> Dict[str, Any]:
+    def train(self, train_dataloader: DataLoader, eval_dataloader: DataLoader | None = None) -> dict[str, Any]:
         """
         Main training loop with curriculum and stage management.
 
@@ -570,7 +571,7 @@ class CogmentTrainer:
 
         return final_results
 
-    def _log_training_progress(self, metrics: Dict[str, float]):
+    def _log_training_progress(self, metrics: dict[str, float]):
         """Log training progress."""
         stage_name = self.curriculum.current_stage.name if self.curriculum else "N/A"
 
@@ -610,7 +611,7 @@ class CogmentTrainer:
         torch.save(checkpoint, checkpoint_path)
         logger.info(f"Saved checkpoint: {checkpoint_path}")
 
-    def load_checkpoint(self, checkpoint_path: Union[str, Path]):
+    def load_checkpoint(self, checkpoint_path: str | Path):
         """Load model checkpoint."""
         checkpoint = torch.load(checkpoint_path, map_location=self.device)
 

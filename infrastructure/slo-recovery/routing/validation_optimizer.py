@@ -4,14 +4,14 @@ Success rate optimization and routing decision validation
 DSPy-based optimization targeting 92.8%+ success rate
 """
 
-import json
-import logging
-from typing import Dict, List
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+import json
+import logging
+import sqlite3
+
 import numpy as np
 from sklearn.metrics import accuracy_score
-import sqlite3
 
 from .slo_recovery_router import RoutingDecision
 
@@ -41,7 +41,7 @@ class OptimizationResult:
     baseline_value: float
     optimized_value: float
     improvement_percentage: float
-    parameter_updates: Dict
+    parameter_updates: dict
     validation_score: float
     timestamp: datetime
 
@@ -189,7 +189,7 @@ class ValidationOptimizer:
         except Exception as e:
             self.logger.error(f"Failed to store validation metrics: {e}")
 
-    def calculate_performance_metrics(self, window_days: int = 7) -> Dict:
+    def calculate_performance_metrics(self, window_days: int = 7) -> dict:
         """Calculate performance metrics over specified time window"""
 
         cutoff_time = datetime.now() - timedelta(days=window_days)
@@ -255,13 +255,13 @@ class ValidationOptimizer:
 
         return metrics
 
-    def _calculate_false_positive_rate(self, predictions: List[bool], actuals: List[bool]) -> float:
+    def _calculate_false_positive_rate(self, predictions: list[bool], actuals: list[bool]) -> float:
         """Calculate false positive rate for escalation predictions"""
         false_positives = sum(1 for p, a in zip(predictions, actuals) if p and not a)
         total_negatives = sum(1 for a in actuals if not a)
         return false_positives / total_negatives if total_negatives > 0 else 0
 
-    def _calculate_false_negative_rate(self, predictions: List[bool], actuals: List[bool]) -> float:
+    def _calculate_false_negative_rate(self, predictions: list[bool], actuals: list[bool]) -> float:
         """Calculate false negative rate for escalation predictions"""
         false_negatives = sum(1 for p, a in zip(predictions, actuals) if not p and a)
         total_positives = sum(1 for a in actuals if a)
@@ -323,7 +323,7 @@ class ValidationOptimizer:
 
         return result
 
-    def _generate_parameter_updates(self, target_metric: str, baseline_metrics: Dict) -> Dict:
+    def _generate_parameter_updates(self, target_metric: str, baseline_metrics: dict) -> dict:
         """Generate parameter updates based on target metric and current performance"""
 
         updates = {}
@@ -358,7 +358,7 @@ class ValidationOptimizer:
 
         return updates
 
-    def _simulate_optimization_impact(self, baseline_value: float, parameter_updates: Dict) -> float:
+    def _simulate_optimization_impact(self, baseline_value: float, parameter_updates: dict) -> float:
         """Simulate the impact of parameter updates (simplified model)"""
 
         # This is a simplified simulation - in production, this would use
@@ -383,7 +383,7 @@ class ValidationOptimizer:
 
         return baseline_value * impact_factor
 
-    def _calculate_validation_score(self, parameter_updates: Dict) -> float:
+    def _calculate_validation_score(self, parameter_updates: dict) -> float:
         """Calculate validation score for parameter updates"""
 
         # Score based on the conservativeness and evidence of updates
@@ -397,7 +397,7 @@ class ValidationOptimizer:
         aggressive_changes = sum(
             1
             for adjustment in parameter_updates.values()
-            if isinstance(adjustment, (int, float)) and abs(adjustment) > 0.2
+            if isinstance(adjustment, int | float) and abs(adjustment) > 0.2
         )
         score -= aggressive_changes * 0.05
 
@@ -438,7 +438,7 @@ class ValidationOptimizer:
         except Exception as e:
             self.logger.error(f"Failed to store optimization result: {e}")
 
-    def validate_routing_decision(self, routing_decision: RoutingDecision) -> Dict:
+    def validate_routing_decision(self, routing_decision: RoutingDecision) -> dict:
         """Validate a routing decision before execution"""
 
         validation_result = {
@@ -504,7 +504,7 @@ class ValidationOptimizer:
 
         return np.mean([m.actual_success_rate for m in strategy_metrics])
 
-    def generate_optimization_report(self) -> Dict:
+    def generate_optimization_report(self) -> dict:
         """Generate comprehensive optimization report"""
 
         # Current performance metrics
@@ -547,7 +547,7 @@ class ValidationOptimizer:
 
         return report
 
-    def _calculate_improvement_trends(self) -> Dict:
+    def _calculate_improvement_trends(self) -> dict:
         """Calculate improvement trends over time"""
 
         if len(self.validation_metrics) < 50:
@@ -573,7 +573,7 @@ class ValidationOptimizer:
             "trend_period_size": 25,
         }
 
-    def _generate_recommendations(self, current_metrics: Dict) -> List[str]:
+    def _generate_recommendations(self, current_metrics: dict) -> list[str]:
         """Generate optimization recommendations based on current performance"""
 
         recommendations = []

@@ -8,12 +8,13 @@ Extracted from GraphFixer to follow single responsibility principle.
 """
 
 import time
-from typing import Any, List
+from typing import Any
+
 import numpy as np
 
 from ..graph_fixer import DetectedGap, GapType
+from ..interfaces.base_service import AsyncServiceMixin, CacheableMixin, ServiceConfig
 from ..interfaces.service_interfaces import IGapDetectionService
-from ..interfaces.base_service import ServiceConfig, CacheableMixin, AsyncServiceMixin
 
 
 class GapDetectionService(IGapDetectionService, CacheableMixin, AsyncServiceMixin):
@@ -56,8 +57,8 @@ class GapDetectionService(IGapDetectionService, CacheableMixin, AsyncServiceMixi
         self._initialized = False
 
     async def detect_gaps(
-        self, query: str = None, retrieved_info: List[Any] = None, focus_area: str = None
-    ) -> List[DetectedGap]:
+        self, query: str = None, retrieved_info: list[Any] = None, focus_area: str = None
+    ) -> list[DetectedGap]:
         """
         Detect knowledge gaps using multiple analysis methods.
 
@@ -109,7 +110,7 @@ class GapDetectionService(IGapDetectionService, CacheableMixin, AsyncServiceMixi
             self.logger.exception(f"Gap detection failed: {e}")
             return []
 
-    async def detect_structural_gaps(self) -> List[DetectedGap]:
+    async def detect_structural_gaps(self) -> list[DetectedGap]:
         """Detect structural gaps in graph connectivity."""
         gaps = []
 
@@ -129,7 +130,7 @@ class GapDetectionService(IGapDetectionService, CacheableMixin, AsyncServiceMixi
             self.logger.exception(f"Structural gap detection failed: {e}")
             return gaps
 
-    async def detect_semantic_gaps(self, query: str = None, focus_area: str = None) -> List[DetectedGap]:
+    async def detect_semantic_gaps(self, query: str = None, focus_area: str = None) -> list[DetectedGap]:
         """Detect semantic gaps using vector analysis."""
         gaps = []
 
@@ -150,7 +151,7 @@ class GapDetectionService(IGapDetectionService, CacheableMixin, AsyncServiceMixi
             self.logger.exception(f"Semantic gap detection failed: {e}")
             return gaps
 
-    async def detect_connectivity_gaps(self) -> List[DetectedGap]:
+    async def detect_connectivity_gaps(self) -> list[DetectedGap]:
         """Detect overall connectivity issues."""
         gaps = []
 
@@ -184,8 +185,8 @@ class GapDetectionService(IGapDetectionService, CacheableMixin, AsyncServiceMixi
     # Private implementation methods
 
     async def _run_detection_method(
-        self, method: str, query: str, retrieved_info: List[Any], focus_area: str
-    ) -> List[DetectedGap]:
+        self, method: str, query: str, retrieved_info: list[Any], focus_area: str
+    ) -> list[DetectedGap]:
         """Run a specific detection method."""
         try:
             if method == "structural_analysis":
@@ -204,7 +205,7 @@ class GapDetectionService(IGapDetectionService, CacheableMixin, AsyncServiceMixi
             self.logger.warning(f"Detection method {method} failed: {e}")
             return []
 
-    async def _find_isolated_nodes(self) -> List[DetectedGap]:
+    async def _find_isolated_nodes(self) -> list[DetectedGap]:
         """Find completely isolated nodes."""
         gaps = []
 
@@ -223,7 +224,7 @@ class GapDetectionService(IGapDetectionService, CacheableMixin, AsyncServiceMixi
 
         return gaps
 
-    async def _find_underconnected_nodes(self) -> List[DetectedGap]:
+    async def _find_underconnected_nodes(self) -> list[DetectedGap]:
         """Find high-trust nodes with few connections."""
         gaps = []
 
@@ -246,7 +247,7 @@ class GapDetectionService(IGapDetectionService, CacheableMixin, AsyncServiceMixi
 
         return gaps
 
-    async def _find_semantic_disconnects(self) -> List[DetectedGap]:
+    async def _find_semantic_disconnects(self) -> list[DetectedGap]:
         """Find semantically similar but unconnected concepts."""
         gaps = []
 
@@ -287,7 +288,7 @@ class GapDetectionService(IGapDetectionService, CacheableMixin, AsyncServiceMixi
 
         return gaps
 
-    async def _find_missing_bridges(self, focus_area: str) -> List[DetectedGap]:
+    async def _find_missing_bridges(self, focus_area: str) -> list[DetectedGap]:
         """Find missing bridge concepts in a focus area."""
         gaps = []
 
@@ -296,7 +297,7 @@ class GapDetectionService(IGapDetectionService, CacheableMixin, AsyncServiceMixi
 
         return gaps
 
-    async def _detect_trust_inconsistencies(self) -> List[DetectedGap]:
+    async def _detect_trust_inconsistencies(self) -> list[DetectedGap]:
         """Detect inconsistencies in trust scores."""
         gaps = []
 
@@ -337,7 +338,7 @@ class GapDetectionService(IGapDetectionService, CacheableMixin, AsyncServiceMixi
             for edge in self.config.trust_graph.edges.values()
         )
 
-    async def _deduplicate_gaps(self, gaps: List[DetectedGap]) -> List[DetectedGap]:
+    async def _deduplicate_gaps(self, gaps: list[DetectedGap]) -> list[DetectedGap]:
         """Remove duplicate gaps based on type and source nodes."""
         seen = set()
         unique_gaps = []
@@ -350,7 +351,7 @@ class GapDetectionService(IGapDetectionService, CacheableMixin, AsyncServiceMixi
 
         return unique_gaps
 
-    async def _rank_gaps_by_priority(self, gaps: List[DetectedGap]) -> List[DetectedGap]:
+    async def _rank_gaps_by_priority(self, gaps: list[DetectedGap]) -> list[DetectedGap]:
         """Rank gaps by priority * confidence score."""
         gaps.sort(key=lambda g: g.priority * g.confidence, reverse=True)
         return gaps

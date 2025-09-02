@@ -4,9 +4,9 @@ Demonstrates event-driven architecture for real-time updates.
 """
 
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any
 
-from .websocket_service import websocket_service, WebSocketMessage, MessageType
+from .websocket_service import MessageType, WebSocketMessage, websocket_service
 
 
 class TrainingEventHandler:
@@ -15,7 +15,7 @@ class TrainingEventHandler:
     def __init__(self):
         self.active_training_sessions = {}
 
-    async def on_training_started(self, session_id: str, parameters: Dict[str, Any]):
+    async def on_training_started(self, session_id: str, parameters: dict[str, Any]):
         """Handle training started event."""
         self.active_training_sessions[session_id] = {
             "started_at": datetime.now(),
@@ -37,7 +37,7 @@ class TrainingEventHandler:
         await websocket_service.broadcast(message, topic="training")
 
     async def on_training_progress(
-        self, session_id: str, progress: float, current_epoch: int, loss: float, metrics: Dict[str, float]
+        self, session_id: str, progress: float, current_epoch: int, loss: float, metrics: dict[str, float]
     ):
         """Handle training progress updates."""
         if session_id in self.active_training_sessions:
@@ -58,7 +58,7 @@ class TrainingEventHandler:
 
         await websocket_service.broadcast(message, topic="training")
 
-    async def on_training_completed(self, session_id: str, results: Dict[str, Any]):
+    async def on_training_completed(self, session_id: str, results: dict[str, Any]):
         """Handle training completion."""
         if session_id in self.active_training_sessions:
             del self.active_training_sessions[session_id]
@@ -103,7 +103,7 @@ class TrainingEventHandler:
 class ModelEventHandler:
     """Example handler for model lifecycle events."""
 
-    async def on_model_created(self, model_id: str, model_info: Dict[str, Any]):
+    async def on_model_created(self, model_id: str, model_info: dict[str, Any]):
         """Handle model creation."""
         message = WebSocketMessage(
             type=MessageType.MODEL_CREATED,
@@ -113,7 +113,7 @@ class ModelEventHandler:
 
         await websocket_service.broadcast(message, topic="models")
 
-    async def on_model_updated(self, model_id: str, updates: Dict[str, Any]):
+    async def on_model_updated(self, model_id: str, updates: dict[str, Any]):
         """Handle model updates."""
         message = WebSocketMessage(
             type=MessageType.MODEL_UPDATED,
@@ -137,7 +137,7 @@ class ModelEventHandler:
 class P2PFogEventHandler:
     """Example handler for P2P and Fog computing events."""
 
-    async def on_p2p_status_update(self, status: Dict[str, Any]):
+    async def on_p2p_status_update(self, status: dict[str, Any]):
         """Handle P2P network status updates."""
         message = WebSocketMessage(
             type=MessageType.P2P_STATUS,
@@ -151,7 +151,7 @@ class P2PFogEventHandler:
 
         await websocket_service.broadcast(message, topic="p2p")
 
-    async def on_fog_resources_update(self, resources: Dict[str, Any]):
+    async def on_fog_resources_update(self, resources: dict[str, Any]):
         """Handle fog computing resource updates."""
         message = WebSocketMessage(
             type=MessageType.FOG_RESOURCES,
@@ -175,7 +175,7 @@ async def setup_websocket_integration():
     p2p_fog_handler = P2PFogEventHandler()
 
     # Register custom message handlers
-    async def handle_training_status_request(connection_id: str, data: Dict[str, Any]):
+    async def handle_training_status_request(connection_id: str, data: dict[str, Any]):
         """Handle training status requests."""
         await websocket_service.send_to_connection(
             connection_id,

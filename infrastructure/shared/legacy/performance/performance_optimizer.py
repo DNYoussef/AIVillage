@@ -10,19 +10,19 @@ according to CODEX Integration Requirements:
 """
 
 import asyncio
-import gc
-import json
-import logging
-import os
-import sqlite3
-import threading
-import time
 from collections import defaultdict, deque
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
+import gc
+import json
+import logging
+import os
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+import sqlite3
+import threading
+import time
+from typing import Any
 
 import psutil
 
@@ -64,7 +64,7 @@ class PerformanceMetrics:
     evolution_flush_time_ms: float = 0.0
     rag_retrieval_time_ms: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "timestamp": self.timestamp.isoformat(),
@@ -103,13 +103,13 @@ class PerformanceMetrics:
 class DatabasePerformanceOptimizer:
     """Database performance optimization and monitoring."""
 
-    def __init__(self, db_paths: List[str]):
+    def __init__(self, db_paths: list[str]):
         self.db_paths = db_paths
         self.connection_pool = {}
         self.query_cache = {}
         self.performance_stats = defaultdict(list)
 
-    def optimize_database(self, db_path: str) -> Dict[str, Any]:
+    def optimize_database(self, db_path: str) -> dict[str, Any]:
         """Apply performance optimizations to database."""
         results = {}
 
@@ -213,7 +213,7 @@ class DatabasePerformanceOptimizer:
             # Connection stays in pool
             pass
 
-    def measure_query_performance(self, db_path: str, query: str, params: tuple = ()) -> Tuple[float, Any]:
+    def measure_query_performance(self, db_path: str, query: str, params: tuple = ()) -> tuple[float, Any]:
         """Measure query performance and cache results."""
         cache_key = f"{query}:{str(params)}"
 
@@ -254,7 +254,7 @@ class DatabasePerformanceOptimizer:
 
         return duration_ms, result
 
-    def get_database_stats(self, db_path: str) -> Dict[str, Any]:
+    def get_database_stats(self, db_path: str) -> dict[str, Any]:
         """Get comprehensive database statistics."""
         try:
             with self.get_optimized_connection(db_path) as conn:
@@ -331,7 +331,7 @@ class CachePerformanceManager:
         self.l2_max_size = 512  # 512 MB
         self.l3_max_size = 2048  # 2 GB
 
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """Get cache performance statistics."""
         stats = {}
 
@@ -358,7 +358,7 @@ class CachePerformanceManager:
 
         return stats
 
-    def optimize_cache_sizes(self, usage_patterns: Dict[str, Any]) -> Dict[str, Any]:
+    def optimize_cache_sizes(self, usage_patterns: dict[str, Any]) -> dict[str, Any]:
         """Optimize cache sizes based on usage patterns."""
         optimizations = {}
 
@@ -388,7 +388,7 @@ class CachePerformanceManager:
 
         return optimizations
 
-    def _preload_cache(self, common_patterns: List[str]):
+    def _preload_cache(self, common_patterns: list[str]):
         """Preload cache with common query patterns."""
         # This would be implemented based on specific query patterns
         logger.info(f"Preloading cache with {len(common_patterns)} common patterns")
@@ -436,7 +436,7 @@ class MemoryOptimizer:
                 logger.error(f"Memory monitoring error: {e}")
                 time.sleep(60)
 
-    def get_memory_stats(self) -> Dict[str, Any]:
+    def get_memory_stats(self) -> dict[str, Any]:
         """Get current memory statistics."""
         process = psutil.Process()
         memory_info = process.memory_info()
@@ -499,7 +499,7 @@ class MemoryOptimizer:
         logger.warning("Optimizing FAISS memory usage - implementing lazy loading")
         # This would implement FAISS index optimization
 
-    def get_optimization_recommendations(self) -> List[str]:
+    def get_optimization_recommendations(self) -> list[str]:
         """Get memory optimization recommendations."""
         recommendations = []
 
@@ -531,7 +531,7 @@ class NetworkPerformanceOptimizer:
         self.batch_size = 10
         self.compression_stats = {"compressed_bytes": 0, "original_bytes": 0}
 
-    def optimize_message_batching(self, messages: List[Dict[str, Any]]) -> List[bytes]:
+    def optimize_message_batching(self, messages: list[dict[str, Any]]) -> list[bytes]:
         """Optimize message batching for better throughput."""
         if len(messages) <= 1:
             return [self._serialize_message(msg) for msg in messages]
@@ -558,7 +558,7 @@ class NetworkPerformanceOptimizer:
 
         return optimized_messages
 
-    def _serialize_message(self, message: Dict[str, Any]) -> bytes:
+    def _serialize_message(self, message: dict[str, Any]) -> bytes:
         """Serialize message with optional compression."""
         serialized = json.dumps(message).encode("utf-8")
 
@@ -591,7 +591,7 @@ class NetworkPerformanceOptimizer:
 
         return random.uniform(10, 100)  # 10-100ms simulated latency
 
-    def optimize_connection_timeouts(self) -> Dict[str, int]:
+    def optimize_connection_timeouts(self) -> dict[str, int]:
         """Optimize connection timeouts based on network conditions."""
         if not self.network_stats:
             return {
@@ -641,7 +641,7 @@ class PerformanceBenchmarker:
             "cache_hit_rate": 0.8,  # Cache hit rate above 80%
         }
 
-    async def run_comprehensive_benchmark(self) -> Dict[str, Any]:
+    async def run_comprehensive_benchmark(self) -> dict[str, Any]:
         """Run comprehensive performance benchmarks."""
         print("Starting comprehensive performance benchmark...")
 
@@ -686,7 +686,7 @@ class PerformanceBenchmarker:
 
         return results
 
-    async def _benchmark_database(self) -> Dict[str, Any]:
+    async def _benchmark_database(self) -> dict[str, Any]:
         """Benchmark database performance."""
         db_optimizer = DatabasePerformanceOptimizer(["./data/evolution_metrics.db"])
 
@@ -720,7 +720,7 @@ class PerformanceBenchmarker:
             "target_met": sum(query_times) / len(query_times) < self.performance_targets["db_query_ms"],
         }
 
-    async def _benchmark_cache(self) -> Dict[str, Any]:
+    async def _benchmark_cache(self) -> dict[str, Any]:
         """Benchmark cache performance."""
         cache_manager = CachePerformanceManager()
 
@@ -743,7 +743,7 @@ class PerformanceBenchmarker:
             "target_met": stats["overall"]["hit_rate"] >= self.performance_targets["cache_hit_rate"],
         }
 
-    async def _benchmark_memory(self) -> Dict[str, Any]:
+    async def _benchmark_memory(self) -> dict[str, Any]:
         """Benchmark memory usage."""
         memory_optimizer = MemoryOptimizer()
 
@@ -780,7 +780,7 @@ class PerformanceBenchmarker:
             "target_met": final_stats["process_memory_mb"] < self.performance_targets["memory_usage_mb"],
         }
 
-    async def _benchmark_network(self) -> Dict[str, Any]:
+    async def _benchmark_network(self) -> dict[str, Any]:
         """Benchmark network performance."""
         network_optimizer = NetworkPerformanceOptimizer()
 
@@ -809,7 +809,7 @@ class PerformanceBenchmarker:
             "target_met": discovery_time_ms < self.performance_targets["p2p_discovery_ms"],
         }
 
-    async def _benchmark_api(self) -> Dict[str, Any]:
+    async def _benchmark_api(self) -> dict[str, Any]:
         """Benchmark API performance."""
         # Simulate API response times
         api_times = []
@@ -847,7 +847,7 @@ class PerformanceBenchmarker:
             },
         }
 
-    def _generate_summary(self, benchmarks: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_summary(self, benchmarks: dict[str, Any]) -> dict[str, Any]:
         """Generate benchmark summary."""
         summary = {
             "overall_performance": "excellent",
@@ -899,7 +899,7 @@ class PerformanceBenchmarker:
 
         return summary
 
-    def _generate_recommendations(self, benchmarks: Dict[str, Any]) -> List[str]:
+    def _generate_recommendations(self, benchmarks: dict[str, Any]) -> list[str]:
         """Generate performance recommendations."""
         recommendations = []
 
@@ -959,7 +959,7 @@ class AIVillagePerformanceOptimizer:
         # Start monitoring
         self.memory_optimizer.start_monitoring()
 
-    async def optimize_all_systems(self) -> Dict[str, Any]:
+    async def optimize_all_systems(self) -> dict[str, Any]:
         """Optimize all system components."""
         results = {"timestamp": datetime.now().isoformat(), "optimizations": {}}
 
@@ -983,7 +983,7 @@ class AIVillagePerformanceOptimizer:
 
         return results
 
-    async def generate_performance_report(self) -> Dict[str, Any]:
+    async def generate_performance_report(self) -> dict[str, Any]:
         """Generate comprehensive performance report."""
         # Run optimizations first
         optimization_results = await self.optimize_all_systems()

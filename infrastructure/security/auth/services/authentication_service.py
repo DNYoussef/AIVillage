@@ -4,11 +4,11 @@ Handles JWT authentication, token management, and user authentication flows.
 Extracted from the EnhancedJWTAuthenticator class for better modularity.
 """
 
+from datetime import datetime, timedelta
 import logging
 import os
 import secrets
-from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any
 
 try:
     import jwt
@@ -18,14 +18,14 @@ except ImportError:
     JWT_AVAILABLE = False
 
 from ..interfaces import (
-    IAuthenticationService,
-    ISessionManager,
-    IMFAService,
     AuthCredentials,
     AuthResult,
-    TokenValidationResult,
     DeviceInfo,
+    IAuthenticationService,
+    IMFAService,
+    ISessionManager,
     MFAMethodType,
+    TokenValidationResult,
 )
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class AuthenticationService(IAuthenticationService):
         session_manager: ISessionManager,
         mfa_service: IMFAService,
         rbac_system=None,
-        config: Dict[str, Any] = None,
+        config: dict[str, Any] = None,
     ):
         """Initialize authentication service."""
         self.session_manager = session_manager
@@ -171,10 +171,10 @@ class AuthenticationService(IAuthenticationService):
         self,
         user_id: str,
         device_info: DeviceInfo,
-        roles: List[str] = None,
-        permissions: List[str] = None,
+        roles: list[str] = None,
+        permissions: list[str] = None,
         mfa_verified: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create JWT tokens with session tracking."""
         try:
             if not JWT_AVAILABLE:
@@ -250,7 +250,7 @@ class AuthenticationService(IAuthenticationService):
             logger.error(f"Session revocation failed: {e}")
             return False
 
-    async def refresh_token(self, refresh_token: str) -> Dict[str, Any]:
+    async def refresh_token(self, refresh_token: str) -> dict[str, Any]:
         """Refresh access token using refresh token."""
         try:
             # Validate refresh token
@@ -298,7 +298,7 @@ class AuthenticationService(IAuthenticationService):
             logger.error(f"Token refresh failed: {e}")
             raise AuthenticationError(f"Failed to refresh token: {e}")
 
-    def _verify_password(self, password: str, user: Dict[str, Any]) -> bool:
+    def _verify_password(self, password: str, user: dict[str, Any]) -> bool:
         """Verify password against user data."""
         try:
             import hashlib

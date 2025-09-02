@@ -11,14 +11,15 @@ Comprehensive augmentation system for ARC tasks with ~300 variations per task:
 Designed for Stage 1 visual reasoning with heavy augmentation for grokking.
 """
 
-import logging
-from dataclasses import dataclass
-from typing import Dict, List, Tuple, Any, Callable
-from itertools import permutations
+from collections.abc import Callable
 from copy import deepcopy
+from dataclasses import dataclass
+from itertools import permutations
+import logging
+import random
+from typing import Any
 
 import numpy as np
-import random
 
 logger = logging.getLogger(__name__)
 
@@ -34,17 +35,17 @@ class AugmentationConfig:
     enable_occlusion: bool = True
 
     # Rotation settings
-    rotation_angles: List[int] = None  # [0, 45, 90, 135, 180, 225, 270, 315]
+    rotation_angles: list[int] = None  # [0, 45, 90, 135, 180, 225, 270, 315]
 
     # Color remapping settings
     max_color_permutations: int = 50  # Limit for computational efficiency
     preserve_background: bool = True  # Keep color 0 as background
 
     # Grid resizing settings
-    resize_range: Tuple[int, int] = (-2, 2)  # ±2 cells
+    resize_range: tuple[int, int] = (-2, 2)  # ±2 cells
 
     # Occlusion settings
-    occlusion_rate_range: Tuple[float, float] = (0.05, 0.10)  # 5-10%
+    occlusion_rate_range: tuple[float, float] = (0.05, 0.10)  # 5-10%
     preserve_corners: bool = True  # Don't occlude corners
 
     # Quality control
@@ -68,7 +69,7 @@ class ARCGrid:
         """Create a deep copy."""
         return ARCGrid(self.grid.copy())
 
-    def to_list(self) -> List[List[int]]:
+    def to_list(self) -> list[list[int]]:
         """Convert to list format."""
         return self.grid.tolist()
 
@@ -96,7 +97,7 @@ class ARCGrid:
         """Flip vertically."""
         return ARCGrid(np.flipud(self.grid))
 
-    def remap_colors(self, color_mapping: Dict[int, int]) -> "ARCGrid":
+    def remap_colors(self, color_mapping: dict[int, int]) -> "ARCGrid":
         """Remap colors according to mapping."""
         new_grid = self.grid.copy()
         for old_color, new_color in color_mapping.items():
@@ -174,7 +175,7 @@ class ARCAugmentationEngine:
 
         logger.info(f"Initialized ARC augmentation engine (max {self.config.max_augmentations_per_task} per task)")
 
-    def generate_color_mappings(self, original_colors: set, max_mappings: int = 50) -> List[Dict[int, int]]:
+    def generate_color_mappings(self, original_colors: set, max_mappings: int = 50) -> list[dict[int, int]]:
         """Generate systematic color remappings."""
         mappings = []
 
@@ -213,7 +214,7 @@ class ARCAugmentationEngine:
 
         return mappings[:max_mappings]
 
-    def generate_geometric_transforms(self) -> List[Callable[[ARCGrid], ARCGrid]]:
+    def generate_geometric_transforms(self) -> list[Callable[[ARCGrid], ARCGrid]]:
         """Generate geometric transformation functions."""
         transforms = []
 
@@ -248,7 +249,7 @@ class ARCAugmentationEngine:
 
         return transforms
 
-    def generate_resize_variants(self, original_grid: ARCGrid) -> List[Tuple[int, int]]:
+    def generate_resize_variants(self, original_grid: ARCGrid) -> list[tuple[int, int]]:
         """Generate resize dimension variants."""
         if not self.config.enable_grid_resizing:
             return [(original_grid.height, original_grid.width)]
@@ -270,7 +271,7 @@ class ARCAugmentationEngine:
 
         return variants
 
-    def generate_occlusion_variants(self, num_variants: int = 5) -> List[Dict[str, Any]]:
+    def generate_occlusion_variants(self, num_variants: int = 5) -> list[dict[str, Any]]:
         """Generate occlusion parameter variants."""
         if not self.config.enable_occlusion:
             return [{"rate": 0.0}]  # No occlusion
@@ -285,7 +286,7 @@ class ARCAugmentationEngine:
 
         return variants
 
-    def validate_augmentation_quality(self, original: Dict[str, Any], augmented: Dict[str, Any]) -> bool:
+    def validate_augmentation_quality(self, original: dict[str, Any], augmented: dict[str, Any]) -> bool:
         """Validate that augmentation preserves semantic content."""
         if not self.config.validate_semantics:
             return True
@@ -317,7 +318,7 @@ class ARCAugmentationEngine:
 
         return True
 
-    def augment_arc_task(self, task: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def augment_arc_task(self, task: dict[str, Any]) -> list[dict[str, Any]]:
         """Generate comprehensive augmentations for a single ARC task."""
         if "train" not in task or "test" not in task:
             logger.warning("Invalid ARC task format")
@@ -415,12 +416,12 @@ class ARCAugmentationEngine:
 
     def _apply_augmentation(
         self,
-        task: Dict[str, Any],
-        color_mapping: Dict[int, int],
+        task: dict[str, Any],
+        color_mapping: dict[int, int],
         transform_fn: Callable,
-        new_size: Tuple[int, int],
-        occlusion_params: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        new_size: tuple[int, int],
+        occlusion_params: dict[str, Any],
+    ) -> dict[str, Any]:
         """Apply a specific augmentation to a task."""
         augmented_task = deepcopy(task)
         new_height, new_width = new_size
@@ -448,12 +449,12 @@ class ARCAugmentationEngine:
 
     def _augment_grid(
         self,
-        grid_data: List[List[int]],
-        color_mapping: Dict[int, int],
+        grid_data: list[list[int]],
+        color_mapping: dict[int, int],
         transform_fn: Callable,
-        new_size: Tuple[int, int],
-        occlusion_params: Dict[str, Any],
-    ) -> List[List[int]]:
+        new_size: tuple[int, int],
+        occlusion_params: dict[str, Any],
+    ) -> list[list[int]]:
         """Apply augmentation to a single grid."""
         grid = ARCGrid(grid_data)
 
@@ -479,7 +480,7 @@ class ARCAugmentationEngine:
 
         return grid.to_list()
 
-    def get_augmentation_stats(self) -> Dict[str, Any]:
+    def get_augmentation_stats(self) -> dict[str, Any]:
         """Get statistics about augmentation capabilities."""
         # Estimate total possible augmentations
         len(self.arc_colors)

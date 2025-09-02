@@ -20,11 +20,11 @@ import random
 import time
 from typing import Any
 
-# Import marketplace for pricing constraints
-from .marketplace import BidType, PricingTier
-
 # Import reputation system for trust scoring
 from ..reputation import BayesianReputationEngine
+
+# Import marketplace for pricing constraints
+from .marketplace import BidType, PricingTier
 
 logger = logging.getLogger(__name__)
 

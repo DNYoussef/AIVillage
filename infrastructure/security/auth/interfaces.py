@@ -5,10 +5,10 @@ and MFA services following the Interface Segregation Principle.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
+from typing import Any
 
 
 class MFAMethodType(Enum):
@@ -26,8 +26,8 @@ class DeviceInfo:
 
     user_agent: str
     ip_address: str
-    device_fingerprint: Optional[str] = None
-    location: Optional[str] = None
+    device_fingerprint: str | None = None
+    location: str | None = None
 
 
 @dataclass
@@ -36,8 +36,8 @@ class AuthCredentials:
 
     username: str
     password: str
-    mfa_token: Optional[str] = None
-    mfa_method: Optional[MFAMethodType] = None
+    mfa_token: str | None = None
+    mfa_method: MFAMethodType | None = None
 
 
 @dataclass
@@ -45,11 +45,11 @@ class AuthResult:
     """Authentication result."""
 
     success: bool
-    user_id: Optional[str] = None
-    roles: List[str] = None
-    permissions: List[str] = None
+    user_id: str | None = None
+    roles: list[str] = None
+    permissions: list[str] = None
     mfa_verified: bool = False
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 @dataclass
@@ -57,8 +57,8 @@ class TokenValidationResult:
     """Token validation result."""
 
     valid: bool
-    payload: Optional[Dict[str, Any]] = None
-    error_message: Optional[str] = None
+    payload: dict[str, Any] | None = None
+    error_message: str | None = None
 
 
 @dataclass
@@ -70,11 +70,11 @@ class SessionData:
     created_at: datetime
     last_activity: datetime
     device_info: DeviceInfo
-    roles: List[str]
-    permissions: List[str]
-    tenant_id: Optional[str] = None
+    roles: list[str]
+    permissions: list[str]
+    tenant_id: str | None = None
     is_active: bool = True
-    metadata: Dict[str, Any] = None
+    metadata: dict[str, Any] = None
 
 
 @dataclass
@@ -82,10 +82,10 @@ class MFASetupResult:
     """MFA setup result."""
 
     success: bool
-    qr_code: Optional[str] = None
-    backup_codes: List[str] = None
-    secret: Optional[str] = None
-    error_message: Optional[str] = None
+    qr_code: str | None = None
+    backup_codes: list[str] = None
+    secret: str | None = None
+    error_message: str | None = None
 
 
 @dataclass
@@ -96,7 +96,7 @@ class MFAStatus:
     sms_enabled: bool = False
     email_enabled: bool = False
     backup_codes_available: int = 0
-    methods_available: List[str] = None
+    methods_available: list[str] = None
 
 
 class IAuthenticationService(ABC):
@@ -117,10 +117,10 @@ class IAuthenticationService(ABC):
         self,
         user_id: str,
         device_info: DeviceInfo,
-        roles: List[str] = None,
-        permissions: List[str] = None,
+        roles: list[str] = None,
+        permissions: list[str] = None,
         mfa_verified: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create JWT tokens with session tracking."""
         pass
 
@@ -153,16 +153,16 @@ class ISessionManager(ABC):
         self,
         user_id: str,
         device_info: DeviceInfo,
-        roles: List[str] = None,
-        permissions: List[str] = None,
-        tenant_id: Optional[str] = None,
-        metadata: Dict[str, Any] = None,
+        roles: list[str] = None,
+        permissions: list[str] = None,
+        tenant_id: str | None = None,
+        metadata: dict[str, Any] = None,
     ) -> str:
         """Create new user session."""
         pass
 
     @abstractmethod
-    async def get_session(self, session_id: str) -> Optional[SessionData]:
+    async def get_session(self, session_id: str) -> SessionData | None:
         """Get session by ID."""
         pass
 
@@ -187,7 +187,7 @@ class ISessionManager(ABC):
         pass
 
     @abstractmethod
-    async def get_user_sessions(self, user_id: str) -> List[SessionData]:
+    async def get_user_sessions(self, user_id: str) -> list[SessionData]:
         """Get all active sessions for user."""
         pass
 
@@ -212,7 +212,7 @@ class ISessionManager(ABC):
         pass
 
     @abstractmethod
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Health check for session manager."""
         pass
 
@@ -226,7 +226,7 @@ class IMFAService(ABC):
         pass
 
     @abstractmethod
-    def verify_mfa(self, user_id: str, method: MFAMethodType, token: str, secret: Optional[str] = None) -> bool:
+    def verify_mfa(self, user_id: str, method: MFAMethodType, token: str, secret: str | None = None) -> bool:
         """Verify MFA token."""
         pass
 
@@ -236,7 +236,7 @@ class IMFAService(ABC):
         pass
 
     @abstractmethod
-    def generate_backup_codes(self, user_id: str, count: int = 10) -> List[str]:
+    def generate_backup_codes(self, user_id: str, count: int = 10) -> list[str]:
         """Generate backup codes for user."""
         pass
 

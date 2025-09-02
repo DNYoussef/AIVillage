@@ -9,16 +9,16 @@ Manages P2P networking coordination including:
 """
 
 import asyncio
-from typing import Any, Dict, List
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from ..interfaces.base_service import BaseFogService, ServiceStatus, ServiceHealthCheck
+from ..interfaces.base_service import BaseFogService, ServiceHealthCheck, ServiceStatus
 
 
 class FogNetworkingService(BaseFogService):
     """Service for managing fog computing P2P networking"""
 
-    def __init__(self, service_name: str, config: Dict[str, Any], event_bus):
+    def __init__(self, service_name: str, config: dict[str, Any], event_bus):
         super().__init__(service_name, config, event_bus)
 
         # Core components
@@ -234,7 +234,7 @@ class FogNetworkingService(BaseFogService):
             self.logger.error(f"Failed to broadcast message: {e}")
             return 0
 
-    async def get_networking_stats(self) -> Dict[str, Any]:
+    async def get_networking_stats(self) -> dict[str, Any]:
         """Get comprehensive networking statistics"""
         try:
             stats = self.metrics.copy()
@@ -318,7 +318,7 @@ class FogNetworkingService(BaseFogService):
             self.logger.error(f"Betanet message send failed: {e}")
             return False
 
-    async def _get_connected_peers(self, transport_type: str) -> List[str]:
+    async def _get_connected_peers(self, transport_type: str) -> list[str]:
         """Get list of connected peers for a transport type"""
         # Mock peer list
         if transport_type == "bitchat":
@@ -327,7 +327,7 @@ class FogNetworkingService(BaseFogService):
             return ["peer1.onion", "peer2.onion"]
         return []
 
-    async def _get_bitchat_stats(self) -> Dict[str, Any]:
+    async def _get_bitchat_stats(self) -> dict[str, Any]:
         """Get BitChat-specific statistics"""
         return {
             "active_sessions": self.metrics["active_bitchat_sessions"],
@@ -335,7 +335,7 @@ class FogNetworkingService(BaseFogService):
             "connection_quality": "high",
         }
 
-    async def _get_betanet_stats(self) -> Dict[str, Any]:
+    async def _get_betanet_stats(self) -> dict[str, Any]:
         """Get Betanet-specific statistics"""
         return {"active_circuits": self.metrics["active_betanet_circuits"], "avg_hops": 3, "privacy_level": "high"}
 

@@ -7,20 +7,20 @@ Branch Origins: api-enhancement-v3, real-time-monitoring-v2
 Integration: Zero-breaking-change with enhanced unified gateway
 """
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Depends
-from fastapi.responses import JSONResponse
-from typing import List, Dict, Optional, Any
 import asyncio
-import json
-import logging
 from datetime import datetime, timedelta
 from enum import Enum
+import json
+import logging
+from typing import Any
 import uuid
 
-from ..core.evolution_scheduler_manager import EvolutionSchedulerManager, EvolutionTask, EvolutionResult
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+
 from ..algorithms.adaptive_algorithms import EvolutionParameters, ModelConfiguration
-from ..monitoring.regression_detector import ComprehensiveRegressionDetector, RegressionAlert
+from ..core.evolution_scheduler_manager import EvolutionSchedulerManager, EvolutionTask
 from ..integration.evomerge_coordinator import EvoMergeCoordinator, MergeStrategy
+from ..monitoring.regression_detector import ComprehensiveRegressionDetector
 
 logger = logging.getLogger(__name__)
 
@@ -46,10 +46,10 @@ class EvolutionAPI:
         self.evomerge_coordinator = EvoMergeCoordinator()
         
         # WebSocket connection manager for real-time updates
-        self.connections: List[WebSocket] = []
+        self.connections: list[WebSocket] = []
         
         # Task tracking for API
-        self.active_tasks: Dict[str, Dict[str, Any]] = {}
+        self.active_tasks: dict[str, dict[str, Any]] = {}
         
         self._setup_routes()
     
@@ -75,8 +75,8 @@ class EvolutionAPI:
         @self.app.post("/evolution/tasks")
         async def create_evolution_task(
             algorithm: str,
-            model_config: Dict[str, Any],
-            parameters: Optional[Dict[str, Any]] = None
+            model_config: dict[str, Any],
+            parameters: dict[str, Any] | None = None
         ):
             """
             Create new evolution task with specified algorithm and configuration.
@@ -224,7 +224,7 @@ class EvolutionAPI:
         
         @self.app.get("/evolution/tasks")
         async def list_evolution_tasks(
-            status: Optional[TaskStatus] = None,
+            status: TaskStatus | None = None,
             limit: int = 100,
             offset: int = 0
         ):
@@ -292,7 +292,7 @@ class EvolutionAPI:
         
         @self.app.get("/evolution/regression/alerts")
         async def get_regression_alerts(
-            severity: Optional[str] = None,
+            severity: str | None = None,
             hours: int = 24
         ):
             """Get recent regression alerts with filtering."""
@@ -379,7 +379,7 @@ class EvolutionAPI:
             task = task_info["task"]
             
             # Set up progress callback
-            async def progress_callback(generation: int, best_fitness: float, population_stats: Dict):
+            async def progress_callback(generation: int, best_fitness: float, population_stats: dict):
                 progress = min((generation / task.parameters.max_generations) * 100, 100)
                 task_info["progress"] = progress
                 task_info["current_generation"] = generation
@@ -443,7 +443,7 @@ class EvolutionAPI:
                 "timestamp": datetime.now().isoformat()
             })
     
-    async def _notify_websocket_clients(self, message: Dict[str, Any]):
+    async def _notify_websocket_clients(self, message: dict[str, Any]):
         """Send message to all connected WebSocket clients."""
         if not self.connections:
             return
@@ -461,7 +461,7 @@ class EvolutionAPI:
         for conn in disconnected:
             self.connections.remove(conn)
     
-    async def _get_websocket_status_update(self) -> Dict[str, Any]:
+    async def _get_websocket_status_update(self) -> dict[str, Any]:
         """Get comprehensive status update for WebSocket clients."""
         running_tasks = [
             {
@@ -488,7 +488,7 @@ class EvolutionAPI:
             "evomerge_active": len(await self.evomerge_coordinator.get_active_merges())
         }
     
-    async def _get_system_health(self) -> Dict[str, Any]:
+    async def _get_system_health(self) -> dict[str, Any]:
         """Get comprehensive system health metrics."""
         try:
             scheduler_health = await self.scheduler.get_health_status()
@@ -520,7 +520,7 @@ class EvolutionAPI:
         }
         return estimates.get(algorithm, 6.0)
     
-    def _estimate_completion(self, task_info: Dict[str, Any]) -> Optional[str]:
+    def _estimate_completion(self, task_info: dict[str, Any]) -> str | None:
         """Estimate task completion time."""
         if task_info["status"] != TaskStatus.RUNNING:
             return None

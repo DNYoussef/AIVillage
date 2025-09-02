@@ -11,23 +11,24 @@ scheduling algorithms, performance regression detection, and EvoMerge integratio
 """
 
 import asyncio
-import logging
-import json
-import time
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple, Any, Callable
-from datetime import datetime, timedelta
-import uuid
-import numpy as np
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+import logging
 import threading
+import time
+from typing import Any
+import uuid
+
+import numpy as np
 
 # Archaeological enhancement: Integration with existing systems
 try:
+    from core.agent_forge.models.cognate.memory.tensor_memory_optimizer import get_tensor_memory_optimizer
+
     from ...distributed_inference.core.distributed_inference_manager import get_distributed_inference_manager
     from ...monitoring.triage.emergency_triage_system import get_emergency_triage_system
-    from core.agent_forge.models.cognate.memory.tensor_memory_optimizer import get_tensor_memory_optimizer
 except ImportError:
     # Graceful degradation if components not available
     pass
@@ -74,10 +75,10 @@ class ModelConfiguration:
     model_id: str
     model_name: str
     model_type: str
-    parameters: Dict[str, Any]
-    constraints: Dict[str, Any] = field(default_factory=dict)
-    target_metrics: Dict[str, float] = field(default_factory=dict)
-    base_performance: Optional[Dict[str, float]] = None
+    parameters: dict[str, Any]
+    constraints: dict[str, Any] = field(default_factory=dict)
+    target_metrics: dict[str, float] = field(default_factory=dict)
+    base_performance: dict[str, float] | None = None
 
 
 @dataclass
@@ -90,15 +91,15 @@ class EvolutionTask:
     max_generations: int
     performance_threshold: float
     created_at: datetime
-    scheduled_at: Optional[datetime] = None
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    scheduled_at: datetime | None = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
     status: EvolutionStatus = EvolutionStatus.PENDING
     current_generation: int = 0
-    best_performance: Optional[float] = None
-    performance_history: List[float] = field(default_factory=list)
-    resource_requirements: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    best_performance: float | None = None
+    performance_history: list[float] = field(default_factory=list)
+    resource_requirements: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     
     def __post_init__(self):
         if not self.task_id:
@@ -112,12 +113,12 @@ class EvolutionResult:
     model_id: str
     final_performance: float
     generations_completed: int
-    best_configuration: Dict[str, Any]
+    best_configuration: dict[str, Any]
     performance_improvement: float
     execution_time: float
-    resource_usage: Dict[str, Any]
-    convergence_data: List[float]
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    resource_usage: dict[str, Any]
+    convergence_data: list[float]
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class EvolutionSchedulerManager:
@@ -152,14 +153,14 @@ class EvolutionSchedulerManager:
         self.performance_threshold = performance_threshold
         
         # Task management
-        self.pending_tasks: List[EvolutionTask] = []
-        self.running_tasks: Dict[str, EvolutionTask] = {}
-        self.completed_tasks: Dict[str, EvolutionResult] = {}
-        self.task_history: List[EvolutionTask] = []
+        self.pending_tasks: list[EvolutionTask] = []
+        self.running_tasks: dict[str, EvolutionTask] = {}
+        self.completed_tasks: dict[str, EvolutionResult] = {}
+        self.task_history: list[EvolutionTask] = []
         
         # Scheduling state
         self.scheduler_active = False
-        self.scheduler_task: Optional[asyncio.Task] = None
+        self.scheduler_task: asyncio.Task | None = None
         self.task_executor = ThreadPoolExecutor(max_workers=max_concurrent_tasks)
         
         # Performance monitoring
@@ -243,10 +244,10 @@ class EvolutionSchedulerManager:
     async def schedule_evolution(
         self,
         model_config: ModelConfiguration,
-        strategy: Optional[EvolutionStrategy] = None,
+        strategy: EvolutionStrategy | None = None,
         priority: int = 5,
         max_generations: int = 50,
-        performance_threshold: Optional[float] = None
+        performance_threshold: float | None = None
     ) -> str:
         """
         Schedule a model evolution task.
@@ -535,14 +536,14 @@ class EvolutionSchedulerManager:
         result.metadata['performance_guided'] = True
         return result
     
-    def _initialize_population(self, model_config: ModelConfiguration, size: int) -> List[Dict[str, Any]]:
+    def _initialize_population(self, model_config: ModelConfiguration, size: int) -> list[dict[str, Any]]:
         """Initialize population for evolution."""
         population = []
         
         for _ in range(size):
             individual = {}
             for param_name, param_value in model_config.parameters.items():
-                if isinstance(param_value, (int, float)):
+                if isinstance(param_value, int | float):
                     # Random perturbation within constraints
                     constraints = model_config.constraints.get(param_name, {})
                     min_val = constraints.get('min', param_value * 0.5)
@@ -555,7 +556,7 @@ class EvolutionSchedulerManager:
         
         return population
     
-    def _evaluate_individual(self, individual: Dict[str, Any], model_config: ModelConfiguration) -> float:
+    def _evaluate_individual(self, individual: dict[str, Any], model_config: ModelConfiguration) -> float:
         """Evaluate fitness of an individual."""
         # Mock evaluation - in production, this would run actual model training/evaluation
         # Archaeological enhancement: Could integrate with distributed inference for evaluation
@@ -563,7 +564,7 @@ class EvolutionSchedulerManager:
         # Simple fitness function based on parameter values
         fitness = 0.0
         for param_name, param_value in individual.items():
-            if isinstance(param_value, (int, float)):
+            if isinstance(param_value, int | float):
                 target = model_config.target_metrics.get(param_name, param_value)
                 fitness += 1.0 - abs(param_value - target) / max(abs(target), 1.0)
         
@@ -572,19 +573,19 @@ class EvolutionSchedulerManager:
         
         return max(0.0, fitness)
     
-    def _tournament_selection(self, population: List[Dict[str, Any]], fitness_scores: List[float], tournament_size: int = 3) -> Dict[str, Any]:
+    def _tournament_selection(self, population: list[dict[str, Any]], fitness_scores: list[float], tournament_size: int = 3) -> dict[str, Any]:
         """Tournament selection for genetic algorithm."""
         tournament_indices = np.random.choice(len(population), tournament_size, replace=False)
         tournament_fitness = [fitness_scores[i] for i in tournament_indices]
         winner_idx = tournament_indices[np.argmax(tournament_fitness)]
         return population[winner_idx].copy()
     
-    def _crossover(self, parent1: Dict[str, Any], parent2: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def _crossover(self, parent1: dict[str, Any], parent2: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
         """Crossover operation for genetic algorithm."""
         child1, child2 = parent1.copy(), parent2.copy()
         
         for key in parent1.keys():
-            if isinstance(parent1[key], (int, float)) and isinstance(parent2[key], (int, float)):
+            if isinstance(parent1[key], int | float) and isinstance(parent2[key], int | float):
                 if np.random.random() < 0.5:
                     alpha = np.random.random()
                     child1[key] = alpha * parent1[key] + (1 - alpha) * parent2[key]
@@ -592,12 +593,12 @@ class EvolutionSchedulerManager:
         
         return child1, child2
     
-    def _mutate(self, individual: Dict[str, Any], model_config: ModelConfiguration) -> Dict[str, Any]:
+    def _mutate(self, individual: dict[str, Any], model_config: ModelConfiguration) -> dict[str, Any]:
         """Mutation operation for genetic algorithm."""
         mutated = individual.copy()
         
         for key, value in individual.items():
-            if isinstance(value, (int, float)):
+            if isinstance(value, int | float):
                 if np.random.random() < 0.1:  # Mutation probability per gene
                     constraints = model_config.constraints.get(key, {})
                     min_val = constraints.get('min', value * 0.5)
@@ -613,7 +614,7 @@ class EvolutionSchedulerManager:
         
         return mutated
     
-    def _get_resource_usage(self) -> Dict[str, Any]:
+    def _get_resource_usage(self) -> dict[str, Any]:
         """Get current resource usage."""
         # Archaeological enhancement: Could integrate with tensor optimizer
         return {
@@ -730,7 +731,7 @@ class EvolutionSchedulerManager:
         
         return False
     
-    def get_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
+    def get_task_status(self, task_id: str) -> dict[str, Any] | None:
         """Get status of a specific task."""
         # Check running tasks
         if task_id in self.running_tasks:
@@ -772,7 +773,7 @@ class EvolutionSchedulerManager:
         
         return None
     
-    def get_scheduler_statistics(self) -> Dict[str, Any]:
+    def get_scheduler_statistics(self) -> dict[str, Any]:
         """Get comprehensive scheduler statistics."""
         return {
             'scheduler_active': self.scheduler_active,
@@ -810,7 +811,7 @@ class PerformanceTracker:
             'timestamp': datetime.now()
         })
     
-    def get_performance_trend(self, task_id: str) -> List[float]:
+    def get_performance_trend(self, task_id: str) -> list[float]:
         """Get performance trend for a task."""
         if task_id not in self.performance_history:
             return []
@@ -844,11 +845,11 @@ class RegressionDetector:
         self.regression_threshold = regression_threshold
         self.baseline_performances = {}
     
-    def set_baseline(self, model_id: str, performance: Dict[str, float]) -> None:
+    def set_baseline(self, model_id: str, performance: dict[str, float]) -> None:
         """Set baseline performance for a model."""
         self.baseline_performances[model_id] = performance
     
-    def detect_regression(self, baseline: Dict[str, float], current: Dict[str, float]) -> bool:
+    def detect_regression(self, baseline: dict[str, float], current: dict[str, float]) -> bool:
         """Detect if current performance represents a regression."""
         for metric_name, baseline_value in baseline.items():
             if metric_name in current:
@@ -861,7 +862,7 @@ class RegressionDetector:
         
         return False
     
-    def get_performance_delta(self, baseline: Dict[str, float], current: Dict[str, float]) -> Dict[str, float]:
+    def get_performance_delta(self, baseline: dict[str, float], current: dict[str, float]) -> dict[str, float]:
         """Get performance delta between baseline and current."""
         deltas = {}
         
@@ -880,7 +881,7 @@ class RegressionDetector:
 
 
 # Archaeological enhancement: Global scheduler instance
-_global_evolution_scheduler: Optional[EvolutionSchedulerManager] = None
+_global_evolution_scheduler: EvolutionSchedulerManager | None = None
 
 def get_evolution_scheduler() -> EvolutionSchedulerManager:
     """Get or create global evolution scheduler instance."""

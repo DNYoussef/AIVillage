@@ -22,13 +22,13 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from enum import Enum
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 import uuid
 
 from .auction_engine import AuctionEngine, ResourceRequirement
-from .pricing_manager import DynamicPricingManager
 from .market_orchestrator import MarketOrchestrator
-from .resource_allocator import DynamicResourceAllocator, ResourceNode, ResourceType, QoSRequirement
+from .pricing_manager import DynamicPricingManager
+from .resource_allocator import DynamicResourceAllocator, QoSRequirement, ResourceNode, ResourceType
 
 logger = logging.getLogger(__name__)
 
@@ -67,10 +67,10 @@ class P2PMarketplaceMessage:
     sender_role: NetworkRole
 
     # Message content
-    payload: Dict[str, Any] = field(default_factory=dict)
+    payload: dict[str, Any] = field(default_factory=dict)
 
     # Routing and delivery
-    target_peer_ids: List[str] = field(default_factory=list)  # Empty = broadcast
+    target_peer_ids: list[str] = field(default_factory=list)  # Empty = broadcast
     network_zone: str = "global"
     priority: int = 5  # 1-10, higher = more priority
 
@@ -89,17 +89,17 @@ class P2PPeerInfo:
     """Information about P2P network peer"""
 
     peer_id: str
-    roles: List[NetworkRole]
+    roles: list[NetworkRole]
 
     # Network connectivity
-    network_addresses: List[str] = field(default_factory=list)
+    network_addresses: list[str] = field(default_factory=list)
     last_seen: datetime = field(default_factory=lambda: datetime.now(UTC))
     connection_quality: float = 1.0  # 0.0 to 1.0
 
     # Marketplace capabilities
-    available_resources: Dict[str, Any] = field(default_factory=dict)
-    supported_auctions: List[str] = field(default_factory=list)
-    pricing_tiers: List[str] = field(default_factory=list)
+    available_resources: dict[str, Any] = field(default_factory=dict)
+    supported_auctions: list[str] = field(default_factory=list)
+    pricing_tiers: list[str] = field(default_factory=list)
 
     # Reputation and trust
     trust_score: float = 0.5
@@ -143,12 +143,12 @@ class P2PMarketplaceIntegration:
         self.resource_allocator = resource_allocator
 
         # P2P state
-        self.network_peers: Dict[str, P2PPeerInfo] = {}
-        self.active_auctions: Dict[str, Dict[str, Any]] = {}
-        self.pending_allocations: Dict[str, Dict[str, Any]] = {}
+        self.network_peers: dict[str, P2PPeerInfo] = {}
+        self.active_auctions: dict[str, dict[str, Any]] = {}
+        self.pending_allocations: dict[str, dict[str, Any]] = {}
 
         # Message handling
-        self.message_handlers: Dict[P2PMessageType, callable] = {
+        self.message_handlers: dict[P2PMessageType, callable] = {
             P2PMessageType.RESOURCE_ADVERTISEMENT: self._handle_resource_advertisement,
             P2PMessageType.RESOURCE_REQUEST: self._handle_resource_request,
             P2PMessageType.AUCTION_ANNOUNCEMENT: self._handle_auction_announcement,
@@ -170,9 +170,9 @@ class P2PMarketplaceIntegration:
         }
 
         # Background tasks
-        self._advertisement_task: Optional[asyncio.Task] = None
-        self._peer_discovery_task: Optional[asyncio.Task] = None
-        self._reputation_task: Optional[asyncio.Task] = None
+        self._advertisement_task: asyncio.Task | None = None
+        self._peer_discovery_task: asyncio.Task | None = None
+        self._reputation_task: asyncio.Task | None = None
 
         logger.info(f"P2P marketplace integration initialized for peer {peer_id}")
 
@@ -211,7 +211,7 @@ class P2PMarketplaceIntegration:
         requirements: ResourceRequirement,
         qos_requirements: QoSRequirement,
         max_peers: int = 50,
-    ) -> List[Tuple[str, ResourceNode]]:
+    ) -> list[tuple[str, ResourceNode]]:
         """Discover federated resources across P2P network"""
 
         # Create resource request message
@@ -330,7 +330,7 @@ class P2PMarketplaceIntegration:
         auction_id: str,
         coordinator_peer_id: str,
         bid_price: float,
-        available_resources: Dict[str, Any],
+        available_resources: dict[str, Any],
         trust_score: float = 0.8,
     ) -> str:
         """Submit bid to federated auction through P2P network"""
@@ -365,9 +365,9 @@ class P2PMarketplaceIntegration:
 
     async def allocate_federated_resources(
         self,
-        allocation_request: Dict[str, Any],
-        target_peers: List[str],
-    ) -> Dict[str, Any]:
+        allocation_request: dict[str, Any],
+        target_peers: list[str],
+    ) -> dict[str, Any]:
         """Allocate resources across federated network"""
 
         allocation_id = f"fedalloc_{uuid.uuid4().hex[:8]}"
@@ -504,7 +504,7 @@ class P2PMarketplaceIntegration:
 
     # Message handlers
 
-    async def _handle_p2p_message(self, sender_id: str, message_data: Dict[str, Any]):
+    async def _handle_p2p_message(self, sender_id: str, message_data: dict[str, Any]):
         """Handle incoming P2P marketplace message"""
 
         try:
@@ -521,7 +521,7 @@ class P2PMarketplaceIntegration:
         except Exception as e:
             logger.error(f"Error handling P2P message from {sender_id}: {e}")
 
-    async def _handle_resource_advertisement(self, sender_id: str, message_data: Dict[str, Any]):
+    async def _handle_resource_advertisement(self, sender_id: str, message_data: dict[str, Any]):
         """Handle resource advertisement from peer"""
 
         # Update peer information
@@ -542,7 +542,7 @@ class P2PMarketplaceIntegration:
 
         logger.debug(f"Updated resource advertisement from peer {sender_id}")
 
-    async def _handle_resource_request(self, sender_id: str, message_data: Dict[str, Any]):
+    async def _handle_resource_request(self, sender_id: str, message_data: dict[str, Any]):
         """Handle resource request from peer"""
 
         if not self.resource_allocator:
@@ -597,7 +597,7 @@ class P2PMarketplaceIntegration:
             if self.p2p_network:
                 await self.p2p_network.send_message(sender_id, "marketplace", offer_msg.payload)
 
-    async def _handle_auction_announcement(self, sender_id: str, message_data: Dict[str, Any]):
+    async def _handle_auction_announcement(self, sender_id: str, message_data: dict[str, Any]):
         """Handle auction announcement from peer"""
 
         auction_info = {
@@ -625,7 +625,7 @@ class P2PMarketplaceIntegration:
 
                 # Would implement bid calculation and submission logic here
 
-    async def _handle_bid_submission(self, sender_id: str, message_data: Dict[str, Any]):
+    async def _handle_bid_submission(self, sender_id: str, message_data: dict[str, Any]):
         """Handle bid submission for our auction"""
 
         auction_id = message_data.get("auction_id")
@@ -650,7 +650,7 @@ class P2PMarketplaceIntegration:
 
                 logger.info(f"Received bid {bid_id} from {sender_id} for auction {auction_id}")
 
-    async def _handle_allocation_proposal(self, sender_id: str, message_data: Dict[str, Any]):
+    async def _handle_allocation_proposal(self, sender_id: str, message_data: dict[str, Any]):
         """Handle resource allocation proposal"""
 
         allocation_id = message_data.get("allocation_id")
@@ -692,7 +692,7 @@ class P2PMarketplaceIntegration:
 
             logger.info(f"Accepted allocation proposal {allocation_id} from {sender_id}")
 
-    async def _handle_allocation_acceptance(self, sender_id: str, message_data: Dict[str, Any]):
+    async def _handle_allocation_acceptance(self, sender_id: str, message_data: dict[str, Any]):
         """Handle allocation acceptance from peer"""
 
         allocation_id = message_data.get("allocation_id")
@@ -705,7 +705,7 @@ class P2PMarketplaceIntegration:
 
             logger.info(f"Received allocation acceptance from {sender_id} for {allocation_id}")
 
-    async def _handle_peer_status_update(self, sender_id: str, message_data: Dict[str, Any]):
+    async def _handle_peer_status_update(self, sender_id: str, message_data: dict[str, Any]):
         """Handle peer status update"""
 
         if sender_id not in self.network_peers:
@@ -727,7 +727,7 @@ class P2PMarketplaceIntegration:
         if "roles" in status:
             peer_info.roles = [NetworkRole(role) for role in status["roles"]]
 
-    async def _handle_reputation_update(self, sender_id: str, message_data: Dict[str, Any]):
+    async def _handle_reputation_update(self, sender_id: str, message_data: dict[str, Any]):
         """Handle reputation update from peer"""
 
         target_peer_id = message_data.get("peer_id")
@@ -903,7 +903,7 @@ class P2PMarketplaceIntegration:
 
         await self.p2p_network.broadcast_message("marketplace", status_msg.payload)
 
-    def _create_resource_node_from_peer(self, peer_info: P2PPeerInfo) -> Optional[ResourceNode]:
+    def _create_resource_node_from_peer(self, peer_info: P2PPeerInfo) -> ResourceNode | None:
         """Create ResourceNode from P2P peer information"""
 
         resources = peer_info.available_resources
@@ -933,7 +933,7 @@ class P2PMarketplaceIntegration:
 
 
 # Global P2P integration instance
-_p2p_integration: Optional[P2PMarketplaceIntegration] = None
+_p2p_integration: P2PMarketplaceIntegration | None = None
 
 
 def get_p2p_integration(peer_id: str = None, p2p_network=None, **marketplace_components) -> P2PMarketplaceIntegration:

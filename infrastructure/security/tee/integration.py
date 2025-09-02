@@ -18,12 +18,12 @@ from datetime import UTC, datetime, timedelta
 from enum import Enum
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 import uuid
 
-from .attestation import TEEType, ConstitutionalTier, TEEAttestationManager, get_attestation_manager
-from .enclave_manager import TEEEnclaveManager, get_enclave_manager, WorkloadType
-from ..constitutional.security_policy import ConstitutionalPolicyEngine, get_policy_engine, HarmCategory
+from ..constitutional.security_policy import ConstitutionalPolicyEngine, HarmCategory, get_policy_engine
+from .attestation import ConstitutionalTier, TEEAttestationManager, TEEType, get_attestation_manager
+from .enclave_manager import TEEEnclaveManager, WorkloadType, get_enclave_manager
 
 # Import fog computing components
 try:
@@ -54,26 +54,26 @@ class SecureFogNode:
 
     # Node information
     node_type: str = "fog_node"  # fog_node, edge_device, cloud_instance
-    hardware_capabilities: List[str] = field(default_factory=list)
+    hardware_capabilities: list[str] = field(default_factory=list)
 
     # Security status
     security_status: NodeSecurityStatus = NodeSecurityStatus.UNATTESTED
-    tee_type: Optional[TEEType] = None
+    tee_type: TEEType | None = None
     constitutional_tier: ConstitutionalTier = ConstitutionalTier.BRONZE
 
     # Attestation information
-    attestation_result: Optional[Dict[str, Any]] = None
-    last_attestation: Optional[datetime] = None
-    attestation_expires: Optional[datetime] = None
+    attestation_result: dict[str, Any] | None = None
+    last_attestation: datetime | None = None
+    attestation_expires: datetime | None = None
 
     # Constitutional compliance
     policy_compliance_score: float = 0.0
     constitutional_violations: int = 0
-    last_violation: Optional[datetime] = None
+    last_violation: datetime | None = None
 
     # Workload tracking
-    active_enclaves: List[str] = field(default_factory=list)
-    workload_history: List[Dict[str, Any]] = field(default_factory=list)
+    active_enclaves: list[str] = field(default_factory=list)
+    workload_history: list[dict[str, Any]] = field(default_factory=list)
 
     # Performance metrics
     cpu_utilization: float = 0.0
@@ -109,7 +109,7 @@ class ConstitutionalWorkloadRequest:
 
     # Constitutional requirements
     required_tier: ConstitutionalTier = ConstitutionalTier.SILVER
-    harm_categories_monitored: List[HarmCategory] = field(default_factory=list)
+    harm_categories_monitored: list[HarmCategory] = field(default_factory=list)
     max_risk_tolerance: float = 0.3
 
     # Resource requirements
@@ -119,8 +119,8 @@ class ConstitutionalWorkloadRequest:
     requires_network_access: bool = False
 
     # Input data
-    input_data: Dict[str, Any] = field(default_factory=dict)
-    model_requirements: Dict[str, Any] = field(default_factory=dict)
+    input_data: dict[str, Any] = field(default_factory=dict)
+    model_requirements: dict[str, Any] = field(default_factory=dict)
 
     # Requester information
     requester_id: str = ""
@@ -128,7 +128,7 @@ class ConstitutionalWorkloadRequest:
 
     # Timing
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
-    deadline: Optional[datetime] = None
+    deadline: datetime | None = None
 
 
 class TEESecurityIntegrationManager:
@@ -141,14 +141,14 @@ class TEESecurityIntegrationManager:
 
     def __init__(self):
         # Component managers
-        self.attestation_manager: Optional[TEEAttestationManager] = None
-        self.enclave_manager: Optional[TEEEnclaveManager] = None
-        self.policy_engine: Optional[ConstitutionalPolicyEngine] = None
+        self.attestation_manager: TEEAttestationManager | None = None
+        self.enclave_manager: TEEEnclaveManager | None = None
+        self.policy_engine: ConstitutionalPolicyEngine | None = None
 
         # State management
-        self.secure_nodes: Dict[str, SecureFogNode] = {}
-        self.workload_requests: Dict[str, ConstitutionalWorkloadRequest] = {}
-        self.security_events: List[Dict[str, Any]] = []
+        self.secure_nodes: dict[str, SecureFogNode] = {}
+        self.workload_requests: dict[str, ConstitutionalWorkloadRequest] = {}
+        self.security_events: list[dict[str, Any]] = []
 
         # Configuration
         self.attestation_refresh_hours = 24
@@ -156,7 +156,7 @@ class TEESecurityIntegrationManager:
         self.quarantine_duration_hours = 24
 
         # Background tasks
-        self.monitoring_task: Optional[asyncio.Task] = None
+        self.monitoring_task: asyncio.Task | None = None
         self.running = False
 
         logger.info("TEE Security Integration Manager initialized")
@@ -187,7 +187,7 @@ class TEESecurityIntegrationManager:
 
         logger.info("TEE Security Integration Manager stopped")
 
-    async def register_fog_node(self, node_id: str, node_info: Dict[str, Any]) -> SecureFogNode:
+    async def register_fog_node(self, node_id: str, node_info: dict[str, Any]) -> SecureFogNode:
         """Register a new fog computing node with security validation."""
 
         if node_id in self.secure_nodes:
@@ -264,7 +264,7 @@ class TEESecurityIntegrationManager:
 
         return node
 
-    async def deploy_constitutional_workload(self, request: ConstitutionalWorkloadRequest) -> Dict[str, Any]:
+    async def deploy_constitutional_workload(self, request: ConstitutionalWorkloadRequest) -> dict[str, Any]:
         """Deploy constitutional workload to appropriate secure node."""
 
         try:
@@ -344,8 +344,8 @@ class TEESecurityIntegrationManager:
             return {"success": False, "error": str(e), "request_id": request.request_id}
 
     async def monitor_constitutional_compliance(
-        self, node_id: str, content: str, context: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, node_id: str, content: str, context: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Monitor content for constitutional compliance."""
 
         if node_id not in self.secure_nodes:
@@ -378,7 +378,7 @@ class TEESecurityIntegrationManager:
             "node_violations": node.constitutional_violations,
         }
 
-    def get_secure_nodes_summary(self) -> Dict[str, Any]:
+    def get_secure_nodes_summary(self) -> dict[str, Any]:
         """Get summary of secure fog nodes."""
 
         summary = {
@@ -429,7 +429,7 @@ class TEESecurityIntegrationManager:
 
         return summary
 
-    async def generate_security_report(self, report_period_days: int = 7) -> Dict[str, Any]:
+    async def generate_security_report(self, report_period_days: int = 7) -> dict[str, Any]:
         """Generate comprehensive security report."""
 
         cutoff_time = datetime.now(UTC) - timedelta(days=report_period_days)
@@ -514,7 +514,7 @@ class TEESecurityIntegrationManager:
 
         return True
 
-    async def _find_suitable_nodes(self, request: ConstitutionalWorkloadRequest) -> List[SecureFogNode]:
+    async def _find_suitable_nodes(self, request: ConstitutionalWorkloadRequest) -> list[SecureFogNode]:
         """Find nodes suitable for constitutional workload."""
 
         suitable_nodes = []
@@ -590,7 +590,7 @@ class TEESecurityIntegrationManager:
 
         logger.warning(f"Node {node_id} quarantined: {reason}")
 
-    async def _log_security_event(self, event_type: str, details: Dict[str, Any], severity: str = "info"):
+    async def _log_security_event(self, event_type: str, details: dict[str, Any], severity: str = "info"):
         """Log security event."""
 
         event = {
@@ -610,8 +610,8 @@ class TEESecurityIntegrationManager:
         logger.info(f"Security event logged: {event_type} ({severity})")
 
     async def _generate_security_recommendations(
-        self, nodes_summary: Dict[str, Any], violations_summary: Dict[str, Any]
-    ) -> List[str]:
+        self, nodes_summary: dict[str, Any], violations_summary: dict[str, Any]
+    ) -> list[str]:
         """Generate security recommendations based on metrics."""
 
         recommendations = []
@@ -694,7 +694,7 @@ class TEESecurityIntegrationManager:
 
 
 # Global integration manager instance
-_integration_manager: Optional[TEESecurityIntegrationManager] = None
+_integration_manager: TEESecurityIntegrationManager | None = None
 
 
 async def get_integration_manager() -> TEESecurityIntegrationManager:
@@ -711,7 +711,7 @@ async def get_integration_manager() -> TEESecurityIntegrationManager:
 # High-level convenience functions
 
 
-async def register_constitutional_fog_node(node_id: str, node_capabilities: Dict[str, Any]) -> Dict[str, Any]:
+async def register_constitutional_fog_node(node_id: str, node_capabilities: dict[str, Any]) -> dict[str, Any]:
     """Register a fog node with constitutional security capabilities."""
 
     manager = await get_integration_manager()
@@ -727,8 +727,8 @@ async def register_constitutional_fog_node(node_id: str, node_capabilities: Dict
 
 
 async def execute_constitutional_workload(
-    workload_type: str, workload_name: str, input_data: Dict[str, Any], constitutional_requirements: Dict[str, Any]
-) -> Dict[str, Any]:
+    workload_type: str, workload_name: str, input_data: dict[str, Any], constitutional_requirements: dict[str, Any]
+) -> dict[str, Any]:
     """Execute constitutional workload on secure fog infrastructure."""
 
     # Convert workload type

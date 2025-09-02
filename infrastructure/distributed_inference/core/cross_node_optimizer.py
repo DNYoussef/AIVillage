@@ -14,19 +14,14 @@ intelligence from lost optimization research.
 """
 
 import asyncio
+from collections import deque
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum, auto
 import json
 import logging
-import math
-import time
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any
 import uuid
-from collections import defaultdict, deque
-
-import numpy as np
-from pydantic import BaseModel
 
 # Archaeological metadata
 ARCHAEOLOGICAL_METADATA = {
@@ -95,11 +90,11 @@ class OptimizationAction(Enum):
 @dataclass
 class NetworkTopology:
     """Network topology representation."""
-    nodes: Set[str]
-    connections: Dict[str, Set[str]]
-    latencies: Dict[Tuple[str, str], float]  # (src, dst) -> latency_ms
-    bandwidths: Dict[Tuple[str, str], float]  # (src, dst) -> bandwidth_mbps
-    reliability_scores: Dict[Tuple[str, str], float]  # (src, dst) -> reliability
+    nodes: set[str]
+    connections: dict[str, set[str]]
+    latencies: dict[tuple[str, str], float]  # (src, dst) -> latency_ms
+    bandwidths: dict[tuple[str, str], float]  # (src, dst) -> bandwidth_mbps
+    reliability_scores: dict[tuple[str, str], float]  # (src, dst) -> reliability
 
 @dataclass 
 class NodeResourceState:
@@ -142,7 +137,7 @@ class FaultEvent:
     """Fault detection event."""
     fault_id: str
     fault_type: FaultType
-    affected_nodes: List[str]
+    affected_nodes: list[str]
     severity: float  # 0.0 to 1.0
     detected_at: datetime
     description: str
@@ -150,15 +145,15 @@ class FaultEvent:
     
     # Archaeological enhancement
     predicted: bool = False
-    archaeological_pattern_id: Optional[str] = None
-    mitigation_suggested: Optional[str] = None
+    archaeological_pattern_id: str | None = None
+    mitigation_suggested: str | None = None
 
 @dataclass
 class OptimizationRecommendation:
     """Optimization recommendation from archaeological analysis."""
     recommendation_id: str
     action: OptimizationAction
-    target_nodes: List[str]
+    target_nodes: list[str]
     expected_improvement: float  # 0.0 to 1.0
     confidence: float  # 0.0 to 1.0
     priority: int  # 1 to 5
@@ -166,7 +161,7 @@ class OptimizationRecommendation:
     implementation_time_estimate: float  # seconds
     
     # Archaeological metadata
-    archaeological_basis: Dict[str, Any] = field(default_factory=dict)
+    archaeological_basis: dict[str, Any] = field(default_factory=dict)
     historical_success_rate: float = 0.0
 
 class CrossNodeOptimizer:
@@ -181,7 +176,7 @@ class CrossNodeOptimizer:
     - Integration with archaeological optimization research
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize the cross-node optimizer."""
         self.config = config or {}
         self.archaeological_metadata = ARCHAEOLOGICAL_METADATA
@@ -194,15 +189,15 @@ class CrossNodeOptimizer:
             bandwidths={},
             reliability_scores={}
         )
-        self.node_states: Dict[str, NodeResourceState] = {}
+        self.node_states: dict[str, NodeResourceState] = {}
         self.performance_history: deque = deque(maxlen=1000)
         self.fault_history: deque = deque(maxlen=500)
         self.optimization_history: deque = deque(maxlen=200)
         
         # Monitoring and prediction
         self.monitoring_enabled = True
-        self.predictive_models: Dict[str, Any] = {}
-        self.archaeological_patterns: Dict[str, Any] = {}
+        self.predictive_models: dict[str, Any] = {}
+        self.archaeological_patterns: dict[str, Any] = {}
         
         # Configuration
         self.optimization_interval = self.config.get("optimization_interval_seconds", 30)
@@ -218,9 +213,9 @@ class CrossNodeOptimizer:
         
         # State tracking
         self.running = False
-        self.active_optimizations: Set[str] = set()
+        self.active_optimizations: set[str] = set()
         
-        logger.info(f"🔧 CrossNodeOptimizer initialized with archaeological metadata")
+        logger.info("🔧 CrossNodeOptimizer initialized with archaeological metadata")
         logger.info(f"📊 Innovation Score: {self.archaeological_metadata['innovation_score']}")
         
     async def start(self):
@@ -274,7 +269,7 @@ class CrossNodeOptimizer:
     async def register_node(
         self,
         node_id: str,
-        initial_state: Optional[Dict[str, Any]] = None
+        initial_state: dict[str, Any] | None = None
     ) -> bool:
         """Register a node for optimization monitoring."""
         try:
@@ -340,7 +335,7 @@ class CrossNodeOptimizer:
             logger.error(f"❌ Failed to unregister node {node_id}: {e}")
             return False
             
-    async def update_node_state(self, node_id: str, state_update: Dict[str, Any]) -> bool:
+    async def update_node_state(self, node_id: str, state_update: dict[str, Any]) -> bool:
         """Update the state of a registered node."""
         try:
             if node_id not in self.node_states:
@@ -384,7 +379,7 @@ class CrossNodeOptimizer:
         self,
         objective: OptimizationObjective = OptimizationObjective.ARCHAEOLOGICAL_OPTIMAL,
         max_recommendations: int = 5
-    ) -> List[OptimizationRecommendation]:
+    ) -> list[OptimizationRecommendation]:
         """Get optimization recommendations based on current state."""
         try:
             recommendations = []
@@ -455,7 +450,7 @@ class CrossNodeOptimizer:
             self.active_optimizations.discard(recommendation.recommendation_id)
             return False
             
-    async def get_performance_metrics(self) -> Dict[str, Any]:
+    async def get_performance_metrics(self) -> dict[str, Any]:
         """Get current performance metrics."""
         if not self.performance_history:
             return {}
@@ -513,15 +508,15 @@ class CrossNodeOptimizer:
             }
         }
         
-    async def detect_faults(self) -> List[FaultEvent]:
+    async def detect_faults(self) -> list[FaultEvent]:
         """Manually trigger fault detection and return detected faults."""
         return await self._detect_faults()
         
     async def predict_performance(
         self,
         time_horizon_minutes: int = 30,
-        scenarios: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        scenarios: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Predict future performance based on archaeological models."""
         try:
             if not self.predictive_models:
@@ -724,7 +719,7 @@ class CrossNodeOptimizer:
                 logger.error(f"❌ Error in topology management loop: {e}")
                 await asyncio.sleep(self.topology_update_interval)
                 
-    async def _collect_performance_metrics(self) -> Optional[PerformanceMetrics]:
+    async def _collect_performance_metrics(self) -> PerformanceMetrics | None:
         """Collect current performance metrics from all nodes."""
         try:
             if not self.node_states:
@@ -923,7 +918,7 @@ class CrossNodeOptimizer:
     # Additional optimization methods would continue here...
     # For brevity, I'm including key method signatures and core implementation
     
-    async def _detect_faults(self) -> List[FaultEvent]:
+    async def _detect_faults(self) -> list[FaultEvent]:
         """Detect faults using archaeological algorithms."""
         faults = []
         
@@ -990,7 +985,7 @@ class CrossNodeOptimizer:
             
         return faults
         
-    async def _get_archaeological_recommendations(self, max_recommendations: int) -> List[OptimizationRecommendation]:
+    async def _get_archaeological_recommendations(self, max_recommendations: int) -> list[OptimizationRecommendation]:
         """Get optimization recommendations using archaeological patterns."""
         recommendations = []
         
@@ -1017,7 +1012,7 @@ class CrossNodeOptimizer:
             
         return recommendations[:max_recommendations]
         
-    async def _check_pattern_conditions(self, pattern: Dict[str, Any]) -> bool:
+    async def _check_pattern_conditions(self, pattern: dict[str, Any]) -> bool:
         """Check if conditions are met for an archaeological pattern."""
         conditions = pattern.get("conditions", [])
         
@@ -1049,8 +1044,8 @@ class CrossNodeOptimizer:
     async def _create_recommendation_from_pattern(
         self, 
         pattern_name: str, 
-        pattern: Dict[str, Any]
-    ) -> Optional[OptimizationRecommendation]:
+        pattern: dict[str, Any]
+    ) -> OptimizationRecommendation | None:
         """Create optimization recommendation from archaeological pattern."""
         try:
             # Map patterns to actions
@@ -1138,7 +1133,7 @@ class CrossNodeOptimizer:
         
     # Additional utility methods...
     
-    async def _select_target_nodes_for_pattern(self, pattern: Dict[str, Any]) -> List[str]:
+    async def _select_target_nodes_for_pattern(self, pattern: dict[str, Any]) -> list[str]:
         """Select target nodes for a pattern-based optimization."""
         # Simple selection of nodes with suboptimal performance
         target_nodes = []
@@ -1210,7 +1205,7 @@ class CrossNodeOptimizer:
         self, 
         objective: OptimizationObjective, 
         max_recommendations: int
-    ) -> List[OptimizationRecommendation]:
+    ) -> list[OptimizationRecommendation]:
         """Get standard optimization recommendations."""
         return []  # Implementation would go here
         
@@ -1234,19 +1229,19 @@ class CrossNodeOptimizer:
         """Optimize network topology based on current conditions."""
         pass  # Implementation would reconfigure network connections
         
-    async def _predict_base_performance(self, time_horizon_minutes: int) -> Dict[str, Any]:
+    async def _predict_base_performance(self, time_horizon_minutes: int) -> dict[str, Any]:
         """Predict base performance trends."""
         return {"latency_trend": "stable", "throughput_trend": "increasing"}
         
-    async def _predict_archaeological_performance(self, time_horizon_minutes: int) -> Dict[str, Any]:
+    async def _predict_archaeological_performance(self, time_horizon_minutes: int) -> dict[str, Any]:
         """Predict performance using archaeological models."""
         return {"archaeological_trend": "optimizing", "efficiency_improvement": 0.15}
         
     async def _predict_scenario_performance(
         self, 
-        scenario_params: Dict[str, Any], 
+        scenario_params: dict[str, Any], 
         time_horizon_minutes: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Predict performance under specific scenario."""
         return {"scenario_outcome": "positive", "expected_improvement": 0.1}
         

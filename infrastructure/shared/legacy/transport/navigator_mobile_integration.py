@@ -22,7 +22,6 @@ from typing import Any
 
 try:
     from navigation.scion_navigator import RoutingDecision, SCIONAwareNavigator, TransportCandidate, TransportPriority
-
     from production.monitoring.mobile.resource_management import (
         BatteryThermalResourceManager,
         PowerMode,

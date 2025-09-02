@@ -8,13 +8,14 @@ relationship scoring.
 Extracted from GraphFixer to follow single responsibility principle.
 """
 
+from typing import Any
 import uuid
-from typing import Any, Dict, List
+
 import numpy as np
 
-from ..graph_fixer import DetectedGap, ProposedRelationship, GapType
+from ..graph_fixer import DetectedGap, GapType, ProposedRelationship
+from ..interfaces.base_service import AsyncServiceMixin, CacheableMixin, ServiceConfig
 from ..interfaces.service_interfaces import IRelationshipAnalyzerService
-from ..interfaces.base_service import ServiceConfig, CacheableMixin, AsyncServiceMixin
 
 
 class RelationshipAnalyzerService(IRelationshipAnalyzerService, CacheableMixin, AsyncServiceMixin):
@@ -58,7 +59,7 @@ class RelationshipAnalyzerService(IRelationshipAnalyzerService, CacheableMixin, 
         self.clear_cache()
         self._initialized = False
 
-    async def propose_relationships(self, gaps: List[DetectedGap]) -> List[ProposedRelationship]:
+    async def propose_relationships(self, gaps: list[DetectedGap]) -> list[ProposedRelationship]:
         """
         Generate relationship proposals for detected gaps.
 
@@ -157,7 +158,7 @@ class RelationshipAnalyzerService(IRelationshipAnalyzerService, CacheableMixin, 
             self.set_cache(cache_key, 0.0)
             return 0.0
 
-    async def score_relationships(self, proposals: List[ProposedRelationship]) -> List[ProposedRelationship]:
+    async def score_relationships(self, proposals: list[ProposedRelationship]) -> list[ProposedRelationship]:
         """
         Score and rank relationship proposals.
 
@@ -193,7 +194,7 @@ class RelationshipAnalyzerService(IRelationshipAnalyzerService, CacheableMixin, 
 
     # Private implementation methods
 
-    async def _propose_missing_relationships(self, gap: DetectedGap) -> List[ProposedRelationship]:
+    async def _propose_missing_relationships(self, gap: DetectedGap) -> list[ProposedRelationship]:
         """Propose relationships for missing relationship gaps."""
         proposals = []
 
@@ -224,7 +225,7 @@ class RelationshipAnalyzerService(IRelationshipAnalyzerService, CacheableMixin, 
 
         return proposals
 
-    async def _propose_strengthening_relationships(self, gap: DetectedGap) -> List[ProposedRelationship]:
+    async def _propose_strengthening_relationships(self, gap: DetectedGap) -> list[ProposedRelationship]:
         """Propose relationships to strengthen weak connections."""
         proposals = []
 
@@ -269,7 +270,7 @@ class RelationshipAnalyzerService(IRelationshipAnalyzerService, CacheableMixin, 
             self.logger.exception(f"Strengthening relationship proposal failed: {e}")
             return []
 
-    async def _propose_bridge_relationships(self, gap: DetectedGap) -> List[ProposedRelationship]:
+    async def _propose_bridge_relationships(self, gap: DetectedGap) -> list[ProposedRelationship]:
         """Propose relationships to bridge isolated clusters."""
         proposals = []
 
@@ -307,7 +308,7 @@ class RelationshipAnalyzerService(IRelationshipAnalyzerService, CacheableMixin, 
             self.logger.exception(f"Bridge relationship proposal failed: {e}")
             return []
 
-    async def _propose_path_completion_relationships(self, gap: DetectedGap) -> List[ProposedRelationship]:
+    async def _propose_path_completion_relationships(self, gap: DetectedGap) -> list[ProposedRelationship]:
         """Propose relationships to complete reasoning paths."""
         proposals = []
 
@@ -370,7 +371,7 @@ class RelationshipAnalyzerService(IRelationshipAnalyzerService, CacheableMixin, 
         else:
             return "functional"
 
-    async def _find_bridge_candidates(self, isolated_node_id: str) -> List[str]:
+    async def _find_bridge_candidates(self, isolated_node_id: str) -> list[str]:
         """Find well-connected nodes that could serve as bridges."""
         candidates = []
 
@@ -484,7 +485,7 @@ class RelationshipAnalyzerService(IRelationshipAnalyzerService, CacheableMixin, 
 
         return 0.5 + (connectivity_factor * 0.5)  # Range [0.5, 1.0]
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get service statistics."""
         return {
             "relationships_proposed": self.stats["relationships_proposed"],

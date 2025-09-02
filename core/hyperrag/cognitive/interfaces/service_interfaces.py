@@ -6,7 +6,8 @@ loose coupling and testability.
 """
 
 from abc import abstractmethod
-from typing import Any, Dict, List
+from typing import Any
+
 from ..graph_fixer import DetectedGap, ProposedNode, ProposedRelationship
 from .base_service import BaseService
 
@@ -16,23 +17,23 @@ class IGapDetectionService(BaseService):
 
     @abstractmethod
     async def detect_gaps(
-        self, query: str = None, retrieved_info: List[Any] = None, focus_area: str = None
-    ) -> List[DetectedGap]:
+        self, query: str = None, retrieved_info: list[Any] = None, focus_area: str = None
+    ) -> list[DetectedGap]:
         """Detect knowledge gaps using multiple analysis methods."""
         pass
 
     @abstractmethod
-    async def detect_structural_gaps(self) -> List[DetectedGap]:
+    async def detect_structural_gaps(self) -> list[DetectedGap]:
         """Detect structural gaps in graph connectivity."""
         pass
 
     @abstractmethod
-    async def detect_semantic_gaps(self, query: str = None, focus_area: str = None) -> List[DetectedGap]:
+    async def detect_semantic_gaps(self, query: str = None, focus_area: str = None) -> list[DetectedGap]:
         """Detect semantic gaps using vector analysis."""
         pass
 
     @abstractmethod
-    async def detect_connectivity_gaps(self) -> List[DetectedGap]:
+    async def detect_connectivity_gaps(self) -> list[DetectedGap]:
         """Detect overall connectivity issues."""
         pass
 
@@ -41,7 +42,7 @@ class INodeProposalService(BaseService):
     """Interface for proposing new nodes to fill gaps."""
 
     @abstractmethod
-    async def propose_nodes(self, gaps: List[DetectedGap]) -> List[ProposedNode]:
+    async def propose_nodes(self, gaps: list[DetectedGap]) -> list[ProposedNode]:
         """Generate node proposals for detected gaps."""
         pass
 
@@ -60,7 +61,7 @@ class IRelationshipAnalyzerService(BaseService):
     """Interface for analyzing and proposing relationships."""
 
     @abstractmethod
-    async def propose_relationships(self, gaps: List[DetectedGap]) -> List[ProposedRelationship]:
+    async def propose_relationships(self, gaps: list[DetectedGap]) -> list[ProposedRelationship]:
         """Generate relationship proposals for detected gaps."""
         pass
 
@@ -70,7 +71,7 @@ class IRelationshipAnalyzerService(BaseService):
         pass
 
     @abstractmethod
-    async def score_relationships(self, proposals: List[ProposedRelationship]) -> List[ProposedRelationship]:
+    async def score_relationships(self, proposals: list[ProposedRelationship]) -> list[ProposedRelationship]:
         """Score and rank relationship proposals."""
         pass
 
@@ -80,13 +81,13 @@ class IConfidenceCalculatorService(BaseService):
 
     @abstractmethod
     async def calculate_confidence(
-        self, proposal: ProposedNode | ProposedRelationship, gap: DetectedGap, evidence: List[str]
+        self, proposal: ProposedNode | ProposedRelationship, gap: DetectedGap, evidence: list[str]
     ) -> float:
         """Calculate confidence score for a proposal."""
         pass
 
     @abstractmethod
-    async def combine_evidence(self, evidence_list: List[str]) -> float:
+    async def combine_evidence(self, evidence_list: list[str]) -> float:
         """Combine multiple pieces of evidence into a confidence score."""
         pass
 
@@ -100,22 +101,22 @@ class IGraphAnalyticsService(BaseService):
     """Interface for graph metrics and analytics."""
 
     @abstractmethod
-    async def compute_centrality_metrics(self) -> Dict[str, Any]:
+    async def compute_centrality_metrics(self) -> dict[str, Any]:
         """Compute centrality metrics for graph nodes."""
         pass
 
     @abstractmethod
-    async def analyze_clusters(self) -> Dict[str, Any]:
+    async def analyze_clusters(self) -> dict[str, Any]:
         """Analyze clustering patterns in the graph."""
         pass
 
     @abstractmethod
-    async def measure_connectivity(self) -> Dict[str, Any]:
+    async def measure_connectivity(self) -> dict[str, Any]:
         """Measure overall graph connectivity."""
         pass
 
     @abstractmethod
-    async def analyze_completeness(self) -> Dict[str, Any]:
+    async def analyze_completeness(self) -> dict[str, Any]:
         """Analyze graph completeness and coverage."""
         pass
 
@@ -124,12 +125,12 @@ class IKnowledgeValidatorService(BaseService):
     """Interface for validating knowledge consistency."""
 
     @abstractmethod
-    async def validate_consistency(self, proposals: List[ProposedNode | ProposedRelationship]) -> Dict[str, bool]:
+    async def validate_consistency(self, proposals: list[ProposedNode | ProposedRelationship]) -> dict[str, bool]:
         """Validate consistency of proposals with existing knowledge."""
         pass
 
     @abstractmethod
-    async def check_conflicts(self, proposal: ProposedNode | ProposedRelationship) -> List[str]:
+    async def check_conflicts(self, proposal: ProposedNode | ProposedRelationship) -> list[str]:
         """Check for conflicts with existing knowledge."""
         pass
 

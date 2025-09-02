@@ -14,13 +14,12 @@ intelligence and dynamic topology management.
 
 import asyncio
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum, auto
 import json
 import logging
 import socket
-import time
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 import uuid
 
 # Archaeological metadata
@@ -85,7 +84,7 @@ class NodeInfo:
     ip_address: str
     port: int
     status: NodeStatus
-    capabilities: Dict[str, Any]
+    capabilities: dict[str, Any]
     
     # Discovery metadata
     discovered_at: datetime = field(default_factory=datetime.now)
@@ -104,9 +103,9 @@ class NodeInfo:
     peer_reputation: float = 1.0
     
     # Network information
-    network_interfaces: List[Dict[str, str]] = field(default_factory=list)
-    supported_protocols: List[str] = field(default_factory=list)
-    geographical_location: Optional[Dict[str, float]] = None
+    network_interfaces: list[dict[str, str]] = field(default_factory=list)
+    supported_protocols: list[str] = field(default_factory=list)
+    geographical_location: dict[str, float] | None = None
 
 @dataclass
 class DiscoveryEvent:
@@ -119,7 +118,7 @@ class DiscoveryEvent:
     confidence: float = 1.0
     
     # Archaeological metadata
-    archaeological_pattern: Optional[str] = None
+    archaeological_pattern: str | None = None
     network_impact_score: float = 0.0
 
 class NodeDiscovery:
@@ -134,19 +133,19 @@ class NodeDiscovery:
     - Integration with distributed inference coordination
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize the node discovery system."""
         self.config = config or {}
         self.archaeological_metadata = ARCHAEOLOGICAL_METADATA
         
         # Discovery state
-        self.discovered_nodes: Dict[str, NodeInfo] = {}
-        self.local_node_info: Optional[NodeInfo] = None
-        self.discovery_events: List[DiscoveryEvent] = []
+        self.discovered_nodes: dict[str, NodeInfo] = {}
+        self.local_node_info: NodeInfo | None = None
+        self.discovery_events: list[DiscoveryEvent] = []
         
         # Discovery methods
-        self.active_discovery_methods: Set[DiscoveryMethod] = set()
-        self.discovery_intervals: Dict[DiscoveryMethod, float] = {
+        self.active_discovery_methods: set[DiscoveryMethod] = set()
+        self.discovery_intervals: dict[DiscoveryMethod, float] = {
             DiscoveryMethod.MULTICAST: 30.0,
             DiscoveryMethod.BROADCAST: 60.0,
             DiscoveryMethod.PEER_TO_PEER: 15.0,
@@ -154,13 +153,13 @@ class NodeDiscovery:
         }
         
         # Network topology
-        self.network_topology: Dict[str, Set[str]] = {}
-        self.topology_metrics: Dict[str, float] = {}
+        self.network_topology: dict[str, set[str]] = {}
+        self.topology_metrics: dict[str, float] = {}
         
         # Archaeological components
-        self.archaeological_patterns: Dict[str, Any] = {}
-        self.topology_optimizer: Optional[Any] = None
-        self.peer_reputation_system: Dict[str, float] = {}
+        self.archaeological_patterns: dict[str, Any] = {}
+        self.topology_optimizer: Any | None = None
+        self.peer_reputation_system: dict[str, float] = {}
         
         # Configuration
         self.discovery_port = self.config.get("discovery_port", 8765)
@@ -178,10 +177,10 @@ class NodeDiscovery:
             "topology_optimizations": 0
         }
         
-        logger.info(f"🔍 NodeDiscovery initialized with archaeological metadata")
+        logger.info("🔍 NodeDiscovery initialized with archaeological metadata")
         logger.info(f"📊 Innovation Score: {self.archaeological_metadata['innovation_score']}")
         
-    async def start(self, node_id: str, hostname: str, port: int, capabilities: Dict[str, Any]):
+    async def start(self, node_id: str, hostname: str, port: int, capabilities: dict[str, Any]):
         """Start the node discovery system."""
         if not self.archaeological_metadata["feature_flags"].get("ARCHAEOLOGICAL_DISCOVERY_ENABLED", False):
             logger.warning("🚫 Archaeological discovery disabled by feature flag")
@@ -251,8 +250,8 @@ class NodeDiscovery:
     async def discover_nodes(
         self,
         method: DiscoveryMethod = DiscoveryMethod.HYBRID,
-        timeout_seconds: Optional[float] = None
-    ) -> List[NodeInfo]:
+        timeout_seconds: float | None = None
+    ) -> list[NodeInfo]:
         """Manually trigger node discovery."""
         try:
             timeout = timeout_seconds or self.discovery_timeout
@@ -287,9 +286,9 @@ class NodeDiscovery:
             
     async def get_available_nodes(
         self,
-        capability_filter: Optional[Dict[str, Any]] = None,
-        status_filter: Optional[List[NodeStatus]] = None
-    ) -> List[NodeInfo]:
+        capability_filter: dict[str, Any] | None = None,
+        status_filter: list[NodeStatus] | None = None
+    ) -> list[NodeInfo]:
         """Get available nodes with optional filtering."""
         try:
             nodes = []
@@ -320,9 +319,9 @@ class NodeDiscovery:
     async def find_optimal_nodes(
         self,
         count: int = 1,
-        requirements: Optional[Dict[str, Any]] = None,
-        geographical_preference: Optional[Dict[str, float]] = None
-    ) -> List[NodeInfo]:
+        requirements: dict[str, Any] | None = None,
+        geographical_preference: dict[str, float] | None = None
+    ) -> list[NodeInfo]:
         """Find optimal nodes using archaeological algorithms."""
         try:
             if not self.archaeological_metadata["feature_flags"].get("PREDICTIVE_PLACEMENT_ENABLED", False):
@@ -350,7 +349,7 @@ class NodeDiscovery:
             logger.error(f"❌ Failed to find optimal nodes: {e}")
             return []
             
-    async def update_node_status(self, node_id: str, status: NodeStatus, metadata: Optional[Dict[str, Any]] = None):
+    async def update_node_status(self, node_id: str, status: NodeStatus, metadata: dict[str, Any] | None = None):
         """Update the status of a discovered node."""
         try:
             if node_id not in self.discovered_nodes:
@@ -383,7 +382,7 @@ class NodeDiscovery:
         except Exception as e:
             logger.error(f"❌ Failed to update node status: {e}")
             
-    async def get_network_topology(self) -> Dict[str, Any]:
+    async def get_network_topology(self) -> dict[str, Any]:
         """Get current network topology information."""
         try:
             topology_data = {
@@ -420,7 +419,7 @@ class NodeDiscovery:
             logger.error(f"❌ Failed to get network topology: {e}")
             return {}
             
-    async def get_discovery_statistics(self) -> Dict[str, Any]:
+    async def get_discovery_statistics(self) -> dict[str, Any]:
         """Get comprehensive discovery statistics."""
         try:
             recent_events = [e for e in self.discovery_events 
@@ -466,7 +465,7 @@ class NodeDiscovery:
         except Exception:
             return "127.0.0.1"
             
-    async def _get_geographical_location(self) -> Optional[Dict[str, float]]:
+    async def _get_geographical_location(self) -> dict[str, float] | None:
         """Get geographical location (mock implementation)."""
         # In production, this would use IP geolocation services
         return {
@@ -583,7 +582,7 @@ class NodeDiscovery:
                 
     # Discovery Method Implementations
     
-    async def _discover_via_multicast(self, timeout: float) -> List[NodeInfo]:
+    async def _discover_via_multicast(self, timeout: float) -> list[NodeInfo]:
         """Discover nodes via multicast."""
         discovered = []
         
@@ -601,7 +600,7 @@ class NodeDiscovery:
             
         return discovered
         
-    async def _discover_via_peers(self, timeout: float) -> List[NodeInfo]:
+    async def _discover_via_peers(self, timeout: float) -> list[NodeInfo]:
         """Discover nodes via peer-to-peer networking."""
         discovered = []
         
@@ -617,7 +616,7 @@ class NodeDiscovery:
             
         return discovered
         
-    async def _discover_via_archaeology(self, timeout: float) -> List[NodeInfo]:
+    async def _discover_via_archaeology(self, timeout: float) -> list[NodeInfo]:
         """Discover nodes using archaeological algorithms."""
         discovered = []
         
@@ -637,7 +636,7 @@ class NodeDiscovery:
             
         return discovered
         
-    async def _predict_node_locations(self) -> List[NodeInfo]:
+    async def _predict_node_locations(self) -> list[NodeInfo]:
         """Predict likely node locations using archaeological patterns."""
         # Mock implementation - would use sophisticated prediction algorithms
         return []
@@ -698,7 +697,7 @@ class NodeDiscovery:
         
     # Utility Methods
     
-    def _node_matches_capabilities(self, node: NodeInfo, requirements: Dict[str, Any]) -> bool:
+    def _node_matches_capabilities(self, node: NodeInfo, requirements: dict[str, Any]) -> bool:
         """Check if node matches capability requirements."""
         for key, required_value in requirements.items():
             if key not in node.capabilities:
@@ -710,8 +709,8 @@ class NodeDiscovery:
     async def _calculate_node_optimization_score(
         self,
         node: NodeInfo,
-        requirements: Optional[Dict[str, Any]],
-        geographical_preference: Optional[Dict[str, float]]
+        requirements: dict[str, Any] | None,
+        geographical_preference: dict[str, float] | None
     ) -> float:
         """Calculate optimization score for a node."""
         score = 0.0
@@ -761,7 +760,7 @@ class NodeDiscovery:
         
         return (avg_fitness + connectivity_factor) / 2.0
         
-    async def _calculate_network_health(self) -> Dict[str, float]:
+    async def _calculate_network_health(self) -> dict[str, float]:
         """Calculate network health metrics."""
         if not self.discovered_nodes:
             return {"overall_health": 0.0}

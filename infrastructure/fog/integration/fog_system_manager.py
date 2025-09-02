@@ -19,17 +19,18 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from enum import Enum
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
+
+from ..market.pricing_manager import DynamicPricingManager
+from ..privacy.onion_routing import OnionRouter
+from ..proofs.proof_generator import ProofGenerator
+from ..proofs.proof_verifier import ProofVerifier
+from ..quorum.quorum_manager import ByzantineQuorumManager
+from ..reputation.bayesian_reputation import BayesianReputationEngine
+from ..scheduler.placement import FogScheduler
 
 # Import all fog components
 from ..tee.tee_runtime_manager import TEERuntimeManager
-from ..proofs.proof_generator import ProofGenerator
-from ..proofs.proof_verifier import ProofVerifier
-from ..market.pricing_manager import DynamicPricingManager
-from ..scheduler.placement import FogScheduler
-from ..quorum.quorum_manager import ByzantineQuorumManager
-from ..privacy.onion_routing import OnionRouter
-from ..reputation.bayesian_reputation import BayesianReputationEngine
 from ..vrf.vrf_neighbor_selection import VRFNeighborSelector
 
 logger = logging.getLogger(__name__)
@@ -62,13 +63,13 @@ class ComponentHealth:
     name: str
     status: ComponentStatus = ComponentStatus.STOPPED
     health: SystemHealth = SystemHealth.OFFLINE
-    last_heartbeat: Optional[datetime] = None
+    last_heartbeat: datetime | None = None
     error_count: int = 0
     performance_score: float = 1.0
     memory_usage_mb: float = 0.0
     cpu_usage_percent: float = 0.0
     uptime_seconds: float = 0.0
-    error_messages: List[str] = field(default_factory=list)
+    error_messages: list[str] = field(default_factory=list)
 
     def is_healthy(self) -> bool:
         """Check if component is healthy"""
@@ -127,29 +128,29 @@ class FogSystemManager:
     - Configuration management
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self.config = config or self._default_config()
 
         # Initialize all fog components
         self._init_components()
 
         # System state
-        self.component_health: Dict[str, ComponentHealth] = {}
+        self.component_health: dict[str, ComponentHealth] = {}
         self.system_metrics = SystemMetrics()
         self.is_running = False
 
         # Monitoring tasks
-        self._health_monitor_task: Optional[asyncio.Task] = None
-        self._metrics_collector_task: Optional[asyncio.Task] = None
-        self._recovery_task: Optional[asyncio.Task] = None
+        self._health_monitor_task: asyncio.Task | None = None
+        self._metrics_collector_task: asyncio.Task | None = None
+        self._recovery_task: asyncio.Task | None = None
 
         # Performance tracking
-        self.operation_history: List[Dict[str, Any]] = []
-        self.error_history: List[Dict[str, Any]] = []
+        self.operation_history: list[dict[str, Any]] = []
+        self.error_history: list[dict[str, Any]] = []
 
         logger.info("Fog System Manager initialized with 8 components")
 
-    def _default_config(self) -> Dict[str, Any]:
+    def _default_config(self) -> dict[str, Any]:
         """Default system configuration"""
         return {
             "health_check_interval": 30,
@@ -664,7 +665,7 @@ class FogSystemManager:
 
     # Public API methods
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get comprehensive system status"""
 
         component_statuses = {}
@@ -687,7 +688,7 @@ class FogSystemManager:
             "timestamp": datetime.now(UTC).isoformat(),
         }
 
-    async def get_comprehensive_metrics(self) -> Dict[str, Any]:
+    async def get_comprehensive_metrics(self) -> dict[str, Any]:
         """Get detailed system performance metrics"""
 
         # Update metrics before returning
@@ -739,7 +740,7 @@ class FogSystemManager:
             logger.error(f"Failed to restart {component_name}: {e}")
             return False
 
-    def get_component_health(self, component_name: str) -> Optional[Dict[str, Any]]:
+    def get_component_health(self, component_name: str) -> dict[str, Any] | None:
         """Get health status for specific component"""
 
         if component_name not in self.component_health:
@@ -760,7 +761,7 @@ class FogSystemManager:
             "recent_errors": health.error_messages[-5:],  # Last 5 errors
         }
 
-    def update_config(self, new_config: Dict[str, Any]):
+    def update_config(self, new_config: dict[str, Any]):
         """Update system configuration"""
 
         self.config.update(new_config)
@@ -768,7 +769,7 @@ class FogSystemManager:
 
 
 # Global system manager instance
-_system_manager: Optional[FogSystemManager] = None
+_system_manager: FogSystemManager | None = None
 
 
 async def get_system_manager() -> FogSystemManager:

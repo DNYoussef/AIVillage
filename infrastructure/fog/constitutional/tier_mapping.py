@@ -23,7 +23,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from enum import Enum
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -135,13 +135,13 @@ class TierMapping:
 
     # Transition details
     migration_required: bool = False
-    breaking_changes: List[str] = field(default_factory=list)
-    feature_additions: List[str] = field(default_factory=list)
+    breaking_changes: list[str] = field(default_factory=list)
+    feature_additions: list[str] = field(default_factory=list)
 
     # Governance implications
-    new_constraints_applied: List[str] = field(default_factory=list)
-    safety_improvements: List[str] = field(default_factory=list)
-    transparency_changes: List[str] = field(default_factory=list)
+    new_constraints_applied: list[str] = field(default_factory=list)
+    safety_improvements: list[str] = field(default_factory=list)
+    transparency_changes: list[str] = field(default_factory=list)
 
 
 class ConstitutionalTierManager:
@@ -166,12 +166,12 @@ class ConstitutionalTierManager:
         self.transparency_logger = None  # Will be injected
 
         # State tracking
-        self.active_tier_assignments: Dict[str, ConstitutionalTier] = {}
-        self.tier_transition_queue: List[Dict[str, Any]] = []
+        self.active_tier_assignments: dict[str, ConstitutionalTier] = {}
+        self.tier_transition_queue: list[dict[str, Any]] = []
 
         logger.info("Constitutional tier manager initialized")
 
-    def _initialize_tier_capabilities(self) -> Dict[ConstitutionalTier, TierCapabilities]:
+    def _initialize_tier_capabilities(self) -> dict[ConstitutionalTier, TierCapabilities]:
         """Initialize capabilities for each constitutional tier"""
 
         return {
@@ -283,7 +283,7 @@ class ConstitutionalTierManager:
             ),
         }
 
-    def _initialize_tier_mappings(self) -> List[TierMapping]:
+    def _initialize_tier_mappings(self) -> list[TierMapping]:
         """Initialize mappings from legacy to constitutional tiers"""
 
         return [
@@ -394,7 +394,7 @@ class ConstitutionalTierManager:
             ),
         ]
 
-    def get_constitutional_tier(self, user_id: str, legacy_tier: Optional[LegacyTier] = None) -> ConstitutionalTier:
+    def get_constitutional_tier(self, user_id: str, legacy_tier: LegacyTier | None = None) -> ConstitutionalTier:
         """Get constitutional tier for user (with fallback mapping)"""
 
         # Check if user already has constitutional tier assignment
@@ -438,8 +438,8 @@ class ConstitutionalTierManager:
         return self.tier_capabilities[tier].constitutional_constraints
 
     async def validate_tier_compliance(
-        self, user_id: str, workload_type: str, content_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, user_id: str, workload_type: str, content_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Validate that workload complies with user's constitutional tier requirements"""
 
         user_tier = self.get_constitutional_tier(user_id)
@@ -479,7 +479,7 @@ class ConstitutionalTierManager:
 
         return compliance_result
 
-    def get_tier_upgrade_path(self, current_tier: ConstitutionalTier) -> Optional[ConstitutionalTier]:
+    def get_tier_upgrade_path(self, current_tier: ConstitutionalTier) -> ConstitutionalTier | None:
         """Get next tier in upgrade path"""
 
         upgrade_paths = {
@@ -490,7 +490,7 @@ class ConstitutionalTierManager:
 
         return upgrade_paths.get(current_tier)
 
-    def calculate_tier_migration_impact(self, user_id: str, target_tier: ConstitutionalTier) -> Dict[str, Any]:
+    def calculate_tier_migration_impact(self, user_id: str, target_tier: ConstitutionalTier) -> dict[str, Any]:
         """Calculate impact of migrating user to different constitutional tier"""
 
         current_tier = self.get_constitutional_tier(user_id)
@@ -567,7 +567,7 @@ class ConstitutionalTierManager:
         # Simplified implementation - would track request counts in production
         return hash(user_id) % frequency == 0
 
-    def _is_high_risk_content(self, content_data: Dict[str, Any]) -> bool:
+    def _is_high_risk_content(self, content_data: dict[str, Any]) -> bool:
         """Determine if content is high-risk requiring human oversight"""
         risk_score = content_data.get("risk_score", 0.0)
         return risk_score > 0.8
@@ -606,7 +606,7 @@ def map_legacy_tier_to_constitutional(legacy_tier: LegacyTier) -> Constitutional
     return mapping.get(legacy_tier, ConstitutionalTier.BRONZE)
 
 
-def get_tier_requirements(tier: ConstitutionalTier) -> Dict[str, Any]:
+def get_tier_requirements(tier: ConstitutionalTier) -> dict[str, Any]:
     """Get tier requirements for external systems"""
 
     manager = ConstitutionalTierManager()

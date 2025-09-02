@@ -19,19 +19,19 @@ Key Consolidated Features:
 """
 
 import asyncio
-import cProfile
-import pstats
-import time
-import threading
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager, contextmanager
+import cProfile
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Any
 import logging
-import tracemalloc
+import pstats
 import statistics
+import threading
+import time
+import tracemalloc
+from typing import Any
 
 # System imports for resource monitoring
 try:
@@ -104,9 +104,9 @@ class PerformanceMetric:
     unit: str
     timestamp: datetime
     component: str = ""
-    labels: Dict[str, str] = field(default_factory=dict)
+    labels: dict[str, str] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         return {
             "name": self.name,
@@ -124,17 +124,17 @@ class ComponentProfile:
 
     component_name: str
     start_time: datetime
-    end_time: Optional[datetime] = None
-    cpu_usage: Dict[str, float] = field(default_factory=dict)
-    memory_usage: Dict[str, float] = field(default_factory=dict)
-    network_stats: Dict[str, Any] = field(default_factory=dict)
-    function_stats: Dict[str, Any] = field(default_factory=dict)
-    async_stats: Dict[str, Any] = field(default_factory=dict)
-    metrics: List[PerformanceMetric] = field(default_factory=list)
-    bottlenecks: List[Dict[str, Any]] = field(default_factory=list)
+    end_time: datetime | None = None
+    cpu_usage: dict[str, float] = field(default_factory=dict)
+    memory_usage: dict[str, float] = field(default_factory=dict)
+    network_stats: dict[str, Any] = field(default_factory=dict)
+    function_stats: dict[str, Any] = field(default_factory=dict)
+    async_stats: dict[str, Any] = field(default_factory=dict)
+    metrics: list[PerformanceMetric] = field(default_factory=list)
+    bottlenecks: list[dict[str, Any]] = field(default_factory=list)
 
     @property
-    def duration(self) -> Optional[float]:
+    def duration(self) -> float | None:
         """Get profile duration in seconds."""
         if self.end_time:
             return (self.end_time - self.start_time).total_seconds()
@@ -158,9 +158,9 @@ class BottleneckAnalysis:
     affected_component: str
     impact_score: float  # 0.0 to 1.0
     recommendation: str
-    metrics: Dict[str, float] = field(default_factory=dict)
+    metrics: dict[str, float] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         return {
             "type": self.bottleneck_type.value,
@@ -183,10 +183,10 @@ class MonitoringAlert:
     message: str
     timestamp: datetime
     resolved: bool = False
-    resolved_at: Optional[datetime] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    resolved_at: datetime | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         return {
             "alert_id": self.alert_id,
@@ -205,7 +205,7 @@ class PerformanceMonitor:
 
     def __init__(self, config: MonitoringConfig = None):
         self.config = config or MonitoringConfig()
-        self.active_profiles: Dict[str, ComponentProfile] = {}
+        self.active_profiles: dict[str, ComponentProfile] = {}
         self.metrics_buffer = deque(maxlen=self.config.max_samples)
         self.alerts = deque(maxlen=1000)
         self.bottleneck_history = deque(maxlen=500)
@@ -213,7 +213,7 @@ class PerformanceMonitor:
         # Background tasks
         self._monitoring_thread = None
         self._stop_event = threading.Event()
-        self.background_tasks: List[asyncio.Task] = []
+        self.background_tasks: list[asyncio.Task] = []
 
         # System monitoring
         self._system_metrics = {}
@@ -348,8 +348,8 @@ class PerformanceMonitor:
         return alert
 
     def get_real_time_metrics(
-        self, component: Optional[str] = None, time_range_seconds: int = 300
-    ) -> List[Dict[str, Any]]:
+        self, component: str | None = None, time_range_seconds: int = 300
+    ) -> list[dict[str, Any]]:
         """Get real-time metrics within time range."""
         cutoff_time = datetime.now() - timedelta(seconds=time_range_seconds)
 
@@ -360,7 +360,7 @@ class PerformanceMonitor:
 
         return [m.to_dict() for m in metrics]
 
-    def get_component_health(self, component: str) -> Dict[str, Any]:
+    def get_component_health(self, component: str) -> dict[str, Any]:
         """Get health status for a specific component."""
         recent_metrics = self.get_real_time_metrics(component, 60)  # Last minute
 
@@ -417,7 +417,7 @@ class PerformanceMonitor:
             "last_metric_time": recent_metrics[-1]["timestamp"] if recent_metrics else None,
         }
 
-    def get_system_overview(self) -> Dict[str, Any]:
+    def get_system_overview(self) -> dict[str, Any]:
         """Get system-wide monitoring overview."""
         return {
             "timestamp": datetime.now().isoformat(),
@@ -430,7 +430,7 @@ class PerformanceMonitor:
             "component_health": {comp: self.get_component_health(comp) for comp in self._get_monitored_components()},
         }
 
-    async def generate_optimization_report(self) -> Dict[str, Any]:
+    async def generate_optimization_report(self) -> dict[str, Any]:
         """Generate comprehensive optimization report."""
         report = {
             "timestamp": datetime.now().isoformat(),
@@ -561,7 +561,7 @@ class PerformanceMonitor:
                 logger.error(f"Monitoring cleanup error: {e}")
                 await asyncio.sleep(30)
 
-    def _analyze_cpu_profile(self, profiler: cProfile.Profile) -> Dict[str, Any]:
+    def _analyze_cpu_profile(self, profiler: cProfile.Profile) -> dict[str, Any]:
         """Analyze CPU profiling results."""
         stats = pstats.Stats(profiler)
         stats.sort_stats("cumulative")
@@ -589,7 +589,7 @@ class PerformanceMonitor:
             "total_calls": sum(data[0] for data in stats.stats.values()),
         }
 
-    def _analyze_memory_profile(self, snapshot_start, snapshot_end) -> Dict[str, Any]:
+    def _analyze_memory_profile(self, snapshot_start, snapshot_end) -> dict[str, Any]:
         """Analyze memory profiling results."""
         top_stats = snapshot_end.compare_to(snapshot_start, "lineno")
 
@@ -606,7 +606,7 @@ class PerformanceMonitor:
 
         return memory_analysis
 
-    def _analyze_component_bottlenecks(self, profile: ComponentProfile) -> List[BottleneckAnalysis]:
+    def _analyze_component_bottlenecks(self, profile: ComponentProfile) -> list[BottleneckAnalysis]:
         """Analyze component for bottlenecks."""
         bottlenecks = []
 
@@ -676,7 +676,7 @@ class PerformanceMonitor:
                     AlertSeverity.WARNING, metric.component, f"Elevated error rate: {metric.value} errors"
                 )
 
-    def _get_monitored_components(self) -> List[str]:
+    def _get_monitored_components(self) -> list[str]:
         """Get list of components being monitored."""
         components = set()
 
@@ -690,7 +690,7 @@ class PerformanceMonitor:
 
         return list(components)
 
-    def _calculate_system_health(self) -> Dict[str, Any]:
+    def _calculate_system_health(self) -> dict[str, Any]:
         """Calculate overall system health."""
         if not HAS_PSUTIL:
             return {"status": "unknown", "score": 0.5}
@@ -722,7 +722,7 @@ class PerformanceMonitor:
             "memory_percent": memory_percent,
         }
 
-    def _calculate_avg_response_time(self, metrics: List[Dict[str, Any]]) -> float:
+    def _calculate_avg_response_time(self, metrics: list[dict[str, Any]]) -> float:
         """Calculate average response time from metrics."""
         response_times = [
             m["value"] for m in metrics if "response" in m["name"].lower() or "latency" in m["name"].lower()
@@ -746,13 +746,13 @@ class PerformanceMonitor:
         logger.info("Performance Monitor shutdown complete")
 
 
-def create_monitor(config: Optional[MonitoringConfig] = None) -> PerformanceMonitor:
+def create_monitor(config: MonitoringConfig | None = None) -> PerformanceMonitor:
     """Create performance monitor with configuration."""
     return PerformanceMonitor(config or MonitoringConfig())
 
 
 # Global monitor instance for convenience
-_global_monitor: Optional[PerformanceMonitor] = None
+_global_monitor: PerformanceMonitor | None = None
 
 
 async def get_global_monitor() -> PerformanceMonitor:

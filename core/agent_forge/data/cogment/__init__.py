@@ -14,13 +14,13 @@ Replaces HRRM's limited synthetic approach with comprehensive real-world dataset
 for accelerated grokking through curriculum-based progressive training.
 """
 
+from .augmentations import ARCAugmentationEngine
 from .data_manager import CogmentDataManager
 from .stage_0_sanity import SanityCheckDataset
 from .stage_1_arc import ARCVisualDataset
 from .stage_2_puzzles import AlgorithmicPuzzleDataset
 from .stage_3_reasoning import MathTextReasoningDataset
 from .stage_4_longcontext import LongContextDataset
-from .augmentations import ARCAugmentationEngine
 
 __all__ = [
     "CogmentDataManager",

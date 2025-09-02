@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import random
 
+from accelerate import Accelerator
 import numpy as np
 import torch
-from accelerate import Accelerator
 
 
 def set_seed(s=1337):

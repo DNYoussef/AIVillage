@@ -24,7 +24,7 @@ from enum import Enum
 import hashlib
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 import uuid
 
 # Set high precision for financial calculations
@@ -65,14 +65,14 @@ class AuditRecord:
     timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     # Event details
-    event_data: Dict[str, Any] = field(default_factory=dict)
-    actor_id: Optional[str] = None
-    device_id: Optional[str] = None
-    transaction_id: Optional[str] = None
+    event_data: dict[str, Any] = field(default_factory=dict)
+    actor_id: str | None = None
+    device_id: str | None = None
+    transaction_id: str | None = None
 
     # Pricing information
-    pricing_data: Dict[str, Any] = field(default_factory=dict)
-    constitutional_features: Dict[str, bool] = field(default_factory=dict)
+    pricing_data: dict[str, Any] = field(default_factory=dict)
+    constitutional_features: dict[str, bool] = field(default_factory=dict)
     compliance_level: ComplianceLevel = ComplianceLevel.BASIC
 
     # Audit integrity
@@ -155,8 +155,8 @@ class ConstitutionalComplianceReport:
     governance_score: Decimal = Decimal("1.0")
 
     # Issues and recommendations
-    compliance_issues: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
+    compliance_issues: list[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
 
     def calculate_overall_score(self):
         """Calculate overall compliance score"""
@@ -188,16 +188,16 @@ class AuditTrailManager:
 
     def __init__(self):
         # Audit chain storage
-        self.audit_records: List[AuditRecord] = []
-        self.audit_index: Dict[str, int] = {}  # record_id -> position
+        self.audit_records: list[AuditRecord] = []
+        self.audit_index: dict[str, int] = {}  # record_id -> position
 
         # Compliance tracking
-        self.compliance_reports: List[ConstitutionalComplianceReport] = []
-        self.constitutional_violations: List[Dict[str, Any]] = []
+        self.compliance_reports: list[ConstitutionalComplianceReport] = []
+        self.constitutional_violations: list[dict[str, Any]] = []
 
         # Privacy protection
         self.privacy_preserving_mode = True
-        self.zero_knowledge_proofs: Dict[str, Any] = {}
+        self.zero_knowledge_proofs: dict[str, Any] = {}
 
         # Performance metrics
         self.audit_metrics = {
@@ -213,10 +213,10 @@ class AuditTrailManager:
     def log_calculation(
         self,
         calculation_type: str,
-        calculation_data: Dict[str, Any],
+        calculation_data: dict[str, Any],
         device_id: str = None,
         actor_id: str = None,
-        constitutional_features: Dict[str, bool] = None,
+        constitutional_features: dict[str, bool] = None,
     ) -> str:
         """Log pricing calculation with audit trail"""
 
@@ -256,7 +256,7 @@ class AuditTrailManager:
 
         return record_id
 
-    def log_pricing_quote(self, quote_data: Dict[str, Any], actor_id: str = None) -> str:
+    def log_pricing_quote(self, quote_data: dict[str, Any], actor_id: str = None) -> str:
         """Log pricing quote generation"""
 
         record_id = str(uuid.uuid4())
@@ -300,7 +300,7 @@ class AuditTrailManager:
 
         return record_id
 
-    def log_governance_vote(self, vote_data: Dict[str, Any], voter_id: str = None) -> str:
+    def log_governance_vote(self, vote_data: dict[str, Any], voter_id: str = None) -> str:
         """Log governance voting activity"""
 
         record_id = str(uuid.uuid4())
@@ -338,7 +338,7 @@ class AuditTrailManager:
 
         return record_id
 
-    def verify_audit_chain_integrity(self) -> Dict[str, Any]:
+    def verify_audit_chain_integrity(self) -> dict[str, Any]:
         """Verify integrity of entire audit chain"""
 
         integrity_results = {
@@ -439,7 +439,7 @@ class AuditTrailManager:
         start_time: datetime = None,
         end_time: datetime = None,
         limit: int = 100,
-    ) -> List[AuditRecord]:
+    ) -> list[AuditRecord]:
         """Get audit records matching criteria"""
 
         matching_records = []
@@ -472,7 +472,7 @@ class AuditTrailManager:
 
         return matching_records
 
-    def get_transparency_report(self, include_privacy: bool = True) -> Dict[str, Any]:
+    def get_transparency_report(self, include_privacy: bool = True) -> dict[str, Any]:
         """Generate comprehensive transparency report"""
 
         # Recent activity summary
@@ -524,7 +524,7 @@ class AuditTrailManager:
             },
         }
 
-    def export_audit_records(self, format: str = "json", include_sensitive: bool = False) -> Dict[str, Any]:
+    def export_audit_records(self, format: str = "json", include_sensitive: bool = False) -> dict[str, Any]:
         """Export audit records for external analysis"""
 
         exported_records = []
@@ -574,7 +574,7 @@ def get_audit_trail_manager() -> AuditTrailManager:
 
 # Convenience functions for audit logging
 def log_pricing_calculation(
-    calculation_type: str, calculation_data: Dict[str, Any], device_id: str = None, actor_id: str = None
+    calculation_type: str, calculation_data: dict[str, Any], device_id: str = None, actor_id: str = None
 ) -> str:
     """Log pricing calculation to audit trail"""
 
@@ -582,14 +582,14 @@ def log_pricing_calculation(
     return manager.log_calculation(calculation_type, calculation_data, device_id, actor_id)
 
 
-def log_pricing_quote(quote_data: Dict[str, Any], actor_id: str = None) -> str:
+def log_pricing_quote(quote_data: dict[str, Any], actor_id: str = None) -> str:
     """Log pricing quote to audit trail"""
 
     manager = get_audit_trail_manager()
     return manager.log_pricing_quote(quote_data, actor_id)
 
 
-def verify_audit_integrity() -> Dict[str, Any]:
+def verify_audit_integrity() -> dict[str, Any]:
     """Verify audit chain integrity"""
 
     manager = get_audit_trail_manager()

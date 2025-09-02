@@ -5,14 +5,14 @@ Interface definitions for all GraphFixer services,
 enabling loose coupling and testability.
 """
 
-from .base_service import BaseService, ServiceConfig, AsyncServiceMixin, CacheableMixin
+from .base_service import AsyncServiceMixin, BaseService, CacheableMixin, ServiceConfig
 from .service_interfaces import (
-    IGapDetectionService,
-    INodeProposalService,
-    IRelationshipAnalyzerService,
     IConfidenceCalculatorService,
+    IGapDetectionService,
     IGraphAnalyticsService,
     IKnowledgeValidatorService,
+    INodeProposalService,
+    IRelationshipAnalyzerService,
 )
 
 __all__ = [

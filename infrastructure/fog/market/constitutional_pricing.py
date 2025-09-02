@@ -21,7 +21,7 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal, getcontext
 from enum import Enum
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 import uuid
 
 # Set high precision for financial calculations
@@ -107,8 +107,8 @@ class ConstitutionalPricingTier:
     audit_level: ConstitutionalLevel = ConstitutionalLevel.BASIC
 
     def calculate_h200_price(
-        self, h200_hours: Decimal, constitutional_features: Dict[str, bool] = None, time_of_day: str = "standard"
-    ) -> Dict[str, Any]:
+        self, h200_hours: Decimal, constitutional_features: dict[str, bool] = None, time_of_day: str = "standard"
+    ) -> dict[str, Any]:
         """Calculate price with constitutional adjustments"""
 
         constitutional_features = constitutional_features or {}
@@ -182,7 +182,7 @@ class GovernancePricingVote:
 
     # Voting details
     proposed_adjustment: Decimal  # Percentage adjustment
-    target_tier: Optional[str] = None  # Target tier for adjustment
+    target_tier: str | None = None  # Target tier for adjustment
     rationale: str = ""
 
     # Voting metadata
@@ -194,8 +194,8 @@ class GovernancePricingVote:
 
     # Timeline
     proposal_created: datetime = field(default_factory=lambda: datetime.now(UTC))
-    voting_deadline: Optional[datetime] = None
-    implemented_at: Optional[datetime] = None
+    voting_deadline: datetime | None = None
+    implemented_at: datetime | None = None
 
     status: str = "pending"  # "pending", "passed", "failed", "implemented"
 
@@ -242,15 +242,15 @@ class ConstitutionalPricingEngine:
         }
 
         # Initialize constitutional tiers
-        self.constitutional_tiers: Dict[str, ConstitutionalPricingTier] = {}
+        self.constitutional_tiers: dict[str, ConstitutionalPricingTier] = {}
         self._initialize_constitutional_tiers()
 
         # Governance system
-        self.governance_votes: Dict[str, GovernancePricingVote] = {}
-        self.implemented_adjustments: List[Dict[str, Any]] = []
+        self.governance_votes: dict[str, GovernancePricingVote] = {}
+        self.implemented_adjustments: list[dict[str, Any]] = []
 
         # Audit and transparency
-        self.pricing_transparency_log: List[Dict[str, Any]] = []
+        self.pricing_transparency_log: list[dict[str, Any]] = []
 
         logger.info("Constitutional pricing engine initialized")
 
@@ -330,7 +330,7 @@ class ConstitutionalPricingEngine:
 
     def calculate_h200_hours(
         self, device: H200EquivalentDevice, utilization_rate: Decimal, time_hours: Decimal
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Calculate H200-hour equivalent using formula: H200h(d) = (TOPS_d × u × t) / T_ref"""
 
         # Core H200-hour calculation
@@ -382,9 +382,9 @@ class ConstitutionalPricingEngine:
         device: H200EquivalentDevice,
         utilization_rate: Decimal,
         time_hours: Decimal,
-        constitutional_features: Dict[str, bool] = None,
+        constitutional_features: dict[str, bool] = None,
         time_of_day: str = "standard",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get constitutional pricing quote with H200-hour calculation"""
 
         if tier not in self.constitutional_tiers:
@@ -447,7 +447,7 @@ class ConstitutionalPricingEngine:
         proposed_adjustment: Decimal,
         rationale: str,
         proposer_id: str,
-        target_tier: Optional[str] = None,
+        target_tier: str | None = None,
         voting_duration_hours: int = 168,  # 1 week default
     ) -> str:
         """Create a governance vote for pricing adjustments"""
@@ -554,7 +554,7 @@ class ConstitutionalPricingEngine:
 
             logger.info(f"Governance adjustment implemented: " f"{float(vote.proposed_adjustment)}% for {target}")
 
-    async def get_pricing_transparency_report(self) -> Dict[str, Any]:
+    async def get_pricing_transparency_report(self) -> dict[str, Any]:
         """Generate pricing transparency report"""
 
         # Calculate tier statistics
@@ -645,8 +645,8 @@ async def get_h200_price_quote(
     device_tops: float,
     utilization_rate: float,
     time_hours: float,
-    constitutional_features: Dict[str, bool] = None,
-) -> Dict[str, Any]:
+    constitutional_features: dict[str, bool] = None,
+) -> dict[str, Any]:
     """Get H200-hour price quote for device"""
 
     engine = await get_constitutional_pricing_engine()

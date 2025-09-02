@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
-from typing import Tuple
 
 from .memory_utils import surprisal_from_loss
 
@@ -120,7 +119,7 @@ class MemoryWriter(nn.Module):
         write_value: torch.Tensor,  # [B, memory_dim]
         gate_weights: torch.Tensor,  # [B]
         top_indices: torch.Tensor,  # [B, k] indices of slots to potentially update
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Update memory slots with gated writes.
 
@@ -175,7 +174,7 @@ class MemoryWriter(nn.Module):
         values: torch.Tensor,
         gates: torch.Tensor,
         indices: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Competitive memory updates where multiple writes compete for slots.
         """
@@ -227,7 +226,7 @@ class MemoryWriter(nn.Module):
         values: torch.Tensor,
         gates: torch.Tensor,
         indices: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Simple memory updates: each write updates its most similar slot.
         """

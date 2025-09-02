@@ -157,11 +157,11 @@ class BetaNetFogTransport:
         """Initialize constitutional BetaNet components"""
         try:
             # Import constitutional components
+            from ...p2p.betanet.constitutional_frames import ConstitutionalTier
             from ...p2p.betanet.constitutional_transport import (
                 ConstitutionalBetaNetService,
                 ConstitutionalTransportConfig,
             )
-            from ...p2p.betanet.constitutional_frames import ConstitutionalTier
 
             # Map tier string to enum
             tier_mapping = {

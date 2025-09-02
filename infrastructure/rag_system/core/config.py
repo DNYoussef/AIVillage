@@ -6,10 +6,10 @@ within the AIVillage infrastructure. This module serves as a compatibility
 layer to resolve import dependencies while maintaining system functionality.
 """
 
+from dataclasses import dataclass, field
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
-from dataclasses import dataclass, field
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class ModelConfig:
 
     name: str = "default"
     version: str = "1.0.0"
-    parameters: Dict[str, Any] = field(default_factory=dict)
+    parameters: dict[str, Any] = field(default_factory=dict)
     device: str = "cpu"
     precision: str = "float32"
 
@@ -44,7 +44,7 @@ class GenerationConfig:
     temperature: float = 0.7
     top_p: float = 0.9
     repetition_penalty: float = 1.0
-    stop_sequences: List[str] = field(default_factory=list)
+    stop_sequences: list[str] = field(default_factory=list)
 
 
 class UnifiedConfig:
@@ -61,10 +61,10 @@ class UnifiedConfig:
 
     def __init__(
         self,
-        config_path: Optional[Union[str, Path]] = None,
-        model_config: Optional[ModelConfig] = None,
-        retrieval_config: Optional[RetrievalConfig] = None,
-        generation_config: Optional[GenerationConfig] = None,
+        config_path: str | Path | None = None,
+        model_config: ModelConfig | None = None,
+        retrieval_config: RetrievalConfig | None = None,
+        generation_config: GenerationConfig | None = None,
         **kwargs,
     ):
         """
@@ -130,7 +130,7 @@ class UnifiedConfig:
         self._config[key] = value
         logger.debug(f"Configuration updated: {key} = {value}")
 
-    def update(self, config_dict: Dict[str, Any]) -> None:
+    def update(self, config_dict: dict[str, Any]) -> None:
         """
         Update configuration with dictionary of values.
 
@@ -140,7 +140,7 @@ class UnifiedConfig:
         self._config.update(config_dict)
         logger.info(f"Configuration updated with {len(config_dict)} new parameters")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Export configuration as dictionary.
 
@@ -231,7 +231,7 @@ class UnifiedConfig:
             logger.error(f"Failed to reload configuration: {e}")
             return False
 
-    def save(self, path: Optional[Union[str, Path]] = None) -> bool:
+    def save(self, path: str | Path | None = None) -> bool:
         """
         Save configuration to file.
 

@@ -7,12 +7,13 @@ Provides centrality measures, clustering analysis, and connectivity metrics.
 Extracted from GraphFixer to follow single responsibility principle.
 """
 
-from typing import Any, Dict, List, Set
-import numpy as np
 from collections import deque
+from typing import Any
 
+import numpy as np
+
+from ..interfaces.base_service import AsyncServiceMixin, CacheableMixin, ServiceConfig
 from ..interfaces.service_interfaces import IGraphAnalyticsService
-from ..interfaces.base_service import ServiceConfig, CacheableMixin, AsyncServiceMixin
 
 
 class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncServiceMixin):
@@ -48,7 +49,7 @@ class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncService
         self.clear_cache()
         self._initialized = False
 
-    async def compute_centrality_metrics(self) -> Dict[str, Any]:
+    async def compute_centrality_metrics(self) -> dict[str, Any]:
         """
         Compute centrality metrics for all nodes in the graph.
 
@@ -88,7 +89,7 @@ class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncService
             self.logger.exception(f"Centrality computation failed: {e}")
             return {"error": str(e)}
 
-    async def analyze_clusters(self) -> Dict[str, Any]:
+    async def analyze_clusters(self) -> dict[str, Any]:
         """
         Analyze clustering patterns in the graph.
 
@@ -121,7 +122,7 @@ class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncService
             self.logger.exception(f"Cluster analysis failed: {e}")
             return {"error": str(e)}
 
-    async def measure_connectivity(self) -> Dict[str, Any]:
+    async def measure_connectivity(self) -> dict[str, Any]:
         """
         Measure overall graph connectivity.
 
@@ -158,7 +159,7 @@ class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncService
             self.logger.exception(f"Connectivity measurement failed: {e}")
             return {"error": str(e)}
 
-    async def analyze_completeness(self) -> Dict[str, Any]:
+    async def analyze_completeness(self) -> dict[str, Any]:
         """
         Analyze graph completeness and coverage.
 
@@ -200,7 +201,7 @@ class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncService
 
     # Private implementation methods
 
-    async def _compute_degree_centrality(self) -> Dict[str, float]:
+    async def _compute_degree_centrality(self) -> dict[str, float]:
         """Compute degree centrality for all nodes."""
         centrality = {}
 
@@ -214,7 +215,7 @@ class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncService
 
         return centrality
 
-    async def _compute_betweenness_centrality(self) -> Dict[str, float]:
+    async def _compute_betweenness_centrality(self) -> dict[str, float]:
         """Compute betweenness centrality using Brandes algorithm (simplified)."""
         centrality = {node_id: 0.0 for node_id in self.config.trust_graph.nodes}
 
@@ -240,7 +241,7 @@ class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncService
 
         return centrality
 
-    async def _compute_closeness_centrality(self) -> Dict[str, float]:
+    async def _compute_closeness_centrality(self) -> dict[str, float]:
         """Compute closeness centrality for all nodes."""
         centrality = {}
 
@@ -260,7 +261,7 @@ class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncService
 
         return centrality
 
-    async def _compute_eigenvector_centrality(self, max_iterations: int = 100) -> Dict[str, float]:
+    async def _compute_eigenvector_centrality(self, max_iterations: int = 100) -> dict[str, float]:
         """Compute eigenvector centrality using power iteration."""
         nodes = list(self.config.trust_graph.nodes.keys())
         n = len(nodes)
@@ -296,7 +297,7 @@ class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncService
 
         return centrality
 
-    async def _compute_shortest_paths(self, source: str) -> Dict[str, Dict[str, Any]]:
+    async def _compute_shortest_paths(self, source: str) -> dict[str, dict[str, Any]]:
         """Compute shortest paths from a source node using BFS."""
         if source not in self.config.trust_graph.nodes:
             return {}
@@ -324,7 +325,7 @@ class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncService
 
         return distances
 
-    async def _compute_centrality_summary(self, metrics: Dict[str, Dict[str, float]]) -> Dict[str, Any]:
+    async def _compute_centrality_summary(self, metrics: dict[str, dict[str, float]]) -> dict[str, Any]:
         """Compute summary statistics for centrality metrics."""
         summary = {}
 
@@ -341,7 +342,7 @@ class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncService
 
         return summary
 
-    async def _compute_clustering_coefficient(self) -> Dict[str, Any]:
+    async def _compute_clustering_coefficient(self) -> dict[str, Any]:
         """Compute local and global clustering coefficients."""
         local_clustering = {}
 
@@ -367,7 +368,7 @@ class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncService
 
         return {"local": local_clustering, "global": global_clustering}
 
-    async def _detect_communities(self) -> Dict[str, Any]:
+    async def _detect_communities(self) -> dict[str, Any]:
         """Simple community detection using connected components."""
         visited = set()
         communities = []
@@ -384,7 +385,7 @@ class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncService
             "sizes": [len(community) for community in communities],
         }
 
-    async def _explore_component(self, start_node: str, visited: Set[str]) -> List[str]:
+    async def _explore_component(self, start_node: str, visited: set[str]) -> list[str]:
         """Explore connected component starting from a node."""
         component = []
         stack = [start_node]
@@ -405,7 +406,7 @@ class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncService
 
         return component
 
-    async def _get_neighbors(self, node_id: str) -> List[str]:
+    async def _get_neighbors(self, node_id: str) -> list[str]:
         """Get all neighbors of a node."""
         if node_id not in self.config.trust_graph.nodes:
             return []
@@ -453,7 +454,7 @@ class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncService
         size_variance = np.var(communities["sizes"]) if communities["sizes"] else 0
         return max(0.0, 1.0 - (size_variance / (len(self.config.trust_graph.nodes) ** 2)))
 
-    async def _analyze_cluster_distribution(self) -> Dict[str, Any]:
+    async def _analyze_cluster_distribution(self) -> dict[str, Any]:
         """Analyze the distribution of cluster sizes."""
         communities = await self._detect_communities()
         sizes = communities["sizes"]
@@ -517,7 +518,7 @@ class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncService
 
         return max_distance
 
-    async def _calculate_connectivity_score(self, metrics: Dict[str, Any]) -> float:
+    async def _calculate_connectivity_score(self, metrics: dict[str, Any]) -> float:
         """Calculate overall connectivity score from metrics."""
         factors = []
 
@@ -539,7 +540,7 @@ class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncService
 
         return sum(factors) / len(factors) if factors else 0.0
 
-    async def _analyze_structural_completeness(self) -> Dict[str, Any]:
+    async def _analyze_structural_completeness(self) -> dict[str, Any]:
         """Analyze structural completeness of the graph."""
         total_nodes = len(self.config.trust_graph.nodes)
         total_edges = len(self.config.trust_graph.edges)
@@ -565,7 +566,7 @@ class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncService
             "isolated_nodes": isolated_nodes,
         }
 
-    async def _analyze_semantic_completeness(self) -> Dict[str, Any]:
+    async def _analyze_semantic_completeness(self) -> dict[str, Any]:
         """Analyze semantic completeness using available data."""
         # Count nodes with embeddings
         nodes_with_embeddings = sum(
@@ -584,7 +585,7 @@ class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncService
             "embedding_coverage": embedding_coverage,
         }
 
-    async def _analyze_trust_completeness(self) -> Dict[str, Any]:
+    async def _analyze_trust_completeness(self) -> dict[str, Any]:
         """Analyze trust score completeness and distribution."""
         trust_scores = [
             node.trust_score for node in self.config.trust_graph.nodes.values() if hasattr(node, "trust_score")
@@ -608,7 +609,7 @@ class GraphAnalyticsService(IGraphAnalyticsService, CacheableMixin, AsyncService
             "low_trust_nodes": sum(1 for score in trust_scores if score < 0.3),
         }
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get service statistics."""
         return {
             "metric_calculations": self.stats["metric_calculations"],

@@ -11,11 +11,11 @@ This module implements a Titans-style Long-Term Memory system with:
 """
 
 from dataclasses import dataclass
-from pathlib import Path
 import json
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union
+from pathlib import Path
 import time
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -35,7 +35,7 @@ class MemoryItem:
     last_access: float  # Last time this memory was accessed
     surprise: float  # Surprise value when written
     novelty: float  # Novelty value when written
-    metadata: Dict[str, Any]  # Additional metadata
+    metadata: dict[str, Any]  # Additional metadata
 
 
 @dataclass
@@ -84,7 +84,7 @@ class CognateLTMBank(nn.Module):
         self.register_buffer("memory_timestamps", torch.zeros(config.capacity))
 
         # Memory metadata (not tensors, stored separately)
-        self.memory_metadata: List[Optional[Dict[str, Any]]] = [None] * config.capacity
+        self.memory_metadata: list[dict[str, Any] | None] = [None] * config.capacity
 
         # State tracking
         self.current_size = 0
@@ -111,8 +111,8 @@ class CognateLTMBank(nn.Module):
         value: torch.Tensor,
         surprise: float,
         novelty: float,
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> Tuple[bool, float, int]:
+        metadata: dict[str, Any] | None = None,
+    ) -> tuple[bool, float, int]:
         """
         Write a memory to the bank using surprise × novelty gating.
 
@@ -170,8 +170,8 @@ class CognateLTMBank(nn.Module):
         return True, gate_prob, slot
 
     def read(
-        self, query: torch.Tensor, topk: Optional[int] = None, return_similarities: bool = False
-    ) -> Tuple[torch.Tensor, torch.Tensor, List[int], Optional[torch.Tensor]]:
+        self, query: torch.Tensor, topk: int | None = None, return_similarities: bool = False
+    ) -> tuple[torch.Tensor, torch.Tensor, list[int], torch.Tensor | None]:
         """
         Read top-k memories based on cosine similarity.
 
@@ -394,7 +394,7 @@ class CognateLTMBank(nn.Module):
             self.memory_metadata = new_metadata + [None] * (self.config.capacity - new_size)
             self.current_size = new_size
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get memory bank statistics."""
         stats = {
             "current_size": self.current_size,
@@ -418,7 +418,7 @@ class CognateLTMBank(nn.Module):
 
         return stats
 
-    def save(self, path: Union[str, Path]):
+    def save(self, path: str | Path):
         """Save memory bank state to disk."""
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -462,7 +462,7 @@ class CognateLTMBank(nn.Module):
 
         logger.info(f"Saved memory bank to {path} ({self.current_size} memories)")
 
-    def load(self, path: Union[str, Path]):
+    def load(self, path: str | Path):
         """Load memory bank state from disk."""
         path = Path(path)
 
@@ -513,7 +513,7 @@ class CognateLTMBank(nn.Module):
 
 
 def create_memory_bank(
-    capacity: int, d_mem: int, device: Optional[torch.device] = None, **config_kwargs
+    capacity: int, d_mem: int, device: torch.device | None = None, **config_kwargs
 ) -> CognateLTMBank:
     """
     Factory function to create a memory bank.

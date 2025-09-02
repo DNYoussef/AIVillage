@@ -10,12 +10,12 @@ with other fog computing components including:
 """
 
 import asyncio
-import logging
-from datetime import datetime
-from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
+from datetime import datetime
+import logging
+from typing import Any
 
-from .bayesian_reputation import BayesianReputationEngine, ReputationEvent, EventType, ReputationConfig, ReputationTier
+from .bayesian_reputation import BayesianReputationEngine, EventType, ReputationConfig, ReputationEvent, ReputationTier
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +28,9 @@ class TaskResult:
     node_id: str
     success: bool
     completion_time: float
-    quality_score: Optional[float] = None
-    error_type: Optional[str] = None
-    resource_usage: Dict[str, float] = None
+    quality_score: float | None = None
+    error_type: str | None = None
+    resource_usage: dict[str, float] = None
     timestamp: float = None
 
     def __post_init__(self):
@@ -48,7 +48,7 @@ class NodeMetrics:
     success_rate: float
     tasks_completed: int
     tasks_failed: int
-    quality_scores: List[float]
+    quality_scores: list[float]
     availability_score: float
     timestamp: float = None
 
@@ -66,7 +66,7 @@ class ReputationIntegrationManager:
     """
 
     def __init__(
-        self, reputation_engine: Optional[BayesianReputationEngine] = None, config: Optional[ReputationConfig] = None
+        self, reputation_engine: BayesianReputationEngine | None = None, config: ReputationConfig | None = None
     ):
         self.reputation_engine = reputation_engine or BayesianReputationEngine(config)
         self.integration_config = {
@@ -79,7 +79,7 @@ class ReputationIntegrationManager:
         }
 
         # Event batching for performance
-        self._pending_events: List[ReputationEvent] = []
+        self._pending_events: list[ReputationEvent] = []
         self._last_batch_update = datetime.now()
 
         # Performance tracking
@@ -254,7 +254,7 @@ class ReputationIntegrationManager:
 
     # Scheduler Integration
 
-    async def get_node_trust_scores(self, node_ids: List[str]) -> Dict[str, float]:
+    async def get_node_trust_scores(self, node_ids: list[str]) -> dict[str, float]:
         """Get trust scores for scheduler node selection"""
         trust_scores = {}
 
@@ -266,8 +266,8 @@ class ReputationIntegrationManager:
         return trust_scores
 
     async def recommend_trusted_nodes(
-        self, task_requirements: Dict[str, Any], available_nodes: List[str], min_trust: float = 0.6, max_nodes: int = 5
-    ) -> List[str]:
+        self, task_requirements: dict[str, Any], available_nodes: list[str], min_trust: float = 0.6, max_nodes: int = 5
+    ) -> list[str]:
         """Recommend most trusted nodes for task scheduling"""
 
         # Get trust scores for available nodes
@@ -289,7 +289,7 @@ class ReputationIntegrationManager:
 
         return recommendations
 
-    async def get_tier_based_scheduling_weights(self, node_ids: List[str]) -> Dict[str, float]:
+    async def get_tier_based_scheduling_weights(self, node_ids: list[str]) -> dict[str, float]:
         """Get scheduling weights based on reputation tiers"""
         weights = {}
 
@@ -313,7 +313,7 @@ class ReputationIntegrationManager:
 
     # Pricing Integration
 
-    async def get_reputation_pricing_multipliers(self, node_ids: List[str]) -> Dict[str, float]:
+    async def get_reputation_pricing_multipliers(self, node_ids: list[str]) -> dict[str, float]:
         """Get pricing multipliers based on node reputation"""
         multipliers = {}
 
@@ -333,8 +333,8 @@ class ReputationIntegrationManager:
         return multipliers
 
     async def calculate_trust_based_reserve_prices(
-        self, base_reserve_prices: Dict[str, float], node_ids: List[str]
-    ) -> Dict[str, float]:
+        self, base_reserve_prices: dict[str, float], node_ids: list[str]
+    ) -> dict[str, float]:
         """Calculate reserve prices adjusted for node reputation"""
 
         multipliers = await self.get_reputation_pricing_multipliers(node_ids)
@@ -351,7 +351,7 @@ class ReputationIntegrationManager:
 
     async def detect_quality_anomalies(
         self, recent_hours: int = 24, quality_threshold: float = 0.5
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Detect nodes with anomalous quality patterns"""
 
         anomalies = []
@@ -395,7 +395,7 @@ class ReputationIntegrationManager:
         logger.info(f"Detected {len(anomalies)} quality anomalies")
         return anomalies
 
-    async def record_fraud_detection(self, node_id: str, fraud_type: str, evidence: Dict[str, Any]):
+    async def record_fraud_detection(self, node_id: str, fraud_type: str, evidence: dict[str, Any]):
         """Record fraud detection for immediate reputation penalty"""
 
         fraud_event = ReputationEvent(
@@ -413,7 +413,7 @@ class ReputationIntegrationManager:
 
     # Analytics and Monitoring
 
-    async def get_system_reputation_health(self) -> Dict[str, Any]:
+    async def get_system_reputation_health(self) -> dict[str, Any]:
         """Get comprehensive system reputation health metrics"""
 
         # Get basic metrics
@@ -457,7 +457,7 @@ class ReputationIntegrationManager:
             "recommendations": await self._generate_system_recommendations(trust_health, untrusted_ratio),
         }
 
-    async def get_node_reputation_report(self, node_id: str) -> Dict[str, Any]:
+    async def get_node_reputation_report(self, node_id: str) -> dict[str, Any]:
         """Get comprehensive reputation report for a specific node"""
 
         insights = self.reputation_engine.get_reputation_insights(node_id)
@@ -556,7 +556,7 @@ class ReputationIntegrationManager:
 
         return total_trust / max(1, node_count)
 
-    async def _generate_system_recommendations(self, trust_health: float, untrusted_ratio: float) -> List[str]:
+    async def _generate_system_recommendations(self, trust_health: float, untrusted_ratio: float) -> list[str]:
         """Generate system-level recommendations"""
 
         recommendations = []
@@ -575,7 +575,7 @@ class ReputationIntegrationManager:
 
         return recommendations
 
-    def _generate_node_recommendations(self, insights: Dict[str, Any]) -> List[str]:
+    def _generate_node_recommendations(self, insights: dict[str, Any]) -> list[str]:
         """Generate node-specific recommendations"""
 
         recommendations = []
@@ -599,7 +599,7 @@ class ReputationIntegrationManager:
 
         return recommendations
 
-    def _assess_node_risk(self, insights: Dict[str, Any]) -> str:
+    def _assess_node_risk(self, insights: dict[str, Any]) -> str:
         """Assess risk level for a node"""
 
         reputation_score = insights.get("reputation_score", 0)
@@ -614,7 +614,7 @@ class ReputationIntegrationManager:
 
 
 # Global integration manager instance
-_integration_manager: Optional[ReputationIntegrationManager] = None
+_integration_manager: ReputationIntegrationManager | None = None
 
 
 async def get_integration_manager() -> ReputationIntegrationManager:
@@ -632,7 +632,7 @@ async def get_integration_manager() -> ReputationIntegrationManager:
 
 
 async def record_task_completion(
-    task_id: str, node_id: str, success: bool, completion_time: float, quality_score: Optional[float] = None
+    task_id: str, node_id: str, success: bool, completion_time: float, quality_score: float | None = None
 ):
     """Record task completion for reputation tracking"""
 
@@ -645,15 +645,15 @@ async def record_task_completion(
 
 
 async def get_trusted_nodes_for_scheduling(
-    available_nodes: List[str], min_trust: float = 0.6, max_nodes: int = 5
-) -> List[str]:
+    available_nodes: list[str], min_trust: float = 0.6, max_nodes: int = 5
+) -> list[str]:
     """Get most trusted nodes for task scheduling"""
 
     manager = await get_integration_manager()
     return await manager.recommend_trusted_nodes({}, available_nodes, min_trust, max_nodes)
 
 
-async def get_reputation_based_pricing(node_ids: List[str]) -> Dict[str, float]:
+async def get_reputation_based_pricing(node_ids: list[str]) -> dict[str, float]:
     """Get reputation-based pricing multipliers"""
 
     manager = await get_integration_manager()

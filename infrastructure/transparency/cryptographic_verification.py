@@ -3,18 +3,19 @@ Cryptographic Verification System for Constitutional Audit Integrity
 Advanced cryptographic verification ensuring tamper-proof constitutional accountability
 """
 
+import base64
+from dataclasses import asdict, dataclass
+from enum import Enum
 import hashlib
 import json
-import time
-import secrets
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, asdict
-from enum import Enum
 import logging
 from pathlib import Path
+import secrets
+import time
+from typing import Any
+
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import rsa, padding, ec
-import base64
+from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
 
 
 class VerificationLevel(Enum):
@@ -47,7 +48,7 @@ class CryptographicKey:
     key_type: str  # "rsa", "ecdsa", "ed25519"
     public_key_pem: str
     created_timestamp: float
-    expires_timestamp: Optional[float]
+    expires_timestamp: float | None
     usage: str  # "signing", "encryption", "verification"
     key_strength: int  # Key size in bits
 
@@ -63,7 +64,7 @@ class DigitalSignature:
     signature_value: str
     signed_data_hash: str
     verification_key_id: str
-    signature_metadata: Dict[str, Any]
+    signature_metadata: dict[str, Any]
 
 
 @dataclass
@@ -74,9 +75,9 @@ class IntegrityProof:
     timestamp: float
     data_hash: str
     verification_level: VerificationLevel
-    proof_data: Dict[str, Any]
-    verification_path: List[str]  # Chain of verification
-    cryptographic_evidence: Dict[str, Any]
+    proof_data: dict[str, Any]
+    verification_path: list[str]  # Chain of verification
+    cryptographic_evidence: dict[str, Any]
     integrity_status: IntegrityStatus
 
 
@@ -88,8 +89,8 @@ class AuditChain:
     genesis_hash: str
     current_hash: str
     chain_length: int
-    verification_links: List[str]
-    integrity_proofs: List[str]
+    verification_links: list[str]
+    integrity_proofs: list[str]
     timestamp_created: float
     timestamp_updated: float
 
@@ -105,10 +106,10 @@ class ConstitutionalCryptographicVerifier:
         self.storage_path.mkdir(exist_ok=True)
 
         # Cryptographic keys and certificates
-        self.cryptographic_keys: Dict[str, CryptographicKey] = {}
-        self.digital_signatures: Dict[str, DigitalSignature] = {}
-        self.integrity_proofs: Dict[str, IntegrityProof] = {}
-        self.audit_chains: Dict[str, AuditChain] = {}
+        self.cryptographic_keys: dict[str, CryptographicKey] = {}
+        self.digital_signatures: dict[str, DigitalSignature] = {}
+        self.integrity_proofs: dict[str, IntegrityProof] = {}
+        self.audit_chains: dict[str, AuditChain] = {}
 
         # System cryptographic state
         self.master_verification_key = None
@@ -207,7 +208,7 @@ class ConstitutionalCryptographicVerifier:
             # Load cryptographic keys
             keys_file = self.storage_path / "cryptographic_keys.json"
             if keys_file.exists():
-                with open(keys_file, "r") as f:
+                with open(keys_file) as f:
                     data = json.load(f)
                     for key_data in data.get("keys", []):
                         key = CryptographicKey(**key_data)
@@ -216,7 +217,7 @@ class ConstitutionalCryptographicVerifier:
             # Load digital signatures
             signatures_file = self.storage_path / "digital_signatures.json"
             if signatures_file.exists():
-                with open(signatures_file, "r") as f:
+                with open(signatures_file) as f:
                     data = json.load(f)
                     for sig_data in data.get("signatures", []):
                         signature = DigitalSignature(**sig_data)
@@ -225,7 +226,7 @@ class ConstitutionalCryptographicVerifier:
             # Load integrity proofs
             proofs_file = self.storage_path / "integrity_proofs.json"
             if proofs_file.exists():
-                with open(proofs_file, "r") as f:
+                with open(proofs_file) as f:
                     data = json.load(f)
                     for proof_data in data.get("proofs", []):
                         proof = IntegrityProof(**proof_data)
@@ -234,7 +235,7 @@ class ConstitutionalCryptographicVerifier:
             # Load audit chains
             chains_file = self.storage_path / "audit_chains.json"
             if chains_file.exists():
-                with open(chains_file, "r") as f:
+                with open(chains_file) as f:
                     data = json.load(f)
                     for chain_data in data.get("chains", []):
                         chain = AuditChain(**chain_data)
@@ -287,7 +288,7 @@ class ConstitutionalCryptographicVerifier:
         return hashlib.sha256(public_key_der).hexdigest()[:16]
 
     async def generate_constitutional_signature(
-        self, data: Dict[str, Any], signer_id: str, signature_algorithm: str = "rsa_pss"
+        self, data: dict[str, Any], signer_id: str, signature_algorithm: str = "rsa_pss"
     ) -> str:
         """
         Generate digital signature for constitutional decision or audit data
@@ -353,7 +354,7 @@ class ConstitutionalCryptographicVerifier:
             self.logger.error(f"Error generating constitutional signature: {e}")
             raise
 
-    async def verify_constitutional_signature(self, signature_id: str, original_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def verify_constitutional_signature(self, signature_id: str, original_data: dict[str, Any]) -> dict[str, Any]:
         """
         Verify digital signature of constitutional decision or audit data
         """
@@ -430,7 +431,7 @@ class ConstitutionalCryptographicVerifier:
             self.logger.error(f"Error verifying constitutional signature: {e}")
             return {"valid": False, "error": str(e)}
 
-    async def generate_integrity_proof(self, data: Dict[str, Any], verification_level: VerificationLevel) -> str:
+    async def generate_integrity_proof(self, data: dict[str, Any], verification_level: VerificationLevel) -> str:
         """
         Generate comprehensive integrity proof for constitutional data
         """
@@ -536,14 +537,14 @@ class ConstitutionalCryptographicVerifier:
             self.logger.error(f"Error generating integrity proof: {e}")
             raise
 
-    def _generate_merkle_proof_for_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_merkle_proof_for_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """Generate Merkle proof for data integrity"""
         # Simplified Merkle proof (in production, use full Merkle tree implementation)
         data_json = json.dumps(data, sort_keys=True)
         leaf_hash = hashlib.sha256(data_json.encode("utf-8")).hexdigest()
 
         # Create simple Merkle path (in real implementation, this would be from actual tree)
-        sibling_hash = hashlib.sha256(f"sibling_{time.time()}".encode("utf-8")).hexdigest()
+        sibling_hash = hashlib.sha256(f"sibling_{time.time()}".encode()).hexdigest()
         parent_hash = hashlib.sha256((leaf_hash + sibling_hash).encode("utf-8")).hexdigest()
         root_hash = hashlib.sha256((parent_hash + "root_sibling").encode("utf-8")).hexdigest()
 
@@ -555,7 +556,7 @@ class ConstitutionalCryptographicVerifier:
             "leaf_index": 0,
         }
 
-    def _generate_simplified_zk_proof(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_simplified_zk_proof(self, data: dict[str, Any]) -> dict[str, Any]:
         """Generate simplified zero-knowledge proof for data"""
         # Simplified ZK proof (in production, use proper ZK libraries like libsnark)
         data_json = json.dumps(data, sort_keys=True)
@@ -565,7 +566,7 @@ class ConstitutionalCryptographicVerifier:
         commitment = hashlib.sha256(data_json.encode("utf-8") + random_value).hexdigest()
 
         # Generate challenge
-        challenge = hashlib.sha256(f"challenge_{time.time()}".encode("utf-8")).hexdigest()[:16]
+        challenge = hashlib.sha256(f"challenge_{time.time()}".encode()).hexdigest()[:16]
 
         # Generate response
         response = hashlib.sha256((commitment + challenge + data_json).encode("utf-8")).hexdigest()
@@ -578,7 +579,7 @@ class ConstitutionalCryptographicVerifier:
             "security_parameter": 128,
         }
 
-    async def verify_integrity_proof(self, proof_id: str, original_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def verify_integrity_proof(self, proof_id: str, original_data: dict[str, Any]) -> dict[str, Any]:
         """
         Verify comprehensive integrity proof
         """
@@ -664,7 +665,7 @@ class ConstitutionalCryptographicVerifier:
             self.logger.error(f"Error verifying integrity proof: {e}")
             return {"valid": False, "error": str(e)}
 
-    def _verify_merkle_proof(self, data: Dict[str, Any], merkle_data: Dict[str, Any]) -> bool:
+    def _verify_merkle_proof(self, data: dict[str, Any], merkle_data: dict[str, Any]) -> bool:
         """Verify Merkle proof for data"""
         try:
             data_json = json.dumps(data, sort_keys=True)
@@ -684,7 +685,7 @@ class ConstitutionalCryptographicVerifier:
             self.logger.error(f"Error verifying Merkle proof: {e}")
             return False
 
-    def _verify_simplified_zk_proof(self, data: Dict[str, Any], zk_data: Dict[str, Any]) -> bool:
+    def _verify_simplified_zk_proof(self, data: dict[str, Any], zk_data: dict[str, Any]) -> bool:
         """Verify simplified zero-knowledge proof"""
         try:
             data_json = json.dumps(data, sort_keys=True)
@@ -700,7 +701,7 @@ class ConstitutionalCryptographicVerifier:
             self.logger.error(f"Error verifying ZK proof: {e}")
             return False
 
-    async def create_audit_chain(self, initial_data: Dict[str, Any]) -> str:
+    async def create_audit_chain(self, initial_data: dict[str, Any]) -> str:
         """
         Create new audit chain with genesis block
         """
@@ -738,7 +739,7 @@ class ConstitutionalCryptographicVerifier:
 
         return chain_id
 
-    async def add_to_audit_chain(self, chain_id: str, new_data: Dict[str, Any]) -> str:
+    async def add_to_audit_chain(self, chain_id: str, new_data: dict[str, Any]) -> str:
         """
         Add new data to existing audit chain
         """
@@ -774,7 +775,7 @@ class ConstitutionalCryptographicVerifier:
 
         return new_hash
 
-    async def verify_audit_chain_integrity(self, chain_id: str) -> Dict[str, Any]:
+    async def verify_audit_chain_integrity(self, chain_id: str) -> dict[str, Any]:
         """
         Verify complete integrity of audit chain
         """
@@ -851,7 +852,7 @@ class ConstitutionalCryptographicVerifier:
         with open(chains_file, "w") as f:
             json.dump(data, f, indent=2)
 
-    def get_cryptographic_verification_metrics(self) -> Dict[str, Any]:
+    def get_cryptographic_verification_metrics(self) -> dict[str, Any]:
         """Get comprehensive cryptographic verification metrics"""
         return {
             "verification_metrics": self.verification_metrics.copy(),

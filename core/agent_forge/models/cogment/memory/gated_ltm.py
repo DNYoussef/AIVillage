@@ -10,10 +10,9 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Dict
 
 from .cross_attention import CrossAttentionReader, MemoryContextProjector
-from .memory_gates import SurpriseGate, MemoryWriter, NoveltyDetector
+from .memory_gates import MemoryWriter, NoveltyDetector, SurpriseGate
 from .memory_utils import MemoryDecay, surprisal_from_loss, topk_memory_selection
 
 
@@ -140,7 +139,7 @@ class GatedLTMMemory(nn.Module):
         self,
         query_states: torch.Tensor,  # [B, N, query_dim]
         return_attention: bool = False,  # Return attention weights
-        key_mask: Optional[torch.Tensor] = None,  # [n_slots] mask for valid slots
+        key_mask: torch.Tensor | None = None,  # [n_slots] mask for valid slots
     ) -> torch.Tensor:
         """
         Read from memory using cross-attention.
@@ -190,12 +189,12 @@ class GatedLTMMemory(nn.Module):
     def write(
         self,
         query_states: torch.Tensor,  # [B, N, query_dim]
-        predictions: Optional[torch.Tensor] = None,  # [B, N, vocab_size] for surprisal
-        targets: Optional[torch.Tensor] = None,  # [B, N] target tokens
-        surprisal: Optional[torch.Tensor] = None,  # [B] pre-computed surprisal
+        predictions: torch.Tensor | None = None,  # [B, N, vocab_size] for surprisal
+        targets: torch.Tensor | None = None,  # [B, N] target tokens
+        surprisal: torch.Tensor | None = None,  # [B] pre-computed surprisal
         force_write: bool = False,  # Force write regardless of gate
         return_gate_info: bool = False,  # Return gating information
-    ) -> Optional[Dict[str, torch.Tensor]]:
+    ) -> dict[str, torch.Tensor] | None:
         """
         Write to memory with surprise-based gating.
 
@@ -348,7 +347,7 @@ class GatedLTMMemory(nn.Module):
             unique_indices = torch.unique(flat_indices)
             self.last_access[unique_indices] = 0  # Reset access time for used slots
 
-    def get_memory_stats(self) -> Dict[str, torch.Tensor]:
+    def get_memory_stats(self) -> dict[str, torch.Tensor]:
         """Get memory utilization and health statistics."""
         with torch.no_grad():
             stats = {
@@ -411,8 +410,8 @@ class GatedLTMMemory(nn.Module):
     def forward(
         self,
         query_states: torch.Tensor,  # [B, N, query_dim]
-        predictions: Optional[torch.Tensor] = None,  # [B, N, vocab_size]
-        targets: Optional[torch.Tensor] = None,  # [B, N]
+        predictions: torch.Tensor | None = None,  # [B, N, vocab_size]
+        targets: torch.Tensor | None = None,  # [B, N]
         mode: str = "read",  # 'read', 'write', or 'read_write'
         **kwargs,
     ) -> torch.Tensor:

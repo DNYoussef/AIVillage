@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 import logging
-from typing import Optional
 
 from .infrastructure_classifier import InfrastructureClassifier, InfrastructureProfile, PowerRegion, TEEVendor
 
@@ -408,7 +407,7 @@ class QuorumManager:
         self,
         device_candidates: list[dict],
         requirement: QuorumRequirement,
-        callback: Optional[callable] = None,
+        callback: callable | None = None,
         interval_seconds: int = 300,
     ) -> None:
         """Continuously monitor quorum diversity and alert on violations"""

@@ -7,21 +7,20 @@ while orchestrating the new service-based architecture internally.
 This facade maintains 100% API compatibility while leveraging the extracted services.
 """
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
-from .interfaces.base_service import EventBus
-from .interfaces.service_registry import ServiceRegistry, ServiceFactory, ServiceDependency
-from .harvesting.fog_harvesting_service import FogHarvestingService
-from .routing.fog_routing_service import FogRoutingService
-from .marketplace.fog_marketplace_service import FogMarketplaceService
-from .tokenomics.fog_tokenomics_service import FogTokenomicsService
-from .networking.fog_networking_service import FogNetworkingService
-from .monitoring.fog_monitoring_service import FogMonitoringService
 from .configuration.fog_configuration_service import FogConfigurationService
-
+from .harvesting.fog_harvesting_service import FogHarvestingService
+from .interfaces.base_service import EventBus
+from .interfaces.service_registry import ServiceDependency, ServiceFactory, ServiceRegistry
+from .marketplace.fog_marketplace_service import FogMarketplaceService
+from .monitoring.fog_monitoring_service import FogMonitoringService
+from .networking.fog_networking_service import FogNetworkingService
+from .routing.fog_routing_service import FogRoutingService
+from .tokenomics.fog_tokenomics_service import FogTokenomicsService
 
 logger = logging.getLogger(__name__)
 
@@ -56,13 +55,13 @@ class FogCoordinatorFacade:
         self.service_factory = None
 
         # Service references (for backwards compatibility)
-        self.harvesting_service: Optional[FogHarvestingService] = None
-        self.routing_service: Optional[FogRoutingService] = None
-        self.marketplace_service: Optional[FogMarketplaceService] = None
-        self.tokenomics_service: Optional[FogTokenomicsService] = None
-        self.networking_service: Optional[FogNetworkingService] = None
-        self.monitoring_service: Optional[FogMonitoringService] = None
-        self.configuration_service: Optional[FogConfigurationService] = None
+        self.harvesting_service: FogHarvestingService | None = None
+        self.routing_service: FogRoutingService | None = None
+        self.marketplace_service: FogMarketplaceService | None = None
+        self.tokenomics_service: FogTokenomicsService | None = None
+        self.networking_service: FogNetworkingService | None = None
+        self.monitoring_service: FogMonitoringService | None = None
+        self.configuration_service: FogConfigurationService | None = None
 
         # Backwards compatibility properties
         self.harvest_manager = None
@@ -90,7 +89,7 @@ class FogCoordinatorFacade:
 
         logger.info(f"FogCoordinatorFacade initialized: {node_id}")
 
-    def _load_config(self) -> Dict[str, Any]:
+    def _load_config(self) -> dict[str, Any]:
         """Load fog computing configuration (backwards compatible)"""
         import json
 
@@ -312,7 +311,7 @@ class FogCoordinatorFacade:
     # ============================================================================
 
     async def register_mobile_device(
-        self, device_id: str, capabilities: Dict[str, Any], initial_state: Dict[str, Any]
+        self, device_id: str, capabilities: dict[str, Any], initial_state: dict[str, Any]
     ) -> bool:
         """Register a mobile device for fog computing (backwards compatible)"""
         try:
@@ -332,7 +331,7 @@ class FogCoordinatorFacade:
             logger.error(f"Failed to register mobile device: {e}")
             return False
 
-    async def create_hidden_service(self, ports: Dict[int, int], service_type: str = "web") -> str | None:
+    async def create_hidden_service(self, ports: dict[int, int], service_type: str = "web") -> str | None:
         """Create a .fog hidden service (backwards compatible)"""
         try:
             if self.routing_service:
@@ -360,7 +359,7 @@ class FogCoordinatorFacade:
             logger.error(f"Failed to create hidden service: {e}")
             return None
 
-    async def get_system_status(self) -> Dict[str, Any]:
+    async def get_system_status(self) -> dict[str, Any]:
         """Get comprehensive fog system status (backwards compatible)"""
         try:
             status = {
@@ -408,7 +407,7 @@ class FogCoordinatorFacade:
             logger.error(f"Failed to get system status: {e}")
             return {"error": str(e)}
 
-    async def process_fog_request(self, request_type: str, request_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def process_fog_request(self, request_type: str, request_data: dict[str, Any]) -> dict[str, Any]:
         """Process various types of fog computing requests (backwards compatible)"""
         try:
             if request_type == "compute_task":

@@ -10,24 +10,21 @@ This module provides seamless integration between the Evolution Scheduler and
 the existing EvoMerge system for automated model merging and evolution.
 """
 
-import asyncio
-import logging
-import json
-import time
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple, Any, Callable
-from datetime import datetime, timedelta
-import uuid
-import numpy as np
+import logging
 from pathlib import Path
-import hashlib
+from typing import Any
+import uuid
+
+import numpy as np
 
 # Archaeological enhancement: Integration with existing systems
 try:
-    from ..core.evolution_scheduler_manager import EvolutionTask, EvolutionResult, ModelConfiguration
-    from ..monitoring.regression_detector import get_regression_detector
     from ....distributed_inference.core.distributed_inference_manager import get_distributed_inference_manager
+    from ..core.evolution_scheduler_manager import EvolutionResult
+    from ..monitoring.regression_detector import get_regression_detector
 except ImportError:
     # Graceful degradation for testing
     pass
@@ -62,14 +59,14 @@ class ModelCandidate:
     """Represents a model candidate for merging."""
     model_id: str
     model_path: str
-    performance_metrics: Dict[str, float]
+    performance_metrics: dict[str, float]
     generation: int
-    parent_models: List[str] = field(default_factory=list)
+    parent_models: list[str] = field(default_factory=list)
     merge_weight: float = 1.0
-    validation_score: Optional[float] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    validation_score: float | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
     
-    def calculate_fitness(self, target_metrics: Dict[str, float]) -> float:
+    def calculate_fitness(self, target_metrics: dict[str, float]) -> float:
         """Calculate fitness score based on target metrics."""
         if not target_metrics:
             return sum(self.performance_metrics.values()) / len(self.performance_metrics) if self.performance_metrics else 0.0
@@ -94,18 +91,18 @@ class EvoMergeTask:
     """Represents an EvoMerge task."""
     task_id: str
     evolution_task_id: str  # Associated evolution task
-    candidates: List[ModelCandidate]
+    candidates: list[ModelCandidate]
     merge_strategy: MergeStrategy
-    target_metrics: Dict[str, float]
+    target_metrics: dict[str, float]
     max_generations: int
     current_generation: int = 0
     phase: MergePhase = MergePhase.PREPARATION
     created_at: datetime = field(default_factory=datetime.now)
-    completed_at: Optional[datetime] = None
-    best_candidate: Optional[ModelCandidate] = None
-    merge_history: List[Dict[str, Any]] = field(default_factory=list)
-    performance_trajectory: List[float] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    completed_at: datetime | None = None
+    best_candidate: ModelCandidate | None = None
+    merge_history: list[dict[str, Any]] = field(default_factory=list)
+    performance_trajectory: list[float] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
     
     def __post_init__(self):
         if not self.task_id:
@@ -122,9 +119,9 @@ class EvoMergeResult:
     generations_completed: int
     merge_operations: int
     execution_time: float
-    convergence_data: List[float]
-    validation_results: Dict[str, Any]
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    convergence_data: list[float]
+    validation_results: dict[str, Any]
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class EvoMergeCoordinator:
@@ -157,9 +154,9 @@ class EvoMergeCoordinator:
         self.enable_regression_detection = enable_regression_detection
         
         # Task management
-        self.active_merges: Dict[str, EvoMergeTask] = {}
-        self.completed_merges: Dict[str, EvoMergeResult] = {}
-        self.merge_history: List[EvoMergeTask] = []
+        self.active_merges: dict[str, EvoMergeTask] = {}
+        self.completed_merges: dict[str, EvoMergeResult] = {}
+        self.merge_history: list[EvoMergeTask] = []
         
         # Integration with existing systems
         self.regression_detector = None
@@ -208,7 +205,7 @@ class EvoMergeCoordinator:
     async def coordinate_evolution_merge(
         self,
         evolution_result: EvolutionResult,
-        merge_strategy: Optional[MergeStrategy] = None
+        merge_strategy: MergeStrategy | None = None
     ) -> EvoMergeTask:
         """
         Coordinate EvoMerge operation based on evolution result.
@@ -243,7 +240,6 @@ class EvoMergeCoordinator:
         # Analyze evolution characteristics
         convergence_rate = self._analyze_convergence_rate(evolution_result.convergence_data)
         performance_improvement = evolution_result.performance_improvement
-        generations_completed = evolution_result.generations_completed
         
         # Strategy selection heuristics
         if performance_improvement > 0.2:  # High improvement
@@ -255,7 +251,7 @@ class EvoMergeCoordinator:
         else:
             return MergeStrategy.WEIGHTED_MERGE
     
-    def _analyze_convergence_rate(self, convergence_data: List[float]) -> float:
+    def _analyze_convergence_rate(self, convergence_data: list[float]) -> float:
         """Analyze convergence rate from evolution data."""
         if len(convergence_data) < 5:
             return 0.5
@@ -270,7 +266,7 @@ class EvoMergeCoordinator:
         improvement_rate = (end_performance - start_performance) / abs(start_performance)
         return np.clip(improvement_rate, 0.0, 1.0)
     
-    async def _generate_candidates_from_evolution(self, evolution_result: EvolutionResult) -> List[ModelCandidate]:
+    async def _generate_candidates_from_evolution(self, evolution_result: EvolutionResult) -> list[ModelCandidate]:
         """Generate model candidates from evolution result."""
         candidates = []
         
@@ -366,7 +362,7 @@ class EvoMergeCoordinator:
             if merge_task.task_id in self.active_merges:
                 del self.active_merges[merge_task.task_id]
     
-    async def _select_merge_candidates(self, merge_task: EvoMergeTask) -> List[ModelCandidate]:
+    async def _select_merge_candidates(self, merge_task: EvoMergeTask) -> list[ModelCandidate]:
         """Select the best candidates for merging."""
         candidates = merge_task.candidates
         
@@ -386,7 +382,7 @@ class EvoMergeCoordinator:
         
         return selected
     
-    async def _iterative_merge(self, merge_task: EvoMergeTask, candidates: List[ModelCandidate]) -> ModelCandidate:
+    async def _iterative_merge(self, merge_task: EvoMergeTask, candidates: list[ModelCandidate]) -> ModelCandidate:
         """Perform iterative merging to find the best combination."""
         best_candidate = candidates[0]  # Start with the best individual candidate
         
@@ -429,7 +425,7 @@ class EvoMergeCoordinator:
         
         return best_candidate
     
-    async def _create_merge_population(self, candidates: List[ModelCandidate], generation: int) -> List[ModelCandidate]:
+    async def _create_merge_population(self, candidates: list[ModelCandidate], generation: int) -> list[ModelCandidate]:
         """Create population of merged models for current generation."""
         population = []
         
@@ -671,7 +667,7 @@ class EvoMergeCoordinator:
         
         return performance_variance < 1e-6
     
-    async def _validate_merged_model(self, candidate: ModelCandidate) -> Dict[str, Any]:
+    async def _validate_merged_model(self, candidate: ModelCandidate) -> dict[str, Any]:
         """Validate the merged model."""
         validation_results = {
             'passed': True,
@@ -709,7 +705,7 @@ class EvoMergeCoordinator:
         
         return (final_performance - initial_performance) / abs(initial_performance)
     
-    def get_merge_statistics(self) -> Dict[str, Any]:
+    def get_merge_statistics(self) -> dict[str, Any]:
         """Get comprehensive merge statistics."""
         return {
             'active_merges': len(self.active_merges),
@@ -725,7 +721,7 @@ class EvoMergeCoordinator:
             'archaeological_enhancement': True
         }
     
-    def get_merge_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
+    def get_merge_task_status(self, task_id: str) -> dict[str, Any] | None:
         """Get status of a specific merge task."""
         if task_id in self.active_merges:
             task = self.active_merges[task_id]
@@ -757,7 +753,7 @@ class EvoMergeCoordinator:
 
 
 # Archaeological enhancement: Global coordinator instance
-_global_evomerge_coordinator: Optional[EvoMergeCoordinator] = None
+_global_evomerge_coordinator: EvoMergeCoordinator | None = None
 
 def get_evomerge_coordinator() -> EvoMergeCoordinator:
     """Get or create global EvoMerge coordinator instance."""

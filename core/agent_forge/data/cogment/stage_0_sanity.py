@@ -10,13 +10,13 @@ Synthetic tasks for basic functionality validation:
 Purpose: Verify ACT, GrokFast, loss functions work before complex training.
 """
 
+from dataclasses import dataclass
 import logging
 import random
-from dataclasses import dataclass
-from typing import Dict, List, Any
+from typing import Any
 
 import numpy as np
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ class LinearMapTask:
 
         logger.info(f"Linear task: y = {self.A:.2f}x + {self.b:.2f}")
 
-    def generate_samples(self) -> List[Dict[str, Any]]:
+    def generate_samples(self) -> list[dict[str, Any]]:
         """Generate linear mapping samples."""
         samples = []
 
@@ -78,7 +78,7 @@ class SequenceCompletionTask:
         self.config = config
         random.seed(config.seed)
 
-    def generate_samples(self) -> List[Dict[str, Any]]:
+    def generate_samples(self) -> list[dict[str, Any]]:
         """Generate sequence completion samples."""
         samples = []
 
@@ -133,7 +133,7 @@ class ToyMazeTask:
         # Small maze sizes for sanity checks
         self.maze_sizes = [(3, 3), (4, 4), (5, 5)]
 
-    def generate_samples(self) -> List[Dict[str, Any]]:
+    def generate_samples(self) -> list[dict[str, Any]]:
         """Generate toy maze navigation samples."""
         samples = []
 
@@ -189,7 +189,7 @@ class MemoryRecallTask:
         self.config = config
         random.seed(config.seed)
 
-    def generate_samples(self) -> List[Dict[str, Any]]:
+    def generate_samples(self) -> list[dict[str, Any]]:
         """Generate memory recall samples."""
         samples = []
 
@@ -230,7 +230,7 @@ class MemoryRecallTask:
 class SanityCheckDataset(Dataset):
     """Complete sanity check dataset for Stage 0."""
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: dict[str, Any] = None):
         self.config = config or {}
         self.samples_per_task = self.config.get("samples_per_task", 25)
         self.sequence_length = self.config.get("sequence_length", 128)
@@ -264,14 +264,14 @@ class SanityCheckDataset(Dataset):
     def __len__(self) -> int:
         return len(self.samples)
 
-    def __getitem__(self, idx: int) -> Dict[str, Any]:
+    def __getitem__(self, idx: int) -> dict[str, Any]:
         return self.samples[idx]
 
     def get_data_loader(self, batch_size: int = 16, shuffle: bool = True) -> DataLoader:
         """Get DataLoader for this dataset."""
         return DataLoader(self, batch_size=batch_size, shuffle=shuffle, collate_fn=self._collate_fn)
 
-    def _collate_fn(self, batch: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _collate_fn(self, batch: list[dict[str, Any]]) -> dict[str, Any]:
         """Collate function for batching."""
         return {
             "inputs": [item["input"] for item in batch],
@@ -280,7 +280,7 @@ class SanityCheckDataset(Dataset):
             "metadata": [item["metadata"] for item in batch],
         }
 
-    def get_task_distribution(self) -> Dict[str, int]:
+    def get_task_distribution(self) -> dict[str, int]:
         """Get distribution of task types."""
         distribution = {}
         for sample in self.samples:
@@ -305,7 +305,7 @@ class SanityCheckDataset(Dataset):
         return True
 
 
-def create_sanity_dataset(config: Dict[str, Any] = None) -> SanityCheckDataset:
+def create_sanity_dataset(config: dict[str, Any] = None) -> SanityCheckDataset:
     """Factory function to create sanity check dataset."""
     dataset = SanityCheckDataset(config)
 

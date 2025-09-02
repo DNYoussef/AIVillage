@@ -18,14 +18,15 @@ Key Features:
 """
 
 import asyncio
-import json
-import logging
-import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
+import json
+import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Callable, Tuple
+import time
+from typing import Any
 import uuid
 
 logger = logging.getLogger(__name__)
@@ -75,25 +76,25 @@ class TriageIncident:
     source_component: str = ""
     incident_type: str = ""
     description: str = ""
-    raw_data: Dict[str, Any] = field(default_factory=dict)
+    raw_data: dict[str, Any] = field(default_factory=dict)
     
     # Analysis results
     confidence_score: float = 0.0  # 0.0 to 1.0
     impact_assessment: str = ""
-    affected_systems: List[str] = field(default_factory=list)
+    affected_systems: list[str] = field(default_factory=list)
     root_cause_analysis: str = ""
     
     # Response tracking
-    response_actions: List[ResponseAction] = field(default_factory=list)
-    response_log: List[Dict[str, Any]] = field(default_factory=list)
-    escalation_history: List[Dict[str, Any]] = field(default_factory=list)
+    response_actions: list[ResponseAction] = field(default_factory=list)
+    response_log: list[dict[str, Any]] = field(default_factory=list)
+    escalation_history: list[dict[str, Any]] = field(default_factory=list)
     
     # Metadata
-    tags: List[str] = field(default_factory=list)
-    assigned_responder: Optional[str] = None
-    resolution_time: Optional[datetime] = None
+    tags: list[str] = field(default_factory=list)
+    assigned_responder: str | None = None
+    resolution_time: datetime | None = None
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert incident to dictionary for serialization."""
         return {
             'incident_id': self.incident_id,
@@ -116,7 +117,7 @@ class TriageIncident:
             'resolution_time': self.resolution_time.isoformat() if self.resolution_time else None
         }
     
-    def add_response_log(self, action: str, result: str, timestamp: Optional[datetime] = None):
+    def add_response_log(self, action: str, result: str, timestamp: datetime | None = None):
         """Add entry to response log."""
         if timestamp is None:
             timestamp = datetime.now()
@@ -147,22 +148,22 @@ class TriageRule:
     description: str
     
     # Detection criteria
-    component_patterns: List[str] = field(default_factory=list)
-    metric_thresholds: Dict[str, float] = field(default_factory=dict)
-    log_patterns: List[str] = field(default_factory=list)
+    component_patterns: list[str] = field(default_factory=list)
+    metric_thresholds: dict[str, float] = field(default_factory=dict)
+    log_patterns: list[str] = field(default_factory=list)
     
     # Classification
     threat_level: ThreatLevel = ThreatLevel.LOW
     confidence_threshold: float = 0.7
     
     # Response configuration
-    automated_responses: List[ResponseAction] = field(default_factory=list)
+    automated_responses: list[ResponseAction] = field(default_factory=list)
     escalation_timeout_minutes: int = 15
     
     # Rule metadata
     enabled: bool = True
     created_at: datetime = field(default_factory=datetime.now)
-    last_triggered: Optional[datetime] = None
+    last_triggered: datetime | None = None
     trigger_count: int = 0
 
 
@@ -170,11 +171,11 @@ class AnomalyDetector:
     """ML-based anomaly detection for triage system."""
     
     def __init__(self):
-        self.baseline_metrics: Dict[str, Dict[str, float]] = {}
+        self.baseline_metrics: dict[str, dict[str, float]] = {}
         self.detection_window_minutes = 5
         self.anomaly_threshold = 2.5  # Standard deviations
         
-    def update_baseline(self, component: str, metrics: Dict[str, float]):
+    def update_baseline(self, component: str, metrics: dict[str, float]):
         """Update baseline metrics for a component."""
         if component not in self.baseline_metrics:
             self.baseline_metrics[component] = {}
@@ -185,7 +186,7 @@ class AnomalyDetector:
             # Exponential moving average with alpha = 0.1
             self.baseline_metrics[component][metric] = 0.9 * current + 0.1 * value
     
-    def detect_anomalies(self, component: str, current_metrics: Dict[str, float]) -> List[Dict[str, Any]]:
+    def detect_anomalies(self, component: str, current_metrics: dict[str, float]) -> list[dict[str, Any]]:
         """Detect anomalies in current metrics compared to baseline."""
         anomalies = []
         
@@ -235,19 +236,19 @@ class AnomalyDetector:
 class EmergencyTriageSystem:
     """Main emergency triage system coordinator."""
     
-    def __init__(self, config_path: Optional[Path] = None):
+    def __init__(self, config_path: Path | None = None):
         self.config_path = config_path or Path("triage_config.json")
-        self.incidents: Dict[str, TriageIncident] = {}
-        self.rules: Dict[str, TriageRule] = {}
+        self.incidents: dict[str, TriageIncident] = {}
+        self.rules: dict[str, TriageRule] = {}
         self.anomaly_detector = AnomalyDetector()
         
         # Response handlers
-        self.response_handlers: Dict[ResponseAction, Callable] = {}
-        self.escalation_handlers: List[Callable] = []
+        self.response_handlers: dict[ResponseAction, Callable] = {}
+        self.escalation_handlers: list[Callable] = []
         
         # System state
         self.is_running = False
-        self.monitoring_tasks: List[asyncio.Task] = []
+        self.monitoring_tasks: list[asyncio.Task] = []
         
         # Statistics
         self.stats = {
@@ -300,8 +301,8 @@ class EmergencyTriageSystem:
         source_component: str,
         incident_type: str,
         description: str,
-        raw_data: Optional[Dict[str, Any]] = None,
-        threat_level: Optional[ThreatLevel] = None
+        raw_data: dict[str, Any] | None = None,
+        threat_level: ThreatLevel | None = None
     ) -> TriageIncident:
         """Detect and classify a new incident."""
         incident = TriageIncident(
@@ -335,7 +336,7 @@ class EmergencyTriageSystem:
         
         return incident
     
-    def _classify_incident(self, incident: TriageIncident) -> Tuple[ThreatLevel, float]:
+    def _classify_incident(self, incident: TriageIncident) -> tuple[ThreatLevel, float]:
         """Classify incident threat level and confidence."""
         max_threat_level = ThreatLevel.LOW
         max_confidence = 0.0
@@ -563,7 +564,7 @@ class EmergencyTriageSystem:
         
         return impact_map.get(incident.threat_level, "Impact assessment unavailable")
     
-    async def _identify_affected_systems(self, incident: TriageIncident) -> List[str]:
+    async def _identify_affected_systems(self, incident: TriageIncident) -> list[str]:
         """Identify systems affected by an incident."""
         affected = []
         
@@ -647,7 +648,7 @@ class EmergencyTriageSystem:
         """Load triage system configuration."""
         if self.config_path.exists():
             try:
-                with open(self.config_path, 'r') as f:
+                with open(self.config_path) as f:
                     config = json.load(f)
                 
                 # Load rules from configuration
@@ -673,7 +674,7 @@ class EmergencyTriageSystem:
         self.response_handlers[ResponseAction.ALERT_ONLY] = alert_handler
         self.response_handlers[ResponseAction.RESTART_SERVICE] = restart_service_handler
     
-    def get_incidents(self, status: Optional[TriageStatus] = None) -> List[TriageIncident]:
+    def get_incidents(self, status: TriageStatus | None = None) -> list[TriageIncident]:
         """Get incidents, optionally filtered by status."""
         incidents = list(self.incidents.values())
         
@@ -682,7 +683,7 @@ class EmergencyTriageSystem:
         
         return sorted(incidents, key=lambda x: x.timestamp, reverse=True)
     
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get triage system statistics."""
         active_incidents = len([
             i for i in self.incidents.values()
@@ -698,6 +699,6 @@ class EmergencyTriageSystem:
 
 
 # Factory function for easy integration
-def create_emergency_triage_system(config_path: Optional[Path] = None) -> EmergencyTriageSystem:
+def create_emergency_triage_system(config_path: Path | None = None) -> EmergencyTriageSystem:
     """Create and configure an emergency triage system."""
     return EmergencyTriageSystem(config_path)

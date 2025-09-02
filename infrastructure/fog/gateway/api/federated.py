@@ -14,26 +14,26 @@ Key Features:
 """
 
 import asyncio
+from datetime import UTC, datetime, timedelta
+from enum import Enum
 import logging
 import time
+from typing import Any
 import uuid
-from datetime import datetime, UTC, timedelta
-from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends, Query, Request
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
-from enum import Enum
 import uvicorn
 
 # Core integrations
 try:
     from core.rag.integration.fog_compute_bridge import (
-        get_fog_compute_bridge,
         FogComputeBridge,
-        QueryType,
         QueryDistributionStrategy,
+        QueryType,
+        get_fog_compute_bridge,
     )
 
     FOG_BRIDGE_AVAILABLE = True
@@ -41,7 +41,7 @@ except ImportError:
     FOG_BRIDGE_AVAILABLE = False
 
 try:
-    from infrastructure.fog.market.marketplace_api import get_marketplace_api, MarketplaceAPI
+    from infrastructure.fog.market.marketplace_api import MarketplaceAPI, get_marketplace_api
     from infrastructure.fog.market.pricing_manager import get_pricing_manager
 
     MARKETPLACE_AVAILABLE = True
@@ -129,14 +129,14 @@ class FederatedInferenceRequest(BaseModel):
     user_tier: UserTier = Field(UserTier.MEDIUM, description="User tier for pricing")
 
     # Model and query information
-    model_name: Optional[str] = Field(None, description="Specific model to use")
+    model_name: str | None = Field(None, description="Specific model to use")
     query: str = Field(..., description="Query or input for inference")
     query_type: QueryType = Field(QueryType.SIMPLE_RAG, description="Type of query processing")
 
     # Resource requirements
     strategy: QueryDistributionStrategy = Field(QueryDistributionStrategy.BALANCED, description="Distribution strategy")
     max_nodes: int = Field(3, ge=1, le=20, description="Maximum nodes to use")
-    required_capabilities: List[str] = Field(default_factory=list, description="Required node capabilities")
+    required_capabilities: list[str] = Field(default_factory=list, description="Required node capabilities")
 
     # Cost and performance
     max_budget: float = Field(100.0, ge=0.01, description="Maximum budget for the task")
@@ -149,7 +149,7 @@ class FederatedInferenceRequest(BaseModel):
 
     # Scheduling
     timeout_minutes: int = Field(30, ge=1, le=1440, description="Job timeout in minutes")
-    preferred_regions: List[str] = Field(default_factory=list, description="Preferred geographic regions")
+    preferred_regions: list[str] = Field(default_factory=list, description="Preferred geographic regions")
 
     class Config:
         schema_extra = {
@@ -182,14 +182,14 @@ class FederatedTrainingRequest(BaseModel):
     # Resource requirements
     participants_needed: int = Field(5, ge=2, le=100, description="Number of training participants")
     duration_hours: float = Field(2.0, ge=0.5, le=168.0, description="Expected training duration")
-    compute_requirements: Dict[str, Any] = Field(
+    compute_requirements: dict[str, Any] = Field(
         default_factory=lambda: {"cpu_cores": 4, "memory_gb": 8, "gpu_required": False},
         description="Compute resource requirements",
     )
 
     # Cost and performance
     max_budget: float = Field(1000.0, ge=1.0, description="Maximum budget for training")
-    min_accuracy_target: Optional[float] = Field(None, ge=0.0, le=1.0, description="Minimum accuracy target")
+    min_accuracy_target: float | None = Field(None, ge=0.0, le=1.0, description="Minimum accuracy target")
     convergence_threshold: float = Field(0.01, ge=0.001, le=0.1, description="Convergence threshold")
 
     # Privacy and security
@@ -198,8 +198,8 @@ class FederatedTrainingRequest(BaseModel):
     min_trust_score: float = Field(0.7, ge=0.0, le=1.0, description="Minimum participant trust score")
 
     # Scheduling
-    deadline_hours: Optional[float] = Field(None, ge=1.0, description="Training deadline in hours")
-    preferred_regions: List[str] = Field(default_factory=list, description="Preferred geographic regions")
+    deadline_hours: float | None = Field(None, ge=1.0, description="Training deadline in hours")
+    preferred_regions: list[str] = Field(default_factory=list, description="Preferred geographic regions")
 
     class Config:
         schema_extra = {
@@ -226,26 +226,26 @@ class JobStatusResponse(BaseModel):
 
     # Timing information
     submitted_at: datetime
-    started_at: Optional[datetime]
-    estimated_completion_at: Optional[datetime]
-    completed_at: Optional[datetime]
+    started_at: datetime | None
+    estimated_completion_at: datetime | None
+    completed_at: datetime | None
 
     # Resource allocation
-    allocated_nodes: List[Dict[str, Any]] = Field(default_factory=list)
-    resource_utilization: Dict[str, float] = Field(default_factory=dict)
+    allocated_nodes: list[dict[str, Any]] = Field(default_factory=list)
+    resource_utilization: dict[str, float] = Field(default_factory=dict)
 
     # Results and costs
-    results: Optional[Dict[str, Any]] = None
-    total_cost: Optional[float] = None
-    estimated_cost: Optional[float] = None
+    results: dict[str, Any] | None = None
+    total_cost: float | None = None
+    estimated_cost: float | None = None
 
     # Quality metrics
-    performance_metrics: Dict[str, float] = Field(default_factory=dict)
-    quality_score: Optional[float] = None
+    performance_metrics: dict[str, float] = Field(default_factory=dict)
+    quality_score: float | None = None
 
     # Error information
-    error_message: Optional[str] = None
-    error_details: Optional[Dict[str, Any]] = None
+    error_message: str | None = None
+    error_details: dict[str, Any] | None = None
 
 
 class BillingInfoResponse(BaseModel):
@@ -253,7 +253,7 @@ class BillingInfoResponse(BaseModel):
 
     user_id: str
     user_tier: UserTier
-    billing_period: Dict[str, datetime]
+    billing_period: dict[str, datetime]
 
     # Usage summary
     total_jobs: int
@@ -262,15 +262,15 @@ class BillingInfoResponse(BaseModel):
     estimated_monthly_cost: float
 
     # Resource usage breakdown
-    resource_usage: Dict[str, Dict[str, float]]
-    cost_breakdown: Dict[str, float]
+    resource_usage: dict[str, dict[str, float]]
+    cost_breakdown: dict[str, float]
 
     # Tier information
-    tier_limits: Dict[str, Any]
-    usage_against_limits: Dict[str, float]
+    tier_limits: dict[str, Any]
+    usage_against_limits: dict[str, float]
 
     # Recent activity
-    recent_jobs: List[Dict[str, Any]]
+    recent_jobs: list[dict[str, Any]]
 
 
 class SystemHealthResponse(BaseModel):
@@ -280,16 +280,16 @@ class SystemHealthResponse(BaseModel):
     timestamp: datetime
 
     # Component status
-    components: Dict[str, Dict[str, Any]]
+    components: dict[str, dict[str, Any]]
 
     # Performance metrics
-    performance_metrics: Dict[str, float]
+    performance_metrics: dict[str, float]
 
     # Resource availability
-    resource_availability: Dict[str, Dict[str, float]]
+    resource_availability: dict[str, dict[str, float]]
 
     # Network status
-    network_status: Dict[str, Any]
+    network_status: dict[str, Any]
 
 
 class FederatedAPIGateway:
@@ -314,14 +314,14 @@ class FederatedAPIGateway:
         )
 
         # Core components
-        self.fog_bridge: Optional[FogComputeBridge] = None
-        self.marketplace_api: Optional[MarketplaceAPI] = None
+        self.fog_bridge: FogComputeBridge | None = None
+        self.marketplace_api: MarketplaceAPI | None = None
         self.pricing_manager = None
         self.inference_manager = None
 
         # Job tracking
-        self.active_jobs: Dict[str, Dict[str, Any]] = {}
-        self.completed_jobs: Dict[str, Dict[str, Any]] = {}
+        self.active_jobs: dict[str, dict[str, Any]] = {}
+        self.completed_jobs: dict[str, dict[str, Any]] = {}
 
         # Performance metrics
         self.api_stats = {
@@ -386,7 +386,7 @@ class FederatedAPIGateway:
             await self._cleanup_components()
 
         # Health and system endpoints
-        @self.app.get("/health", response_model=Dict[str, Any], tags=["System"])
+        @self.app.get("/health", response_model=dict[str, Any], tags=["System"])
         async def health_check():
             """API health check."""
             return {
@@ -451,8 +451,8 @@ class FederatedAPIGateway:
         async def submit_federated_inference(
             request: FederatedInferenceRequest,
             background_tasks: BackgroundTasks,
-            credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
-        ) -> Dict[str, Any]:
+            credentials: HTTPAuthorizationCredentials | None = Depends(security),
+        ) -> dict[str, Any]:
             """Submit federated inference request."""
 
             job_id = f"inf_{uuid.uuid4().hex[:12]}"
@@ -499,8 +499,8 @@ class FederatedAPIGateway:
         async def submit_federated_training(
             request: FederatedTrainingRequest,
             background_tasks: BackgroundTasks,
-            credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
-        ) -> Dict[str, Any]:
+            credentials: HTTPAuthorizationCredentials | None = Depends(security),
+        ) -> dict[str, Any]:
             """Submit federated training request."""
 
             job_id = f"train_{uuid.uuid4().hex[:12]}"
@@ -605,7 +605,7 @@ class FederatedAPIGateway:
         @self.app.get("/v1/users/{user_id}/jobs", tags=["Job Management"])
         async def get_user_jobs(
             user_id: str,
-            status: Optional[str] = Query(None, description="Filter by job status"),
+            status: str | None = Query(None, description="Filter by job status"),
             limit: int = Query(50, ge=1, le=200, description="Maximum number of jobs to return"),
             offset: int = Query(0, ge=0, description="Number of jobs to skip"),
         ):
@@ -736,7 +736,7 @@ class FederatedAPIGateway:
 
         # Analytics and reporting endpoints
         @self.app.get("/v1/analytics/system", tags=["Analytics"])
-        async def get_system_analytics(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)):
+        async def get_system_analytics(credentials: HTTPAuthorizationCredentials | None = Depends(security)):
             """Get system-wide analytics (admin only)."""
 
             try:
@@ -938,7 +938,7 @@ class FederatedAPIGateway:
 
         return min(duration_cost + participant_cost, request.max_budget)
 
-    def _get_jobs_by_status(self) -> Dict[str, int]:
+    def _get_jobs_by_status(self) -> dict[str, int]:
         """Get job count breakdown by status."""
         status_counts = {}
         all_jobs = list(self.active_jobs.values()) + list(self.completed_jobs.values())
@@ -949,7 +949,7 @@ class FederatedAPIGateway:
 
         return status_counts
 
-    def _get_jobs_by_type(self) -> Dict[str, int]:
+    def _get_jobs_by_type(self) -> dict[str, int]:
         """Get job count breakdown by type."""
         type_counts = {}
         all_jobs = list(self.active_jobs.values()) + list(self.completed_jobs.values())
@@ -960,7 +960,7 @@ class FederatedAPIGateway:
 
         return type_counts
 
-    async def _get_resource_utilization(self) -> Dict[str, float]:
+    async def _get_resource_utilization(self) -> dict[str, float]:
         """Get current resource utilization metrics."""
         return {
             "compute_utilization": 0.68,
@@ -982,7 +982,7 @@ class FederatedAPIGateway:
 
 
 # Global API instance
-_api_gateway: Optional[FederatedAPIGateway] = None
+_api_gateway: FederatedAPIGateway | None = None
 
 
 def get_api_gateway() -> FederatedAPIGateway:

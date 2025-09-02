@@ -20,7 +20,7 @@ from enum import Enum
 import json
 import logging
 import re
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 import uuid
 
 logger = logging.getLogger(__name__)
@@ -125,9 +125,9 @@ class SafetyConstraint:
     description: str = ""
 
     # Constraint definition
-    harm_categories: List[HarmCategory] = field(default_factory=list)
-    keywords: List[str] = field(default_factory=list)
-    patterns: List[str] = field(default_factory=list)  # Regex patterns
+    harm_categories: list[HarmCategory] = field(default_factory=list)
+    keywords: list[str] = field(default_factory=list)
+    patterns: list[str] = field(default_factory=list)  # Regex patterns
 
     # Thresholds
     max_risk_score: float = 0.3  # Maximum allowed risk score
@@ -138,8 +138,8 @@ class SafetyConstraint:
     escalation_threshold: float = 0.8  # Risk score for escalation
 
     # Context and exceptions
-    allowed_contexts: List[str] = field(default_factory=list)
-    exempted_users: Set[str] = field(default_factory=set)
+    allowed_contexts: list[str] = field(default_factory=list)
+    exempted_users: set[str] = field(default_factory=set)
 
     # Metadata
     enabled: bool = True
@@ -182,10 +182,10 @@ class PolicyViolation:
 
     # Timing
     detected_at: datetime = field(default_factory=lambda: datetime.now(UTC))
-    resolved_at: Optional[datetime] = None
+    resolved_at: datetime | None = None
 
     # Additional metadata
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -198,7 +198,7 @@ class ConstitutionalPolicy:
     version: str = "1.0"
 
     # Core principles
-    principles: List[ConstitutionalPrinciple] = field(
+    principles: list[ConstitutionalPrinciple] = field(
         default_factory=lambda: [
             ConstitutionalPrinciple.HELPFULNESS,
             ConstitutionalPrinciple.HARMLESSNESS,
@@ -207,7 +207,7 @@ class ConstitutionalPolicy:
     )
 
     # Safety constraints
-    constraints: List[SafetyConstraint] = field(default_factory=list)
+    constraints: list[SafetyConstraint] = field(default_factory=list)
 
     # Global settings
     default_risk_threshold: float = 0.3
@@ -318,7 +318,7 @@ class HarmClassifier:
             ]
         }
 
-    async def classify_content(self, content: str, content_type: str = "text") -> Dict[HarmCategory, float]:
+    async def classify_content(self, content: str, content_type: str = "text") -> dict[HarmCategory, float]:
         """Classify content for harm categories and return risk scores."""
         if content_type != "text":
             # For non-text content, would use appropriate ML models
@@ -359,8 +359,8 @@ class HarmClassifier:
         return results
 
     async def analyze_behavioral_patterns(
-        self, user_id: str, recent_interactions: List[Dict[str, Any]]
-    ) -> Dict[str, float]:
+        self, user_id: str, recent_interactions: list[dict[str, Any]]
+    ) -> dict[str, float]:
         """Analyze user behavioral patterns for risk assessment."""
         if not recent_interactions:
             return {}
@@ -414,9 +414,9 @@ class ConstitutionalPolicyEngine:
         self.harm_classifier = HarmClassifier()
 
         # Policy storage
-        self.active_policies: Dict[str, ConstitutionalPolicy] = {}
-        self.policy_violations: List[PolicyViolation] = []
-        self.user_behavior_history: Dict[str, List[Dict[str, Any]]] = {}
+        self.active_policies: dict[str, ConstitutionalPolicy] = {}
+        self.policy_violations: list[PolicyViolation] = []
+        self.user_behavior_history: dict[str, list[dict[str, Any]]] = {}
 
         # Default constitutional policy
         self.default_policy = self._create_default_policy()
@@ -425,7 +425,7 @@ class ConstitutionalPolicyEngine:
         # Monitoring and state
         self.monitoring_enabled = True
         self.real_time_filtering = True
-        self.violation_threshold_counts: Dict[str, int] = {}
+        self.violation_threshold_counts: dict[str, int] = {}
 
         logger.info("Constitutional Policy Engine initialized")
 
@@ -433,9 +433,9 @@ class ConstitutionalPolicyEngine:
         self,
         content: str,
         content_type: str = "text",
-        context: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
         policy_id: str = "default",
-    ) -> Tuple[bool, Dict[str, Any]]:
+    ) -> tuple[bool, dict[str, Any]]:
         """
         Evaluate content against constitutional policy.
 
@@ -543,7 +543,7 @@ class ConstitutionalPolicyEngine:
         return is_safe, evaluation_details
 
     async def validate_workload_deployment(
-        self, workload_manifest: Dict[str, Any], node_attestation: Dict[str, Any], policy_id: str = "default"
+        self, workload_manifest: dict[str, Any], node_attestation: dict[str, Any], policy_id: str = "default"
     ) -> bool:
         """Validate that workload can be safely deployed with constitutional guarantees."""
 
@@ -581,8 +581,8 @@ class ConstitutionalPolicyEngine:
         return True
 
     async def monitor_workload_execution(
-        self, workload_id: str, execution_logs: List[Dict[str, Any]], policy_id: str = "default"
-    ) -> Dict[str, Any]:
+        self, workload_id: str, execution_logs: list[dict[str, Any]], policy_id: str = "default"
+    ) -> dict[str, Any]:
         """Monitor ongoing workload execution for constitutional compliance."""
 
         monitoring_result = {
@@ -626,7 +626,7 @@ class ConstitutionalPolicyEngine:
         return monitoring_result
 
     def create_custom_policy(
-        self, name: str, constraints: List[SafetyConstraint], principles: Optional[List[ConstitutionalPrinciple]] = None
+        self, name: str, constraints: list[SafetyConstraint], principles: list[ConstitutionalPrinciple] | None = None
     ) -> str:
         """Create custom constitutional policy."""
 
@@ -643,8 +643,8 @@ class ConstitutionalPolicyEngine:
         return policy.policy_id
 
     def get_policy_violations_summary(
-        self, time_window_hours: int = 24, policy_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, time_window_hours: int = 24, policy_id: str | None = None
+    ) -> dict[str, Any]:
         """Get summary of policy violations within time window."""
 
         cutoff_time = datetime.now(UTC) - timedelta(hours=time_window_hours)
@@ -692,7 +692,7 @@ class ConstitutionalPolicyEngine:
 
     async def generate_compliance_report(
         self, policy_id: str = "default", report_period_days: int = 30
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate comprehensive constitutional compliance report."""
 
         policy = self.active_policies.get(policy_id)
@@ -875,7 +875,7 @@ class ConstitutionalPolicyEngine:
         cutoff_time = datetime.now(UTC) - timedelta(days=policy.retain_violations_days)
         self.policy_violations = [v for v in self.policy_violations if v.detected_at > cutoff_time]
 
-    def _get_recommended_actions(self, violations: List[PolicyViolation], behavioral_risk: float) -> List[str]:
+    def _get_recommended_actions(self, violations: list[PolicyViolation], behavioral_risk: float) -> list[str]:
         """Get recommended actions based on violations and behavioral risk."""
 
         actions = []
@@ -904,7 +904,7 @@ class ConstitutionalPolicyEngine:
 
 
 # Global policy engine instance
-_policy_engine: Optional[ConstitutionalPolicyEngine] = None
+_policy_engine: ConstitutionalPolicyEngine | None = None
 
 
 async def get_policy_engine() -> ConstitutionalPolicyEngine:
@@ -921,8 +921,8 @@ async def get_policy_engine() -> ConstitutionalPolicyEngine:
 
 
 async def evaluate_constitutional_content(
-    content: str, user_id: str = "anonymous", context: Optional[Dict[str, Any]] = None
-) -> Tuple[bool, Dict[str, Any]]:
+    content: str, user_id: str = "anonymous", context: dict[str, Any] | None = None
+) -> tuple[bool, dict[str, Any]]:
     """Evaluate content for constitutional compliance."""
 
     engine = await get_policy_engine()
@@ -932,7 +932,7 @@ async def evaluate_constitutional_content(
     return await engine.evaluate_content(content, context=context)
 
 
-async def validate_constitutional_workload(workload_manifest: Dict[str, Any], node_attestation: Dict[str, Any]) -> bool:
+async def validate_constitutional_workload(workload_manifest: dict[str, Any], node_attestation: dict[str, Any]) -> bool:
     """Validate workload can be safely deployed."""
 
     engine = await get_policy_engine()

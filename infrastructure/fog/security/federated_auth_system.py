@@ -12,18 +12,19 @@ for federated learning networks with BetaNet integration, including:
 """
 
 import asyncio
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from enum import Enum
 import hashlib
 import json
 import logging
 import secrets
 import time
-from dataclasses import dataclass, field
-from datetime import datetime, UTC
-from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
-import jwt
+from typing import Any
+
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives.asymmetric import padding, rsa
+import jwt
 
 logger = logging.getLogger(__name__)
 
@@ -64,13 +65,13 @@ class NodeIdentity:
 
     node_id: str
     public_key: bytes
-    certificate: Optional[bytes] = None
-    roles: Set[NodeRole] = field(default_factory=set)
-    capabilities: Set[str] = field(default_factory=set)
+    certificate: bytes | None = None
+    roles: set[NodeRole] = field(default_factory=set)
+    capabilities: set[str] = field(default_factory=set)
     reputation_score: float = 1.0
     created_at: float = field(default_factory=time.time)
     last_active: float = field(default_factory=time.time)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -84,7 +85,7 @@ class AuthenticationChallenge:
     expires_at: float
     nonce: bytes
     difficulty: int = 1
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -97,7 +98,7 @@ class AuthenticationResponse:
     proof: bytes
     timestamp: float
     method: AuthenticationMethod
-    additional_factors: Dict[str, Any] = field(default_factory=dict)
+    additional_factors: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -106,13 +107,13 @@ class SessionToken:
 
     token_id: str
     node_id: str
-    roles: Set[NodeRole]
-    capabilities: Set[str]
+    roles: set[NodeRole]
+    capabilities: set[str]
     issued_at: float
     expires_at: float
     status: SessionStatus = SessionStatus.ACTIVE
-    refresh_token: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    refresh_token: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -123,8 +124,8 @@ class AccessRequest:
     node_id: str
     resource_path: str
     operation: str
-    required_capabilities: Set[str]
-    context: Dict[str, Any] = field(default_factory=dict)
+    required_capabilities: set[str]
+    context: dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
 
 
@@ -134,12 +135,12 @@ class CryptographicKeyManager:
     """
 
     def __init__(self):
-        self.node_keypairs: Dict[str, Tuple[bytes, bytes]] = {}  # private, public
-        self.trusted_certificates: Dict[str, bytes] = {}
-        self.revoked_certificates: Set[str] = set()
-        self.key_rotation_schedule: Dict[str, float] = {}
+        self.node_keypairs: dict[str, tuple[bytes, bytes]] = {}  # private, public
+        self.trusted_certificates: dict[str, bytes] = {}
+        self.revoked_certificates: set[str] = set()
+        self.key_rotation_schedule: dict[str, float] = {}
 
-    def generate_node_keypair(self, node_id: str) -> Tuple[bytes, bytes]:
+    def generate_node_keypair(self, node_id: str) -> tuple[bytes, bytes]:
         """Generate RSA keypair for a node"""
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
@@ -226,8 +227,8 @@ class MultiFactorAuthenticator:
     """
 
     def __init__(self):
-        self.pending_challenges: Dict[str, AuthenticationChallenge] = {}
-        self.completed_authentications: Dict[str, Dict[str, Any]] = {}
+        self.pending_challenges: dict[str, AuthenticationChallenge] = {}
+        self.completed_authentications: dict[str, dict[str, Any]] = {}
         self.factor_weights = {
             AuthenticationMethod.PASSWORD: 0.3,
             AuthenticationMethod.CERTIFICATE: 0.4,
@@ -236,8 +237,8 @@ class MultiFactorAuthenticator:
         }
 
     async def create_authentication_challenge(
-        self, node_id: str, required_methods: List[AuthenticationMethod], context: Optional[Dict[str, Any]] = None
-    ) -> List[AuthenticationChallenge]:
+        self, node_id: str, required_methods: list[AuthenticationMethod], context: dict[str, Any] | None = None
+    ) -> list[AuthenticationChallenge]:
         """
         Create multi-factor authentication challenges
 
@@ -322,7 +323,7 @@ class MultiFactorAuthenticator:
         }
         return json.dumps(challenge_data).encode()
 
-    def _calculate_challenge_difficulty(self, method: AuthenticationMethod, context: Optional[Dict[str, Any]]) -> int:
+    def _calculate_challenge_difficulty(self, method: AuthenticationMethod, context: dict[str, Any] | None) -> int:
         """Calculate appropriate challenge difficulty"""
         base_difficulty = 1
 
@@ -335,7 +336,7 @@ class MultiFactorAuthenticator:
 
         return base_difficulty
 
-    async def verify_authentication_response(self, response: AuthenticationResponse) -> Dict[str, Any]:
+    async def verify_authentication_response(self, response: AuthenticationResponse) -> dict[str, Any]:
         """
         Verify multi-factor authentication response
 
@@ -380,7 +381,7 @@ class MultiFactorAuthenticator:
 
     async def _verify_method_response(
         self, challenge: AuthenticationChallenge, response: AuthenticationResponse
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Verify response for specific authentication method"""
         try:
             if challenge.method == AuthenticationMethod.PASSWORD:
@@ -399,7 +400,7 @@ class MultiFactorAuthenticator:
 
     async def _verify_password_response(
         self, challenge: AuthenticationChallenge, response: AuthenticationResponse
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Verify password-based response"""
         challenge_data = json.loads(challenge.challenge_data.decode())
 
@@ -421,7 +422,7 @@ class MultiFactorAuthenticator:
 
     async def _verify_certificate_response(
         self, challenge: AuthenticationChallenge, response: AuthenticationResponse
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Verify certificate-based response"""
         # Verify certificate signature on challenge data
         # In production, verify against trusted CA
@@ -442,7 +443,7 @@ class MultiFactorAuthenticator:
 
     async def _verify_biometric_response(
         self, challenge: AuthenticationChallenge, response: AuthenticationResponse
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Verify biometric response"""
         challenge_data = json.loads(challenge.challenge_data.decode())
 
@@ -462,7 +463,7 @@ class MultiFactorAuthenticator:
 
     async def _verify_hardware_token_response(
         self, challenge: AuthenticationChallenge, response: AuthenticationResponse
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Verify hardware token response"""
         challenge_data = json.loads(challenge.challenge_data.decode())
 
@@ -508,7 +509,7 @@ class RoleBasedAccessControl:
     """
 
     def __init__(self):
-        self.role_permissions: Dict[NodeRole, Set[str]] = {
+        self.role_permissions: dict[NodeRole, set[str]] = {
             NodeRole.ADMIN: {
                 "system.manage",
                 "node.create",
@@ -538,7 +539,7 @@ class RoleBasedAccessControl:
             NodeRole.OBSERVER: {"audit.read", "metrics.read"},
         }
 
-        self.capability_matrix: Dict[str, Dict[str, Any]] = {
+        self.capability_matrix: dict[str, dict[str, Any]] = {
             "model.train": {
                 "description": "Train machine learning models",
                 "risk_level": "medium",
@@ -563,9 +564,9 @@ class RoleBasedAccessControl:
             },
         }
 
-        self.dynamic_permissions: Dict[str, Set[str]] = {}
+        self.dynamic_permissions: dict[str, set[str]] = {}
 
-    def get_node_capabilities(self, node_identity: NodeIdentity) -> Set[str]:
+    def get_node_capabilities(self, node_identity: NodeIdentity) -> set[str]:
         """Get all capabilities for a node based on roles and dynamic permissions"""
         capabilities = set()
 
@@ -593,7 +594,7 @@ class RoleBasedAccessControl:
 
         return filtered_capabilities
 
-    def check_access_permission(self, node_identity: NodeIdentity, access_request: AccessRequest) -> Dict[str, Any]:
+    def check_access_permission(self, node_identity: NodeIdentity, access_request: AccessRequest) -> dict[str, Any]:
         """Check if node has permission for requested access"""
         node_capabilities = self.get_node_capabilities(node_identity)
 
@@ -643,7 +644,7 @@ class RoleBasedAccessControl:
             "reputation_score": node_identity.reputation_score,
         }
 
-    def _check_contextual_access(self, node_identity: NodeIdentity, access_request: AccessRequest) -> Dict[str, Any]:
+    def _check_contextual_access(self, node_identity: NodeIdentity, access_request: AccessRequest) -> dict[str, Any]:
         """Check contextual access restrictions"""
         context = access_request.context
 
@@ -674,7 +675,7 @@ class RoleBasedAccessControl:
 
         return {"allowed": True, "details": "All contextual checks passed"}
 
-    def grant_temporary_permission(self, node_id: str, capabilities: Set[str], duration_seconds: int = 3600) -> str:
+    def grant_temporary_permission(self, node_id: str, capabilities: set[str], duration_seconds: int = 3600) -> str:
         """Grant temporary permissions to a node"""
         permission_id = f"temp_{node_id}_{secrets.token_hex(8)}"
 
@@ -704,9 +705,9 @@ class FederatedSessionManager:
 
     def __init__(self, jwt_secret: str):
         self.jwt_secret = jwt_secret
-        self.active_sessions: Dict[str, SessionToken] = {}
-        self.session_history: Dict[str, List[Dict[str, Any]]] = {}
-        self.revoked_tokens: Set[str] = set()
+        self.active_sessions: dict[str, SessionToken] = {}
+        self.session_history: dict[str, list[dict[str, Any]]] = {}
+        self.revoked_tokens: set[str] = set()
 
     async def create_session(
         self,
@@ -714,7 +715,7 @@ class FederatedSessionManager:
         authentication_score: float,
         rbac: RoleBasedAccessControl,
         session_duration: int = 3600,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create authenticated session for a node
 
@@ -801,8 +802,8 @@ class FederatedSessionManager:
         }
 
     async def validate_session(
-        self, jwt_token: str, required_capabilities: Optional[Set[str]] = None
-    ) -> Dict[str, Any]:
+        self, jwt_token: str, required_capabilities: set[str] | None = None
+    ) -> dict[str, Any]:
         """Validate session token and check capabilities"""
         try:
             # Decode JWT token
@@ -879,7 +880,7 @@ class FederatedSessionManager:
         logger.info(f"Revoked session {token_id} for node {session.node_id}: {reason}")
         return True
 
-    async def refresh_session(self, refresh_token: str, new_duration: int = 3600) -> Optional[Dict[str, Any]]:
+    async def refresh_session(self, refresh_token: str, new_duration: int = 3600) -> dict[str, Any] | None:
         """Refresh session using refresh token"""
         # Find session by refresh token
         target_session = None
@@ -918,7 +919,7 @@ class FederatedSessionManager:
             "expires_at": target_session.expires_at,
         }
 
-    def get_session_statistics(self) -> Dict[str, Any]:
+    def get_session_statistics(self) -> dict[str, Any]:
         """Get session management statistics"""
         active_count = len([s for s in self.active_sessions.values() if s.status == SessionStatus.ACTIVE])
         expired_count = len([s for s in self.active_sessions.values() if s.status == SessionStatus.EXPIRED])
@@ -939,21 +940,21 @@ class FederatedAuthenticationSystem:
     Main federated authentication system coordinating all components
     """
 
-    def __init__(self, jwt_secret: Optional[str] = None):
+    def __init__(self, jwt_secret: str | None = None):
         self.key_manager = CryptographicKeyManager()
         self.mfa_authenticator = MultiFactorAuthenticator()
         self.rbac = RoleBasedAccessControl()
         self.session_manager = FederatedSessionManager(jwt_secret or secrets.token_hex(32))
-        self.node_identities: Dict[str, NodeIdentity] = {}
-        self.pending_registrations: Dict[str, Dict[str, Any]] = {}
+        self.node_identities: dict[str, NodeIdentity] = {}
+        self.pending_registrations: dict[str, dict[str, Any]] = {}
 
     async def register_node(
         self,
         node_id: str,
-        roles: Set[NodeRole],
-        metadata: Optional[Dict[str, Any]] = None,
-        initial_capabilities: Optional[Set[str]] = None,
-    ) -> Dict[str, Any]:
+        roles: set[NodeRole],
+        metadata: dict[str, Any] | None = None,
+        initial_capabilities: set[str] | None = None,
+    ) -> dict[str, Any]:
         """Register a new node in the system"""
         if node_id in self.node_identities:
             raise ValueError(f"Node {node_id} already registered")
@@ -983,8 +984,8 @@ class FederatedAuthenticationSystem:
         }
 
     async def authenticate_node(
-        self, node_id: str, authentication_methods: List[AuthenticationMethod], context: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, node_id: str, authentication_methods: list[AuthenticationMethod], context: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Start authentication process for a node"""
         if node_id not in self.node_identities:
             raise ValueError(f"Node {node_id} not registered")
@@ -1010,8 +1011,8 @@ class FederatedAuthenticationSystem:
         }
 
     async def complete_authentication(
-        self, responses: List[AuthenticationResponse], session_duration: int = 3600
-    ) -> Dict[str, Any]:
+        self, responses: list[AuthenticationResponse], session_duration: int = 3600
+    ) -> dict[str, Any]:
         """Complete authentication and create session"""
         if not responses:
             raise ValueError("No authentication responses provided")
@@ -1057,7 +1058,7 @@ class FederatedAuthenticationSystem:
             "verification_details": verification_results,
         }
 
-    async def authorize_access(self, jwt_token: str, access_request: AccessRequest) -> Dict[str, Any]:
+    async def authorize_access(self, jwt_token: str, access_request: AccessRequest) -> dict[str, Any]:
         """Authorize access request using session and RBAC"""
         # Validate session
         session_validation = await self.session_manager.validate_session(
@@ -1092,7 +1093,7 @@ class FederatedAuthenticationSystem:
             },
         }
 
-    async def revoke_node_access(self, node_id: str, reason: str = "manual_revocation") -> Dict[str, Any]:
+    async def revoke_node_access(self, node_id: str, reason: str = "manual_revocation") -> dict[str, Any]:
         """Revoke all access for a node"""
         if node_id not in self.node_identities:
             raise ValueError(f"Node {node_id} not found")
@@ -1119,7 +1120,7 @@ class FederatedAuthenticationSystem:
             "new_reputation": node_identity.reputation_score,
         }
 
-    def get_system_status(self) -> Dict[str, Any]:
+    def get_system_status(self) -> dict[str, Any]:
         """Get comprehensive system status"""
         return {
             "registered_nodes": len(self.node_identities),
@@ -1142,7 +1143,7 @@ class FederatedAuthenticationSystem:
 
 # Factory function for system creation
 def create_federated_auth_system(
-    jwt_secret: Optional[str] = None, admin_node_id: Optional[str] = None
+    jwt_secret: str | None = None, admin_node_id: str | None = None
 ) -> FederatedAuthenticationSystem:
     """
     Factory function to create and initialize federated authentication system

@@ -4,19 +4,20 @@ Implements zero-knowledge proofs and cryptographic commitments for transparent a
 while preserving user privacy across constitutional tiers
 """
 
+import base64
+from dataclasses import asdict, dataclass
+from enum import Enum
 import hashlib
 import json
-import time
-import secrets
-from typing import Dict, List, Any
-from dataclasses import dataclass, asdict
-from enum import Enum
 import logging
 from pathlib import Path
+import secrets
+import time
+from typing import Any
+
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-import base64
 
 
 class ZKProofType(Enum):
@@ -65,7 +66,7 @@ class CryptographicCommitment:
     commitment_scheme: str  # e.g., "pedersen", "hash_based"
     commitment_value: str
     blinding_factor_hash: str  # Hash of blinding factor (not the factor itself)
-    verification_parameters: Dict[str, str]
+    verification_parameters: dict[str, str]
 
 
 @dataclass
@@ -75,8 +76,8 @@ class SelectiveDisclosurePackage:
     package_id: str
     timestamp: float
     original_decision_hash: str
-    disclosed_fields: List[str]
-    redacted_content: Dict[str, Any]
+    disclosed_fields: list[str]
+    redacted_content: dict[str, Any]
     integrity_proof: str
     disclosure_authorization: str
 
@@ -92,9 +93,9 @@ class PrivacyPreservingAuditSystem:
         self.storage_path.mkdir(exist_ok=True)
 
         # Storage for privacy-preserving audit components
-        self.zk_proofs: Dict[str, ZeroKnowledgeProof] = {}
-        self.commitments: Dict[str, CryptographicCommitment] = {}
-        self.selective_disclosures: Dict[str, SelectiveDisclosurePackage] = {}
+        self.zk_proofs: dict[str, ZeroKnowledgeProof] = {}
+        self.commitments: dict[str, CryptographicCommitment] = {}
+        self.selective_disclosures: dict[str, SelectiveDisclosurePackage] = {}
 
         # Cryptographic keys for system operations
         self.system_private_key = None
@@ -145,7 +146,7 @@ class PrivacyPreservingAuditSystem:
             # Load ZK proofs
             zk_file = self.storage_path / "zk_proofs.json"
             if zk_file.exists():
-                with open(zk_file, "r") as f:
+                with open(zk_file) as f:
                     data = json.load(f)
                     for proof_data in data.get("proofs", []):
                         proof = ZeroKnowledgeProof(**proof_data)
@@ -154,7 +155,7 @@ class PrivacyPreservingAuditSystem:
             # Load commitments
             commitment_file = self.storage_path / "commitments.json"
             if commitment_file.exists():
-                with open(commitment_file, "r") as f:
+                with open(commitment_file) as f:
                     data = json.load(f)
                     for commitment_data in data.get("commitments", []):
                         commitment = CryptographicCommitment(**commitment_data)
@@ -163,7 +164,7 @@ class PrivacyPreservingAuditSystem:
             # Load selective disclosures
             disclosure_file = self.storage_path / "selective_disclosures.json"
             if disclosure_file.exists():
-                with open(disclosure_file, "r") as f:
+                with open(disclosure_file) as f:
                     data = json.load(f)
                     for disclosure_data in data.get("disclosures", []):
                         disclosure = SelectiveDisclosurePackage(**disclosure_data)
@@ -179,7 +180,7 @@ class PrivacyPreservingAuditSystem:
             self.logger.error(f"Error loading existing privacy data: {e}")
 
     async def generate_constitutional_compliance_proof(
-        self, decision_data: Dict[str, Any], user_tier: str, privacy_level: PrivacyLevel
+        self, decision_data: dict[str, Any], user_tier: str, privacy_level: PrivacyLevel
     ) -> str:
         """
         Generate zero-knowledge proof of constitutional compliance
@@ -232,7 +233,7 @@ class PrivacyPreservingAuditSystem:
         verification_json = json.dumps(verification_data, sort_keys=True)
 
         # Create proof hash
-        proof_hash = hashlib.sha256(f"{commitment}{challenge}{response}{verification_json}".encode("utf-8")).hexdigest()
+        proof_hash = hashlib.sha256(f"{commitment}{challenge}{response}{verification_json}".encode()).hexdigest()
 
         # Create ZK proof object
         zk_proof = ZeroKnowledgeProof(
@@ -260,7 +261,7 @@ class PrivacyPreservingAuditSystem:
 
         return proof_id
 
-    def _verify_tier_restrictions(self, decision_data: Dict[str, Any], user_tier: str) -> bool:
+    def _verify_tier_restrictions(self, decision_data: dict[str, Any], user_tier: str) -> bool:
         """Verify that decision respects tier-specific restrictions"""
         decision_type = decision_data.get("decision_type", "unknown")
 
@@ -291,7 +292,7 @@ class PrivacyPreservingAuditSystem:
         return False
 
     async def create_cryptographic_commitment(
-        self, commitment_data: Dict[str, Any], commitment_scheme: str = "hash_based"
+        self, commitment_data: dict[str, Any], commitment_scheme: str = "hash_based"
     ) -> str:
         """
         Create cryptographic commitment for minimal disclosure scenarios
@@ -315,7 +316,7 @@ class PrivacyPreservingAuditSystem:
         elif commitment_scheme == "pedersen":
             # Simplified Pedersen commitment (in real implementation, use proper group operations)
             commitment_value = hashlib.sha256(
-                f"pedersen_{committed_data_hash}_{blinding_factor_hash}".encode("utf-8")
+                f"pedersen_{committed_data_hash}_{blinding_factor_hash}".encode()
             ).hexdigest()
 
         else:
@@ -385,7 +386,7 @@ class PrivacyPreservingAuditSystem:
             json.dump(secure_data, f, indent=2)
 
     async def create_selective_disclosure_package(
-        self, original_decision: Dict[str, Any], disclosed_fields: List[str], requester_authorization: str
+        self, original_decision: dict[str, Any], disclosed_fields: list[str], requester_authorization: str
     ) -> str:
         """
         Create selective disclosure package for controlled transparency
@@ -456,7 +457,7 @@ class PrivacyPreservingAuditSystem:
 
         return package_id
 
-    async def verify_zk_proof(self, proof_id: str) -> Dict[str, Any]:
+    async def verify_zk_proof(self, proof_id: str) -> dict[str, Any]:
         """
         Verify zero-knowledge proof of constitutional compliance
         """
@@ -470,7 +471,7 @@ class PrivacyPreservingAuditSystem:
 
         # Verify proof hash
         expected_hash = hashlib.sha256(
-            f"{proof.commitment}{proof.challenge}{proof.response}{proof.verification_data}".encode("utf-8")
+            f"{proof.commitment}{proof.challenge}{proof.response}{proof.verification_data}".encode()
         ).hexdigest()
 
         if expected_hash != proof.proof_hash:
@@ -496,7 +497,7 @@ class PrivacyPreservingAuditSystem:
 
         return verification_result
 
-    async def verify_commitment_opening(self, commitment_id: str, revealed_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def verify_commitment_opening(self, commitment_id: str, revealed_data: dict[str, Any]) -> dict[str, Any]:
         """
         Verify opening of cryptographic commitment
         """
@@ -543,7 +544,7 @@ class PrivacyPreservingAuditSystem:
         if not secure_file.exists():
             raise ValueError("Secure data file not found")
 
-        with open(secure_file, "r") as f:
+        with open(secure_file) as f:
             secure_data = json.load(f)
 
         # Decrypt symmetric key
@@ -569,7 +570,7 @@ class PrivacyPreservingAuditSystem:
 
         existing_data = {"proofs": []}
         if proof_file.exists():
-            with open(proof_file, "r") as f:
+            with open(proof_file) as f:
                 existing_data = json.load(f)
 
         # Add new proof
@@ -589,7 +590,7 @@ class PrivacyPreservingAuditSystem:
 
         existing_data = {"commitments": []}
         if commitment_file.exists():
-            with open(commitment_file, "r") as f:
+            with open(commitment_file) as f:
                 existing_data = json.load(f)
 
         existing_data["commitments"].append(asdict(commitment))
@@ -603,7 +604,7 @@ class PrivacyPreservingAuditSystem:
 
         existing_data = {"disclosures": []}
         if disclosure_file.exists():
-            with open(disclosure_file, "r") as f:
+            with open(disclosure_file) as f:
                 existing_data = json.load(f)
 
         existing_data["disclosures"].append(asdict(disclosure))
@@ -611,7 +612,7 @@ class PrivacyPreservingAuditSystem:
         with open(disclosure_file, "w") as f:
             json.dump(existing_data, f, indent=2)
 
-    def get_privacy_metrics(self) -> Dict[str, Any]:
+    def get_privacy_metrics(self) -> dict[str, Any]:
         """Get privacy preservation metrics"""
         total_operations = sum(self.privacy_metrics.values())
 
@@ -647,7 +648,7 @@ class PrivacyPreservingAuditSystem:
             },
         }
 
-    async def generate_privacy_compliance_report(self) -> Dict[str, Any]:
+    async def generate_privacy_compliance_report(self) -> dict[str, Any]:
         """Generate comprehensive privacy compliance report"""
         metrics = self.get_privacy_metrics()
 

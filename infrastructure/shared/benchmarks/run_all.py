@@ -6,11 +6,11 @@ and saves their aggregated metrics to ``performance_comparison.json``.
 
 import argparse
 import asyncio
+from dataclasses import asdict
 import json
 import logging
-import sys
-from dataclasses import asdict
 from pathlib import Path
+import sys
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 

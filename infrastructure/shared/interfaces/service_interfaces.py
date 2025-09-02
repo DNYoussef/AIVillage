@@ -4,9 +4,9 @@ Common interfaces and protocols for fog and graph services.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Protocol
-from enum import Enum
 import asyncio
+from enum import Enum
+from typing import Any, Protocol
 
 
 class ServiceStatus(Enum):
@@ -46,9 +46,9 @@ class BaseService(Protocol):
 
     async def stop(self) -> bool: ...
 
-    async def health_check(self) -> Dict[str, Any]: ...
+    async def health_check(self) -> dict[str, Any]: ...
 
-    async def get_metrics(self) -> Dict[str, Any]: ...
+    async def get_metrics(self) -> dict[str, Any]: ...
 
 
 # Fog Computing Service Interfaces
@@ -66,12 +66,12 @@ class FogOrchestrationServiceInterface(ABC):
         pass
 
     @abstractmethod
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Get system health status."""
         pass
 
     @abstractmethod
-    async def get_system_stats(self) -> Dict[str, Any]:
+    async def get_system_stats(self) -> dict[str, Any]:
         """Get comprehensive system statistics."""
         pass
 
@@ -95,12 +95,12 @@ class FogHarvestingServiceInterface(ABC):
         pass
 
     @abstractmethod
-    async def register_device(self, device_info: Dict[str, Any]) -> str:
+    async def register_device(self, device_info: dict[str, Any]) -> str:
         """Register a harvesting device."""
         pass
 
     @abstractmethod
-    async def get_harvesting_stats(self) -> Dict[str, Any]:
+    async def get_harvesting_stats(self) -> dict[str, Any]:
         """Get harvesting statistics."""
         pass
 
@@ -119,7 +119,7 @@ class FogPrivacyServiceInterface(ABC):
         pass
 
     @abstractmethod
-    async def create_hidden_service(self, service_config: Dict[str, Any]) -> str:
+    async def create_hidden_service(self, service_config: dict[str, Any]) -> str:
         """Create a hidden service."""
         pass
 
@@ -129,12 +129,12 @@ class GapDetectionServiceInterface(ABC):
     """Interface for gap detection service."""
 
     @abstractmethod
-    async def detect_gaps(self, graph_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def detect_gaps(self, graph_data: dict[str, Any]) -> list[dict[str, Any]]:
         """Detect knowledge gaps in the graph."""
         pass
 
     @abstractmethod
-    async def analyze_completeness(self, graph_data: Dict[str, Any]) -> float:
+    async def analyze_completeness(self, graph_data: dict[str, Any]) -> float:
         """Analyze graph completeness score."""
         pass
 
@@ -143,12 +143,12 @@ class KnowledgeProposalServiceInterface(ABC):
     """Interface for knowledge proposal service."""
 
     @abstractmethod
-    async def generate_proposals(self, gaps: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def generate_proposals(self, gaps: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Generate knowledge proposals for gaps."""
         pass
 
     @abstractmethod
-    async def rank_proposals(self, proposals: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def rank_proposals(self, proposals: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Rank proposals by quality."""
         pass
 
@@ -157,12 +157,12 @@ class GraphAnalysisServiceInterface(ABC):
     """Interface for graph analysis service."""
 
     @abstractmethod
-    async def analyze_structure(self, graph_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def analyze_structure(self, graph_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze graph structure."""
         pass
 
     @abstractmethod
-    async def calculate_metrics(self, graph_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def calculate_metrics(self, graph_data: dict[str, Any]) -> dict[str, Any]:
         """Calculate graph metrics."""
         pass
 
@@ -171,7 +171,7 @@ class GraphAnalysisServiceInterface(ABC):
 class ServiceEvent:
     """Base class for service events."""
 
-    def __init__(self, event_type: str, source_service: str, data: Dict[str, Any]):
+    def __init__(self, event_type: str, source_service: str, data: dict[str, Any]):
         self.event_type = event_type
         self.source_service = source_service
         self.data = data
@@ -208,17 +208,17 @@ class ServiceDiscovery(ABC):
     """Abstract service discovery interface."""
 
     @abstractmethod
-    async def register_service(self, service_name: str, service_info: Dict[str, Any]) -> None:
+    async def register_service(self, service_name: str, service_info: dict[str, Any]) -> None:
         """Register a service."""
         pass
 
     @abstractmethod
-    async def discover_service(self, service_name: str) -> Optional[Dict[str, Any]]:
+    async def discover_service(self, service_name: str) -> dict[str, Any] | None:
         """Discover a service by name."""
         pass
 
     @abstractmethod
-    async def list_services(self) -> List[Dict[str, Any]]:
+    async def list_services(self) -> list[dict[str, Any]]:
         """List all registered services."""
         pass
 
@@ -228,12 +228,12 @@ class ConfigurationProvider(ABC):
     """Abstract configuration provider."""
 
     @abstractmethod
-    async def get_config(self, service_name: str) -> Dict[str, Any]:
+    async def get_config(self, service_name: str) -> dict[str, Any]:
         """Get configuration for a service."""
         pass
 
     @abstractmethod
-    async def update_config(self, service_name: str, config: Dict[str, Any]) -> None:
+    async def update_config(self, service_name: str, config: dict[str, Any]) -> None:
         """Update service configuration."""
         pass
 
@@ -243,12 +243,12 @@ class MetricsCollector(ABC):
     """Abstract metrics collector."""
 
     @abstractmethod
-    async def record_metric(self, metric_name: str, value: float, tags: Dict[str, str] = None) -> None:
+    async def record_metric(self, metric_name: str, value: float, tags: dict[str, str] = None) -> None:
         """Record a metric value."""
         pass
 
     @abstractmethod
-    async def get_metrics(self, service_name: str) -> Dict[str, Any]:
+    async def get_metrics(self, service_name: str) -> dict[str, Any]:
         """Get metrics for a service."""
         pass
 

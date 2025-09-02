@@ -23,10 +23,10 @@ import logging
 import os
 import secrets
 import subprocess
-from typing import Any, Dict, List, Optional
+from typing import Any
 import uuid
 
-from .attestation import TEEType, ConstitutionalTier, AttestationResult, get_attestation_manager
+from .attestation import AttestationResult, ConstitutionalTier, TEEType, get_attestation_manager
 
 logger = logging.getLogger(__name__)
 
@@ -86,15 +86,15 @@ class EnclaveConfiguration:
     enable_sealing: bool = True
 
     # Constitutional constraints
-    allowed_workload_types: List[WorkloadType] = field(default_factory=list)
-    harm_categories_monitored: List[str] = field(
+    allowed_workload_types: list[WorkloadType] = field(default_factory=list)
+    harm_categories_monitored: list[str] = field(
         default_factory=lambda: ["violence", "hate_speech", "harassment", "privacy_violations"]
     )
     max_execution_time_seconds: int = 3600  # 1 hour
 
     # Communication settings
     enable_network_access: bool = False
-    allowed_endpoints: List[str] = field(default_factory=list)
+    allowed_endpoints: list[str] = field(default_factory=list)
     enable_inter_enclave_communication: bool = True
 
     # Audit and monitoring
@@ -123,8 +123,8 @@ class WorkloadManifest:
 
     # Constitutional requirements
     constitutional_tier: ConstitutionalTier = ConstitutionalTier.SILVER
-    harm_categories: List[str] = field(default_factory=list)
-    safety_constraints: Dict[str, Any] = field(default_factory=dict)
+    harm_categories: list[str] = field(default_factory=list)
+    safety_constraints: dict[str, Any] = field(default_factory=dict)
 
     # Resource requirements
     min_memory_mb: int = 256
@@ -132,8 +132,8 @@ class WorkloadManifest:
     estimated_runtime_seconds: int = 300
 
     # Inputs and outputs
-    input_schema: Dict[str, Any] = field(default_factory=dict)
-    output_schema: Dict[str, Any] = field(default_factory=dict)
+    input_schema: dict[str, Any] = field(default_factory=dict)
+    output_schema: dict[str, Any] = field(default_factory=dict)
 
     # Security requirements
     requires_network_access: bool = False
@@ -159,18 +159,18 @@ class EnclaveInstance:
     tee_type: TEEType = TEEType.SOFTWARE_TEE
 
     # Security context
-    attestation_result: Optional[AttestationResult] = None
+    attestation_result: AttestationResult | None = None
     measurement_hash: str = ""
-    sealed_secrets: Dict[str, bytes] = field(default_factory=dict)
+    sealed_secrets: dict[str, bytes] = field(default_factory=dict)
 
     # Runtime information
-    pid: Optional[int] = None
+    pid: int | None = None
     start_time: datetime = field(default_factory=lambda: datetime.now(UTC))
     last_heartbeat: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     # Workload tracking
-    current_workload: Optional[WorkloadManifest] = None
-    workload_history: List[str] = field(default_factory=list)
+    current_workload: WorkloadManifest | None = None
+    workload_history: list[str] = field(default_factory=list)
 
     # Monitoring data
     cpu_usage: float = 0.0
@@ -180,7 +180,7 @@ class EnclaveInstance:
 
     # Safety monitoring
     constitutional_violations: int = 0
-    safety_alerts: List[str] = field(default_factory=list)
+    safety_alerts: list[str] = field(default_factory=list)
 
     def is_healthy(self) -> bool:
         """Check if enclave is healthy."""
@@ -204,7 +204,7 @@ class IntelSGXEnclaveManager:
 
     def __init__(self):
         self.sgx_sdk_path = os.getenv("SGX_SDK", "/opt/intel/sgxsdk")
-        self.running_enclaves: Dict[str, subprocess.Popen] = {}
+        self.running_enclaves: dict[str, subprocess.Popen] = {}
 
     async def create_enclave(self, config: EnclaveConfiguration) -> EnclaveInstance:
         """Create Intel SGX enclave."""
@@ -337,7 +337,7 @@ class AMDSEVEnclaveManager:
 
     def __init__(self):
         self.sev_tool_path = "/usr/sbin/sevctl"
-        self.running_vms: Dict[str, str] = {}  # instance_id -> vm_id
+        self.running_vms: dict[str, str] = {}  # instance_id -> vm_id
 
     async def create_enclave(self, config: EnclaveConfiguration) -> EnclaveInstance:
         """Create AMD SEV-SNP protected VM."""
@@ -433,7 +433,7 @@ class SoftwareEnclaveManager:
     """Software-based enclave simulation for Bronze tier."""
 
     def __init__(self):
-        self.running_processes: Dict[str, subprocess.Popen] = {}
+        self.running_processes: dict[str, subprocess.Popen] = {}
 
     async def create_enclave(self, config: EnclaveConfiguration) -> EnclaveInstance:
         """Create software-simulated enclave."""
@@ -519,12 +519,12 @@ class TEEEnclaveManager:
         self.software_manager = SoftwareEnclaveManager()
 
         # State management
-        self.active_enclaves: Dict[str, EnclaveInstance] = {}
-        self.workload_manifests: Dict[str, WorkloadManifest] = {}
-        self.enclave_configurations: Dict[str, EnclaveConfiguration] = {}
+        self.active_enclaves: dict[str, EnclaveInstance] = {}
+        self.workload_manifests: dict[str, WorkloadManifest] = {}
+        self.enclave_configurations: dict[str, EnclaveConfiguration] = {}
 
         # Monitoring
-        self.monitoring_task: Optional[asyncio.Task] = None
+        self.monitoring_task: asyncio.Task | None = None
         self.running = False
 
         logger.info("TEE Enclave Manager initialized")
@@ -640,9 +640,9 @@ class TEEEnclaveManager:
         self,
         node_id: str,
         workload_manifest: WorkloadManifest,
-        input_data: Dict[str, Any],
+        input_data: dict[str, Any],
         constitutional_tier: ConstitutionalTier = ConstitutionalTier.SILVER,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Execute constitutional workload with full security lifecycle."""
 
         try:
@@ -689,11 +689,11 @@ class TEEEnclaveManager:
             logger.error(f"Constitutional workload execution failed: {e}")
             return {"success": False, "error": str(e), "execution_time": datetime.now(UTC).isoformat()}
 
-    def get_enclave_status(self, instance_id: str) -> Optional[EnclaveInstance]:
+    def get_enclave_status(self, instance_id: str) -> EnclaveInstance | None:
         """Get status of specific enclave."""
         return self.active_enclaves.get(instance_id)
 
-    def get_active_enclaves_summary(self) -> Dict[str, Any]:
+    def get_active_enclaves_summary(self) -> dict[str, Any]:
         """Get summary of all active enclaves."""
         summary = {
             "total_enclaves": len(self.active_enclaves),
@@ -747,7 +747,7 @@ class TEEEnclaveManager:
 
         return True
 
-    async def _execute_workload(self, instance_id: str, input_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_workload(self, instance_id: str, input_data: dict[str, Any]) -> dict[str, Any]:
         """Execute workload within enclave."""
         instance = self.active_enclaves[instance_id]
 
@@ -813,7 +813,7 @@ class TEEEnclaveManager:
 
 
 # Global enclave manager instance
-_enclave_manager: Optional[TEEEnclaveManager] = None
+_enclave_manager: TEEEnclaveManager | None = None
 
 
 async def get_enclave_manager() -> TEEEnclaveManager:
@@ -833,9 +833,9 @@ async def get_enclave_manager() -> TEEEnclaveManager:
 async def execute_constitutional_inference(
     node_id: str,
     model_name: str,
-    input_data: Dict[str, Any],
+    input_data: dict[str, Any],
     constitutional_tier: ConstitutionalTier = ConstitutionalTier.SILVER,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Execute constitutional AI inference in secure enclave."""
 
     manifest = WorkloadManifest(
@@ -851,7 +851,7 @@ async def execute_constitutional_inference(
     return await manager.execute_constitutional_workload(node_id, manifest, input_data, constitutional_tier)
 
 
-async def create_constitutional_training_enclave(node_id: str, training_config: Dict[str, Any]) -> str:
+async def create_constitutional_training_enclave(node_id: str, training_config: dict[str, Any]) -> str:
     """Create enclave for constitutional federated learning."""
 
     attestation_manager = await get_attestation_manager()

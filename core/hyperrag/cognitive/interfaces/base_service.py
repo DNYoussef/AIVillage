@@ -6,9 +6,9 @@ enabling clean architecture principles and dependency injection.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
-import logging
 from dataclasses import dataclass
+import logging
+from typing import Any
 
 
 @dataclass
@@ -52,7 +52,7 @@ class BaseService(ABC):
         """Check if service is properly initialized."""
         return self._initialized
 
-    def validate_dependencies(self, required_deps: List[str]) -> bool:
+    def validate_dependencies(self, required_deps: list[str]) -> bool:
         """Validate that required dependencies are available."""
         for dep in required_deps:
             if not hasattr(self.config, dep) or getattr(self.config, dep) is None:
@@ -77,9 +77,9 @@ class CacheableMixin:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._cache: Dict[str, Any] = {}
+        self._cache: dict[str, Any] = {}
 
-    def get_from_cache(self, key: str) -> Optional[Any]:
+    def get_from_cache(self, key: str) -> Any | None:
         """Get value from cache."""
         return self._cache.get(key) if self.config.cache_enabled else None
 
