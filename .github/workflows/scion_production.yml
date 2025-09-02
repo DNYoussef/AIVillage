@@ -141,7 +141,24 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: stable
+          go-version: '1.21'
+          check-latest: true
+          cache: true
+          cache-dependency-path: 'integrations/clients/rust/scion-sidecar/go.sum'
+      
+      - name: Verify Go installation
+        run: |
+          echo "Verifying Go installation and environment..."
+          go version || {
+            echo "[ERROR] Go installation failed"
+            exit 1
+          }
+          
+          echo "Go environment:"
+          go env GOROOT
+          go env GOPATH
+          go env GOCACHE
+          echo "Go is properly installed and configured"
       - name: Run Rust clippy (Main Workspace)
         continue-on-error: true
         run: |
@@ -175,12 +192,29 @@ jobs:
       - name: Run Go vet
         run: |
           if [ -d "integrations/clients/rust/scion-sidecar" ]; then
+            echo "Running Go vet analysis on scion-sidecar..."
             cd integrations/clients/rust/scion-sidecar
-            go vet ./... 2>&1 | tee ../../../../govet.txt
+            
+            # Run go vet with detailed output
+            echo "[INFO] Analyzing Go code with 'go vet'..."
+            if go vet ./... 2>&1 | tee ../../../../govet.txt; then
+              echo "[PASS] Go vet completed successfully"
+            else
+              echo "[WARNING] Go vet found potential issues (see govet.txt)"
+              echo "[INFO] This is non-blocking but should be reviewed"
+            fi
+            
+            # Check if govet.txt has any critical issues
+            if grep -E "(fatal|panic|critical)" ../../../../govet.txt >/dev/null 2>&1; then
+              echo "[WARNING] Critical issues detected in Go vet output"
+            else
+              echo "[INFO] No critical issues detected in Go vet analysis"
+            fi
+            
             cd ../../../..
           else
-            echo "No Go modules found, skipping vet"
-            echo "No Go modules found" > govet.txt
+            echo "[INFO] No Go sidecar directory found, skipping go vet"
+            echo "No Go modules found - sidecar not present in this build" > govet.txt
           fi
 
       - name: Upload Security and Lint Reports
@@ -259,21 +293,76 @@ jobs:
       - name: Build Go
         run: |
           if [ -d "integrations/clients/rust/scion-sidecar" ]; then
+            echo "Found Go sidecar directory, checking Go setup..."
             cd integrations/clients/rust/scion-sidecar
-            go build ./...
+            
+            # Check if go is available and version is compatible
+            if ! go version >/dev/null 2>&1; then
+              echo "[ERROR] Go is not available in PATH"
+              echo "Expected Go 1.21+ for scion-sidecar build"
+              exit 1
+            fi
+            
+            echo "[INFO] Go version: $(go version)"
+            
+            # Verify go.mod exists and has correct structure
+            if [ ! -f "go.mod" ]; then
+              echo "[ERROR] go.mod not found in scion-sidecar directory"
+              exit 1
+            fi
+            
+            echo "[INFO] Found go.mod: $(head -n 3 go.mod)"
+            
+            # Clean and download dependencies with timeout protection
+            echo "[INFO] Cleaning Go module cache and downloading dependencies..."
+            timeout 300s go clean -modcache || echo "[WARNING] Module cache cleanup timed out"
+            timeout 600s go mod download || {
+              echo "[ERROR] Failed to download Go dependencies within 10 minutes"
+              echo "This may indicate network issues or dependency conflicts"
+              exit 1
+            }
+            
+            echo "[INFO] Running go mod tidy to clean up dependencies..."
+            go mod tidy
+            
+            echo "[INFO] Building Go modules..."
+            go build -v ./...
+            
+            echo "[PASS] Go build completed successfully"
             cd ../../../..
           else
-            echo "No Go modules found, skipping build"
+            echo "[INFO] No Go sidecar directory found at integrations/clients/rust/scion-sidecar"
+            echo "[INFO] Skipping Go build - this is expected if sidecar is not part of this branch"
           fi
 
       - name: Test Go
         run: |
           if [ -d "integrations/clients/rust/scion-sidecar" ]; then
+            echo "Running Go tests for scion-sidecar..."
             cd integrations/clients/rust/scion-sidecar
-            go test ./...
+            
+            # Run tests with timeout and race detection
+            echo "[INFO] Running Go tests with race detection..."
+            timeout 300s go test -v -race ./... || {
+              test_exit_code=$?
+              if [ $test_exit_code -eq 124 ]; then
+                echo "[ERROR] Go tests timed out after 5 minutes"
+              else
+                echo "[ERROR] Go tests failed with exit code: $test_exit_code"
+              fi
+              
+              echo "[INFO] Attempting to run tests without race detection as fallback..."
+              timeout 180s go test -v ./... || {
+                echo "[ERROR] Fallback tests also failed"
+                exit 1
+              }
+              echo "[WARNING] Tests passed without race detection, but race detection failed"
+            }
+            
+            echo "[PASS] Go tests completed"
             cd ../../../..
           else
-            echo "No Go modules found, skipping tests"
+            echo "[INFO] No Go sidecar directory found, skipping Go tests"
           fi
 
       - name: Generate metrics snapshot
