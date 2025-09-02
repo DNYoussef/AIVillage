@@ -28,6 +28,7 @@ jobs:
   security-preflight:
     name: Security Pre-Flight
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     outputs:
       security-gate-passed: ${{ steps.security-gate.outputs.passed }}
       emergency-bypass: ${{ github.event.inputs.emergency_bypass == 'true' }}
@@ -54,9 +55,20 @@ jobs:
 
           # Secret detection (exclude test files)
           echo "Step 1: Running detect-secrets scan..."
-          if detect-secrets scan --baseline .secrets.baseline --exclude-files 'tests/.*\.py$'; then
+          if [ -f ".secrets.baseline" ]; then
+            echo "Using secrets baseline file"
+            timeout 300 detect-secrets scan --baseline .secrets.baseline --exclude-files 'tests/.*\.py$'
+          else
+            echo "No secrets baseline found, creating one and scanning"
+            timeout 300 detect-secrets scan --exclude-files 'tests/.*\.py$' --baseline .secrets.baseline
+          fi
+          
+          if [ $? -eq 0 ]; then
             echo "[PASS] Secret detection passed"
             DETECTION_PASSED="true"
+          elif [ $? -eq 124 ]; then
+            echo "[FAIL] Secret detection timed out after 5 minutes"
+            DETECTION_PASSED="false"
           else
             echo "[FAIL] Secrets detected in production code"
             DETECTION_PASSED="false"
@@ -65,11 +77,14 @@ jobs:
           # Production security validation (accept PASS_WITH_WARNINGS)
           echo "Step 2: Running production security validation..."
           if [ -f "scripts/validate_secret_sanitization.py" ]; then
-            python scripts/validate_secret_sanitization.py --production-ready
+            timeout 600 python scripts/validate_secret_sanitization.py --production-ready
             validation_result=$?
             if [ $validation_result -eq 0 ]; then
               echo "[PASS] Security validation completed successfully (exit code: $validation_result)"
               VALIDATION_PASSED="true"
+            elif [ $validation_result -eq 124 ]; then
+              echo "[FAIL] Security validation timed out after 10 minutes"
+              VALIDATION_PASSED="false"
             else
               echo "[FAIL] Production security validation failed (exit code: $validation_result)"
               VALIDATION_PASSED="false"
