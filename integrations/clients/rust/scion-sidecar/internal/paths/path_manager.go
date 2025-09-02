@@ -242,17 +242,17 @@ func (pm *PathManager) queryFreshPaths(dstIA addr.IA) ([]snet.Path, error) {
 		return nil, fmt.Errorf("daemon path query failed: %w", err)
 	}
 
-	if len(pathReply.Paths) == 0 {
+	if len(pathReply) == 0 {
 		log.WithField("dst_ia", dstIA).Warn("No paths found to destination")
 		return nil, fmt.Errorf("no paths available to %s", dstIA)
 	}
 
 	log.WithFields(log.Fields{
 		"dst_ia": dstIA,
-		"paths":  len(pathReply.Paths),
+		"paths":  len(pathReply),
 	}).Debug("Received paths from SCION daemon")
 
-	return pathReply.Paths, nil
+	return pathReply, nil
 }
 
 // convertPaths converts SCION paths to PathInfo objects
@@ -310,7 +310,11 @@ func (pm *PathManager) convertPaths(paths []snet.Path, dstIA addr.IA) []*PathInf
 func (pm *PathManager) generatePathID(path snet.Path, index int) string {
 	// Use path fingerprint if available, otherwise use index-based ID
 	if pathMeta := path.Metadata(); pathMeta != nil {
-		return fmt.Sprintf("path_%s_%d", pathMeta.String(), index)
+		// Use path interfaces for unique identification since String() is not available in v0.10.0
+		if interfaces := pathMeta.Interfaces; len(interfaces) > 0 {
+			return fmt.Sprintf("path_%v_%d", interfaces, index)
+		}
+		return fmt.Sprintf("path_meta_%d", index)
 	}
 	return fmt.Sprintf("path_%s_to_%s_%d", pm.localIA, path.Destination(), index)
 }

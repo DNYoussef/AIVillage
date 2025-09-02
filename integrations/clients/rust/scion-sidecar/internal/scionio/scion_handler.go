@@ -131,8 +131,15 @@ func (h *ScionIOHandler) initScionComponents() error {
 		Host: &net.UDPAddr{IP: net.IPv4(0, 0, 0, 0), Port: 0}, // Bind to any port
 	}
 
-	// Create SCION packet connection
-	conn, err := snet.Listen(h.ctx, "udp", localAddr, addr.SvcNone)
+	// Create SCION packet connection using the v0.10.0 API
+	// Initialize network with daemon connection
+	network := &snet.SCIONNetwork{
+		Dispatcher: h.dispatcher,
+		Connector:  h.daemon,
+	}
+	
+	// Create packet connection
+	conn, err := network.Listen(h.ctx, "udp", localAddr)
 	if err != nil {
 		return fmt.Errorf("failed to create SCION connection: %w", err)
 	}
@@ -142,8 +149,8 @@ func (h *ScionIOHandler) initScionComponents() error {
 	h.conn = conn
 
 	log.WithFields(log.Fields{
-		"local_addr": conn.LocalAddr(),
-		"bound_port": conn.LocalAddr().(*snet.UDPAddr).Host.(*net.UDPAddr).Port,
+		"local_addr": h.conn.LocalAddr(),
+		"bound_port": getPortFromAddr(h.conn.LocalAddr()),
 	}).Info("SCION networking components initialized")
 
 	return nil
@@ -203,8 +210,11 @@ func (h *ScionIOHandler) packetReceiver() {
 				continue
 			}
 
-			// Read packet
-			packet, err := h.conn.ReadFrom(buffer)
+			// Read packet using v0.10.0 API
+			packet := &snet.Packet{
+				Bytes: buffer,
+			}
+			err := h.conn.ReadFrom(packet)
 			if err != nil {
 				if !isTimeoutError(err) && h.ctx.Err() == nil {
 					log.WithError(err).Error("Failed to read SCION packet")
@@ -251,8 +261,12 @@ func (h *ScionIOHandler) SendPacket(ctx context.Context, rawPacket []byte, dstIA
 		return fmt.Errorf("failed to set write deadline: %w", err)
 	}
 
-	// Send packet
-	n, err := h.conn.WriteTo(rawPacket, destination)
+	// Send packet using v0.10.0 API - WriteTo now expects a packet pointer
+	packet := &snet.Packet{
+		Bytes:       rawPacket,
+		Destination: destination,
+	}
+	n, err := h.conn.WriteTo(packet, destination)
 	if err != nil {
 		h.recordError()
 		return fmt.Errorf("failed to send SCION packet: %w", err)
@@ -305,7 +319,11 @@ func (h *ScionIOHandler) GetLocalAddr() net.Addr {
 	if h.conn == nil {
 		return nil
 	}
-	return h.conn.LocalAddr()
+	// LocalAddr is available on the connection
+	if localAddr := h.conn.LocalAddr(); localAddr != nil {
+		return localAddr
+	}
+	return nil
 }
 
 // GetStats returns current I/O statistics
@@ -384,6 +402,21 @@ func isTimeoutError(err error) bool {
 		return netErr.Timeout()
 	}
 	return false
+}
+
+// getPortFromAddr extracts port number from network address
+func getPortFromAddr(addr net.Addr) int {
+	if addr == nil {
+		return 0
+	}
+	if udpAddr, ok := addr.(*snet.UDPAddr); ok {
+		if udpAddr.Host != nil {
+			if hostUDP, ok := udpAddr.Host.(*net.UDPAddr); ok {
+				return hostUDP.Port
+			}
+		}
+	}
+	return 0
 }
 
 // IOStats represents I/O statistics
