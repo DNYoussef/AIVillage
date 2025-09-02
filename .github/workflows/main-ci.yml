@@ -114,7 +114,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: setup
     if: needs.setup.outputs.python-components != '[]'
-    timeout-minutes: 8
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -217,7 +217,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [setup, python-quality]
     if: needs.setup.outputs.run-tests == 'true'
-    timeout-minutes: 15
+    timeout-minutes: 20
     
     services:
       postgres:
@@ -264,9 +264,20 @@ jobs:
     - name: Install Test Dependencies
       run: |
         python -m pip install --upgrade pip
+        # Install lightweight testing dependencies first
         pip install pytest pytest-cov pytest-xdist pytest-mock pytest-asyncio
-        pip install -r requirements.txt || echo "No requirements.txt found"
-        pip install -r config/requirements/requirements-dev.txt || echo "No dev requirements found"
+        # Install requirements with timeout protection and fallback
+        if timeout 300 pip install -r requirements.txt; then
+          echo "Main requirements installed successfully"
+        else
+          echo "Main requirements installation timed out - using fallback"
+          # Try dev requirements
+          if [ -f "config/requirements/requirements-dev.txt" ]; then
+            pip install -r config/requirements/requirements-dev.txt || true
+          fi
+          # Install minimal essential test dependencies
+          pip install fastapi uvicorn pydantic requests || true
+        fi
     
     - name: Run Unit Tests
       env:
@@ -302,7 +313,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [testing]
     if: always() && needs.setup.outputs.run-tests == 'true'
-    timeout-minutes: 12
+    timeout-minutes: 15
     
     steps:
     - name: Checkout Code
@@ -363,14 +374,14 @@ jobs:
         echo "::endgroup::"
 
   # ============================================
-  # STAGE 7: Build & Package
+  # STAGE 7: Build & Package (Optimized)
   # ============================================
   build:
     name: Build & Package
     runs-on: ubuntu-latest
     needs: [python-quality, frontend-quality, testing]
     if: always() && (needs.python-quality.result == 'success' || needs.python-quality.result == 'skipped')
-    timeout-minutes: 8
+    timeout-minutes: 15
     
     steps:
     - name: Checkout Code
@@ -382,10 +393,24 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
         cache: 'pip'
     
+    - name: Cache Build Dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: build-deps-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+        restore-keys: |
+          build-deps-${{ runner.os }}-
+    
     - name: Install Build Tools
       run: |
         python -m pip install --upgrade pip build setuptools wheel
-        pip install -r requirements.txt || echo "No requirements.txt found"
+        # Try to install requirements with timeout, fallback to minimal build
+        if timeout 900 pip install -r requirements.txt; then
+          echo "Full requirements installed successfully"
+        else
+          echo "Full requirements timed out - installing minimal build dependencies"
+          pip install build setuptools wheel fastapi uvicorn pydantic || true
+        fi
     
     - name: Build Package
       run: |

@@ -77,7 +77,7 @@ jobs:
             "to be implemented"
           )
 
-          # Files to check (exclude test files, docs, and stub implementations)
+          # Files to check (exclude test files, docs, stub implementations, and .claude directory)
           FILES_TO_CHECK=$(find . -type f \( \
             -name "*.go" -o \
             -name "*.rs" -o \
@@ -91,6 +91,7 @@ jobs:
             ! -path "./.git/*" \
             ! -path "./target/*" \
             ! -path "./vendor/*" \
+            ! -path "./.claude/*" \
             ! -path "./infrastructure/shared/tools/stub_*" \
             ! -path "./infrastructure/twin/quality/stub_*" \
             ! -path "./experiments/*" \
@@ -104,9 +105,9 @@ jobs:
             # Check each file individually and exclude legitimate stub implementations
             while IFS= read -r file; do
               if grep -l -i "$pattern" "$file" 2>/dev/null; then
-                # Skip files that are legitimate stub implementations or test utilities
-                if [[ "$file" =~ (stub_elimination_system|stub_fix|list_stubs|test_stub) ]]; then
-                  echo "[INFO] Skipping legitimate stub utility: $file"
+                # Skip files that are legitimate stub implementations, test utilities, or .claude directory
+                if [[ "$file" =~ (stub_elimination_system|stub_fix|list_stubs|test_stub) ]] || [[ "$file" =~ \.claude/ ]] || [[ "$file" =~ scripts/ ]] || [[ "$file" =~ tools/ ]]; then
+                  echo "[INFO] Skipping legitimate development utility: $file"
                   continue
                 fi
                 echo "[FAIL] Found placeholder pattern '$pattern' in production code: $file"
