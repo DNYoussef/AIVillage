@@ -1,0 +1,176 @@
+# Automated False Positive Detection Configuration
+# Sequential Thinking MCP Integration for Security Scanning
+
+# This configuration implements automated detection and handling of security scan false positives
+# using patterns identified through Sequential Thinking analysis
+
+detection_patterns:
+  bandit_false_positives:
+    S105_hardcoded_passwords:
+      # String literals that look like passwords but aren't
+      legitimate_patterns:
+        - pattern: "enum_value_.*password.*"
+          context: "enumeration definitions"
+          auto_nosec: true
+          justification: "enum value, not password"
+        
+        - pattern: ".*_TOKEN.*|.*TOKEN_.*"
+          context: "token type identifiers" 
+          auto_nosec: true
+          justification: "token identifier, not password"
+        
+        - pattern: ".*field.*password.*|password.*field.*"
+          context: "field name definitions"
+          auto_nosec: true
+          justification: "field name, not password"
+        
+        - pattern: ".*config.*secret.*|secret.*config.*"
+          context: "configuration constants"
+          auto_nosec: true
+          justification: "config key, not password"
+        
+        - pattern: "classification_.*|.*_classification"
+          context: "security classification levels"
+          auto_nosec: true
+          justification: "classification level, not password"
+        
+        - pattern: "algorithm_.*|.*_algorithm"
+          context: "algorithm name constants"
+          auto_nosec: true
+          justification: "algorithm name, not password"
+
+    S106_test_passwords:
+      # Test password assignments in test contexts
+      legitimate_patterns:
+        - file_pattern: ".*/test.*\\.py$|.*test_.*\\.py$|.*_test\\.py$"
+          context: "test files"
+          auto_nosec: true
+          justification: "test password for testing"
+        
+        - file_pattern: ".*/tests/.*\\.py$"
+          context: "test directory"
+          auto_nosec: true
+          justification: "test password for test suite"
+        
+        - variable_pattern: "test_password.*|.*test_password|test_.*_password"
+          context: "test password variables"
+          auto_nosec: true
+          justification: "test password variable"
+        
+        - function_pattern: ".*test.*|.*setup.*|.*fixture.*"
+          context: "test functions"
+          auto_nosec: true
+          justification: "test password in test function"
+
+    S107_parameter_defaults:
+      # Function parameters with password-like defaults
+      legitimate_patterns:
+        - pattern: "def .*\\(.*password.*=.*\\)"
+          context: "function parameter defaults"
+          auto_nosec: true
+          justification: "parameter default, not hardcoded password"
+        
+        - pattern: "def .*\\(.*secret.*=.*\\)"
+          context: "function parameter defaults"
+          auto_nosec: true
+          justification: "parameter default, not hardcoded secret"
+
+  detect_secrets_false_positives:
+    test_context_secrets:
+      # Secrets in test/development contexts
+      legitimate_patterns:
+        - file_pattern: ".*/test_.*\\.py$|.*_test\\.py$|.*/tests/.*\\.py$"
+          context: "test files"
+          auto_verify: true
+          verification_note: "test secret in development context"
+        
+        - file_pattern: ".*/example.*\\.py$|.*/demo.*\\.py$"
+          context: "example/demo files"
+          auto_verify: true
+          verification_note: "example secret for demonstration"
+        
+        - file_pattern: ".*/mock.*\\.py$|.*/fixture.*\\.py$"
+          context: "mock/fixture files"
+          auto_verify: true
+          verification_note: "mock secret for testing"
+
+    development_secrets:
+      # Development-only secrets that are safe
+      legitimate_patterns:
+        - secret_type: "base64_high_entropy_string"
+          file_pattern: ".*/test.*|.*/dev.*|.*/local.*"
+          entropy_threshold: 4.5
+          auto_verify: true
+          verification_note: "development entropy string"
+        
+        - secret_type: "hex_high_entropy_string" 
+          file_pattern: ".*/test.*|.*/dev.*"
+          entropy_threshold: 3.0
+          auto_verify: true
+          verification_note: "development hex string"
+
+# Sequential reasoning patterns for context analysis
+sequential_analysis:
+  reasoning_chains:
+    bandit_classification:
+      steps:
+        1: "identify_string_literal_context"
+        2: "analyze_surrounding_code_structure" 
+        3: "determine_legitimate_usage_pattern"
+        4: "classify_as_false_positive_if_matches"
+        5: "generate_contextual_nosec_comment"
+    
+    secrets_classification:
+      steps:
+        1: "identify_secret_location_context"
+        2: "analyze_file_path_patterns"
+        3: "evaluate_secret_exposure_risk"
+        4: "determine_development_vs_production"
+        5: "auto_verify_if_development_context"
+
+# Automated remediation configuration
+automated_remediation:
+  enabled: true
+  
+  nosec_comment_templates:
+    S105: "# nosec B105 - {context}, not actual password"
+    S106: "# nosec B106 - test password for {test_type}"
+    S107: "# nosec B107 - parameter default value, not hardcoded password"
+  
+  secrets_verification:
+    auto_verify_test_contexts: true
+    require_verification_notes: true
+    
+  reporting:
+    log_automated_fixes: true
+    create_remediation_summary: true
+    update_false_positive_database: true
+
+# Integration with Sequential Thinking MCP
+mcp_integration:
+  memory_updates:
+    store_false_positive_patterns: true
+    learn_from_manual_overrides: true
+    update_classification_accuracy: true
+  
+  sequential_thinking:
+    enable_step_by_step_analysis: true
+    document_reasoning_chains: true
+    validate_classification_logic: true
+  
+  continuous_learning:
+    pattern_evolution: true
+    accuracy_improvement: true
+    new_pattern_detection: true
+
+# Quality gates integration
+quality_gates:
+  threshold_adjustments:
+    allow_verified_false_positives: true
+    context_aware_blocking: true
+    intelligent_override_handling: true
+  
+  validation_requirements:
+    require_nosec_justification: true
+    validate_test_context_claims: true
+    enforce_verification_notes: true

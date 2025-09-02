@@ -12,8 +12,75 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional
 
-# Import the unified linting manager
-from unified_linting_manager import UnifiedLintingPipeline, unified_linting_manager
+# Set up basic logging first
+import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+# Import the unified linting manager with proper error handling
+try:
+    from .unified_linting_manager import UnifiedLintingPipeline, unified_linting_manager
+    logger.info("Successfully imported unified linting manager from package")
+except ImportError:
+    try:
+        from unified_linting_manager import UnifiedLintingPipeline, unified_linting_manager
+        logger.info("Successfully imported unified linting manager from local directory")
+    except ImportError as e:
+        logger.error(f"Failed to import unified linting manager: {e}")
+        # Create a minimal fallback
+        import asyncio
+        from pathlib import Path
+        
+        class MinimalLintingResult:
+            def __init__(self, tool, status="error", message="Tool unavailable"):
+                self.tool = tool
+                self.status = status
+                self.issues_found = 0
+                self.critical_issues = 0
+                self.security_issues = 0
+                self.performance_issues = 0
+                self.style_issues = 0
+                self.execution_time = 0.0
+                self.suggestions = [message]
+                self.details = {"error": message}
+                
+        class UnifiedLintingPipeline:
+            def __init__(self, config_path=None):
+                self.config_path = config_path
+                logger.error("Using minimal fallback - full linting unavailable")
+            
+            async def run_full_pipeline(self, target_paths=None):
+                return {
+                    "error": "Unified linting manager not available",
+                    "fallback": True,
+                    "pipeline_summary": {
+                        "timestamp": "unknown",
+                        "total_tools_run": 0,
+                        "total_issues_found": 0,
+                        "critical_issues": 0,
+                        "security_issues": 0,
+                        "performance_issues": 0,
+                        "style_issues": 0,
+                        "total_execution_time": 0.0
+                    },
+                    "recommendations": ["Install required linting tools and dependencies"],
+                    "next_steps": ["Check installation and configuration"]
+                }
+            
+            async def run_python_linting(self, target_paths):
+                return {"fallback": MinimalLintingResult("python", "error", "Python linting unavailable")}
+            
+            async def run_frontend_linting(self, target_paths):
+                return {"fallback": MinimalLintingResult("frontend", "error", "Frontend linting unavailable")}
+            
+            async def run_security_linting(self, target_paths):
+                return {"fallback": MinimalLintingResult("security", "error", "Security linting unavailable")}
+            
+            async def initialize_mcp_connections(self):
+                logger.warning("MCP connections not available in fallback mode")
+                return False
+        
+        unified_linting_manager = UnifiedLintingPipeline()
 
 
 def setup_logging(debug: bool = False):

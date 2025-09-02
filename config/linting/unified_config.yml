@@ -1,18 +1,15 @@
-# Unified Linting Configuration for AIVillage
-# MCP-Enhanced Multi-Agent Code Review System
+# AIVillage Unified Linting Configuration
+# Comprehensive configuration for all linting tools and quality gates
+# Last Updated: 2025-01-09
 
-version: "2.1.0"
-mcp_integration:
-  github_automation: true
-  sequential_thinking: true
-  memory_learning: true
-  context7_caching: true
-
-# Python Linting Configuration (Unified)
+# ============================================================================
+# PYTHON LINTING CONFIGURATION
+# ============================================================================
 python:
+  # Ruff - Fast Python linter and formatter
   ruff:
     line_length: 120
-    target_version: "py311"
+    target_version: "py312"
     select:
       - "E"    # pycodestyle errors
       - "W"    # pycodestyle warnings  
@@ -22,165 +19,115 @@ python:
       - "B"    # flake8-bugbear
       - "C4"   # flake8-comprehensions
       - "SIM"  # flake8-simplify
-      - "S"    # bandit (security)
+      - "S"    # flake8-bandit (security)
       - "N"    # pep8-naming
-      - "BLE"  # flake8-blind-except
-      - "RUF"  # Ruff-specific
+      - "D"    # pydocstyle
     ignore:
-      - "E501"    # Line too long (handled by black)
-      - "F821"    # Undefined name (too many false positives in dynamic imports)
-      - "S101"    # Use of assert (common in tests)
-      - "S311"    # random module (not cryptographically secure, but okay for non-security)
+      - "E501"  # Line too long (handled by black)
+      - "D100"  # Missing docstring in public module
+      - "D101"  # Missing docstring in public class
+      - "D102"  # Missing docstring in public method
+      - "D103"  # Missing docstring in public function
+      - "S105"  # Possible hardcoded password (false positives)
     exclude:
-      - "experimental"
-      - "deprecated"
-      - "archive" 
-      - "tmp"
-      - "tools/development/build"
-      - "**/__pycache__"
-      - "**/.pytest_cache"
+      - "experimental/"
+      - "deprecated/"
+      - "archive/"
+      - "tmp/"
+      - "build/"
+      - "dist/"
+      - "__pycache__/"
+      - ".venv/"
+      - "tools/development/build/workspace/"
     per_file_ignores:
-      "tests/*": ["S101", "S106", "S108"]  # Allow asserts and hardcoded values in tests
-      "scripts/*": ["S602", "S603"]       # Allow subprocess usage in scripts
-    fix: true
-    show_fixes: true
+      "tests/*": ["S101", "D100", "D101", "D102", "D103"]  # Allow assert in tests
+      "__init__.py": ["F401"]  # Allow unused imports in __init__.py
 
+  # Black - Code formatter
   black:
     line_length: 120
-    target_version: ["py311"]
+    target_version: ["py312"]
     skip_string_normalization: false
-    exclude: |
-      /(
-        experimental
-        | deprecated
-        | archive
-        | tmp
-        | tools/development/build
-      )/
-    preview: false
-
+    exclude: "/(experimental|deprecated|archive|tmp|build|dist|__pycache__|.venv|tools/development/build/workspace)/"
+    
+  # MyPy - Static type checker
   mypy:
-    python_version: "3.11"
-    ignore_missing_imports: true
-    no_strict_optional: true
-    warn_return_any: false
+    python_version: "3.12"
+    warn_return_any: true
     warn_unused_configs: true
-    warn_redundant_casts: true
-    warn_unused_ignores: false
-    strict_equality: true
+    disallow_untyped_defs: false  # Gradually enable
+    disallow_incomplete_defs: false  # Gradually enable
     check_untyped_defs: true
-    exclude: |
-      (?x)(
-        experimental|
-        deprecated|
-        archive|
-        tmp|
-        tools/development/build
-      )
-    plugins:
-      - "pydantic.mypy"
-
+    disallow_subclassing_any: true
+    disallow_untyped_calls: false  # Gradually enable
+    disallow_untyped_decorators: false  # Gradually enable
+    ignore_missing_imports: true
+    no_implicit_optional: true
+    warn_redundant_casts: true
+    warn_unused_ignores: true
+    show_error_codes: true
+    exclude:
+      - "experimental/"
+      - "deprecated/"
+      - "archive/"
+      - "tmp/"
+      - "tools/development/build/workspace/"
+    
+  # Bandit - Security linter
   bandit:
+    tests: ["B101", "B102", "B103", "B104", "B105", "B106", "B107", "B108", "B110", 
+            "B112", "B201", "B301", "B302", "B303", "B304", "B305", "B306", "B307", "B308", "B309", "B310", "B311", "B312", "B313", "B314", "B315", "B316", "B317", "B318", "B319", "B320", "B321", "B322", "B323", "B324", "B325",
+            "B401", "B402", "B403", "B404", "B405", "B406", "B407", "B408", "B409", "B410", "B411", "B412", "B413",
+            "B501", "B502", "B503", "B504", "B505", "B506", "B507", "B508", "B509",
+            "B601", "B602", "B603", "B604", "B605", "B606", "B607", "B608", "B609", "B610", "B611",
+            "B701", "B702", "B703"]
+    skips: ["B101", "B601"]  # Skip assert and shell usage in specific contexts
     exclude_dirs:
-      - "tests"
-      - "experimental"
-      - "deprecated"
-      - "tools/development"
+      - "tests/"
+      - "experimental/"
+      - "deprecated/"
+      - "tools/development/build/workspace/"
     severity_level: "medium"
     confidence_level: "medium"
-    format: "json"
     recursive: true
-    ignore_nosec: false
-    skips:
-      - "B101"  # Test for use of assert (handled separately)
-      - "B601"  # paramiko_calls (legitimate usage)
-    reports:
-      - "json"
-      - "txt"
 
-  isort:
-    profile: "black"
-    line_length: 120
-    multi_line_output: 3
-    force_grid_wrap: 0
-    use_parentheses: true
-    ensure_newline_before_comments: true
-    combine_as_imports: true
-    skip_glob:
-      - "experimental/*"
-      - "deprecated/*"
-      - "archive/*"
-      - "tmp/*"
-
-# Frontend Linting Configuration (Unified)
+# ============================================================================
+# FRONTEND LINTING CONFIGURATION  
+# ============================================================================
 frontend:
+  # ESLint - JavaScript/TypeScript linting
   eslint:
-    root: true
-    parser: "@typescript-eslint/parser"
-    parserOptions:
-      ecmaVersion: 2022
-      sourceType: "module"
-      ecmaFeatures:
-        jsx: true
-    plugins:
-      - "@typescript-eslint"
-      - "react"
-      - "react-hooks"
-      - "security"
-      - "import"
     extends:
       - "eslint:recommended"
       - "@typescript-eslint/recommended"
-      - "plugin:react/recommended"
-      - "plugin:react-hooks/recommended"
-      - "plugin:security/recommended"
       - "prettier"
+    parser: "@typescript-eslint/parser"
+    plugins:
+      - "@typescript-eslint"
+      - "security"
+      - "import"
+    parserOptions:
+      ecmaVersion: 2023
+      sourceType: "module"
+      project: "./tsconfig.json"
+    rules:
+      no-console: "warn"
+      no-unused-vars: "error"
+      prefer-const: "error"
+      no-var: "error"
+      eqeqeq: "error"
+      curly: "error"
+      security/detect-object-injection: "error"
+      security/detect-non-literal-regexp: "error"
+      import/order: "error"
+      "@typescript-eslint/no-unused-vars": "error"
+      "@typescript-eslint/explicit-function-return-type": "warn"
     env:
       browser: true
       node: true
-      es2022: true
-    rules:
-      # Error Prevention
-      "no-console": "warn"
-      "no-debugger": "error"
-      "no-unused-vars": "off"  # Handled by TypeScript
-      "@typescript-eslint/no-unused-vars": "error"
-      
-      # Security
-      "security/detect-object-injection": "warn"
-      "security/detect-non-literal-regexp": "warn"
-      "security/detect-unsafe-regex": "error"
-      
-      # Code Quality
-      "prefer-const": "error"
-      "no-var": "error"
-      "eqeqeq": "error"
-      "curly": "error"
-      
-      # React Best Practices
-      "react/prop-types": "off"  # Using TypeScript
-      "react/react-in-jsx-scope": "off"  # Not needed in React 17+
-      "react-hooks/exhaustive-deps": "warn"
-      
-      # Import Organization
-      "import/order": ["error", {
-        "groups": [
-          "builtin",
-          "external", 
-          "internal",
-          "parent",
-          "sibling",
-          "index"
-        ],
-        "newlines-between": "always"
-      }]
-    ignorePatterns:
-      - "node_modules/"
-      - "dist/"
-      - "build/"
-      - "coverage/"
-      - "*.min.js"
-
+      es2023: true
+    
+  # Prettier - Code formatter
   prettier:
     printWidth: 120
     tabWidth: 2
@@ -188,350 +135,303 @@ frontend:
     semi: true
     singleQuote: true
     quoteProps: "as-needed"
-    jsxSingleQuote: false
     trailingComma: "es5"
     bracketSpacing: true
     bracketSameLine: false
     arrowParens: "avoid"
-    endOfLine: "lf"
-    embeddedLanguageFormatting: "auto"
-    ignore:
-      - "node_modules"
-      - "dist"
-      - "build"
-      - "coverage"
-      - "*.min.js"
-      - "*.min.css"
-
+    
+  # TypeScript compiler options
   typescript:
-    strict: true
-    noImplicitAny: true
-    strictNullChecks: true
-    strictFunctionTypes: true
-    noImplicitReturns: true
-    noUnusedLocals: true
-    noUnusedParameters: true
-    exactOptionalPropertyTypes: true
-    target: "ES2022"
-    module: "ESNext"
-    moduleResolution: "node"
-    allowSyntheticDefaultImports: true
-    esModuleInterop: true
-    skipLibCheck: true
-    forceConsistentCasingInFileNames: true
-    resolveJsonModule: true
-    isolatedModules: true
-    noEmit: true
-    jsx: "react-jsx"
+    compilerOptions:
+      target: "ES2023"
+      module: "commonjs"
+      lib: ["ES2023", "DOM"]
+      strict: true
+      noImplicitAny: true
+      strictNullChecks: true
+      noImplicitReturns: true
+      noUnusedLocals: true
+      noUnusedParameters: true
+    exclude:
+      - "node_modules/"
+      - "dist/"
+      - "build/"
 
-  stylelint:
-    extends:
-      - "stylelint-config-standard"
-      - "stylelint-config-prettier"
-    plugins:
-      - "stylelint-order"
-      - "stylelint-scss"
-    rules:
-      "order/properties-alphabetical-order": true
-      "declaration-empty-line-before": null
-      "rule-empty-line-before": null
-      "scss/at-import-partial-extension": null
-
-# Security Linting Configuration (Cross-Language)
+# ============================================================================
+# SECURITY CONFIGURATION
+# ============================================================================
 security:
+  # Security policy settings
   block_on_critical: true
+  block_on_high: false
   auto_fix: false
   report_format: "sarif"
   fail_on_severity: "HIGH"
   
-  detect_secrets:
-    baseline: ".secrets.baseline"
-    exclude_files: |
-      .*\.git/.*
-      .*node_modules/.*
-      .*\.pytest_cache/.*
-      .*__pycache__/.*
-      .*\.coverage
-      .*coverage\.xml
-    exclude_lines: |
-      # secrets-exclude-line
-      # pragma: allowlist secret
-    plugins:
-      - "ArtifactoryDetector"
-      - "AWSKeyDetector"
-      - "AzureStorageKeyDetector"
-      - "Base64HighEntropyString"
-      - "BasicAuthDetector"
-      - "CloudantDetector"
-      - "GitHubTokenDetector"
-      - "HexHighEntropyString"
-      - "IbmCloudIamDetector"
-      - "IbmCosHmacDetector"
-      - "JwtTokenDetector"
-      - "KeywordDetector"
-      - "MailchimpDetector"
-      - "NpmDetector"
-      - "PrivateKeyDetector"
-      - "SlackDetector"
-      - "SoftlayerDetector"
-      - "SquareOAuthDetector"
-      - "StripeDetector"
-      - "TwilioKeyDetector"
+  security_policy:
+    block_on_critical: true
+    block_on_high: false
+    max_medium_issues: 10
+    max_low_issues: 50
+    required_tools: ["bandit", "detect-secrets", "pip-audit", "semgrep"]
+    severity_thresholds:
+      critical: 0
+      high: 2
+      medium: 10
+      low: 50
+    exempted_rules: []
+    custom_rules_path: "config/security/custom-rules"
+  
+  # Tool-specific configurations
+  tools:
+    bandit:
+      enabled: true
+      config_file: ".bandit"
+      severity: ["HIGH", "MEDIUM"]
+      confidence: ["HIGH", "MEDIUM"]
+    
+    semgrep:
+      enabled: true
+      rulesets:
+        - "security"
+        - "owasp-top-ten"
+        - "cwe-top-25"
+        - "python"
+      custom_rules: "config/security/custom-semgrep-rules"
+      timeout: 300
+    
+    detect_secrets:
+      enabled: true
+      baseline: ".secrets.baseline"
+      plugins:
+        - "ArtifactoryDetector"
+        - "AWSKeyDetector" 
+        - "AzureStorageKeyDetector"
+        - "Base64HighEntropyString"
+        - "BasicAuthDetector"
+        - "CloudantDetector"
+        - "DiscordBotTokenDetector"
+        - "GitHubTokenDetector"
+        - "HexHighEntropyString"
+        - "IBMCloudIamDetector"
+        - "IBMCosHmacDetector"
+        - "IPPublicDetector"
+        - "JwtTokenDetector"
+        - "KeywordDetector"
+        - "MailchimpDetector"
+        - "NpmDetector"
+        - "PrivateKeyDetector"
+        - "SlackDetector"
+        - "SoftlayerDetector"
+        - "SquareOAuthDetector"
+        - "StripeDetector"
+        - "TwilioKeyDetector"
+      exclude_files: "^(tests/|experimental/|tools/development/build/workspace/)"
+      exclude_lines: "password|NOPASSWORD"
+    
+    pip_audit:
+      enabled: true
+      format: "json"
+      local: true
+      desc: true
+      cache_dir: ".pip-audit-cache"
+      
+    safety:
+      enabled: true
+      ignore_ids: []
+      full_report: true
 
-  semgrep:
-    config:
-      - "auto"
-      - "security"
-      - "owasp-top-ten"
-      - "cwe-top-25"
-    severity: ["ERROR", "WARNING"]
-    exclude_dirs:
-      - "tests"
-      - "experimental"
-      - "node_modules"
-      - "vendor"
-    output_format: "sarif"
-    metrics: "off"
-    quiet: false
-    verbose: false
-
-  pip_audit:
-    format: "json"
-    cache_dir: ".pip-audit-cache"
-    local: false
-    require_hashes: false
-    vulnerability_service: "pypi"
-    ignore_vulns: []  # Add CVE IDs to ignore if needed
-    fix: false
-    dry_run: false
-
-  safety:
-    json: true
-    full_report: true
-    cache: true
-    ignore: []  # Add vulnerability IDs to ignore if needed
-
-# Documentation Linting
+# ============================================================================
+# DOCUMENTATION LINTING
+# ============================================================================
 documentation:
   markdownlint:
-    extends: "markdownlint/style/prettier"
-    rules:
-      MD013: false  # Line length (handled by prettier)
-      MD033: false  # HTML allowed
-      MD041: false  # First line need not be h1
-    ignore:
-      - "node_modules"
-      - "CHANGELOG.md"
-      - "vendor"
-
+    enabled: true
+    config:
+      MD013: false  # Line length
+      MD033: false  # Allow HTML
+      MD041: false  # First line in file should be a top level header
+    exclude:
+      - "node_modules/"
+      - ".venv/"
+      - "build/"
+      - "dist/"
+  
   textlint:
-    plugins:
-      - "@textlint/markdown"
-    rules:
-      "@textlint-rule/no-dead-link": true
-      "terminology": {
-        "defaultTerms": false,
-        "terms": "config/textlint-terms.json"
-      }
+    enabled: false  # Optional advanced text linting
 
-# Quality Thresholds and Gates
+# ============================================================================
+# QUALITY GATES AND THRESHOLDS  
+# ============================================================================
 quality_gates:
-  security:
-    critical: 0
-    high: 0
-    medium: 5
-    block_on_critical: true
-    block_on_high: true
-    
-  performance:
-    regression_threshold: 0.05  # 5% performance regression
-    complexity_limit: 10
-    max_execution_time: 300     # 5 minutes per tool
-    
-  style:
-    max_total_issues: 100
-    max_critical_issues: 0
-    max_issues_per_file: 10
-    
-  coverage:
-    minimum: 60
-    target: 80
-    block_on_minimum: false
-    
-  maintainability:
-    min_overall_score: 60.0
-    min_security_score: 80.0
-    max_technical_debt_ratio: 0.15
-
-# GitHub Integration Settings
-github_integration:
-  auto_pr_checks: true
-  auto_fix_commits: true
-  quality_gates: true
-  block_merge_on_critical: true
+  overall_score_threshold: 80
+  security_score_threshold: 90
+  performance_score_threshold: 70
+  style_score_threshold: 75
   
-  required_status_checks:
-    - "unified-linting/python"
-    - "unified-linting/frontend" 
-    - "unified-linting/security"
-    - "unified-linting/quality-gate"
+  fail_conditions:
+    critical_security_issues: 0
+    high_security_issues: 2
+    total_issues_per_file: 10
+    complexity_score: 10
+    technical_debt_ratio: 0.3
   
-  auto_fix_tools:
-    - "black"
-    - "prettier"
-    - "ruff --fix"
-    - "eslint --fix"
-  
-  pr_comment_template: |
-    ## 🔍 Unified Code Quality Report
-    
-    **Overall Quality Score**: {overall_score}/100
-    **Security Score**: {security_score}/100
-    **Quality Gate Status**: {quality_gate_status}
-    
-    ### 📊 Issues Summary
-    - **Total Issues**: {total_issues}
-    - **Critical Issues**: {critical_issues}  
-    - **Security Issues**: {security_issues}
-    - **Performance Issues**: {performance_issues}
-    - **Style Issues**: {style_issues}
-    
-    ### 🔧 Tools Run
-    {tools_summary}
-    
-    ### 💡 Recommendations
-    {recommendations}
-    
-    ### 📝 Next Steps
-    {next_steps}
-    
-    ---
-    *Generated by AIVillage Unified Linting Pipeline with MCP Integration*
+  metrics_weights:
+    security: 0.35
+    performance: 0.25
+    style: 0.20
+    maintainability: 0.15
+    coverage: 0.05
 
-  workflow_dispatch_inputs:
-    run_full_scan:
-      description: "Run comprehensive quality scan with all tools"
-      required: false
-      default: false
-      type: boolean
-    target_languages:
-      description: "Comma-separated list of languages to lint (python,frontend,security)"
-      required: false
-      default: "python,frontend,security"
-      type: string
-    skip_cache:
-      description: "Skip performance cache and run fresh scans"
-      required: false
-      default: false
-      type: boolean
-
-# MCP Server Integration
-mcp_servers:
-  github:
-    enabled: true
-    workflows: true
-    checks: true
-    automations: true
-    
-  sequential_thinking:
-    enabled: true
-    domain: "code-quality-analysis"
-    optimization: "pattern-recognition"
-    
-  memory:
-    enabled: true
-    category: "linting-patterns"
-    learning: true
-    retention_days: 30
-    
-  context7:
-    enabled: true
-    cache_type: "linting-results"
-    performance: true
-    ttl_hours: 24
-
-# Performance Optimization
+# ============================================================================
+# PERFORMANCE AND CACHING
+# ============================================================================
 performance:
-  parallel_execution: true
-  max_concurrent_tools: 4
-  cache_results: true
-  cache_ttl_hours: 24
-  timeout_per_tool_seconds: 300
+  caching:
+    enabled: true
+    ttl: 3600  # 1 hour
+    cache_results: true
   
-  tool_priorities:
-    - "ruff"        # Fast syntax/style checks first
-    - "black"       # Quick formatting check
-    - "eslint"      # Frontend syntax checks
-    - "detect-secrets" # Fast secret scanning
-    - "mypy"        # Slower type checking
-    - "bandit"      # Security analysis
-    - "semgrep"     # Deep security analysis
-    - "prettier"    # Frontend formatting
-    - "typescript"  # TypeScript compilation
-    - "pip-audit"   # Dependency scanning
-    - "stylelint"   # CSS linting
+  parallel_execution:
+    enabled: true
+    max_workers: 4
+  
+  timeout_settings:
+    ruff: 120
+    black: 60
+    mypy: 300
+    bandit: 180
+    semgrep: 400
+    eslint: 240
+    prettier: 120
+    typescript: 300
 
-# Reporting and Analytics  
+# ============================================================================
+# GITHUB INTEGRATION
+# ============================================================================
+github_integration:
+  enabled: true
+  auto_pr_checks: true
+  auto_fix_commits: false  # Require manual approval
+  quality_gates: true
+  required_status_checks:
+    - "unified-linting"
+    - "security-scan"
+  
+  pr_comments:
+    enabled: true
+    include_suggestions: true
+    include_metrics: true
+    max_comments: 10
+  
+  check_run_settings:
+    name: "AIVillage Code Quality"
+    title_template: "Code Quality Analysis - {status}"
+    summary_template: "Found {total_issues} issues across {tools_run} tools"
+
+# ============================================================================
+# PATHS AND FILE PATTERNS
+# ============================================================================
+paths:
+  include_patterns:
+    - "src/**/*.py"
+    - "core/**/*.py"
+    - "infrastructure/**/*.py" 
+    - "tests/**/*.py"
+    - "config/**/*.py"
+    - "scripts/**/*.py"
+    - "**/*.js"
+    - "**/*.ts"
+    - "**/*.jsx"
+    - "**/*.tsx"
+    - "**/*.json"
+    - "**/*.yml"
+    - "**/*.yaml"
+    - "**/*.md"
+  
+  exclude_patterns:
+    - "experimental/**"
+    - "deprecated/**" 
+    - "archive/**"
+    - "tmp/**"
+    - "build/**"
+    - "dist/**"
+    - "__pycache__/**"
+    - ".venv/**"
+    - "node_modules/**"
+    - ".git/**"
+    - "tools/development/build/workspace/**"
+    - "*.log"
+    - "*.pid"
+    - "*.sock"
+  
+  auto_detect_paths:
+    - "."
+    - "src/"
+    - "core/"
+    - "infrastructure/"
+    - "apps/"
+    - "lib/"
+
+# ============================================================================
+# REPORTING AND OUTPUT
+# ============================================================================
 reporting:
-  formats: ["json", "sarif", "html", "markdown"]
+  formats:
+    - "json"
+    - "sarif"
+    - "text"
+    - "summary"
+  
+  output_files:
+    json: "linting-results.json"
+    sarif: "linting-results.sarif"
+    text: "linting-report.txt"
+    summary: "linting-summary.txt"
+  
   include_metrics: true
-  include_trends: true
-  retention_days: 90
+  include_suggestions: true
+  include_diff: false
   
-  dashboard_metrics:
-    - "quality_score_trend"
-    - "issues_by_type"
-    - "security_findings_trend"
-    - "tool_execution_times"
-    - "false_positive_rate"
-    - "fix_rate"
-  
-  export_formats:
-    - "prometheus"  # For monitoring integration
-    - "datadog"     # APM integration
-    - "elasticsearch"  # Log aggregation
+  console_output:
+    verbose: false
+    show_passed: true
+    show_skipped: false
+    color: true
 
-# Tool-Specific Advanced Configuration
-advanced:
-  ruff:
-    enable_preview: false
-    unsafe_fixes: false
-    respect_gitignore: true
-    force_exclude: true
-    
-  mypy:
-    cache_dir: ".mypy_cache"
-    sqlite_cache: true
-    incremental: true
-    
-  eslint:
-    cache: true
-    cache_location: ".eslintcache"
-    fix_dry_run: false
-    
-  bandit:
-    aggregate: "vuln"
-    format_custom_template: false
-    msg_template: "{abspath}:{line}: {test_id}[bandit]: {severity}: {msg}"
-    
-  semgrep:
-    enable_metrics: false
-    disable_version_check: true
-    force_color: false
-    
-# Development and Testing
-development:
-  test_mode: false
-  dry_run: false
-  debug_logging: false
-  mock_mcp_servers: false
+# ============================================================================
+# ENVIRONMENT-SPECIFIC OVERRIDES
+# ============================================================================
+environments:
+  development:
+    security:
+      block_on_high: false
+      max_medium_issues: 20
+    quality_gates:
+      overall_score_threshold: 70
+    performance:
+      parallel_execution:
+        max_workers: 2
   
-  test_configurations:
-    minimal:
-      tools: ["ruff", "black"]
-      thresholds: {"security": {"critical": 0}}
-    standard:
-      tools: ["ruff", "black", "mypy", "eslint", "bandit"]
-    comprehensive:
-      tools: "all"
-      include_experimental: false
+  staging:
+    security:
+      block_on_high: true
+      max_medium_issues: 5
+    quality_gates:
+      overall_score_threshold: 85
+      
+  production:
+    security:
+      block_on_critical: true
+      block_on_high: true
+      max_medium_issues: 0
+    quality_gates:
+      overall_score_threshold: 90
+      security_score_threshold: 95
+    github_integration:
+      auto_fix_commits: false
+      required_status_checks:
+        - "unified-linting"
+        - "security-scan"
+        - "performance-test"
+        - "integration-test"

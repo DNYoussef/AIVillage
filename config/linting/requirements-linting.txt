@@ -1,0 +1,133 @@
+# AIVillage Unified Linting Manager - Dependencies
+# Install with: pip install -r requirements-linting.txt
+# Last Updated: 2025-01-09
+
+# ============================================================================
+# CORE LINTING DEPENDENCIES
+# ============================================================================
+
+# Python Code Quality Tools
+ruff>=0.6.1                    # Fast Python linter and formatter
+black>=24.8.0                  # Python code formatter  
+mypy>=1.11.1                   # Static type checker
+isort>=5.13.2                  # Import sorter
+
+# Security Scanning Tools
+bandit>=1.7.7                  # Python security linter
+semgrep>=1.45.0                # Multi-language SAST tool
+detect-secrets>=1.4.0          # Secrets detection
+pip-audit>=2.7.3               # Python dependency vulnerability scanner
+safety>=3.2.7                  # Python package security checker
+
+# Frontend/JavaScript Tools (if Node.js available)
+# These are typically installed via npm:
+# npm install -g eslint prettier typescript @typescript-eslint/parser @typescript-eslint/eslint-plugin
+
+# ============================================================================
+# OPTIONAL ADVANCED SECURITY TOOLS
+# ============================================================================
+
+# Additional security scanners (optional)
+# trufflesec>=3.0.0             # Advanced secrets detection (requires Go)
+# gitleaks>=8.0.0               # Git secrets detection (requires Go installation)
+# osv-scanner>=1.0.0            # OSV vulnerability database scanner
+
+# Infrastructure as Code security (optional)
+# checkov>=3.0.0                # Terraform/CloudFormation/K8s scanner
+# terrascan>=1.18.0             # IaC security scanner
+# snyk>=1.0.0                   # Commercial security scanner (requires account)
+
+# Container security (optional)
+# trivy>=0.50.0                 # Container/filesystem vulnerability scanner
+
+# ============================================================================
+# CACHING AND PERFORMANCE DEPENDENCIES
+# ============================================================================
+
+# Redis caching (optional - will use fallback if not available)
+redis>=5.0.8                   # Redis client
+redis-sentinel>=0.1.0          # Redis Sentinel support
+
+# Memcached caching (optional)
+python-memcached>=1.59         # Memcached client (alternative to pymemcache)
+# Note: 'memcache' module is provided by python-memcached
+
+# Monitoring and metrics (optional)
+prometheus-client>=0.20.0      # Metrics collection
+
+# ============================================================================
+# CORE PYTHON DEPENDENCIES
+# ============================================================================
+
+# Configuration and data handling
+PyYAML>=6.0.1                  # YAML configuration parsing
+pydantic>=2.8.2                # Data validation
+python-dotenv>=1.0.0           # Environment variable loading
+
+# CLI and utilities
+click>=8.1.7                   # Command line interface framework
+colorama>=0.4.6                # Cross-platform colored terminal text
+rich>=13.0.0                   # Rich text and beautiful formatting
+
+# Async support
+asyncio-mqtt>=0.16.1           # For async operations (if needed)
+
+# ============================================================================
+# DEVELOPMENT AND TESTING DEPENDENCIES  
+# ============================================================================
+
+# Testing framework
+pytest>=8.3.2                  # Testing framework
+pytest-asyncio>=0.23.8         # Async testing support
+pytest-mock>=3.14.0            # Mock support for testing
+pytest-cov>=5.0.0              # Coverage reporting
+
+# Development utilities
+pre-commit>=3.8.0              # Git pre-commit hooks
+ipython>=8.26.0                # Enhanced Python shell
+
+# ============================================================================
+# ALTERNATIVE PACKAGES (choose based on environment)
+# ============================================================================
+
+# Alternative caching backends
+# pymemcache>=4.0.0             # Alternative Memcached client
+# hiredis>=2.0.0                # Faster Redis protocol parser
+
+# Alternative security tools
+# vulture>=2.0.0                # Dead code finder
+# dodgy>=0.2.1                  # Secrets detection alternative
+
+# ============================================================================
+# PLATFORM-SPECIFIC NOTES
+# ============================================================================
+
+# Windows users may need:
+# - Visual Studio Build Tools for some packages
+# - Windows-specific versions of some tools
+
+# Linux/Mac users can install additional tools:
+# - gitleaks (via package manager or Go install)
+# - trufflehog (via package manager or Go install)
+# - semgrep (via brew/package manager)
+
+# Docker users can use official images:
+# - semgrep/semgrep:latest
+# - bandit:latest
+# - trufflesecurity/trufflehog:latest
+
+# ============================================================================
+# INSTALLATION NOTES
+# ============================================================================
+
+# Basic installation:
+# pip install -r requirements-linting.txt
+
+# For development environment:
+# pip install -r requirements-linting.txt -r requirements-dev.txt
+
+# For CI/CD environments:
+# pip install --no-cache-dir -r requirements-linting.txt
+
+# To update all packages:
+# pip install -r requirements-linting.txt --upgrade

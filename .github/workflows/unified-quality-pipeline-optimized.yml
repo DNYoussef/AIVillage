@@ -1,0 +1,919 @@
+name: Unified Quality Pipeline - Optimized
+
+on:
+  push:
+    branches: [ main, develop, feature/* ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+  workflow_dispatch:
+    inputs:
+      target_components:
+        description: 'Target components (comma-separated): core,infrastructure,src,packages,ui'
+        required: false
+        default: 'all'
+        type: string
+      skip_frontend:
+        description: 'Skip frontend quality checks'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+  CACHE_VERSION: 'v4'
+  PYTHONDONTWRITEBYTECODE: 1
+  PYTHONUNBUFFERED: 1
+
+# Concurrency control
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ============================================
+  # STAGE 0: Dynamic Configuration & Setup
+  # ============================================
+  setup-matrix:
+    name: Setup Configuration Matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      python-components: ${{ steps.config.outputs.python-components }}
+      run-frontend: ${{ steps.config.outputs.run-frontend }}
+      cache-key: ${{ steps.config.outputs.cache-key }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure Component Matrix
+        id: config
+        run: |
+          # Parse input components or detect automatically
+          if [[ "${{ github.event.inputs.target_components }}" == "all" || -z "${{ github.event.inputs.target_components }}" ]]; then
+            # Auto-detect components
+            components=()
+            for dir in core infrastructure src packages; do
+              if [[ -d "$dir" ]] && [[ -n "$(find "$dir" -name "*.py" | head -1)" ]]; then
+                components+=("\"$dir\"")
+              fi
+            done
+            python_components="[$(IFS=,; echo "${components[*]}")]"
+          else
+            # Use specified components
+            IFS=',' read -ra ADDR <<< "${{ github.event.inputs.target_components }}"
+            components=()
+            for component in "${ADDR[@]}"; do
+              component=$(echo "$component" | xargs)  # trim whitespace
+              if [[ -d "$component" ]]; then
+                components+=("\"$component\"")
+              fi
+            done
+            python_components="[$(IFS=,; echo "${components[*]}")]"
+          fi
+          
+          echo "python-components=$python_components" >> $GITHUB_OUTPUT
+          
+          # Frontend detection
+          if [[ "${{ github.event.inputs.skip_frontend }}" == "true" ]]; then
+            echo "run-frontend=false" >> $GITHUB_OUTPUT
+          elif [[ -d "ui/web" ]] && [[ -f "ui/web/package.json" ]]; then
+            echo "run-frontend=true" >> $GITHUB_OUTPUT
+          else
+            echo "run-frontend=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # Generate cache key
+          cache_key="${{ env.CACHE_VERSION }}-${{ hashFiles('**/requirements*.txt', '**/package*.json', 'pyproject.toml') }}"
+          echo "cache-key=$cache_key" >> $GITHUB_OUTPUT
+          
+          echo "Configuration:"
+          echo "  Python components: $python_components"
+          echo "  Run frontend: $(if [[ "${{ github.event.inputs.skip_frontend }}" == "true" ]]; then echo false; elif [[ -d "ui/web" ]]; then echo true; else echo false; fi)"
+          echo "  Cache key: $cache_key"
+
+  # ============================================
+  # STAGE 1: Python Code Quality (Parallel Matrix)
+  # ============================================
+  python-quality:
+    name: Python Quality - ${{ matrix.component }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: setup-matrix
+    if: needs.setup-matrix.outputs.python-components != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        component: ${{ fromJson(needs.setup-matrix.outputs.python-components) }}
+    outputs:
+      quality-status: ${{ steps.quality-summary.outputs.status }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.local/lib/python${{ env.PYTHON_VERSION }}/site-packages
+          key: ${{ needs.setup-matrix.outputs.cache-key }}-python
+          restore-keys: |
+            ${{ env.CACHE_VERSION }}-python-
+
+      - name: Install Quality Tools
+        run: |
+          python -m pip install --upgrade pip wheel
+          pip install ruff black mypy bandit pytest pytest-cov
+          pip install -r requirements.txt || echo "No root requirements.txt found"
+          
+          # Install component-specific requirements if they exist
+          if [[ -f "${{ matrix.component }}/requirements.txt" ]]; then
+            pip install -r ${{ matrix.component }}/requirements.txt
+          fi
+
+      - name: Component Validation
+        run: |
+          if [[ ! -d "${{ matrix.component }}" ]]; then
+            echo "❌ Component directory '${{ matrix.component }}' not found"
+            exit 1
+          fi
+          
+          python_files=$(find "${{ matrix.component }}" -name "*.py" | wc -l)
+          echo "📊 Found $python_files Python files in ${{ matrix.component }}"
+          
+          if [[ $python_files -eq 0 ]]; then
+            echo "⚠️ No Python files found in ${{ matrix.component }}, skipping"
+            exit 0
+          fi
+
+      - name: "🔍 Ruff Linting"
+        id: ruff-check
+        run: |
+          echo "🔍 Running Ruff linting on ${{ matrix.component }}..."
+          
+          # Create results directory
+          mkdir -p artifacts/quality-results
+          
+          if ruff check ${{ matrix.component }}/ --output-format=json --output-file=artifacts/quality-results/ruff-${{ matrix.component }}.json; then
+            echo "✅ Ruff linting passed"
+            echo "ruff-status=passed" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Ruff linting found issues"
+            echo "ruff-status=issues" >> $GITHUB_OUTPUT
+            # Show issues in GitHub annotations format
+            ruff check ${{ matrix.component }}/ --output-format=github || true
+          fi
+
+      - name: "🎨 Black Formatting Check"
+        id: black-check
+        run: |
+          echo "🎨 Checking Black formatting on ${{ matrix.component }}..."
+          
+          if black --check --diff --line-length=120 ${{ matrix.component }}/; then
+            echo "✅ Black formatting passed"
+            echo "black-status=passed" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Black formatting issues found"
+            echo "black-status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: "🔍 MyPy Type Checking"
+        id: mypy-check
+        continue-on-error: true
+        run: |
+          echo "🔍 Running MyPy type checking on ${{ matrix.component }}..."
+          
+          if mypy ${{ matrix.component }}/ --ignore-missing-imports --show-error-codes --json-report artifacts/quality-results/mypy-${{ matrix.component }}.json; then
+            echo "✅ MyPy type checking passed"
+            echo "mypy-status=passed" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ MyPy type checking found issues"
+            echo "mypy-status=issues" >> $GITHUB_OUTPUT
+            # Non-blocking for now
+          fi
+
+      - name: "🛡️ Bandit Security Scan"
+        id: bandit-check
+        run: |
+          echo "🛡️ Running Bandit security scan on ${{ matrix.component }}..."
+          
+          bandit -r ${{ matrix.component }}/ -f json -o artifacts/quality-results/bandit-${{ matrix.component }}.json -ll || true
+          
+          # Check for high/critical issues
+          if bandit -r ${{ matrix.component }}/ -ll | grep -E "(High|Medium)" | grep -c "Issue"; then
+            issue_count=$(bandit -r ${{ matrix.component }}/ -ll | grep -E "(High|Medium)" | grep -c "Issue" || echo "0")
+            echo "⚠️ Bandit found $issue_count security issues"
+            echo "bandit-status=issues" >> $GITHUB_OUTPUT
+            echo "bandit-count=$issue_count" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Bandit security scan passed"
+            echo "bandit-status=passed" >> $GITHUB_OUTPUT
+            echo "bandit-count=0" >> $GITHUB_OUTPUT
+          fi
+          
+          # Show findings in readable format
+          bandit -r ${{ matrix.component }}/ -f txt || echo "Bandit scan completed"
+
+      - name: Quality Summary
+        id: quality-summary
+        run: |
+          ruff_status="${{ steps.ruff-check.outputs.ruff-status }}"
+          black_status="${{ steps.black-check.outputs.black-status }}"
+          mypy_status="${{ steps.mypy-check.outputs.mypy-status }}"
+          bandit_status="${{ steps.bandit-check.outputs.bandit-status }}"
+          bandit_count="${{ steps.bandit-check.outputs.bandit-count }}"
+          
+          echo "Quality Summary for ${{ matrix.component }}:"
+          echo "  Ruff: $ruff_status"
+          echo "  Black: $black_status"
+          echo "  MyPy: $mypy_status"
+          echo "  Bandit: $bandit_status ($bandit_count issues)"
+          
+          # Critical failure conditions
+          if [[ "$black_status" == "failed" ]]; then
+            echo "❌ Critical failure: Code formatting required"
+            echo "status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          elif [[ "$bandit_count" -gt 10 ]]; then
+            echo "❌ Critical failure: Too many security issues ($bandit_count)"
+            echo "status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "✅ Quality checks completed successfully"
+            echo "status=passed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload Quality Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quality-results-${{ matrix.component }}-${{ github.run_id }}
+          path: artifacts/quality-results/
+          retention-days: 30
+
+  # ============================================
+  # STAGE 2: Frontend Quality (Conditional)
+  # ============================================
+  frontend-quality:
+    name: Frontend Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    needs: setup-matrix
+    if: needs.setup-matrix.outputs.run-frontend == 'true'
+    outputs:
+      frontend-status: ${{ steps.frontend-summary.outputs.status }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ui/web/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: ui/web
+        run: |
+          npm ci --prefer-offline --no-audit
+          npm install --save-dev eslint-plugin-security @typescript-eslint/parser
+
+      - name: "📝 ESLint Analysis"
+        id: eslint-check
+        working-directory: ui/web
+        continue-on-error: true
+        run: |
+          echo "📝 Running ESLint analysis..."
+          
+          mkdir -p ../artifacts/frontend-results
+          
+          if npx eslint src/ --ext .ts,.tsx,.js,.jsx --format=json --output-file=../artifacts/frontend-results/eslint-report.json; then
+            echo "✅ ESLint analysis passed"
+            echo "eslint-status=passed" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ ESLint found issues"
+            echo "eslint-status=issues" >> $GITHUB_OUTPUT
+            # Show issues in GitHub format
+            npx eslint src/ --ext .ts,.tsx,.js,.jsx --format=github || true
+          fi
+
+      - name: "🎨 Prettier Formatting"
+        id: prettier-check
+        working-directory: ui/web
+        run: |
+          echo "🎨 Checking Prettier formatting..."
+          
+          if npx prettier --check src/; then
+            echo "✅ Prettier formatting passed"
+            echo "prettier-status=passed" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Prettier formatting issues found"
+            echo "prettier-status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: "🔍 TypeScript Compilation"
+        id: tsc-check
+        working-directory: ui/web
+        continue-on-error: true
+        run: |
+          echo "🔍 Running TypeScript compilation..."
+          
+          if npx tsc --noEmit --strict --pretty; then
+            echo "✅ TypeScript compilation passed"
+            echo "tsc-status=passed" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ TypeScript compilation issues found"
+            echo "tsc-status=issues" >> $GITHUB_OUTPUT
+          fi
+
+      - name: "🔒 Frontend Security Audit"
+        id: audit-check
+        working-directory: ui/web
+        continue-on-error: true
+        run: |
+          echo "🔒 Running npm security audit..."
+          
+          audit_result=$(npm audit --audit-level moderate --json || echo '{}')
+          echo "$audit_result" > ../artifacts/frontend-results/npm-audit.json
+          
+          vulnerabilities=$(echo "$audit_result" | jq -r '.metadata.vulnerabilities.total // 0' 2>/dev/null || echo "0")
+          
+          if [[ $vulnerabilities -eq 0 ]]; then
+            echo "✅ No security vulnerabilities found"
+            echo "audit-status=passed" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Found $vulnerabilities security vulnerabilities"
+            echo "audit-status=issues" >> $GITHUB_OUTPUT
+            npm audit --audit-level moderate || true
+          fi
+
+      - name: Frontend Summary
+        id: frontend-summary
+        run: |
+          eslint_status="${{ steps.eslint-check.outputs.eslint-status }}"
+          prettier_status="${{ steps.prettier-check.outputs.prettier-status }}"
+          tsc_status="${{ steps.tsc-check.outputs.tsc-status }}"
+          audit_status="${{ steps.audit-check.outputs.audit-status }}"
+          
+          echo "Frontend Quality Summary:"
+          echo "  ESLint: $eslint_status"
+          echo "  Prettier: $prettier_status"
+          echo "  TypeScript: $tsc_status"
+          echo "  Security Audit: $audit_status"
+          
+          if [[ "$prettier_status" == "failed" ]]; then
+            echo "❌ Critical failure: Code formatting required"
+            echo "status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "✅ Frontend quality checks completed"
+            echo "status=passed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload Frontend Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-results-${{ github.run_id }}
+          path: artifacts/frontend-results/
+          retention-days: 30
+
+  # ============================================
+  # STAGE 3: Comprehensive Testing
+  # ============================================
+  testing-pipeline:
+    name: Comprehensive Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [setup-matrix, python-quality]
+    if: always() && (needs.python-quality.result == 'success' || needs.python-quality.result == 'skipped')
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: aivillage_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s  
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    outputs:
+      test-status: ${{ steps.test-summary.outputs.status }}
+      coverage-percentage: ${{ steps.coverage.outputs.percentage }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.local/lib/python${{ env.PYTHON_VERSION }}/site-packages
+          key: ${{ needs.setup-matrix.outputs.cache-key }}-testing
+          restore-keys: |
+            ${{ env.CACHE_VERSION }}-testing-
+
+      - name: Install Test Dependencies
+        run: |
+          python -m pip install --upgrade pip wheel
+          pip install pytest pytest-cov pytest-xdist pytest-mock pytest-timeout
+          pip install -r requirements.txt || echo "No root requirements.txt found"
+          
+          # Install additional test dependencies
+          for req_file in requirements-test.txt config/requirements/requirements-test.txt; do
+            if [[ -f "$req_file" ]]; then
+              pip install -r "$req_file"
+              break
+            fi
+          done
+
+      - name: "🧪 Unit Tests"
+        id: unit-tests
+        env:
+          DB_PASSWORD: test_password
+          REDIS_PASSWORD: test_redis
+          JWT_SECRET: test_jwt_secret_key_minimum_32_characters
+          AIVILLAGE_ENV: testing
+        run: |
+          echo "🧪 Running unit tests..."
+          
+          mkdir -p artifacts/test-results
+          
+          if pytest tests/ -v --tb=short --maxfail=10 \
+            --cov=core --cov=infrastructure --cov=src --cov=packages \
+            --cov-report=xml --cov-report=html --cov-report=term \
+            --junit-xml=artifacts/test-results/pytest-results.xml \
+            -n auto --timeout=300; then
+            echo "✅ Unit tests passed"
+            echo "unit-status=passed" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Unit tests failed"
+            echo "unit-status=failed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: "🔗 Integration Tests"
+        id: integration-tests
+        if: steps.unit-tests.outputs.unit-status == 'passed'
+        env:
+          DB_PASSWORD: test_password
+          REDIS_PASSWORD: test_redis
+          JWT_SECRET: test_jwt_secret_key_minimum_32_characters
+          AIVILLAGE_ENV: testing
+        continue-on-error: true
+        run: |
+          echo "🔗 Running integration tests..."
+          
+          if [[ -d "tests/integration" ]]; then
+            if pytest tests/integration/ -v --tb=short --timeout=600; then
+              echo "✅ Integration tests passed"
+              echo "integration-status=passed" >> $GITHUB_OUTPUT
+            else
+              echo "⚠️ Integration tests had issues"
+              echo "integration-status=issues" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "ℹ️ No integration tests found"
+            echo "integration-status=skipped" >> $GITHUB_OUTPUT
+          fi
+
+      - name: "📊 Coverage Analysis"
+        id: coverage
+        if: always()
+        run: |
+          if [[ -f "coverage.xml" ]]; then
+            coverage_pct=$(python -c "
+            import xml.etree.ElementTree as ET
+            try:
+                tree = ET.parse('coverage.xml')
+                root = tree.getroot()
+                coverage = root.attrib.get('line-rate', '0')
+                print(f'{float(coverage) * 100:.1f}')
+            except:
+                print('0.0')
+            ")
+            echo "Coverage: $coverage_pct%"
+            echo "percentage=$coverage_pct" >> $GITHUB_OUTPUT
+            
+            if (( $(echo "$coverage_pct >= 60" | bc -l) )); then
+              echo "✅ Coverage target met ($coverage_pct% >= 60%)"
+            else
+              echo "⚠️ Coverage below target ($coverage_pct% < 60%)"
+            fi
+          else
+            echo "⚠️ No coverage data available"
+            echo "percentage=0.0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Test Summary
+        id: test-summary
+        run: |
+          unit_status="${{ steps.unit-tests.outputs.unit-status }}"
+          integration_status="${{ steps.integration-tests.outputs.integration-status }}"
+          coverage_pct="${{ steps.coverage.outputs.percentage }}"
+          
+          echo "Testing Summary:"
+          echo "  Unit Tests: $unit_status"
+          echo "  Integration Tests: $integration_status"
+          echo "  Coverage: $coverage_pct%"
+          
+          if [[ "$unit_status" == "passed" ]]; then
+            echo "✅ Critical tests passed"
+            echo "status=passed" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Critical tests failed"
+            echo "status=failed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: aivillage-coverage
+          fail_ci_if_error: false
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ github.run_id }}
+          path: |
+            artifacts/test-results/
+            htmlcov/
+          retention-days: 30
+
+  # ============================================
+  # STAGE 4: Security Consolidation
+  # ============================================
+  security-consolidation:
+    name: Security Consolidation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [python-quality, frontend-quality]
+    if: always()
+    outputs:
+      security-status: ${{ steps.security-decision.outputs.status }}
+      high-issues: ${{ steps.consolidation.outputs.high-issues }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download All Quality Results
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: "*-results-*"
+          path: all-results/
+          merge-multiple: true
+
+      - name: Security Consolidation Analysis
+        id: consolidation
+        run: |
+          echo "🔒 Consolidating security analysis..."
+          
+          mkdir -p artifacts/security-consolidated
+          
+          # Initialize counters
+          total_high_issues=0
+          total_medium_issues=0
+          total_low_issues=0
+          
+          # Process Bandit reports
+          for bandit_file in all-results/bandit-*.json; do
+            if [[ -f "$bandit_file" ]]; then
+              echo "Processing $(basename "$bandit_file")..."
+              
+              high_count=$(jq '[.results[] | select(.issue_severity == "HIGH")] | length' "$bandit_file" 2>/dev/null || echo "0")
+              medium_count=$(jq '[.results[] | select(.issue_severity == "MEDIUM")] | length' "$bandit_file" 2>/dev/null || echo "0")
+              low_count=$(jq '[.results[] | select(.issue_severity == "LOW")] | length' "$bandit_file" 2>/dev/null || echo "0")
+              
+              total_high_issues=$((total_high_issues + high_count))
+              total_medium_issues=$((total_medium_issues + medium_count))
+              total_low_issues=$((total_low_issues + low_count))
+              
+              echo "  High: $high_count, Medium: $medium_count, Low: $low_count"
+            fi
+          done
+          
+          # Process frontend security results
+          if [[ -f "all-results/npm-audit.json" ]]; then
+            echo "Processing npm audit results..."
+            npm_issues=$(jq -r '.metadata.vulnerabilities.total // 0' all-results/npm-audit.json 2>/dev/null || echo "0")
+            total_high_issues=$((total_high_issues + npm_issues))
+          fi
+          
+          echo "Consolidated Security Summary:"
+          echo "  High Issues: $total_high_issues"
+          echo "  Medium Issues: $total_medium_issues" 
+          echo "  Low Issues: $total_low_issues"
+          
+          # Generate consolidated report
+          cat > artifacts/security-consolidated/security-summary.json << EOF
+          {
+            "timestamp": "$(date -Iseconds)",
+            "total_high_issues": $total_high_issues,
+            "total_medium_issues": $total_medium_issues,
+            "total_low_issues": $total_low_issues,
+            "components_scanned": $(find all-results/ -name "bandit-*.json" | wc -l),
+            "frontend_scanned": $(test -f "all-results/npm-audit.json" && echo "true" || echo "false")
+          }
+          EOF
+          
+          echo "high-issues=$total_high_issues" >> $GITHUB_OUTPUT
+          echo "medium-issues=$total_medium_issues" >> $GITHUB_OUTPUT
+          echo "low-issues=$total_low_issues" >> $GITHUB_OUTPUT
+
+      - name: Security Gate Decision
+        id: security-decision
+        run: |
+          high_issues="${{ steps.consolidation.outputs.high-issues }}"
+          medium_issues="${{ steps.consolidation.outputs.medium-issues }}"
+          
+          echo "🛡️ Evaluating security gate..."
+          
+          if [[ $high_issues -eq 0 ]]; then
+            if [[ $medium_issues -le 5 ]]; then
+              echo "✅ Security gate PASSED - No high issues, acceptable medium issues ($medium_issues)"
+              echo "status=passed" >> $GITHUB_OUTPUT
+            else
+              echo "⚠️ Security gate WARNING - No high issues, but many medium issues ($medium_issues)"
+              echo "status=warning" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "❌ Security gate FAILED - $high_issues high-severity issues found"
+            echo "status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Upload Consolidated Security Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-consolidated-${{ github.run_id }}
+          path: artifacts/security-consolidated/
+          retention-days: 90
+
+  # ============================================
+  # STAGE 5: Quality Gates & Reporting
+  # ============================================
+  quality-gates:
+    name: Quality Gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    needs: [python-quality, frontend-quality, testing-pipeline, security-consolidation]
+    if: always()
+    outputs:
+      final-status: ${{ steps.final-decision.outputs.status }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Quality Gate Analysis
+        id: gate-analysis
+        run: |
+          echo "🎯 Analyzing quality gates..."
+          
+          # Collect all results
+          python_result="${{ needs.python-quality.result }}"
+          frontend_result="${{ needs.frontend-quality.result }}"
+          testing_result="${{ needs.testing-pipeline.result }}"
+          security_result="${{ needs.security-consolidation.result }}"
+          
+          testing_status="${{ needs.testing-pipeline.outputs.test-status }}"
+          security_status="${{ needs.security-consolidation.outputs.security-status }}"
+          high_issues="${{ needs.security-consolidation.outputs.high-issues }}"
+          coverage="${{ needs.testing-pipeline.outputs.coverage-percentage }}"
+          
+          echo "Gate Analysis:"
+          echo "  Python Quality: $python_result"
+          echo "  Frontend Quality: $frontend_result"
+          echo "  Testing: $testing_result ($testing_status)"
+          echo "  Security: $security_result ($security_status)"
+          echo "  High Security Issues: $high_issues"
+          echo "  Coverage: $coverage%"
+          
+          # Decision logic
+          critical_failed=false
+          warnings=0
+          
+          # Critical failures (block merge)
+          if [[ "$python_result" == "failure" ]]; then
+            echo "❌ CRITICAL: Python quality checks failed"
+            critical_failed=true
+          fi
+          
+          if [[ "$frontend_result" == "failure" ]]; then
+            echo "❌ CRITICAL: Frontend quality checks failed"
+            critical_failed=true
+          fi
+          
+          if [[ "$testing_status" == "failed" ]]; then
+            echo "❌ CRITICAL: Tests failed"
+            critical_failed=true
+          fi
+          
+          if [[ "$security_status" == "failed" ]]; then
+            echo "❌ CRITICAL: Security gate failed"
+            critical_failed=true
+          fi
+          
+          # Warnings (don't block but report)
+          if [[ "$security_status" == "warning" ]]; then
+            echo "⚠️ WARNING: Security issues found"
+            ((warnings++))
+          fi
+          
+          if [[ -n "$coverage" ]] && (( $(echo "$coverage < 60" | bc -l) )); then
+            echo "⚠️ WARNING: Coverage below 60% ($coverage%)"
+            ((warnings++))
+          fi
+          
+          echo "critical-failed=$critical_failed" >> $GITHUB_OUTPUT
+          echo "warnings=$warnings" >> $GITHUB_OUTPUT
+
+      - name: Generate Quality Report
+        run: |
+          echo "📊 Generating comprehensive quality report..."
+          
+          cat > quality-report.md << 'EOF'
+          # AIVillage Unified Quality Pipeline Report
+          
+          **Pipeline Run:** ${{ github.run_number }}  
+          **Commit:** ${{ github.sha }}  
+          **Branch:** ${{ github.ref_name }}  
+          **Triggered by:** ${{ github.event_name }}  
+          **Timestamp:** $(date -Iseconds)
+          
+          ## Quality Gate Results
+          
+          | Component | Status | Details |
+          |-----------|--------|---------|
+          | Python Quality | ${{ needs.python-quality.result }} | Code linting, formatting, type checking |
+          | Frontend Quality | ${{ needs.frontend-quality.result }} | JavaScript/TypeScript analysis |
+          | Testing Pipeline | ${{ needs.testing-pipeline.result }} | Unit tests, integration tests |
+          | Security Analysis | ${{ needs.security-consolidation.result }} | Security scanning across all components |
+          
+          ## Metrics
+          
+          - **Test Coverage:** ${{ needs.testing-pipeline.outputs.coverage-percentage }}%
+          - **High Security Issues:** ${{ needs.security-consolidation.outputs.high-issues }}
+          - **Critical Failures:** ${{ steps.gate-analysis.outputs.critical-failed }}
+          - **Warnings:** ${{ steps.gate-analysis.outputs.warnings }}
+          
+          ## Component Matrix
+          
+          **Python Components:** ${{ needs.setup-matrix.outputs.python-components }}
+          **Frontend Processing:** ${{ needs.setup-matrix.outputs.run-frontend }}
+          
+          ## Next Steps
+          
+          ${{ steps.gate-analysis.outputs.critical-failed == 'true' && '❌ **CRITICAL ISSUES FOUND** - Address failures before merging' || '✅ **QUALITY GATES PASSED** - Ready for review' }}
+          
+          ${{ steps.gate-analysis.outputs.warnings > 0 && format('⚠️ **{0} WARNINGS** - Review recommended', steps.gate-analysis.outputs.warnings) || '' }}
+          
+          ---
+          *Generated by AIVillage Unified Quality Pipeline*
+          EOF
+
+      - name: Final Decision
+        id: final-decision
+        run: |
+          critical_failed="${{ steps.gate-analysis.outputs.critical-failed }}"
+          warnings="${{ steps.gate-analysis.outputs.warnings }}"
+          
+          if [[ "$critical_failed" == "true" ]]; then
+            echo "❌ FINAL DECISION: Quality gates FAILED"
+            echo "status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          elif [[ $warnings -gt 0 ]]; then
+            echo "⚠️ FINAL DECISION: Quality gates PASSED with warnings"
+            echo "status=warning" >> $GITHUB_OUTPUT
+          else
+            echo "✅ FINAL DECISION: Quality gates PASSED"
+            echo "status=passed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload Quality Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-report-${{ github.run_id }}
+          path: quality-report.md
+          retention-days: 90
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('quality-report.md', 'utf8');
+            
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && comment.body.includes('AIVillage Unified Quality Pipeline Report')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                comment_id: botComment.id,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: report
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: report
+              });
+            }
+
+  # ============================================
+  # FINAL: Production Deployment Readiness
+  # ============================================
+  deployment-readiness:
+    name: Production Deployment Readiness
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [quality-gates]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.quality-gates.outputs.final-status != 'failed'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Production Readiness Validation
+        run: |
+          echo "🚀 Validating production deployment readiness..."
+          
+          # Check for critical production files
+          required_files=(
+            "core/"
+            "infrastructure/"
+            ".github/workflows/unified-quality-pipeline-optimized.yml"
+          )
+          
+          missing_files=()
+          for file in "${required_files[@]}"; do
+            if [[ ! -e "$file" ]]; then
+              missing_files+=("$file")
+            fi
+          done
+          
+          if [[ ${#missing_files[@]} -eq 0 ]]; then
+            echo "✅ All critical files present"
+            echo "🎯 Quality Status: ${{ needs.quality-gates.outputs.final-status }}"
+            echo "🚀 PRODUCTION DEPLOYMENT READY"
+          else
+            echo "❌ Missing critical files: ${missing_files[*]}"
+            echo "🚫 PRODUCTION DEPLOYMENT BLOCKED"
+            exit 1
+          fi
+
+      - name: Deployment Trigger
+        if: needs.quality-gates.outputs.final-status == 'passed'
+        run: |
+          echo "🚀 All systems go for production deployment!"
+          echo "Quality gates: PASSED"
+          echo "Security: CLEARED"
+          echo "Tests: PASSING"
+          echo "Coverage: ADEQUATE"
+          echo ""
+          echo "Ready to trigger production deployment workflow..."

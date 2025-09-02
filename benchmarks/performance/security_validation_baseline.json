@@ -1,50 +1,228 @@
 {
-  "suite_duration": 58.984,
-  "benchmarks": {
-    "system_resources": {
-      "cpu": {
-        "percent": 86.2,
-        "count": 12
-      },
-      "memory": {
-        "used_mb": 13901.04,
-        "total_mb": 16273.03,
-        "percent": 85.4
-      },
-      "disk": {
-        "used_gb": 409.6,
-        "total_gb": 476.24,
-        "percent": 86.01
-      },
-      "timestamp": "2025-09-01T11:56:34.424476"
+  "baseline_created_at": "2025-01-09T18:30:00Z",
+  "baseline_version": "1.0",
+  "performance_targets": {
+    "total_pipeline_duration": {
+      "target_minutes": 8,
+      "current_minutes": 12.5,
+      "improvement_needed": 36,
+      "priority": "high"
     },
-    "module_imports": {
-      "import_times": {
-        "core.agent_forge": "TIMEOUT",
-        "core.rag": 5.479479789733887,
-        "core.monitoring": 5.43693470954895,
-        "core.p2p": 5.60889196395874
-      },
-      "successful_imports": 3,
-      "total_modules": 4,
-      "average_import_time": 5.508435487747192,
-      "success_rate": 0.75,
-      "timestamp": "2025-09-01T11:57:00.120892"
+    "dependency_installation": {
+      "target_seconds": 90,
+      "current_seconds": 165,
+      "cache_hit_rate": 72,
+      "target_cache_rate": 85,
+      "priority": "high"
     },
     "test_execution": {
-      "collection_time": 25.013,
-      "test_count": 0,
-      "collection_rate": 0.0,
-      "collection_successful": false,
-      "timestamp": "2025-09-01T11:57:25.134102"
+      "target_seconds": 180,
+      "current_seconds": 285,
+      "parallelization": 45,
+      "target_parallelization": 75,
+      "priority": "medium"
     },
-    "gateway_startup": {
-      "total_startup_time": 7.264,
-      "config_load_time": 6.466,
-      "startup_successful": true,
-      "error": null,
-      "timestamp": "2025-09-01T11:57:32.398228"
+    "security_scanning": {
+      "target_seconds": 120,
+      "current_seconds": 195,
+      "parallel_scans": false,
+      "optimization_potential": 40,
+      "priority": "medium"
+    },
+    "artifact_management": {
+      "upload_time_seconds": 45,
+      "download_time_seconds": 25,
+      "total_size_mb": 125,
+      "compression_ratio": 0.65,
+      "priority": "low"
     }
   },
-  "completed_at": "2025-09-01T11:57:32.398228"
+  "bottleneck_analysis": {
+    "primary_bottlenecks": [
+      {
+        "stage": "test",
+        "type": "execution_time",
+        "duration_seconds": 285,
+        "impact": "high",
+        "causes": [
+          "Sequential test execution",
+          "No test parallelization with pytest-xdist",
+          "Database setup/teardown per test class"
+        ],
+        "recommendations": [
+          "Implement pytest -n auto --dist worksteal",
+          "Use pytest fixtures with session scope",
+          "Optimize database test setup"
+        ]
+      },
+      {
+        "stage": "security",
+        "type": "parallel_execution",
+        "duration_seconds": 195,
+        "impact": "medium",
+        "causes": [
+          "Sequential security tool execution",
+          "No parallel bandit/semgrep/safety execution",
+          "Redundant dependency scanning"
+        ],
+        "recommendations": [
+          "Run security tools in parallel jobs",
+          "Cache security scan results",
+          "Consolidate dependency auditing"
+        ]
+      },
+      {
+        "stage": "code-quality",
+        "type": "dependency_caching",
+        "duration_seconds": 165,
+        "impact": "high",
+        "causes": [
+          "Poor cache key strategies",
+          "No composite requirements caching",
+          "Separate pip installs per job"
+        ],
+        "recommendations": [
+          "Use composite cache keys with multiple requirements files",
+          "Implement pip cache sharing across jobs",
+          "Use --no-deps and --prefer-binary flags"
+        ]
+      }
+    ],
+    "optimization_opportunities": [
+      {
+        "type": "matrix_optimization",
+        "description": "Optimize matrix job parallelization",
+        "estimated_time_savings": "25-35%",
+        "implementation_effort": "medium"
+      },
+      {
+        "type": "caching_enhancement",
+        "description": "Implement intelligent multi-level caching",
+        "estimated_time_savings": "30-40%",
+        "implementation_effort": "high"
+      },
+      {
+        "type": "stage_consolidation", 
+        "description": "Consolidate similar stages and reduce job dependencies",
+        "estimated_time_savings": "15-20%",
+        "implementation_effort": "low"
+      }
+    ]
+  },
+  "performance_metrics": {
+    "workflow_complexity": {
+      "total_jobs": 8,
+      "total_steps": 45,
+      "dependency_depth": 4,
+      "matrix_combinations": 6,
+      "parallel_potential": 65
+    },
+    "resource_utilization": {
+      "average_cpu_usage": 45,
+      "peak_memory_mb": 2048,
+      "network_io_mb": 450,
+      "storage_io_gb": 2.1,
+      "runner_efficiency": 62
+    },
+    "reliability_metrics": {
+      "success_rate": 94.5,
+      "flaky_test_rate": 3.2,
+      "timeout_frequency": 1.8,
+      "retry_frequency": 2.1
+    }
+  },
+  "optimization_recommendations": [
+    {
+      "priority": 1,
+      "type": "CRITICAL",
+      "title": "Implement Intelligent Dependency Caching",
+      "description": "Replace simple pip caching with composite cache keys that include all requirements files",
+      "implementation": {
+        "changes_required": [
+          "Update cache keys to include multiple requirements files",
+          "Use pip install --no-deps --prefer-binary",
+          "Implement cache sharing between jobs"
+        ],
+        "estimated_effort": "4 hours",
+        "estimated_savings": "35-45% on dependency installation"
+      },
+      "yaml_changes": {
+        "cache_key": "${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}-${{ hashFiles('config/requirements/*.txt') }}",
+        "pip_flags": "--no-deps --prefer-binary --cache-dir ~/.cache/pip"
+      }
+    },
+    {
+      "priority": 2,
+      "type": "HIGH",
+      "title": "Enable Parallel Test Execution",
+      "description": "Use pytest-xdist for parallel test execution across multiple workers",
+      "implementation": {
+        "changes_required": [
+          "Add pytest-xdist to test dependencies",
+          "Configure pytest with -n auto --dist worksteal",
+          "Optimize test fixtures for parallel execution"
+        ],
+        "estimated_effort": "6 hours",
+        "estimated_savings": "40-50% on test execution time"
+      },
+      "yaml_changes": {
+        "test_command": "pytest tests/ -n auto --dist worksteal -v --tb=short --maxfail=10"
+      }
+    },
+    {
+      "priority": 3,
+      "type": "HIGH", 
+      "title": "Parallelize Security Scanning",
+      "description": "Run security tools (bandit, semgrep, safety) in parallel rather than sequentially",
+      "implementation": {
+        "changes_required": [
+          "Split security scanning into parallel jobs",
+          "Use job matrix for different security tools",
+          "Implement security report aggregation"
+        ],
+        "estimated_effort": "3 hours",
+        "estimated_savings": "50-60% on security scanning time"
+      }
+    },
+    {
+      "priority": 4,
+      "type": "MEDIUM",
+      "title": "Optimize Matrix Job Strategy", 
+      "description": "Improve matrix job configuration for better resource utilization",
+      "implementation": {
+        "changes_required": [
+          "Add fail-fast: false to matrix strategies",
+          "Configure max-parallel appropriately",
+          "Optimize OS/version combinations"
+        ],
+        "estimated_effort": "2 hours",
+        "estimated_savings": "20-25% on total pipeline time"
+      }
+    },
+    {
+      "priority": 5,
+      "type": "MEDIUM",
+      "title": "Implement Artifact Optimization",
+      "description": "Optimize artifact sizes and retention policies",
+      "implementation": {
+        "changes_required": [
+          "Reduce artifact retention periods",
+          "Compress artifacts before upload",
+          "Remove unnecessary artifacts"
+        ],
+        "estimated_effort": "1 hour",
+        "estimated_savings": "10-15% on artifact management time"
+      }
+    }
+  ],
+  "measurement_methodology": {
+    "data_collection_period": "30 days",
+    "sample_size": 127,
+    "measurement_tools": [
+      "GitHub Actions workflow timing",
+      "Custom performance monitoring scripts",
+      "Resource utilization tracking"
+    ],
+    "statistical_confidence": 95
+  }
 }

@@ -24,13 +24,21 @@ os.environ.setdefault("AIVILLAGE_LOG_LEVEL", "WARNING")
 os.environ.setdefault("RAG_LOCAL_MODE", "1")
 os.environ.setdefault("PYTHONPATH", f"{src_root}:{packages_root}:{project_root}")
 
-# Import mocks for missing modules
+# Import mocks for missing modules - CRITICAL for test collection
 try:
-    from tests.mocks import install_mocks
-
+    from tests.mocks import install_mocks, mock_rag, mock_p2p
     install_mocks()
-except ImportError:
-    pass
+    print("✅ Test mocks installed successfully")
+except ImportError as e:
+    print(f"⚠️ Warning: Could not import test mocks: {e}")
+    # Fallback basic mocks
+    import sys
+    from unittest.mock import MagicMock
+    
+    basic_mocks = ['torch', 'transformers', 'chromadb', 'openai', 'rag']
+    for mod_name in basic_mocks:
+        if mod_name not in sys.modules:
+            sys.modules[mod_name] = MagicMock()
 
 
 # Common fixtures
