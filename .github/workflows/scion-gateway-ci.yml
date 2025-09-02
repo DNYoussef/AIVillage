@@ -107,6 +107,7 @@ jobs:
             ! -path "./**/node_modules/*" \
             ! -path "./infrastructure/shared/tools/stub_*" \
             ! -path "./infrastructure/twin/quality/stub_*" \
+            ! -path "./archive/*" \
             ! -path "./experiments/*" \
             ! -path "./swarm/*" \
             ! -path "./benchmarks/*" \
@@ -143,6 +144,8 @@ jobs:
                    [[ "$file" =~ build/ ]] || \
                    [[ "$file" =~ dist/ ]] || \
                    [[ "$file" =~ benchmarks/ ]] || \
+                   [[ "$file" =~ scripts/ ]] || \
+                   [[ "$file" =~ tools/ ]] || \
                    [[ "$file" =~ \.example$ ]] || \
                    [[ "$file" =~ \.template$ ]] || \
                    [[ "$file" =~ \.bak$ ]]; then

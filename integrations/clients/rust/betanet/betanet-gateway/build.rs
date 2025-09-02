@@ -6,11 +6,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build_client(true)   // Generate client code
         .out_dir("src/generated")
         .compile(
-            &["../proto/betanet_gateway.proto"],
-            &["../proto"],
+            &["../../../../../proto/betanet_gateway.proto"],
+            &["../../../../../proto"],
         )?;
 
-    println!("cargo:rerun-if-changed=../proto/betanet_gateway.proto");
+    println!("cargo:rerun-if-changed=../../../../../proto/betanet_gateway.proto");
     println!("cargo:rerun-if-changed=build.rs");
 
     Ok(())
