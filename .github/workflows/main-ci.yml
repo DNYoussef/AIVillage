@@ -199,7 +199,10 @@ jobs:
           ! -path "./security/scripts/*" \
           ! -path "./experiments/*" \
           ! -path "./swarm/*" \
-          ! -path "./scripts/*")
+          ! -path "./scripts/*" \
+          ! -name "*_pb.go" \
+          ! -name "*_grpc.pb.go" \
+          ! -name "*.generated.*")
         
         VIOLATIONS_FOUND=false
         

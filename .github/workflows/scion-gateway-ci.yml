@@ -118,7 +118,10 @@ jobs:
             ! -path "./build/*" \
             ! -path "./dist/*" \
             ! -path "./*/build/*" \
-            ! -path "./*/dist/*")
+            ! -path "./*/dist/*" \
+            ! -name "*_pb.go" \
+            ! -name "*_grpc.pb.go" \
+            ! -name "*.generated.*")
 
           VIOLATIONS_FOUND=false
 

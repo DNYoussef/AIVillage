@@ -8,24 +8,122 @@ import "google/protobuf/timestamp.proto";
 
 // BetaNet Gateway Service
 service BetaNetGateway {
-    // Create a new secure tunnel
+    // SCION packet operations
+    rpc SendScionPacket(SendPacketRequest) returns (SendPacketResponse);
+    rpc RecvScionPacket(RecvPacketRequest) returns (RecvPacketResponse);
+    
+    // Path management
+    rpc RegisterPath(RegisterPathRequest) returns (RegisterPathResponse);
+    rpc QueryPaths(QueryPathsRequest) returns (QueryPathsResponse);
+    
+    // Health and monitoring
+    rpc Health(HealthRequest) returns (HealthResponse);
+    rpc Stats(StatsRequest) returns (StatsResponse);
+    
+    // Validation
+    rpc ValidateSequence(ValidateSequenceRequest) returns (ValidateSequenceResponse);
+    
+    // Tunnel management (additional features)
     rpc CreateTunnel(CreateTunnelRequest) returns (CreateTunnelResponse);
-    
-    // List active tunnels
     rpc ListTunnels(ListTunnelsRequest) returns (ListTunnelsResponse);
-    
-    // Delete a tunnel
     rpc DeleteTunnel(DeleteTunnelRequest) returns (DeleteTunnelResponse);
-    
-    // Get tunnel status
     rpc GetTunnelStatus(GetTunnelStatusRequest) returns (GetTunnelStatusResponse);
-    
-    // Health check
-    rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
 }
 
 // Messages
 
+// SCION packet operations
+message SendPacketRequest {
+    bytes packet_data = 1;
+    string destination_ia = 2;
+    string path_id = 3;
+}
+
+message SendPacketResponse {
+    bool success = 1;
+    string packet_id = 2;
+    string error_message = 3;
+}
+
+message RecvPacketRequest {
+    string source_ia = 1;
+    int32 timeout_ms = 2;
+}
+
+message RecvPacketResponse {
+    bytes packet_data = 1;
+    string source_ia = 2;
+    string path_id = 3;
+    google.protobuf.Timestamp received_at = 4;
+}
+
+// Path management
+message RegisterPathRequest {
+    string path_id = 1;
+    repeated string hops = 2;
+    int32 mtu = 3;
+    google.protobuf.Timestamp expiration = 4;
+}
+
+message RegisterPathResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message QueryPathsRequest {
+    string destination_ia = 1;
+    int32 max_paths = 2;
+}
+
+message QueryPathsResponse {
+    repeated PathInfo paths = 1;
+}
+
+message PathInfo {
+    string path_id = 1;
+    repeated string hops = 2;
+    int32 mtu = 3;
+    double latency_ms = 4;
+    google.protobuf.Timestamp expiration = 5;
+}
+
+// Health and monitoring
+message HealthRequest {
+    string service = 1;
+}
+
+message HealthResponse {
+    HealthStatus status = 1;
+    string message = 2;
+}
+
+message StatsRequest {
+    bool include_paths = 1;
+    bool include_metrics = 2;
+}
+
+message StatsResponse {
+    int64 packets_sent = 1;
+    int64 packets_received = 2;
+    int64 bytes_sent = 3;
+    int64 bytes_received = 4;
+    int32 active_paths = 5;
+    double uptime_seconds = 6;
+}
+
+// Validation
+message ValidateSequenceRequest {
+    repeated bytes packets = 1;
+    string expected_hash = 2;
+}
+
+message ValidateSequenceResponse {
+    bool valid = 1;
+    string actual_hash = 2;
+    repeated int32 invalid_indices = 3;
+}
+
+// Tunnel management (original messages)
 message CreateTunnelRequest {
     string source_ia = 1;        // Source ISD-AS
     string destination_ia = 2;   // Destination ISD-AS
