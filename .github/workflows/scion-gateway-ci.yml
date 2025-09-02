@@ -58,24 +58,23 @@ jobs:
         run: |
           echo "🔍 Scanning for placeholder patterns in production code..."
 
-          # Define placeholder patterns
-          PLACEHOLDER_PATTERNS=(
-            "TODO:"
-            "FIXME:"
-            "XXX:"
-            "HACK:"
-            "NOTE:"
-            "placeholder"
-            "not implemented"
-            "stub"
-            "mock"
-            "fake"
-            "dummy"
-            "temporary"
-            "temp implementation"
-            "coming soon"
-            "to be implemented"
-          )
+          # Define patterns to check (avoiding literal matches in this file)
+          declare -a PLACEHOLDER_PATTERNS
+          PLACEHOLDER_PATTERNS[0]="T""ODO:"
+          PLACEHOLDER_PATTERNS[1]="F""IXME:"
+          PLACEHOLDER_PATTERNS[2]="X""XX:"
+          PLACEHOLDER_PATTERNS[3]="H""ACK:"
+          PLACEHOLDER_PATTERNS[4]="N""OTE:"
+          PLACEHOLDER_PATTERNS[5]="place""holder"
+          PLACEHOLDER_PATTERNS[6]="not ""implemented"
+          PLACEHOLDER_PATTERNS[7]="st""ub"
+          PLACEHOLDER_PATTERNS[8]="mo""ck"
+          PLACEHOLDER_PATTERNS[9]="fa""ke"
+          PLACEHOLDER_PATTERNS[10]="dum""my"
+          PLACEHOLDER_PATTERNS[11]="tempor""ary"
+          PLACEHOLDER_PATTERNS[12]="temp ""implementation"
+          PLACEHOLDER_PATTERNS[13]="coming ""soon"
+          PLACEHOLDER_PATTERNS[14]="to be ""implemented"
 
           # Files to check (exclude development, testing, archive, and third-party directories)
           # Production-focused exclusions to prevent false positives

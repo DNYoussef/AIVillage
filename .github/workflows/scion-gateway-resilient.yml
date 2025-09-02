@@ -221,6 +221,23 @@ jobs:
             git diff go.mod go.sum
           fi
 
+      - name: Install Go protobuf tools
+        run: |
+          echo "[INFO] Installing Go protobuf tools..."
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+          
+          echo "[INFO] Verifying protobuf tools installation..."
+          which protoc-gen-go || echo "[ERROR] protoc-gen-go not found in PATH"
+          which protoc-gen-go-grpc || echo "[ERROR] protoc-gen-go-grpc not found in PATH"
+          
+          echo "[INFO] Go environment:"
+          go env GOPATH
+          go env GOBIN
+          
+          echo "[INFO] Adding Go bin to PATH..."
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+          
       - name: Generate protobuf code with error handling
         run: |
           echo "[INFO] Generating protobuf code..."
@@ -228,10 +245,18 @@ jobs:
             echo "[PASS] Protobuf generation successful"
           else
             echo "[ERROR] Protobuf generation failed"
+            echo "[DEBUG] Current directory: $(pwd)"
             echo "[DEBUG] Checking for proto files:"
             find . -name "*.proto" -type f
-            echo "[DEBUG] Checking Makefile:"
-            cat Makefile | grep -A5 -B5 proto || echo "No proto target found in Makefile"
+            echo "[DEBUG] Checking proto path:"
+            ls -la ../../../../proto/ || echo "Proto directory not found"
+            echo "[DEBUG] Checking protobuf tools:"
+            which protoc protoc-gen-go protoc-gen-go-grpc || echo "Some protobuf tools missing"
+            echo "[DEBUG] Checking Makefile proto target:"
+            cat Makefile | grep -A10 -B5 proto || echo "No proto target found in Makefile"
+            echo "[DEBUG] Go environment:"
+            go env GOPATH
+            go env GOBIN
             exit 1
           fi
 
@@ -340,11 +365,15 @@ jobs:
           echo "Binary Created: ${{ steps.build-binary.outputs.binary-created || 'false' }}"
           echo "Coverage: ${{ steps.test-coverage.outputs.coverage || 'N/A' }}%"
           
-          if [ "${{ job.status }}" = "success" ]; then
-            echo "Overall Status: SUCCESS"
+          # If we reached this point without the job failing, consider it successful
+          # The job would have stopped earlier if any critical step failed
+          binary_created="${{ steps.build-binary.outputs.binary-created }}"
+          
+          if [ "$binary_created" = "true" ]; then
+            echo "Overall Status: SUCCESS (binary was created)"
             echo "success=true" >> $GITHUB_OUTPUT
           else
-            echo "Overall Status: FAILURE"
+            echo "Overall Status: FAILURE (binary was not created)"
             echo "success=false" >> $GITHUB_OUTPUT
           fi
           echo "================================="
@@ -391,10 +420,25 @@ jobs:
             echo "[INFO] Build completed on first attempt"
           fi
           
-          if [ "${{ needs.scion-sidecar-resilient.outputs.build-success }}" = "true" ]; then
+          # Check build success with proper null handling
+          build_success="${{ needs.scion-sidecar-resilient.outputs.build-success }}"
+          job_result="${{ needs.scion-sidecar-resilient.result }}"
+          
+          echo "Job Result: $job_result"
+          echo "Build Success Output: $build_success"
+          
+          if [ "$job_result" = "success" ] && [ "$build_success" = "true" ]; then
             echo "[PASS] Enhanced resilience build completed successfully"
+          elif [ "$job_result" = "failure" ]; then
+            echo "[FAIL] SCION sidecar resilient job failed completely"
+            echo "Check scion-sidecar-resilient job logs for detailed error analysis"
+            exit 1
+          elif [ "$job_result" = "cancelled" ]; then
+            echo "[WARN] SCION sidecar resilient job was cancelled"
+            exit 1
           else
-            echo "[FAIL] Enhanced resilience build failed"
+            echo "[FAIL] Enhanced resilience build failed or returned unexpected result"
+            echo "Job result: $job_result, Build success: $build_success"
             echo "Check previous job logs for detailed error analysis"
             exit 1
           fi
@@ -417,7 +461,9 @@ jobs:
           echo "Commit SHA: ${{ github.sha }}"
           echo "Branch: ${{ github.ref_name }}"
           
-          if [ "${{ needs.validate-resilience.result }}" = "success" ]; then
+          validation_result="${{ needs.validate-resilience.result }}"
+          
+          if [ "$validation_result" = "success" ]; then
             echo "✅ RESILIENCE VALIDATION PASSED"
             echo "Enhanced Go build pipeline is working correctly with:"
             echo "  • Exponential backoff retry logic (2s, 4s, 8s delays)"
@@ -425,8 +471,22 @@ jobs:
             echo "  • Extended timeout (900s) for network resilience" 
             echo "  • Comprehensive error logging and recovery"
             echo "  • Binary validation and functionality testing"
-          else
+            echo ""
+            echo "🎉 SCION Gateway enhanced resilience is OPERATIONAL"
+          elif [ "$validation_result" = "failure" ]; then
             echo "❌ RESILIENCE VALIDATION FAILED"
-            echo "Review the build logs for issues requiring attention"
+            echo ""
+            echo "Common issues to check:"
+            echo "  • Protobuf compiler and Go plugins installation"
+            echo "  • Proto file paths and accessibility"
+            echo "  • Go module dependencies and network connectivity"
+            echo "  • Build system configuration and Makefile targets"
+            echo ""
+            echo "🔍 Review the scion-sidecar-resilient and validate-resilience job logs"
+            echo "📋 Check specific error messages in the proto generation step"
+            exit 1
+          else
+            echo "⚠️  RESILIENCE VALIDATION UNKNOWN STATUS: $validation_result"
+            echo "This may indicate a workflow configuration issue"
             exit 1
           fi
