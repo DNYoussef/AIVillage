@@ -1,0 +1,432 @@
+# Enhanced SCION Gateway CI/CD Pipeline with Go Build Resilience
+# Features: Retry logic with exponential backoff, improved caching, comprehensive error recovery
+
+name: SCION Gateway Enhanced Resilience
+
+on:
+  push:
+    branches: [ main, develop, 'feature/scion-*' ]
+    paths:
+      - 'integrations/clients/rust/betanet/betanet-gateway/**'
+      - 'integrations/clients/rust/scion-sidecar/**'
+      - 'infrastructure/p2p/scion_gateway.py'
+      - 'core/agents/infrastructure/navigation/scion_navigator.py'
+      - 'tests/integration/test_scion_unified.py'
+      - 'devops/deployment/docker/docker-compose.scion-gateway.yml'
+      - '.github/workflows/scion-gateway-resilient.yml'
+
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'integrations/clients/rust/betanet/betanet-gateway/**'
+      - 'integrations/clients/rust/scion-sidecar/**'
+      - 'infrastructure/p2p/scion_gateway.py'
+      - 'core/agents/infrastructure/navigation/scion_navigator.py'
+      - 'tests/integration/test_scion_unified.py'
+      - 'devops/deployment/docker/docker-compose.scion-gateway.yml'
+
+  workflow_dispatch:
+    inputs:
+      force_cache_refresh:
+        description: 'Force refresh of all caches'
+        required: false
+        default: 'false'
+        type: boolean
+      test_retry_logic:
+        description: 'Test retry logic with simulated failures'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  CARGO_TERM_COLOR: always
+  GO_VERSION: '1.21'
+  RUST_VERSION: '1.75'
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+  # Enhanced resilience settings
+  GO_BUILD_TIMEOUT: '900'  # Increased from 600s to 900s
+  GO_RETRY_ATTEMPTS: '3'
+  GO_RETRY_DELAY_BASE: '2'  # Base delay for exponential backoff
+  GO_CACHE_VERSION: 'v2'   # Enhanced cache strategy
+
+jobs:
+  # Enhanced Go SCION Sidecar Build with Resilience
+  scion-sidecar-resilient:
+    name: SCION Sidecar (Go) - Enhanced Resilience
+    runs-on: ubuntu-latest
+    timeout-minutes: 20  # Increased for retry logic
+    defaults:
+      run:
+        working-directory: integrations/clients/rust/scion-sidecar
+
+    outputs:
+      build-success: ${{ steps.build-result.outputs.success }}
+      retry-count: ${{ steps.go-download.outputs.retry-count }}
+      cache-hit: ${{ steps.go-cache.outputs.cache-hit }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go with enhanced error handling
+        id: go-setup
+        uses: actions/setup-go@v5  # Updated to v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false  # We'll handle caching manually for better control
+
+      - name: Verify Go installation
+        run: |
+          echo "Verifying Go installation..."
+          go version || {
+            echo "[ERROR] Go installation failed"
+            exit 1
+          }
+          echo "Go environment:"
+          echo "  GOROOT: $(go env GOROOT)"
+          echo "  GOPATH: $(go env GOPATH)" 
+          echo "  GOCACHE: $(go env GOCACHE)"
+          echo "  GOMODCACHE: $(go env GOMODCACHE)"
+
+      - name: Enhanced Go Module Cache
+        id: go-cache
+        uses: actions/cache@v4
+        if: github.event.inputs.force_cache_refresh != 'true'
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+            ~/.cache/go-mod-download
+          key: ${{ runner.os }}-go-${{ env.GO_CACHE_VERSION }}-${{ hashFiles('**/go.sum', '**/go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ env.GO_CACHE_VERSION }}-
+            ${{ runner.os }}-go-
+
+      - name: Cache status report
+        run: |
+          if [ "${{ steps.go-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "[INFO] Go module cache HIT - using cached dependencies"
+          else
+            echo "[INFO] Go module cache MISS - will download fresh dependencies"
+          fi
+
+      - name: Install protobuf compiler with retry
+        run: |
+          echo "Installing protobuf compiler..."
+          for attempt in 1 2 3; do
+            if sudo apt-get update && sudo apt-get install -y protobuf-compiler; then
+              echo "[PASS] Protobuf compiler installed successfully on attempt $attempt"
+              break
+            else
+              echo "[WARN] Protobuf installation attempt $attempt failed"
+              if [ $attempt -eq 3 ]; then
+                echo "[ERROR] Failed to install protobuf after 3 attempts"
+                exit 1
+              fi
+              sleep $((attempt * 2))  # 2s, 4s delay
+            fi
+          done
+
+      - name: Download Go dependencies with exponential backoff retry
+        id: go-download
+        run: |
+          echo "Starting Go module download with retry logic..."
+          
+          # Function for exponential backoff retry
+          retry_with_backoff() {
+            local cmd="$1"
+            local max_attempts=${{ env.GO_RETRY_ATTEMPTS }}
+            local base_delay=${{ env.GO_RETRY_DELAY_BASE }}
+            local attempt=1
+            
+            while [ $attempt -le $max_attempts ]; do
+              echo "[ATTEMPT $attempt/$max_attempts] Executing: $cmd"
+              
+              if timeout ${{ env.GO_BUILD_TIMEOUT }}s bash -c "$cmd"; then
+                echo "[SUCCESS] Command succeeded on attempt $attempt"
+                echo "retry-count=$attempt" >> $GITHUB_OUTPUT
+                return 0
+              else
+                exit_code=$?
+                echo "[FAILURE] Command failed on attempt $attempt (exit code: $exit_code)"
+                
+                if [ $attempt -eq $max_attempts ]; then
+                  echo "[ERROR] All $max_attempts attempts failed"
+                  echo "retry-count=$attempt" >> $GITHUB_OUTPUT
+                  return $exit_code
+                fi
+                
+                # Calculate delay: base_delay * 2^(attempt-1) = 2s, 4s, 8s
+                delay=$((base_delay * (1 << (attempt - 1))))
+                echo "[RETRY] Waiting ${delay}s before next attempt..."
+                sleep $delay
+                
+                attempt=$((attempt + 1))
+              fi
+            done
+          }
+
+          # Test retry logic if requested
+          if [ "${{ github.event.inputs.test_retry_logic }}" = "true" ]; then
+            echo "[TEST] Simulating failure to test retry logic..."
+            retry_with_backoff "false"  # This will always fail to test retry
+            echo "[TEST] Retry test completed, proceeding with normal operation..."
+          fi
+
+          # Clean module cache if needed
+          if [ "${{ steps.go-cache.outputs.cache-hit }}" != "true" ] || [ "${{ github.event.inputs.force_cache_refresh }}" = "true" ]; then
+            echo "[INFO] Cleaning Go module cache..."
+            go clean -modcache || echo "[WARN] Failed to clean module cache, continuing..."
+          fi
+
+          # Download dependencies with retry
+          echo "[INFO] Starting dependency download with enhanced error handling..."
+          
+          retry_with_backoff "go mod download -x" || {
+            echo "[ERROR] Failed to download Go modules after all retry attempts"
+            echo "[DEBUG] Go environment debug info:"
+            go env
+            echo "[DEBUG] Module file contents:"
+            cat go.mod || echo "go.mod not found"
+            echo "[DEBUG] Network connectivity test:"
+            curl -I https://proxy.golang.org/ || echo "Proxy connectivity failed"
+            exit 1
+          }
+
+          echo "[SUCCESS] Go module download completed successfully"
+
+      - name: Verify and tidy Go modules
+        run: |
+          echo "[INFO] Verifying and tidying Go modules..."
+          
+          # Verify modules
+          if go mod verify; then
+            echo "[PASS] Go module verification successful"
+          else
+            echo "[WARN] Go module verification failed, attempting to fix..."
+            go mod download
+            go mod verify || echo "[WARN] Module verification still failing, continuing anyway..."
+          fi
+          
+          # Tidy modules
+          echo "[INFO] Running go mod tidy..."
+          go mod tidy
+          
+          # Check for any changes
+          if git diff --exit-code go.mod go.sum; then
+            echo "[PASS] Go modules are clean and tidy"
+          else
+            echo "[INFO] Go modules were updated by tidy operation:"
+            git diff go.mod go.sum
+          fi
+
+      - name: Generate protobuf code with error handling
+        run: |
+          echo "[INFO] Generating protobuf code..."
+          if make proto; then
+            echo "[PASS] Protobuf generation successful"
+          else
+            echo "[ERROR] Protobuf generation failed"
+            echo "[DEBUG] Checking for proto files:"
+            find . -name "*.proto" -type f
+            echo "[DEBUG] Checking Makefile:"
+            cat Makefile | grep -A5 -B5 proto || echo "No proto target found in Makefile"
+            exit 1
+          fi
+
+      - name: Enhanced Go static analysis
+        run: |
+          echo "[INFO] Running enhanced Go static analysis..."
+          
+          # Go vet with enhanced checks
+          echo "Step 1: Running go vet..."
+          if go vet ./...; then
+            echo "[PASS] go vet completed successfully"
+          else
+            echo "[FAIL] go vet found issues"
+            exit 1
+          fi
+          
+          # Check for race conditions in parallel
+          echo "Step 2: Running race detection..."
+          if go build -race ./...; then
+            echo "[PASS] Race detection build successful"
+          else
+            echo "[WARN] Race detection found potential issues (non-blocking)"
+          fi
+          
+          echo "[SUCCESS] Static analysis completed"
+
+      - name: Run comprehensive Go tests with enhanced reporting
+        run: |
+          echo "[INFO] Running comprehensive Go test suite..."
+          
+          # Create test output directory
+          mkdir -p test-results
+          
+          # Run tests with verbose output, race detection, and coverage
+          echo "Running tests with race detection and coverage..."
+          
+          if go test -v -race -coverprofile=coverage.out -covermode=atomic \
+             -timeout=5m ./... 2>&1 | tee test-results/test-output.txt; then
+            echo "[PASS] All Go tests passed"
+            
+            # Generate detailed coverage report
+            if [ -f coverage.out ]; then
+              echo "[INFO] Generating coverage reports..."
+              go tool cover -html=coverage.out -o test-results/coverage.html
+              
+              COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+              echo "Test coverage: $COVERAGE%"
+              echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+              
+              if (( $(echo "$COVERAGE >= 70" | bc -l) )); then
+                echo "[PASS] Test coverage meets minimum requirement: $COVERAGE% >= 70%"
+              else
+                echo "[WARN] Test coverage below recommended 70%: $COVERAGE%"
+              fi
+            fi
+          else
+            echo "[FAIL] Go tests failed"
+            echo "[DEBUG] Test failure analysis:"
+            tail -50 test-results/test-output.txt || echo "No test output available"
+            exit 1
+          fi
+
+      - name: Build Go binary with enhanced validation
+        id: build-binary
+        run: |
+          echo "[INFO] Building Go binary with enhanced validation..."
+          
+          # Build with detailed output
+          if make build VERBOSE=1; then
+            echo "[PASS] Binary build successful"
+            
+            # Verify binary exists and is executable
+            if [ -f bin/scion_sidecar ]; then
+              echo "[PASS] Binary file exists: bin/scion_sidecar"
+              
+              # Check binary properties
+              ls -la bin/scion_sidecar
+              file bin/scion_sidecar
+              
+              # Test binary functionality
+              echo "[INFO] Testing binary functionality..."
+              ./bin/scion_sidecar --help > /dev/null && echo "[PASS] Help command works"
+              ./bin/scion_sidecar --version > /dev/null && echo "[PASS] Version command works"
+              
+              echo "binary-created=true" >> $GITHUB_OUTPUT
+            else
+              echo "[ERROR] Binary file not found after build"
+              echo "[DEBUG] Contents of bin directory:"
+              ls -la bin/ || echo "bin/ directory not found"
+              exit 1
+            fi
+          else
+            echo "[ERROR] Binary build failed"
+            echo "binary-created=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Build result summary
+        id: build-result
+        if: always()
+        run: |
+          echo "=== SCION SIDECAR BUILD SUMMARY ==="
+          echo "Go Version: $(go version)"
+          echo "Cache Hit: ${{ steps.go-cache.outputs.cache-hit }}"
+          echo "Retry Count: ${{ steps.go-download.outputs.retry-count || 'N/A' }}"
+          echo "Binary Created: ${{ steps.build-binary.outputs.binary-created || 'false' }}"
+          echo "Coverage: ${{ steps.test-coverage.outputs.coverage || 'N/A' }}%"
+          
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "Overall Status: SUCCESS"
+            echo "success=true" >> $GITHUB_OUTPUT
+          else
+            echo "Overall Status: FAILURE"
+            echo "success=false" >> $GITHUB_OUTPUT
+          fi
+          echo "================================="
+
+      - name: Upload enhanced test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scion-sidecar-test-results-${{ github.run_id }}
+          path: |
+            integrations/clients/rust/scion-sidecar/test-results/
+            integrations/clients/rust/scion-sidecar/coverage.out
+          retention-days: 30
+
+      - name: Upload sidecar binary
+        if: steps.build-binary.outputs.binary-created == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: scion-sidecar-binary-resilient-${{ github.run_id }}
+          path: integrations/clients/rust/scion-sidecar/bin/scion_sidecar
+          retention-days: 90
+
+  # Build Status Validation
+  validate-resilience:
+    name: Validate Build Resilience
+    runs-on: ubuntu-latest
+    needs: [scion-sidecar-resilient]
+    if: always()
+    
+    steps:
+      - name: Analyze Build Results
+        run: |
+          echo "=== BUILD RESILIENCE ANALYSIS ==="
+          echo "Build Success: ${{ needs.scion-sidecar-resilient.outputs.build-success }}"
+          echo "Retry Count: ${{ needs.scion-sidecar-resilient.outputs.retry-count }}"
+          echo "Cache Hit: ${{ needs.scion-sidecar-resilient.outputs.cache-hit }}"
+          
+          # Validate resilience metrics
+          retry_count="${{ needs.scion-sidecar-resilient.outputs.retry-count }}"
+          if [ -n "$retry_count" ] && [ "$retry_count" -gt 1 ]; then
+            echo "[INFO] Retry logic was utilized ($retry_count attempts)"
+            echo "Resilience mechanisms working as expected"
+          else
+            echo "[INFO] Build completed on first attempt"
+          fi
+          
+          if [ "${{ needs.scion-sidecar-resilient.outputs.build-success }}" = "true" ]; then
+            echo "[PASS] Enhanced resilience build completed successfully"
+          else
+            echo "[FAIL] Enhanced resilience build failed"
+            echo "Check previous job logs for detailed error analysis"
+            exit 1
+          fi
+          echo "=================================="
+
+  # Final Status Check
+  resilience-status:
+    name: Resilience Status Check
+    runs-on: ubuntu-latest
+    needs: [validate-resilience]
+    if: always()
+    
+    steps:
+      - name: Final Status Report
+        run: |
+          echo "🛡️ SCION GATEWAY RESILIENCE STATUS REPORT"
+          echo "=========================================="
+          echo "Pipeline Status: ${{ needs.validate-resilience.result }}"
+          echo "Timestamp: $(date -Iseconds)"
+          echo "Commit SHA: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
+          
+          if [ "${{ needs.validate-resilience.result }}" = "success" ]; then
+            echo "✅ RESILIENCE VALIDATION PASSED"
+            echo "Enhanced Go build pipeline is working correctly with:"
+            echo "  • Exponential backoff retry logic (2s, 4s, 8s delays)"
+            echo "  • Enhanced dependency caching with multi-level keys"
+            echo "  • Extended timeout (900s) for network resilience" 
+            echo "  • Comprehensive error logging and recovery"
+            echo "  • Binary validation and functionality testing"
+          else
+            echo "❌ RESILIENCE VALIDATION FAILED"
+            echo "Review the build logs for issues requiring attention"
+            exit 1
+          fi

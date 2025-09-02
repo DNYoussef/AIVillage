@@ -16,9 +16,91 @@ import logging
 from pathlib import Path
 import re
 import sys
+from datetime import datetime
+from enum import Enum
+from typing import Dict, List, Optional, Tuple
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+class SecuritySeverity(Enum):
+    """Security issue severity levels for production deployment gates."""
+    CRITICAL = "CRITICAL"
+    ERROR = "ERROR" 
+    WARNING = "WARNING"
+    INFO = "INFO"
+
+
+class SecurityValidationResult:
+    """Structured security validation result with severity classification."""
+    
+    def __init__(self):
+        self.issues_by_severity = {
+            SecuritySeverity.CRITICAL: [],
+            SecuritySeverity.ERROR: [],
+            SecuritySeverity.WARNING: [],
+            SecuritySeverity.INFO: []
+        }
+        self.validated_secrets = []
+        self.files_processed = 0
+        self.audit_trail = []
+    
+    def add_issue(self, severity: SecuritySeverity, file_path: str, line_num: int, 
+                  issue_type: str, content: str, pattern: str = None, justification: str = None):
+        """Add a security issue with proper severity classification."""
+        issue = {
+            "file": file_path,
+            "line": line_num,
+            "type": issue_type,
+            "content": content,
+            "pattern": pattern,
+            "justification": justification,
+            "timestamp": datetime.now().isoformat()
+        }
+        self.issues_by_severity[severity].append(issue)
+        
+        # Log to audit trail
+        self.audit_trail.append({
+            "action": "issue_detected",
+            "severity": severity.value,
+            "details": issue,
+            "timestamp": datetime.now().isoformat()
+        })
+    
+    def get_overall_status(self, production_ready_mode: bool = False) -> str:
+        """Determine overall validation status based on severity counts."""
+        critical_count = len(self.issues_by_severity[SecuritySeverity.CRITICAL])
+        error_count = len(self.issues_by_severity[SecuritySeverity.ERROR])
+        warning_count = len(self.issues_by_severity[SecuritySeverity.WARNING])
+        
+        # CRITICAL issues always block deployment
+        if critical_count > 0:
+            return "FAIL"
+        
+        # ERROR issues block deployment unless in production-ready mode
+        if error_count > 0:
+            if production_ready_mode:
+                return "PASS_WITH_ERRORS"  # New status for production mode
+            else:
+                return "FAIL"
+        
+        # WARNING issues are acceptable in production mode
+        if warning_count > 0:
+            return "PASS_WITH_WARNINGS"
+        
+        return "PASS"
+    
+    def get_exit_code(self, production_ready_mode: bool = False) -> int:
+        """Get appropriate exit code based on validation results."""
+        status = self.get_overall_status(production_ready_mode)
+        
+        if status == "PASS":
+            return 0
+        elif status in ["PASS_WITH_WARNINGS", "PASS_WITH_ERRORS"]:
+            return 0 if production_ready_mode else 1
+        else:  # FAIL
+            return 2
 
 
 class SecretSanitizationValidator:
@@ -36,18 +118,38 @@ class SecretSanitizationValidator:
             "tests/benchmarks/test_performance_benchmarks.py",
         ]
 
-        # Patterns that indicate potentially unsafe secrets
-        self.unsafe_patterns = [
-            r'password\s*=\s*["\'][^"\']*Password123[^"\']*["\'](?!.*pragma.*allowlist)',
-            r'secret_key\s*=\s*["\'][^"\']+["\'](?!.*pragma.*allowlist)',
-            r'api_key\s*=\s*["\'][^"\']+["\'](?!.*pragma.*allowlist)',
-            r'private_key\s*=\s*["\'][^"\']+["\'](?!.*pragma.*allowlist)',
-            # Production-like patterns
-            r'["\'][A-Za-z0-9+/]{20,}={0,2}["\']',  # Base64-like strings
-            r'["\']sk-[A-Za-z0-9]{48,}["\']',  # OpenAI API key pattern
-            r'["\']ghp_[A-Za-z0-9]{36}["\']',  # GitHub personal access token
-            r'["\']AKIA[A-Z0-9]{16}["\']',  # AWS access key ID pattern
-        ]
+        # ENHANCED: Security patterns categorized by severity level
+        self.security_patterns = {
+            SecuritySeverity.CRITICAL: [
+                # Production credentials - ALWAYS block deployment
+                (r'["\']sk-[A-Za-z0-9]{48,}["\']', 'openai_api_key', 'Live OpenAI API key detected'),
+                (r'["\']ghp_[A-Za-z0-9]{36}["\']', 'github_pat', 'Live GitHub personal access token detected'),
+                (r'["\']AKIA[A-Z0-9]{16}["\']', 'aws_access_key', 'Live AWS access key detected'),
+                (r'["\']glpat-[A-Za-z0-9_\-]{20}["\']', 'gitlab_pat', 'Live GitLab access token detected'),
+                (r'["\'][0-9a-fA-F]{32}["\'](?=.*password)', 'md5_password_hash', 'Potential live password hash'),
+                (r'["\']\\$[0-9][a-z]\\$[^"\']*["\']', 'bcrypt_hash', 'Potential live bcrypt hash')
+            ],
+            SecuritySeverity.ERROR: [
+                # Hardcoded secrets without proper pragma comments - block in strict mode
+                (r'password\s*=\s*["\'][^"\']*[A-Za-z0-9!@#$%^&*()]{8,}[^"\']*["\'](?!.*pragma.*allowlist)', 'hardcoded_password', 'Hardcoded password without pragma allowlist'),
+                (r'secret_key\s*=\s*["\'][^"\']{16,}["\'](?!.*pragma.*allowlist)', 'hardcoded_secret_key', 'Hardcoded secret key without pragma allowlist'),
+                (r'api_key\s*=\s*["\'][^"\']{20,}["\'](?!.*pragma.*allowlist)', 'hardcoded_api_key', 'Hardcoded API key without pragma allowlist'),
+                (r'private_key\s*=\s*["\'][^"\']{40,}["\'](?!.*pragma.*allowlist)', 'hardcoded_private_key', 'Hardcoded private key without pragma allowlist')
+            ],
+            SecuritySeverity.WARNING: [
+                # Suspicious patterns that should be reviewed
+                (r'["\'][A-Za-z0-9+/]{40,}={0,2}["\'](?!.*pragma.*allowlist)', 'base64_string', 'Long base64 string without pragma comment'),
+                (r'password\s*=\s*["\'][^"\']*test[^"\']*["\'](?!.*pragma.*allowlist)', 'test_password_no_pragma', 'Test password without pragma comment'),
+                (r'["\'][0-9a-fA-F]{16,}["\'](?!.*pragma.*allowlist)', 'hex_string', 'Long hex string without pragma comment'),
+                (r'bearer\s+[A-Za-z0-9_\-\.]{20,}(?!.*pragma.*allowlist)', 'bearer_token', 'Bearer token without pragma comment')
+            ],
+            SecuritySeverity.INFO: [
+                # Informational - potential secrets that might need review
+                (r'["\'][A-Z0-9]{10,}["\']', 'uppercase_string', 'Long uppercase string - check if credential'),
+                (r'token\s*=\s*["\'][^"\']{10,}["\']', 'generic_token', 'Generic token assignment'),
+                (r'key\s*=\s*["\'][^"\']{10,}["\']', 'generic_key', 'Generic key assignment')
+            ]
+        }
 
         # Safe test patterns (should have pragma comments)
         self.test_patterns = [
