@@ -241,22 +241,47 @@ jobs:
       - name: Generate protobuf code with error handling
         run: |
           echo "[INFO] Generating protobuf code..."
-          if make proto; then
+          
+          # Create pkg/gateway directory if it doesn't exist
+          mkdir -p pkg/gateway
+          
+          # Check protobuf tools availability
+          echo "[INFO] Checking protobuf tools..."
+          which protoc || { echo "[ERROR] protoc not found"; exit 1; }
+          which protoc-gen-go || { echo "[ERROR] protoc-gen-go not found"; exit 1; }
+          which protoc-gen-go-grpc || { echo "[ERROR] protoc-gen-go-grpc not found"; exit 1; }
+          
+          # Generate protobuf code directly
+          echo "[INFO] Running protoc command directly..."
+          if protoc --proto_path=../../../../proto \
+             --go_out=pkg/gateway \
+             --go_opt=paths=source_relative \
+             --go-grpc_out=pkg/gateway \
+             --go-grpc_opt=paths=source_relative \
+             ../../../../proto/betanet_gateway.proto; then
             echo "[PASS] Protobuf generation successful"
+            
+            # Verify generated files exist
+            echo "[INFO] Verifying generated protobuf files..."
+            if [ -f pkg/gateway/betanet_gateway.pb.go ] && [ -f pkg/gateway/betanet_gateway_grpc.pb.go ]; then
+              echo "[PASS] All protobuf files generated successfully"
+              ls -la pkg/gateway/*.pb.go
+            else
+              echo "[WARN] Some protobuf files may be missing:"
+              ls -la pkg/gateway/ || echo "pkg/gateway directory not found"
+            fi
           else
             echo "[ERROR] Protobuf generation failed"
             echo "[DEBUG] Current directory: $(pwd)"
             echo "[DEBUG] Checking for proto files:"
-            find . -name "*.proto" -type f
-            echo "[DEBUG] Checking proto path:"
-            ls -la ../../../../proto/ || echo "Proto directory not found"
-            echo "[DEBUG] Checking protobuf tools:"
-            which protoc protoc-gen-go protoc-gen-go-grpc || echo "Some protobuf tools missing"
-            echo "[DEBUG] Checking Makefile proto target:"
-            cat Makefile | grep -A10 -B5 proto || echo "No proto target found in Makefile"
+            find ../../../../proto -name "*.proto" -type f || echo "No proto files found"
+            echo "[DEBUG] Proto file content:"
+            cat ../../../../proto/betanet_gateway.proto || echo "Cannot read proto file"
             echo "[DEBUG] Go environment:"
             go env GOPATH
             go env GOBIN
+            echo "[DEBUG] PATH:"
+            echo $PATH
             exit 1
           fi
 
@@ -324,8 +349,12 @@ jobs:
         run: |
           echo "[INFO] Building Go binary with enhanced validation..."
           
-          # Build with detailed output
-          if make build VERBOSE=1; then
+          # Create bin directory if it doesn't exist
+          mkdir -p bin
+          
+          # Build with detailed output using corrected binary name
+          echo "[INFO] Building binary using go build directly..."
+          if go build -ldflags "-X main.version=dev -X main.commit=$(git rev-parse --short HEAD) -X main.date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" -o bin/scion_sidecar -v ./cmd/scion_sidecar; then
             echo "[PASS] Binary build successful"
             
             # Verify binary exists and is executable
@@ -334,22 +363,28 @@ jobs:
               
               # Check binary properties
               ls -la bin/scion_sidecar
-              file bin/scion_sidecar
+              file bin/scion_sidecar || echo "[INFO] file command not available"
               
               # Test binary functionality
               echo "[INFO] Testing binary functionality..."
-              ./bin/scion_sidecar --help > /dev/null && echo "[PASS] Help command works"
-              ./bin/scion_sidecar --version > /dev/null && echo "[PASS] Version command works"
+              ./bin/scion_sidecar --help > /dev/null 2>&1 && echo "[PASS] Help command works" || echo "[WARN] Help command failed (may be expected)"
+              ./bin/scion_sidecar --version > /dev/null 2>&1 && echo "[PASS] Version command works" || echo "[WARN] Version command failed (may be expected)"
               
               echo "binary-created=true" >> $GITHUB_OUTPUT
             else
               echo "[ERROR] Binary file not found after build"
               echo "[DEBUG] Contents of bin directory:"
               ls -la bin/ || echo "bin/ directory not found"
+              echo "[DEBUG] Contents of current directory:"
+              ls -la
               exit 1
             fi
           else
             echo "[ERROR] Binary build failed"
+            echo "[DEBUG] Go environment:"
+            go env
+            echo "[DEBUG] Build command output:"
+            go build -ldflags "-X main.version=dev" -o bin/scion_sidecar -v ./cmd/scion_sidecar 2>&1 || true
             echo "binary-created=false" >> $GITHUB_OUTPUT
             exit 1
           fi

@@ -1,0 +1,106 @@
+{
+  "ci_integration_ready": true,
+  "total_tests": 6,
+  "passed": 6,
+  "failed": 0,
+  "success_rate": 1.0,
+  "total_duration": 1.2766830921173096,
+  "results": {
+    "import_validation": {
+      "success": true,
+      "timestamp": 1756842845.4427986,
+      "duration": 1.256511926651001,
+      "details": {
+        "successful_imports": [
+          "fastapi",
+          "pydantic",
+          "pytest",
+          "asyncio",
+          "pathlib",
+          "json",
+          "logging"
+        ],
+        "failed_imports": [],
+        "total_imports": 7,
+        "success_rate": 1.0
+      },
+      "error": null
+    },
+    "file_structure_validation": {
+      "success": true,
+      "timestamp": 1756842845.4433126,
+      "duration": 0.0005140304565429688,
+      "details": {
+        "existing_paths": [
+          "tests/integration",
+          "tests/pytest.ini",
+          ".github/workflows/main-ci.yml",
+          "requirements.txt",
+          "src",
+          "packages"
+        ],
+        "missing_paths": [],
+        "total_paths": 6,
+        "coverage": 1.0
+      },
+      "error": null
+    },
+    "pytest_configuration": {
+      "success": true,
+      "timestamp": 1756842845.4443371,
+      "duration": 0.001024484634399414,
+      "details": {
+        "has_tool_pytest": true,
+        "has_asyncio_mode": false,
+        "config_file_exists": true,
+        "configuration_valid": true
+      },
+      "error": null
+    },
+    "async_support": {
+      "success": true,
+      "timestamp": 1756842845.4629698,
+      "duration": 0.01863265037536621,
+      "details": {
+        "basic_async_test": true,
+        "pytest_asyncio_available": true
+      },
+      "error": null
+    },
+    "ci_workflow_validation": {
+      "success": true,
+      "timestamp": 1756842845.4629698,
+      "duration": 0.0,
+      "details": {
+        "has_integration_tests": true,
+        "has_python_setup": true,
+        "has_pytest_runner": true,
+        "has_timeout_config": true,
+        "workflow_file_exists": true
+      },
+      "error": null
+    },
+    "environment_setup": {
+      "success": true,
+      "timestamp": 1756842845.4629698,
+      "duration": 0.0,
+      "details": {
+        "python_version": "3.12.5",
+        "python_compatible": true,
+        "current_directory": "C:\\Users\\17175\\Desktop\\AIVillage",
+        "in_project_root": true,
+        "env_vars": {
+          "PYTHONPATH": "C:\\Users\\17175\\Desktop\\AIVillage\\infrastructure:C:\\Users\\17175\\Desktop\\AIVillage\\core:C:\\Users\\17175\\Desktop\\AIVillage\\packages:C:\\Users\\17175\\Desktop\\AIVillage\\src:C:\\Users\\17175\\Desktop\\AIVillage:C:\\Users\\17175\\Desktop\\AIVillage:C:\\Python312\\python312.zip:C:\\Python312\\DLLs:C:\\Python312\\Lib:C:\\Python312:C:\\Users\\17175\\AppData\\Roaming\\Python\\Python312\\site-packages:C:\\Users\\17175\\AppData\\Roaming\\Python\\Python312\\site-packages\\win32:C:\\Users\\17175\\AppData\\Roaming\\Python\\Python312\\site-packages\\win32\\lib:C:\\Users\\17175\\AppData\\Roaming\\Python\\Python312\\site-packages\\Pythonwin:C:\\Python312\\Lib\\site-packages",
+          "DB_PASSWORD": "default",
+          "REDIS_PASSWORD": "default",
+          "JWT_SECRET": "default",
+          "AIVILLAGE_ENV": "testing"
+        }
+      },
+      "error": null
+    }
+  },
+  "recommendations": [
+    "CI/CD integration is ready - all validation tests passed!"
+  ]
+}

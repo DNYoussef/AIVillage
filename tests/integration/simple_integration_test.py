@@ -4,8 +4,10 @@
 import asyncio
 from pathlib import Path
 import sys
+import pytest
 
 
+@pytest.mark.asyncio
 async def test_basic_integration():
     """Test basic integration functionality."""
 
@@ -117,6 +119,7 @@ async def test_basic_integration():
         return False
 
 
+@pytest.mark.asyncio
 async def test_transport_integration():
     """Test integration with actual transport infrastructure."""
 

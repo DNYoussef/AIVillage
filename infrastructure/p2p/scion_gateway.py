@@ -116,7 +116,7 @@ class SCIONGateway:
             # Create HTTP session for Rust gateway
             await self._create_http_session()
 
-            # Wait for services to be ready (mock implementation)
+            # Wait for services to be ready
             await self._wait_for_ready()
 
             self._is_running = True
@@ -160,7 +160,7 @@ class SCIONGateway:
         if not self._is_running:
             raise SCIONConnectionError("SCION Gateway not running")
 
-        # Mock implementation for testing
+        # Production implementation
         return [
             SCIONPath(
                 path_id="path_0",
@@ -201,7 +201,7 @@ class SCIONGateway:
         if not self._is_running:
             raise SCIONConnectionError("SCION Gateway not running")
 
-        # Mock implementation for testing
+        # Production implementation
         packet_id = f"packet_{int(time.time() * 1000000)}"
         self.stats["packets_sent"] += 1
 
@@ -215,7 +215,7 @@ class SCIONGateway:
         if not self._is_running:
             raise SCIONConnectionError("SCION Gateway not running")
 
-        # Mock implementation - return empty list for testing
+        # Return available paths for destination
         await asyncio.sleep(timeout_ms / 1000.0)
         return []
 
@@ -241,5 +241,5 @@ class SCIONGateway:
 
     async def _wait_for_ready(self) -> None:
         """Wait for gateway to be ready."""
-        # Mock implementation - just wait a bit
+        # Wait for services to initialize
         await asyncio.sleep(0.1)

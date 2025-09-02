@@ -11,7 +11,7 @@ GOFMT=gofmt
 GOLINT=golangci-lint
 
 # Build parameters
-BINARY_NAME=scion-sidecar
+BINARY_NAME=scion_sidecar
 BINARY_UNIX=$(BINARY_NAME)_unix
 PROTO_DIR=../../../../proto
 PKG_DIR=pkg/gateway

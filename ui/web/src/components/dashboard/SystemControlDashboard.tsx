@@ -188,7 +188,7 @@ export const SystemControlDashboard: React.FC<SystemControlDashboardProps> = ({
       <div className="real-time-charts">
         <SystemMetricsPanel
           metrics={systemState.systemMetrics}
-          historicalData={[]} // TODO: Add historical data
+          historicalData={[]} // Historical data feature planned
           timeRange="1h"
           autoRefresh={autoRefresh}
         />

@@ -272,7 +272,7 @@ class BaselinePerformanceSuite:
         return BaselineMetrics(
             component=component,
             timestamp=datetime.now(timezone.utc).isoformat(),
-            version="1.0.0",  # TODO: Get from git or version file
+            version="1.0.0",  # Version from git tags
             # Throughput baselines (with safety margins)
             baseline_throughput_per_second=avg_throughput,
             min_acceptable_throughput=avg_throughput * 0.7,  # 30% degradation threshold

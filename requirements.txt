@@ -41,7 +41,11 @@ qdrant-client>=1.11.1
 # ============================================================================
 
 # PyTorch Ecosystem
-
+torch>=2.4.0
+torchvision>=0.19.0
+torchaudio>=2.4.0
+triton>=2.3.0; platform_machine != 'arm64' and platform_system != 'Windows'
+xformers>=0.0.26; platform_machine != 'arm64' and platform_system != 'Windows'
 
 # Transformers & NLP
 transformers>=4.44.0

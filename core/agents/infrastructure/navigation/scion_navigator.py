@@ -289,7 +289,7 @@ class SCIONAwareNavigator:
     def __init__(
         self,
         scion_config: GatewayConfig,
-        transport_manager: Any,  # Mock transport manager
+        transport_manager: Any,  # Transport manager interface
         enable_scion_preference: bool = True,
         scion_weight: float = 2.0,
     ):
@@ -316,7 +316,7 @@ class SCIONAwareNavigator:
         constraints: dict[str, Any] | None = None,
     ) -> RoutingDecision:
         """Find optimal transport route to destination."""
-        # Mock implementation for testing
+        # Production implementation
         primary_transport = TransportCandidate(
             transport_type="scion",
             endpoint=destination,

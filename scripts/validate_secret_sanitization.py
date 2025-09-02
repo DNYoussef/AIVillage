@@ -216,12 +216,23 @@ class SecretSanitizationValidator:
                 result["line_count"] = len(lines)
 
             for line_num, line in enumerate(lines, 1):
-                # Check for unsafe secret patterns
-                for pattern in self.unsafe_patterns:
-                    if re.search(pattern, line, re.IGNORECASE):
-                        result["issues"].append(
-                            {"line": line_num, "type": "unsafe_secret", "content": line.strip(), "pattern": pattern}
-                        )
+                # Check for unsafe secret patterns across all severity levels
+                for severity, patterns in self.security_patterns.items():
+                    for pattern_tuple in patterns:
+                        pattern = pattern_tuple[0]  # Extract regex pattern from tuple
+                        pattern_name = pattern_tuple[1] if len(pattern_tuple) > 1 else "unknown_pattern"
+                        description = pattern_tuple[2] if len(pattern_tuple) > 2 else "Security pattern detected"
+                        
+                        if re.search(pattern, line, re.IGNORECASE):
+                            result["issues"].append({
+                                "line": line_num, 
+                                "type": f"{severity.value.lower()}_security_issue", 
+                                "content": line.strip(), 
+                                "pattern": pattern,
+                                "pattern_name": pattern_name,
+                                "description": description,
+                                "severity": severity.value
+                            })
 
                 # Check for properly sanitized test secrets
                 if re.search(r"pragma.*allowlist.*secret", line, re.IGNORECASE):
