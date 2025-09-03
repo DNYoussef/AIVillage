@@ -5,8 +5,8 @@
 //! and security measures.
 
 use crate::{
-    BetanetMessage, BetanetPeer,
     error::{BetanetError, Result},
+    BetanetMessage, BetanetPeer,
 };
 
 use metrics::{Counter, Gauge, Histogram, Unit};
@@ -123,7 +123,7 @@ pub struct ResourceMetrics {
 }
 
 /// Real-time statistics
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct RealtimeStats {
     /// Current active connections
     pub active_connections: u32,
@@ -133,6 +133,18 @@ pub struct RealtimeStats {
     pub current_throughput: f64,
     /// Average latency (ms)
     pub average_latency_ms: f64,
+    /// Successful message deliveries
+    pub successful_deliveries: u64,
+    /// Failed message deliveries
+    pub failed_deliveries: u64,
+    /// Successful Noise handshakes
+    pub successful_handshakes: u64,
+    /// Failed Noise handshakes
+    pub failed_handshakes: u64,
+    /// Replay attacks detected
+    pub replay_attacks: u64,
+    /// Signature verification failures
+    pub signature_failures: u64,
     /// Current reliability score
     pub reliability_score: f64,
     /// Current security score
@@ -349,7 +361,9 @@ impl KpiMetrics {
 
     /// Record message sent
     pub async fn record_message_sent(&self, message: &BetanetMessage, latency: Duration) {
-        self.performance.message_latency.record(latency.as_millis() as f64);
+        self.performance
+            .message_latency
+            .record(latency.as_millis() as f64);
         self.performance.throughput.increment(1);
 
         // Update real-time stats
@@ -367,66 +381,110 @@ impl KpiMetrics {
 
         // Update real-time stats
         let mut stats = self.realtime_stats.write().await;
+        stats.successful_deliveries += 1;
+        if stats.messages_in_flight > 0 {
+            stats.messages_in_flight -= 1;
+        }
+    }
+
+    /// Record failed message delivery
+    pub async fn record_delivery_failure(&self) {
+        self.resilience.failed_deliveries.increment(1);
+
+        let mut stats = self.realtime_stats.write().await;
+        stats.failed_deliveries += 1;
         if stats.messages_in_flight > 0 {
             stats.messages_in_flight -= 1;
         }
     }
 
     /// Record transport switch
-    pub async fn record_transport_switch(&self, from_transport: &str, to_transport: &str, reason: &str) {
+    pub async fn record_transport_switch(
+        &self,
+        from_transport: &str,
+        to_transport: &str,
+        reason: &str,
+    ) {
         self.performance.transport_switches.increment(1);
 
         if reason.contains("fallback") {
             self.performance.fallback_activations.increment(1);
         }
 
-        debug!("Transport switch: {} -> {} (reason: {})", from_transport, to_transport, reason);
+        debug!(
+            "Transport switch: {} -> {} (reason: {})",
+            from_transport, to_transport, reason
+        );
     }
 
     /// Record security event
     pub async fn record_security_event(&self, event_type: SecurityEventType) {
+        let mut stats = self.realtime_stats.write().await;
         match event_type {
             SecurityEventType::HandshakeSuccess => {
                 self.security.successful_handshakes.increment(1);
+                stats.successful_handshakes += 1;
             }
             SecurityEventType::HandshakeFailure => {
                 self.security.failed_handshakes.increment(1);
+                stats.failed_handshakes += 1;
             }
             SecurityEventType::KeyRotation => {
                 self.security.key_rotations.increment(1);
             }
             SecurityEventType::ReplayAttackDetected => {
                 self.security.replay_attacks_detected.increment(1);
+                stats.replay_attacks += 1;
             }
             SecurityEventType::SignatureVerificationFailure => {
                 self.security.signature_failures.increment(1);
+                stats.signature_failures += 1;
             }
         }
     }
 
     /// Record covert channel usage
-    pub async fn record_covert_channel_usage(&self, channel_type: CovertChannelType, bytes_used: u64) {
+    pub async fn record_covert_channel_usage(
+        &self,
+        channel_type: CovertChannelType,
+        bytes_used: u64,
+    ) {
         match channel_type {
             CovertChannelType::HttpHeaders => {
-                self.covert_channel.header_channel_capacity.set(bytes_used as f64);
+                self.covert_channel
+                    .header_channel_capacity
+                    .set(bytes_used as f64);
             }
             CovertChannelType::JsonBody => {
-                self.covert_channel.json_channel_capacity.set(bytes_used as f64);
+                self.covert_channel
+                    .json_channel_capacity
+                    .set(bytes_used as f64);
             }
             CovertChannelType::HtmlComments => {
-                self.covert_channel.html_channel_capacity.set(bytes_used as f64);
+                self.covert_channel
+                    .html_channel_capacity
+                    .set(bytes_used as f64);
             }
             CovertChannelType::JpegMetadata => {
-                self.covert_channel.jpeg_channel_capacity.set(bytes_used as f64);
+                self.covert_channel
+                    .jpeg_channel_capacity
+                    .set(bytes_used as f64);
             }
         }
     }
 
     /// Record resource usage
-    pub async fn record_resource_usage(&self, cpu_percent: f64, memory_mb: f64, network_io_bps: f64) {
+    pub async fn record_resource_usage(
+        &self,
+        cpu_percent: f64,
+        memory_mb: f64,
+        network_io_bps: f64,
+    ) {
         self.resource.cpu_usage.set(cpu_percent);
         self.resource.memory_usage.set(memory_mb * 1024.0 * 1024.0); // Convert to bytes
-        self.resource.network_io_rate.increment(network_io_bps as u64);
+        self.resource
+            .network_io_rate
+            .increment(network_io_bps as u64);
     }
 
     /// Get current real-time statistics
@@ -516,14 +574,38 @@ impl KpiMetrics {
             ReportFormat::Markdown => {
                 let mut report = String::new();
                 report.push_str("# Betanet KPI Report\n\n");
-                report.push_str(&format!("**Generated**: {}\n\n", chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC")));
-                report.push_str(&format!("**Active Connections**: {}\n", stats.active_connections));
-                report.push_str(&format!("**Messages in Flight**: {}\n", stats.messages_in_flight));
-                report.push_str(&format!("**Current Throughput**: {:.2} msgs/sec\n", stats.current_throughput));
-                report.push_str(&format!("**Average Latency**: {:.2} ms\n", stats.average_latency_ms));
-                report.push_str(&format!("**Reliability Score**: {:.3}\n", stats.reliability_score));
-                report.push_str(&format!("**Security Score**: {:.3}\n", stats.security_score));
-                report.push_str(&format!("\n**Historical Snapshots**: {}\n", historical.len()));
+                report.push_str(&format!(
+                    "**Generated**: {}\n\n",
+                    chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC")
+                ));
+                report.push_str(&format!(
+                    "**Active Connections**: {}\n",
+                    stats.active_connections
+                ));
+                report.push_str(&format!(
+                    "**Messages in Flight**: {}\n",
+                    stats.messages_in_flight
+                ));
+                report.push_str(&format!(
+                    "**Current Throughput**: {:.2} msgs/sec\n",
+                    stats.current_throughput
+                ));
+                report.push_str(&format!(
+                    "**Average Latency**: {:.2} ms\n",
+                    stats.average_latency_ms
+                ));
+                report.push_str(&format!(
+                    "**Reliability Score**: {:.3}\n",
+                    stats.reliability_score
+                ));
+                report.push_str(&format!(
+                    "**Security Score**: {:.3}\n",
+                    stats.security_score
+                ));
+                report.push_str(&format!(
+                    "\n**Historical Snapshots**: {}\n",
+                    historical.len()
+                ));
                 Ok(report)
             }
         }
@@ -547,9 +629,23 @@ impl KpiMetrics {
                     .unwrap()
                     .as_secs();
 
-                // Reference implementation: derived metrics calculation
-                stats.reliability_score = 0.95; // Placeholder
-                stats.security_score = 0.98; // Placeholder
+                // Derived metrics calculation based on runtime statistics
+                let total_deliveries = stats.successful_deliveries + stats.failed_deliveries;
+                stats.reliability_score = if total_deliveries > 0 {
+                    stats.successful_deliveries as f64 / total_deliveries as f64
+                } else {
+                    1.0
+                };
+
+                let total_security_events = stats.successful_handshakes
+                    + stats.failed_handshakes
+                    + stats.replay_attacks
+                    + stats.signature_failures;
+                stats.security_score = if total_security_events > 0 {
+                    stats.successful_handshakes as f64 / total_security_events as f64
+                } else {
+                    1.0
+                };
             }
         });
     }
@@ -624,12 +720,36 @@ impl KpiMetrics {
 impl PerformanceMetrics {
     fn new() -> Self {
         Self {
-            message_latency: Histogram::new("betanet_message_latency", Unit::Milliseconds, "Message latency in milliseconds"),
-            throughput: Counter::new("betanet_throughput", Unit::Count, "Messages processed per second"),
-            bandwidth_utilization: Gauge::new("betanet_bandwidth_utilization", Unit::Percent, "Bandwidth utilization percentage"),
-            transport_switches: Counter::new("betanet_transport_switches", Unit::Count, "Number of transport switches"),
-            fallback_activations: Counter::new("betanet_fallback_activations", Unit::Count, "Number of fallback activations"),
-            fingerprint_success_rate: Gauge::new("betanet_fingerprint_success_rate", Unit::Percent, "Chrome fingerprint success rate"),
+            message_latency: Histogram::new(
+                "betanet_message_latency",
+                Unit::Milliseconds,
+                "Message latency in milliseconds",
+            ),
+            throughput: Counter::new(
+                "betanet_throughput",
+                Unit::Count,
+                "Messages processed per second",
+            ),
+            bandwidth_utilization: Gauge::new(
+                "betanet_bandwidth_utilization",
+                Unit::Percent,
+                "Bandwidth utilization percentage",
+            ),
+            transport_switches: Counter::new(
+                "betanet_transport_switches",
+                Unit::Count,
+                "Number of transport switches",
+            ),
+            fallback_activations: Counter::new(
+                "betanet_fallback_activations",
+                Unit::Count,
+                "Number of fallback activations",
+            ),
+            fingerprint_success_rate: Gauge::new(
+                "betanet_fingerprint_success_rate",
+                Unit::Percent,
+                "Chrome fingerprint success rate",
+            ),
         }
     }
 }
@@ -637,12 +757,36 @@ impl PerformanceMetrics {
 impl SecurityMetrics {
     fn new() -> Self {
         Self {
-            successful_handshakes: Counter::new("betanet_successful_handshakes", Unit::Count, "Successful Noise handshakes"),
-            failed_handshakes: Counter::new("betanet_failed_handshakes", Unit::Count, "Failed Noise handshakes"),
-            key_rotations: Counter::new("betanet_key_rotations", Unit::Count, "Number of key rotations"),
-            replay_attacks_detected: Counter::new("betanet_replay_attacks", Unit::Count, "Replay attacks detected"),
-            signature_failures: Counter::new("betanet_signature_failures", Unit::Count, "Signature verification failures"),
-            trust_score_distribution: Histogram::new("betanet_trust_scores", Unit::Percent, "Peer trust score distribution"),
+            successful_handshakes: Counter::new(
+                "betanet_successful_handshakes",
+                Unit::Count,
+                "Successful Noise handshakes",
+            ),
+            failed_handshakes: Counter::new(
+                "betanet_failed_handshakes",
+                Unit::Count,
+                "Failed Noise handshakes",
+            ),
+            key_rotations: Counter::new(
+                "betanet_key_rotations",
+                Unit::Count,
+                "Number of key rotations",
+            ),
+            replay_attacks_detected: Counter::new(
+                "betanet_replay_attacks",
+                Unit::Count,
+                "Replay attacks detected",
+            ),
+            signature_failures: Counter::new(
+                "betanet_signature_failures",
+                Unit::Count,
+                "Signature verification failures",
+            ),
+            trust_score_distribution: Histogram::new(
+                "betanet_trust_scores",
+                Unit::Percent,
+                "Peer trust score distribution",
+            ),
         }
     }
 }
@@ -650,12 +794,36 @@ impl SecurityMetrics {
 impl CovertChannelMetrics {
     fn new() -> Self {
         Self {
-            header_channel_capacity: Gauge::new("betanet_header_channel_capacity", Unit::Bytes, "HTTP header channel capacity"),
-            json_channel_capacity: Gauge::new("betanet_json_channel_capacity", Unit::Bytes, "JSON body channel capacity"),
-            html_channel_capacity: Gauge::new("betanet_html_channel_capacity", Unit::Bytes, "HTML comment channel capacity"),
-            jpeg_channel_capacity: Gauge::new("betanet_jpeg_channel_capacity", Unit::Bytes, "JPEG metadata channel capacity"),
-            detection_evasion_rate: Gauge::new("betanet_detection_evasion_rate", Unit::Percent, "Detection evasion success rate"),
-            traffic_analysis_resistance: Gauge::new("betanet_traffic_analysis_resistance", Unit::Percent, "Traffic analysis resistance score"),
+            header_channel_capacity: Gauge::new(
+                "betanet_header_channel_capacity",
+                Unit::Bytes,
+                "HTTP header channel capacity",
+            ),
+            json_channel_capacity: Gauge::new(
+                "betanet_json_channel_capacity",
+                Unit::Bytes,
+                "JSON body channel capacity",
+            ),
+            html_channel_capacity: Gauge::new(
+                "betanet_html_channel_capacity",
+                Unit::Bytes,
+                "HTML comment channel capacity",
+            ),
+            jpeg_channel_capacity: Gauge::new(
+                "betanet_jpeg_channel_capacity",
+                Unit::Bytes,
+                "JPEG metadata channel capacity",
+            ),
+            detection_evasion_rate: Gauge::new(
+                "betanet_detection_evasion_rate",
+                Unit::Percent,
+                "Detection evasion success rate",
+            ),
+            traffic_analysis_resistance: Gauge::new(
+                "betanet_traffic_analysis_resistance",
+                Unit::Percent,
+                "Traffic analysis resistance score",
+            ),
         }
     }
 }
@@ -663,12 +831,36 @@ impl CovertChannelMetrics {
 impl ResilienceMetrics {
     fn new() -> Self {
         Self {
-            successful_deliveries: Counter::new("betanet_successful_deliveries", Unit::Count, "Successful message deliveries"),
-            failed_deliveries: Counter::new("betanet_failed_deliveries", Unit::Count, "Failed message deliveries"),
-            path_diversity_score: Gauge::new("betanet_path_diversity", Unit::Percent, "Path diversity score"),
-            as_diversity_score: Gauge::new("betanet_as_diversity", Unit::Percent, "AS diversity score"),
-            partition_recovery_time: Histogram::new("betanet_partition_recovery_time", Unit::Milliseconds, "Network partition recovery time"),
-            peer_discovery_rate: Gauge::new("betanet_peer_discovery_rate", Unit::Percent, "Peer discovery success rate"),
+            successful_deliveries: Counter::new(
+                "betanet_successful_deliveries",
+                Unit::Count,
+                "Successful message deliveries",
+            ),
+            failed_deliveries: Counter::new(
+                "betanet_failed_deliveries",
+                Unit::Count,
+                "Failed message deliveries",
+            ),
+            path_diversity_score: Gauge::new(
+                "betanet_path_diversity",
+                Unit::Percent,
+                "Path diversity score",
+            ),
+            as_diversity_score: Gauge::new(
+                "betanet_as_diversity",
+                Unit::Percent,
+                "AS diversity score",
+            ),
+            partition_recovery_time: Histogram::new(
+                "betanet_partition_recovery_time",
+                Unit::Milliseconds,
+                "Network partition recovery time",
+            ),
+            peer_discovery_rate: Gauge::new(
+                "betanet_peer_discovery_rate",
+                Unit::Percent,
+                "Peer discovery success rate",
+            ),
         }
     }
 }
@@ -679,9 +871,21 @@ impl ResourceMetrics {
             cpu_usage: Gauge::new("betanet_cpu_usage", Unit::Percent, "CPU usage percentage"),
             memory_usage: Gauge::new("betanet_memory_usage", Unit::Bytes, "Memory usage in bytes"),
             network_io_rate: Counter::new("betanet_network_io", Unit::Bytes, "Network I/O rate"),
-            connection_pool_usage: Gauge::new("betanet_connection_pool_usage", Unit::Percent, "Connection pool utilization"),
-            mobile_battery_impact: Gauge::new("betanet_mobile_battery_impact", Unit::Percent, "Mobile battery impact score"),
-            mobile_data_usage: Counter::new("betanet_mobile_data_usage", Unit::Bytes, "Mobile data usage"),
+            connection_pool_usage: Gauge::new(
+                "betanet_connection_pool_usage",
+                Unit::Percent,
+                "Connection pool utilization",
+            ),
+            mobile_battery_impact: Gauge::new(
+                "betanet_mobile_battery_impact",
+                Unit::Percent,
+                "Mobile battery impact score",
+            ),
+            mobile_data_usage: Counter::new(
+                "betanet_mobile_data_usage",
+                Unit::Bytes,
+                "Mobile data usage",
+            ),
         }
     }
 }
@@ -731,11 +935,53 @@ mod tests {
             bytes::Bytes::from("test"),
         );
 
-        metrics.record_message_sent(&message, Duration::from_millis(50)).await;
+        metrics
+            .record_message_sent(&message, Duration::from_millis(50))
+            .await;
         metrics.record_message_received(&message).await;
 
         let stats = metrics.get_realtime_stats().await;
         assert_eq!(stats.messages_in_flight, 0);
+    }
+
+    #[tokio::test]
+    async fn test_score_calculation() {
+        let metrics = KpiMetrics::new();
+        metrics.start().await.unwrap();
+
+        let message = BetanetMessage::new(
+            "sender".to_string(),
+            "recipient".to_string(),
+            bytes::Bytes::from("test"),
+        );
+
+        // One successful and one failed delivery
+        metrics
+            .record_message_sent(&message, Duration::from_millis(10))
+            .await;
+        metrics.record_message_received(&message).await;
+        metrics
+            .record_message_sent(&message, Duration::from_millis(10))
+            .await;
+        metrics.record_delivery_failure().await;
+
+        // One successful handshake, one failure, and a replay attack
+        metrics
+            .record_security_event(SecurityEventType::HandshakeSuccess)
+            .await;
+        metrics
+            .record_security_event(SecurityEventType::HandshakeFailure)
+            .await;
+        metrics
+            .record_security_event(SecurityEventType::ReplayAttackDetected)
+            .await;
+
+        // Allow background task to update derived metrics
+        tokio::time::sleep(Duration::from_millis(1100)).await;
+        let stats = metrics.get_realtime_stats().await;
+
+        assert!((stats.reliability_score - 0.5).abs() < 0.01);
+        assert!((stats.security_score - (1.0 / 3.0)).abs() < 0.01);
     }
 
     #[test]
