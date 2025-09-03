@@ -36,7 +36,13 @@ tempfile = { workspace = true }
 default = ["sbom", "checks-all"]
 sbom = []
 checks-all = []
+unstable = []
 
 [[bin]]
 name = "betanet-linter"
 path = "src/main.rs"
+
+[lib]
+name = "betanet_linter"
+path = "src/lib.rs"
+test = false

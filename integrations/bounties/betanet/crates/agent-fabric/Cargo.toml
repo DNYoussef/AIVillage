@@ -50,3 +50,19 @@ default = ["rpc", "dtn"]
 rpc = []
 dtn = []
 mls = ["openmls", "openmls_traits", "openmls_rust_crypto"]
+unstable = []
+
+[[test]]
+name = "integration_tests"
+path = "tests/integration_tests.rs"
+required-features = ["unstable"]
+
+[[example]]
+name = "rpc_outage_test"
+path = "examples/rpc_outage_test.rs"
+required-features = ["unstable"]
+
+[[example]]
+name = "rpc_outage_test_simple"
+path = "examples/rpc_outage_test_simple.rs"
+required-features = ["unstable"]

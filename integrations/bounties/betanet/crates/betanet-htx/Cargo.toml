@@ -62,5 +62,32 @@ quic = ["dep:quinn"]
 noise-xk = []
 hybrid-kem-stub = []
 tls-fingerprint = []
+# Unstable examples are gated behind this feature
+unstable = []
 # Temporarily disable problematic features
 # utls-integration = ["dep:betanet-utls", "dep:rand_distr", "tls-fingerprint"]
+
+[[example]]
+name = "echo_client"
+path = "examples/echo_client.rs"
+required-features = ["unstable"]
+
+[[example]]
+name = "echo_server"
+path = "examples/echo_server.rs"
+required-features = ["unstable"]
+
+[[example]]
+name = "htx_quic_datagram_demo"
+path = "examples/htx_quic_datagram_demo.rs"
+required-features = ["unstable"]
+
+[[example]]
+name = "htx_quic_masque_demo"
+path = "examples/htx_quic_masque_demo.rs"
+required-features = ["unstable"]
+
+[[example]]
+name = "masque_demo"
+path = "examples/masque_demo.rs"
+required-features = ["unstable"]

@@ -57,7 +57,7 @@ pub mod receipts;
 pub mod split;
 
 // Re-export main types
-pub use fedavg_secureagg::{DifferentialPrivacy, FedAvgAggregator, SecureAggregation};
+pub use fedavg_secureagg::{DifferentialPrivacy, FedAvgAggregator, FedAvgConfig, SecureAggregation};
 pub use gossip::{GossipProtocol, PeerExchange, RobustAggregation};
 pub use orchestrator::{CohortManager, RoundOrchestrator, RoundPlan};
 pub use receipts::{FLReceipt, ProofOfParticipation, ResourceMetrics};
