@@ -38,7 +38,7 @@ export const CreditEarningTips: React.FC<CreditEarningTipsProps> = ({
 
       <div className="earning-strategies">
         <h4>Earning Strategies</h4>
-        <p>Multiple ways to earn credits coming soon!</p>
+        <p>Earn credits by contributing resources and participating in marketplace activities.</p>
       </div>
 
       <div className="market-insights">

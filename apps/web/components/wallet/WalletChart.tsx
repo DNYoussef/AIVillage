@@ -28,7 +28,7 @@ export const WalletChart: React.FC<WalletChartProps> = ({
         <svg width={chartWidth} height={chartHeight} className="credit-chart">
           <rect width="100%" height="100%" fill="#f3f4f6" />
           <text x={chartWidth/2} y={chartHeight/2} textAnchor="middle" dominantBaseline="central">
-            Chart visualization coming soon
+            No chart data available
           </text>
         </svg>
       </div>
