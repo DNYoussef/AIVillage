@@ -1197,12 +1197,15 @@ if __name__ == "__main__":
         user_id = await twin.create_user(
             username="demo_user",
             email="demo@example.com",
-            password="secure_password",  # nosec B106 - test demo password, not production
+            password="example_password",  # pragma: allowlist secret - nosec B106: demo password
             display_name="Demo User",  # pragma: allowlist secret
         )
 
         # Authenticate user
-        token = await twin.authenticate_user("demo_user", "secure_password")  # nosec B106 - test demo password
+        token = await twin.authenticate_user(
+            "demo_user",
+            "example_password",  # pragma: allowlist secret - nosec B106: demo password
+        )
         print(f"Authentication token: {token}")
 
         # Create conversation
