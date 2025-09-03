@@ -195,7 +195,7 @@ impl AgentFabric {
     pub async fn send_to_group(&self, group_id: String, message: GroupMessage) -> Result<()> {
         let groups = self.mls_groups.read().await;
         if let Some(group) = groups.get(&group_id) {
-            group.send_message(message).await?;
+            let _ = group.send_message(message).await?;
             Ok(())
         } else {
             Err(AgentFabricError::GroupNotFound(group_id))
