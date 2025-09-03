@@ -3,6 +3,9 @@
 use std::os::raw::c_char;
 use std::ptr;
 
+use once_cell::sync::Lazy;
+use tokio::runtime::Runtime;
+
 /// Result codes for Betanet FFI functions
 #[repr(i32)]
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -33,7 +36,30 @@ pub struct BetanetHandle {
     _private: [u8; 0],
 }
 
+/// Global async runtime used by FFI functions
+static RUNTIME: Lazy<Runtime> = Lazy::new(|| {
+    Runtime::new().expect("failed to create async runtime")
+});
+
+/// Get a reference to the global async runtime
+pub fn runtime() -> &'static Runtime {
+    &RUNTIME
+}
+
+/// Initialize the global runtime (optional no-op)
+#[no_mangle]
+pub extern "C" fn betanet_init_runtime() -> BetanetResult {
+    // Force initialization of the runtime
+    Lazy::force(&RUNTIME);
+    BetanetResult::Success
+}
+
 /// Buffer structure for passing data between C and Rust
+///
+/// When `capacity` is zero the buffer is a read-only view over memory
+/// owned by the library and **must not** be freed by the caller. When
+/// `capacity` is non-zero the buffer owns the memory and the caller is
+/// responsible for releasing it with [`betanet_buffer_free`].
 #[repr(C)]
 pub struct BetanetBuffer {
     /// Pointer to data

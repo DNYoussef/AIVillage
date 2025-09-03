@@ -5,6 +5,7 @@ use std::os::raw::{c_char, c_int, c_uint};
 use std::ffi::{CStr, CString};
 use std::ptr;
 use betanet_linter::{Linter, LinterConfig, SeverityLevel};
+use crate::common::runtime;
 
 /// Linter handle
 pub type LinterHandle = BetanetHandle;
@@ -85,7 +86,8 @@ pub extern "C" fn linter_create(config: *const LinterConfigFFI) -> *mut LinterHa
 ///
 /// # Arguments
 /// * `linter` - Linter handle
-/// * `results` - Output results structure
+/// * `results` - Output results structure owned by the caller
+///   which will be populated on success
 ///
 /// # Returns
 /// * Result code
@@ -100,8 +102,8 @@ pub extern "C" fn linter_run(
 
     let linter_ref = unsafe { &mut *(linter as *mut Linter) };
 
-    // Note: This would need async runtime setup in a real implementation
-    let lint_results = match futures::executor::block_on(linter_ref.run()) {
+    // Execute using shared async runtime
+    let lint_results = match runtime().block_on(linter_ref.run()) {
         Ok(r) => r,
         Err(_) => return BetanetResult::InternalError,
     };
@@ -139,7 +141,8 @@ pub extern "C" fn linter_run(
 /// # Arguments
 /// * `linter` - Linter handle
 /// * `rule_name` - Rule name to check (null-terminated string)
-/// * `results` - Output results structure
+/// * `results` - Output results structure owned by the caller and
+///   populated on success
 ///
 /// # Returns
 /// * Result code
@@ -162,7 +165,8 @@ pub extern "C" fn linter_check_rule(
         }
     };
 
-    let lint_results = match futures::executor::block_on(linter_ref.check_rule(rule_str)) {
+    // Execute using shared async runtime
+    let lint_results = match runtime().block_on(linter_ref.check_rule(rule_str)) {
         Ok(r) => r,
         Err(_) => return BetanetResult::InternalError,
     };
@@ -200,7 +204,8 @@ pub extern "C" fn linter_check_rule(
 /// # Arguments
 /// * `directory` - Directory to analyze (null-terminated string)
 /// * `format` - SBOM format ("spdx" or "cyclonedx", null-terminated string)
-/// * `output` - Output buffer for SBOM JSON (will be allocated)
+/// * `output` - Output buffer for SBOM JSON. The buffer is allocated by the
+///   library and the caller must release it with `betanet_buffer_free`.
 ///
 /// # Returns
 /// * Result code
@@ -239,7 +244,8 @@ pub extern "C" fn linter_generate_sbom(
     let generator = betanet_linter::SbomGenerator::new();
     let dir_path = std::path::Path::new(dir_str);
 
-    let sbom_json = match futures::executor::block_on(generator.generate(dir_path, format_str)) {
+    // Execute using shared async runtime
+    let sbom_json = match runtime().block_on(generator.generate(dir_path, format_str)) {
         Ok(json) => json,
         Err(_) => return BetanetResult::InternalError,
     };
