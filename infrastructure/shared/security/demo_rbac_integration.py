@@ -7,12 +7,19 @@ integrated with all major AIVillage components.
 
 import asyncio
 import logging
+import os
 
 from . import Permission, Role, initialize_aivillage_rbac
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Guard against execution in production environments
+if os.getenv("AIVILLAGE_ENV") == "production":
+    raise RuntimeError(
+        "demo_rbac_integration.py contains demo credentials and should not be used in production builds",
+    )
 
 
 async def demo_rbac_system():
@@ -30,7 +37,11 @@ async def demo_rbac_system():
     print("\n2. Creating demo tenant...")
     tenant = await rbac.create_tenant(
         name="Demo Corporation",
-        admin_user={"username": "demo_admin", "email": "admin@demo.corp", "password": "SecurePassword123!"},
+        admin_user={
+            "username": "demo_admin",
+            "email": "admin@demo.corp",
+            "password": "SecurePassword123!",  # pragma: allowlist secret
+        },
         config={"max_agents": 20, "max_rag_collections": 10, "storage_quota_gb": 500},
     )
     print(f"   Created tenant: {tenant.name} ({tenant.tenant_id})")
@@ -41,7 +52,7 @@ async def demo_rbac_system():
     developer = await rbac.create_user(
         username="alice_dev",
         email="alice@demo.corp",
-        password="DevPassword123!",  # nosec B106 - demo password for testing
+        password="DevPassword123!",  # pragma: allowlist secret - nosec B106: demo password
         tenant_id=tenant.tenant_id,
         role=Role.DEVELOPER,
     )
@@ -50,7 +61,7 @@ async def demo_rbac_system():
     data_scientist = await rbac.create_user(
         username="bob_scientist",
         email="bob@demo.corp",
-        password="DataPassword123!",  # nosec B106 - demo password for testing
+        password="DataPassword123!",  # pragma: allowlist secret - nosec B106: demo password
         tenant_id=tenant.tenant_id,
         role=Role.DATA_SCIENTIST,
     )
@@ -59,7 +70,7 @@ async def demo_rbac_system():
     regular_user = await rbac.create_user(
         username="charlie_user",
         email="charlie@demo.corp",
-        password="UserPassword123!",  # nosec B106 - demo password for testing
+        password="UserPassword123!",  # pragma: allowlist secret - nosec B106: demo password
         tenant_id=tenant.tenant_id,
         role=Role.USER,
     )
@@ -70,7 +81,7 @@ async def demo_rbac_system():
 
     admin_session = await rbac.authenticate(
         username="demo_admin",
-        password="SecurePassword123!",  # nosec B106 - demo password for testing
+        password="SecurePassword123!",  # pragma: allowlist secret - nosec B106: demo password
         tenant_id=tenant.tenant_id,
         ip_address="127.0.0.1",
         user_agent="Demo/1.0",
@@ -79,7 +90,7 @@ async def demo_rbac_system():
 
     dev_session = await rbac.authenticate(
         username="alice_dev",
-        password="DevPassword123!",  # nosec B106 - demo password for testing
+        password="DevPassword123!",  # pragma: allowlist secret - nosec B106: demo password
         tenant_id=tenant.tenant_id,
         ip_address="127.0.0.1",
         user_agent="Demo/1.0",
@@ -222,13 +233,17 @@ async def demo_rbac_system():
     # Create second tenant
     tenant2 = await rbac.create_tenant(
         name="Another Corp",
-        admin_user={"username": "other_admin", "email": "admin@other.corp", "password": "OtherPassword123!"},
+        admin_user={
+            "username": "other_admin",
+            "email": "admin@other.corp",
+            "password": "OtherPassword123!",  # pragma: allowlist secret
+        },
     )
 
     other_user = await rbac.create_user(
         username="eve_other",
         email="eve@other.corp",
-        password="EvePassword123!",  # nosec B106 - demo password for testing
+        password="EvePassword123!",  # pragma: allowlist secret - nosec B106: demo password
         tenant_id=tenant2.tenant_id,
         role=Role.USER,
     )
