@@ -1202,16 +1202,162 @@ class CrossNodeOptimizer:
     # Additional stub methods for completeness...
     
     async def _get_standard_recommendations(
-        self, 
-        objective: OptimizationObjective, 
+        self,
+        objective: OptimizationObjective,
         max_recommendations: int
     ) -> list[OptimizationRecommendation]:
-        """Get standard optimization recommendations."""
-        return []  # Implementation would go here
+        """Get standard optimization recommendations.
+
+        This method implements a very small rule based optimiser that
+        inspects the current ``node_states`` and generates optimisation
+        actions.  The goal of the implementation is not to be exhaustive
+        but to provide deterministic behaviour that can be exercised in
+        unit tests.  The rules are:
+
+        * **BALANCE_LOAD / MINIMIZE_LATENCY / MAXIMIZE_THROUGHPUT** –
+          migrate work from the most loaded node to the least loaded one.
+        * **MINIMIZE_COST** – scale down nodes that are largely
+          under‑utilised.
+        * **MAXIMIZE_RELIABILITY** – activate a backup for nodes with a
+          high error rate.
+
+        The returned recommendations are sorted by the caller of this
+        method, therefore we simply build a list based on the current
+        objective.
+        """
+
+        if not self.node_states:
+            return []
+
+        recommendations: list[OptimizationRecommendation] = []
+        states = list(self.node_states.values())
+
+        # Helper to create recommendation objects
+        def make_rec(action: OptimizationAction, targets: list[str],
+                     expected: float = 0.2, priority: int = 3) -> OptimizationRecommendation:
+            return OptimizationRecommendation(
+                recommendation_id=str(uuid.uuid4()),
+                action=action,
+                target_nodes=targets,
+                expected_improvement=min(max(expected, 0.0), 1.0),
+                confidence=0.7,
+                priority=priority,
+                estimated_cost=0.1,
+                implementation_time_estimate=1.0,
+            )
+
+        if objective in {
+            OptimizationObjective.BALANCE_LOAD,
+            OptimizationObjective.MINIMIZE_LATENCY,
+            OptimizationObjective.MAXIMIZE_THROUGHPUT,
+        }:
+            overloaded = sorted(states, key=lambda s: s.cpu_utilization, reverse=True)
+            underloaded = sorted(states, key=lambda s: s.cpu_utilization)
+            for src, dst in zip(overloaded, underloaded):
+                if src.cpu_utilization - dst.cpu_utilization < 0.2:
+                    break
+                recommendations.append(
+                    make_rec(
+                        OptimizationAction.MIGRATE_WORKLOAD,
+                        [src.node_id, dst.node_id],
+                        expected=src.cpu_utilization - dst.cpu_utilization,
+                        priority=4,
+                    )
+                )
+                if len(recommendations) >= max_recommendations:
+                    break
+
+        elif objective == OptimizationObjective.MINIMIZE_COST:
+            for state in states:
+                if state.cpu_utilization < 0.2 and state.memory_utilization < 0.2:
+                    recommendations.append(
+                        make_rec(
+                            OptimizationAction.SCALE_RESOURCES,
+                            [state.node_id],
+                            expected=0.1,
+                            priority=2,
+                        )
+                    )
+                    if len(recommendations) >= max_recommendations:
+                        break
+
+        elif objective == OptimizationObjective.MAXIMIZE_RELIABILITY:
+            for state in states:
+                if state.error_rate > 0.1:
+                    recommendations.append(
+                        make_rec(
+                            OptimizationAction.ACTIVATE_BACKUP_NODE,
+                            [state.node_id],
+                            expected=0.3,
+                            priority=5,
+                        )
+                    )
+                    if len(recommendations) >= max_recommendations:
+                        break
+
+        return recommendations
         
     async def _check_performance_anomalies(self, metrics: PerformanceMetrics):
-        """Check for performance anomalies."""
-        pass  # Implementation would go here
+        """Check for performance anomalies.
+
+        The implementation looks for simple threshold breaches in the
+        aggregated ``PerformanceMetrics``.  When an anomaly is detected a
+        ``FaultEvent`` is generated, stored in ``fault_history`` and
+        passed to ``_handle_detected_fault``.  A list of generated faults
+        is returned which aids unit testing.
+        """
+
+        faults: list[FaultEvent] = []
+
+        try:
+            affected_nodes = list(self.node_states.keys())
+
+            if metrics.total_latency_ms > 1000:
+                fault = FaultEvent(
+                    fault_id=str(uuid.uuid4()),
+                    fault_type=FaultType.SLOW_RESPONSE,
+                    affected_nodes=affected_nodes,
+                    severity=min(metrics.total_latency_ms / 2000.0, 1.0),
+                    detected_at=datetime.now(),
+                    description="High end-to-end latency detected",
+                    confidence=0.8,
+                )
+                self.fault_history.append(fault)
+                faults.append(fault)
+                await self._handle_detected_fault(fault)
+
+            if metrics.success_rate < 0.9:
+                fault = FaultEvent(
+                    fault_id=str(uuid.uuid4()),
+                    fault_type=FaultType.COMPUTE_OVERLOAD,
+                    affected_nodes=affected_nodes,
+                    severity=min((0.9 - metrics.success_rate) / 0.9, 1.0),
+                    detected_at=datetime.now(),
+                    description="Low success rate detected",
+                    confidence=0.7,
+                )
+                self.fault_history.append(fault)
+                faults.append(fault)
+                await self._handle_detected_fault(fault)
+
+            if metrics.resource_efficiency < 0.5:
+                fault = FaultEvent(
+                    fault_id=str(uuid.uuid4()),
+                    fault_type=FaultType.MEMORY_EXHAUSTION,
+                    affected_nodes=affected_nodes,
+                    severity=1 - metrics.resource_efficiency,
+                    detected_at=datetime.now(),
+                    description="Resource efficiency critically low",
+                    confidence=0.6,
+                )
+                self.fault_history.append(fault)
+                faults.append(fault)
+                await self._handle_detected_fault(fault)
+
+        except Exception as e:
+            logger.error(f"❌ Failed to check performance anomalies: {e}")
+
+        return faults
         
     async def _handle_detected_fault(self, fault: FaultEvent):
         """Handle a detected fault."""
@@ -1222,12 +1368,95 @@ class CrossNodeOptimizer:
         self.active_optimizations.discard(optimization_id)
         
     async def _update_network_topology(self):
-        """Update network topology information."""
-        pass  # Implementation would measure actual network metrics
+        """Update network topology information.
+
+        In lieu of real network probes we derive synthetic metrics from
+        the current ``node_states``.  Every pair of active nodes receives
+        a latency, bandwidth and reliability score.  Connections are
+        added for all node pairs so that subsequent optimisation can make
+        decisions based on these values.
+        """
+
+        nodes = list(self.node_states.values())
+        for i, src in enumerate(nodes):
+            self.network_topology.connections.setdefault(src.node_id, set())
+            for dst in nodes[i + 1:]:
+                self.network_topology.connections.setdefault(dst.node_id, set())
+
+                latency = 10 + abs(src.network_utilization - dst.network_utilization) * 100
+                bandwidth = max(
+                    10.0,
+                    100.0 - (src.network_utilization + dst.network_utilization) * 50,
+                )
+                reliability = 1.0 - ((src.error_rate + dst.error_rate) / 2.0)
+
+                # Register bidirectional connection
+                self.network_topology.connections[src.node_id].add(dst.node_id)
+                self.network_topology.connections[dst.node_id].add(src.node_id)
+
+                for a, b in ((src.node_id, dst.node_id), (dst.node_id, src.node_id)):
+                    self.network_topology.latencies[(a, b)] = latency
+                    self.network_topology.bandwidths[(a, b)] = bandwidth
+                    self.network_topology.reliability_scores[(a, b)] = reliability
+
+        # Remove connections for nodes that no longer exist
+        for node in list(self.network_topology.connections.keys()):
+            if node not in self.node_states:
+                del self.network_topology.connections[node]
+        to_remove = [pair for pair in self.network_topology.latencies if pair[0] not in self.node_states or pair[1] not in self.node_states]
+        for pair in to_remove:
+            self.network_topology.latencies.pop(pair, None)
+            self.network_topology.bandwidths.pop(pair, None)
+            self.network_topology.reliability_scores.pop(pair, None)
         
     async def _optimize_network_topology(self):
-        """Optimize network topology based on current conditions."""
-        pass  # Implementation would reconfigure network connections
+        """Optimize network topology based on current conditions.
+
+        Connections with very high latency or poor reliability are
+        removed.  For nodes that end up without any neighbours we
+        re‑establish a connection to the lowest latency peer if possible.
+        """
+
+        removal: list[tuple[str, str]] = []
+
+        # Identify poor connections
+        for (src, dst), latency in list(self.network_topology.latencies.items()):
+            reliability = self.network_topology.reliability_scores.get((src, dst), 1.0)
+            if latency > 200 or reliability < 0.5:
+                removal.append((src, dst))
+
+        for src, dst in removal:
+            self.network_topology.connections.get(src, set()).discard(dst)
+            self.network_topology.latencies.pop((src, dst), None)
+            self.network_topology.bandwidths.pop((src, dst), None)
+            self.network_topology.reliability_scores.pop((src, dst), None)
+
+        # Ensure bidirectional removal
+        for src, dst in removal:
+            self.network_topology.connections.get(dst, set()).discard(src)
+            self.network_topology.latencies.pop((dst, src), None)
+            self.network_topology.bandwidths.pop((dst, src), None)
+            self.network_topology.reliability_scores.pop((dst, src), None)
+
+        # Ensure each node has at least one connection if possible
+        nodes = list(self.node_states.keys())
+        for node in nodes:
+            current = self.network_topology.connections.get(node, set())
+            if current or len(nodes) <= 1:
+                continue
+            # Choose the best peer based on existing latency information
+            candidates = [
+                (other, self.network_topology.latencies.get((node, other), float("inf")))
+                for other in nodes if other != node
+            ]
+            if not candidates:
+                continue
+            target, best_latency = min(candidates, key=lambda x: x[1])
+            if best_latency == float("inf"):
+                continue
+            self.network_topology.connections.setdefault(node, set()).add(target)
+            self.network_topology.connections.setdefault(target, set()).add(node)
+
         
     async def _predict_base_performance(self, time_horizon_minutes: int) -> dict[str, Any]:
         """Predict base performance trends."""
