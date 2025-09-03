@@ -3,7 +3,7 @@
 Workflow Timeout Adjustment Script
 
 Adjusts the timeout values in the SCION production security workflow based on monitoring findings.
-Increases detect-secrets timeout from 300s to 600s to prevent timeout failures.
+Increases detect-secrets timeout from 240s to 600s to prevent timeout failures.
 
 Usage:
     python scripts/security/adjust_workflow_timeouts.py [--dry-run]
@@ -29,10 +29,10 @@ class WorkflowTimeoutAdjuster:
         # Timeout adjustments based on monitoring findings
         self.timeout_adjustments = [
             {
-                "description": "Increase detect-secrets timeout from 300s to 600s",
-                "pattern": r"timeout 300 detect-secrets scan",
+                "description": "Increase detect-secrets timeout from 240s to 600s",
+                "pattern": r"timeout 240 detect-secrets scan",
                 "replacement": r"timeout 600 detect-secrets scan",
-                "reason": "detect-secrets consistently timing out after 5 minutes"
+                "reason": "detect-secrets consistently timing out after 4 minutes"
             }
         ]
 
