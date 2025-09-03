@@ -14,3 +14,7 @@ This document summarizes the consolidation of legacy `core/rag` modules into the
 
 The legacy files in `core/rag` have been removed or reduced to thin wrappers that import from `unified_rag`.  New development should target the `unified_rag` package exclusively.
 
+
+## Related Documentation
+
+- [Creative Search and Gap Detection](rag/creative_search_and_gap_detection.md)

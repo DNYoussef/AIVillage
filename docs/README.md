@@ -35,7 +35,7 @@ AIVillage is a sophisticated multi-agent AI system with self-evolution capabilit
 ### Core Functionality
 - 🟡 **Agent Communication**: Protocol defined but end-to-end workflow needs validation
 - 🟡 **Unified Compression System**: Consolidated from 28+ fragmented implementations into a pipeline targeting 4×–100× compression ([documentation](src/production/compression/README.md))
-- 🟡 **RAG System**: Structure implemented; small benchmark of 5 queries averaged **1.509 ms** with 100% accuracy ([results](docs/benchmarks/rag_latency_results.json))
+- 🟡 **RAG System**: Structure implemented; small benchmark of 5 queries averaged **1.509 ms** with 100% accuracy ([results](docs/benchmarks/rag_latency_results.json)). See [creative search and gap detection guide](rag/creative_search_and_gap_detection.md).
 - 🟡 **Evolution System**: Simulation logic complete but real agent evolution needs testing
 - 🟡 **P2P Networking**: Basic implementation; 5-message localhost benchmark averaged **0.748 ms** round trip with 100% success ([results](docs/benchmarks/p2p_network_results.json))
 
