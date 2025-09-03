@@ -5,14 +5,14 @@
 //! management, and governance constraints.
 
 use crate::{
-    BetanetMessage, MessagePriority,
+    BetanetMessage,
     gateway::{ScionGateway, PathRequirements},
     transport::chrome_fingerprint_v2::{
         ChromeTemplateManagerV2, OriginCalibratorV2, MobileBudgetManager,
     },
-    metrics::{KpiMetrics, BenchmarkConfig, NetworkConditions},
+    metrics::{KpiMetrics, NetworkConditions},
     error::Result,
-    config::{BetanetConfig, GatewayConfig},
+    config::GatewayConfig,
 };
 
 use bytes::Bytes;
@@ -49,6 +49,8 @@ pub struct IntegrationTestConfig {
     pub mobile_simulation: bool,
     /// Network conditions
     pub network_conditions: NetworkConditions,
+    /// Governance constraints applied in tests
+    pub governance_constraints: u32,
 }
 
 /// Test results
@@ -347,7 +349,7 @@ impl BetanetV2IntegrationTest {
                 paths_discovered: stats.total_paths as u32,
                 beacons_processed: stats.active_beacons as u32,
                 control_messages_signed: stats.control_message_stats.messages_sent as u32,
-                governance_constraints_applied: 0, // Would be tracked in real implementation
+                governance_constraints_applied: config.governance_constraints,
             })
         } else {
             warn!("Gateway not initialized for testing");
@@ -355,7 +357,7 @@ impl BetanetV2IntegrationTest {
                 paths_discovered: 0,
                 beacons_processed: 0,
                 control_messages_signed: 0,
-                governance_constraints_applied: 0,
+                governance_constraints_applied: config.governance_constraints,
             })
         }
     }
@@ -402,11 +404,27 @@ impl BetanetV2IntegrationTest {
         // Get real-time stats
         let realtime_stats = self.kpi_metrics.get_realtime_stats().await;
 
+        // Calculate resource efficiency based on theoretical vs actual throughput
+        let avg_message_size = if config.message_sizes.is_empty() {
+            1.0
+        } else {
+            config.message_sizes.iter().copied().sum::<usize>() as f64
+                / config.message_sizes.len() as f64
+        };
+        let bandwidth_bytes_per_sec =
+            (config.network_conditions.bandwidth_mbps as f64 * 1_000_000.0) / 8.0;
+        let theoretical_throughput = bandwidth_bytes_per_sec / avg_message_size;
+        let resource_efficiency = if theoretical_throughput > 0.0 {
+            (throughput / theoretical_throughput).min(1.0)
+        } else {
+            0.0
+        };
+
         Ok(PerformanceResults {
             average_latency_ms: average_latency,
             throughput_msgs_per_sec: throughput,
             reliability_score: realtime_stats.reliability_score,
-            resource_efficiency: 0.85, // Placeholder - would calculate from actual metrics
+            resource_efficiency,
         })
     }
 
@@ -516,12 +534,14 @@ Generated: {}
 
 impl Default for IntegrationTestConfig {
     fn default() -> Self {
+        let external_origin =
+            std::env::var("BETANET_TEST_ORIGIN").unwrap_or_else(|_| "api.github.com".to_string());
         Self {
             duration: Duration::from_secs(60),
             test_origins: vec![
                 "example.com".to_string(),
                 "httpbin.org".to_string(),
-                "jsonplaceholder.typicode.com".to_string(),
+                external_origin,
             ],
             message_sizes: vec![1024, 4096, 16384, 65536],
             concurrent_connections: 5,
@@ -532,6 +552,7 @@ impl Default for IntegrationTestConfig {
                 packet_loss_percent: 0.1,
                 jitter_ms: 10,
             },
+            governance_constraints: 0,
         }
     }
 }
@@ -568,5 +589,22 @@ mod tests {
 
         let results = results.unwrap();
         assert!(results.budget_enforcements >= 0);
+    }
+
+    #[tokio::test]
+    async fn test_origin_calibration_isolated() {
+        let test_suite = BetanetV2IntegrationTest::new().await.unwrap();
+        let origin = std::env::var("BETANET_TEST_ORIGIN")
+            .unwrap_or_else(|_| "httpbin.org".to_string());
+        let config = IntegrationTestConfig {
+            test_origins: vec![origin],
+            ..Default::default()
+        };
+
+        let results = test_suite.test_origin_calibration(&config).await;
+        assert!(results.is_ok());
+
+        let results = results.unwrap();
+        assert!(results.origins_calibrated > 0);
     }
 }
