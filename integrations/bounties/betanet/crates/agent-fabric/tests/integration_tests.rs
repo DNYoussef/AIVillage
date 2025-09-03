@@ -213,7 +213,7 @@ async fn test_group_messaging() {
         timestamp: 1234567890,
     };
 
-    group.send_message(training_message).await.unwrap();
+    let _ = group.send_message(training_message).await.unwrap();
 
     // Test alert message
     let alert_message = GroupMessage {
@@ -227,7 +227,7 @@ async fn test_group_messaging() {
         timestamp: 1234567891,
     };
 
-    group.send_message(alert_message).await.unwrap();
+    let _ = group.send_message(alert_message).await.unwrap();
 
     let stats = group.get_stats().await;
     assert_eq!(stats.messages_sent, 2);
