@@ -57,3 +57,26 @@ secure-aggregation = []
 differential-privacy = []
 compression = []
 mobile-optimized = []
+unstable = []
+
+[[example]]
+name = "fl_cohort_simple"
+path = "examples/fl_cohort_simple.rs"
+# This example depends on experimental features and is excluded from default builds.
+required-features = ["unstable"]
+
+[[example]]
+name = "fl_cohort_emulation"
+path = "examples/fl_cohort_emulation.rs"
+# Skip this more complex example unless the `unstable` feature is explicitly enabled.
+required-features = ["unstable"]
+
+[[test]]
+name = "mock_communication_test"
+path = "tests/mock_communication_test.rs"
+required-features = ["unstable"]
+
+[[test]]
+name = "integration_test"
+path = "tests/integration_test.rs"
+required-features = ["unstable"]

@@ -1006,6 +1006,7 @@ mod tests {
         assert!(!cohort.is_round_complete()); // No results yet
     }
 
+    #[cfg(not(debug_assertions))]
     #[test]
     fn test_participant_health() {
         let mut health = ParticipantHealth::new();

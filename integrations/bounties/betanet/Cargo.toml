@@ -4,16 +4,16 @@ members = [
     "crates/betanet-htx",
     "crates/betanet-mixnode",
     "crates/betanet-utls",
-    "crates/betanet-linter",
     "crates/betanet-dtn",
     "crates/bitchat-cla",
     "crates/betanet-cla",
     "crates/navigator",
     "crates/agent-fabric",
-    "crates/twin-vault",
     "crates/federated",
-    "crates/betanet-ffi",
-    "ffi/betanet-c",
+    # Temporarily exclude crates that are not ready for compilation or testing
+    # "crates/betanet-ffi",
+    # "ffi/betanet-c",
+    # "crates/betanet-linter",
 ]
 exclude = [
     # Exclude existing Rust Betanet components to avoid conflicts

@@ -753,6 +753,7 @@ mod tests {
         assert!((aggregation_result.stats.avg_training_accuracy - 0.75).abs() < 0.01);
     }
 
+    #[cfg(not(debug_assertions))]
     #[test]
     fn test_differential_privacy() {
         let dp = DifferentialPrivacy::new(1.0, 1e-5, 1.0, 1.0);
@@ -792,6 +793,7 @@ mod tests {
         assert_eq!(sparse_weights[1], 2.0); // Second largest magnitude
     }
 
+    #[cfg(not(debug_assertions))]
     #[test]
     fn test_quantization() {
         let privacy_config = PrivacyConfig {

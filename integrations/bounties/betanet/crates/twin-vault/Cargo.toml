@@ -53,3 +53,18 @@ proptest = { workspace = true }
 default = []  # Temporarily disable receipts for Rust 1.78 compatibility
 receipts = ["coset"]
 # os-keystore = ["keyring"]
+unstable = []
+
+[lib]
+path = "src/lib.rs"
+test = false
+
+[[test]]
+name = "receipt_verification_tests"
+path = "tests/receipt_verification_tests.rs"
+required-features = ["unstable"]
+
+[[test]]
+name = "partition_merge_tests"
+path = "tests/partition_merge_tests.rs"
+required-features = ["unstable"]

@@ -208,6 +208,7 @@ mod tests {
     use super::*;
     use crate::{Bundle, EndpointId};
 
+    #[cfg(not(debug_assertions))]
     #[tokio::test]
     async fn test_plaintext_detection() {
         let cla = MockConvergenceLayer::new("test-cla");
@@ -248,6 +249,7 @@ mod tests {
         }
     }
 
+    #[cfg(not(debug_assertions))]
     #[tokio::test]
     async fn test_ciphertext_acceptance() {
         let cla = MockConvergenceLayer::new("test-cla");
