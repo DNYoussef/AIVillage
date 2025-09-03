@@ -35,7 +35,7 @@ Usage:
 import asyncio
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from .communication.chat_engine import ChatEngine
 from .device.unified_system import UnifiedEdgeDeviceSystem
@@ -107,6 +107,10 @@ class EdgeSystem:
             "uptime_seconds": 0.0,
         }
 
+        # Health monitoring storage
+        self.health_checks: dict[str, Callable[[], Any]] = {}
+        self.component_health: dict[str, Any] = {}
+
         logger.info("Edge System initialized with integrated components")
 
     async def initialize(self) -> bool:
@@ -171,13 +175,20 @@ class EdgeSystem:
 
         # Wire Device System → All Components
         if self.device_system:
-            # Register device system listeners for component health
-            pass  # Could add health monitoring integration
+            # Register device system in health monitoring registry
+            self.health_checks["device_system"] = self.device_system.get_system_status
+            logger.debug("Device system health monitoring enabled")
 
         # Wire Chat Engine → Knowledge System
         if self.chat_engine and self.knowledge_system:
-            # Chat engine could query knowledge for better responses
-            pass  # Could add knowledge-enhanced chat responses
+            # Link chat engine with knowledge system and register health check
+            self.chat_engine.knowledge_system = self.knowledge_system
+            self.health_checks["chat_engine"] = self.chat_engine.get_system_status
+            logger.debug("Chat engine knowledge integration wired")
+
+        # Monitor knowledge system health as well
+        if self.knowledge_system:
+            self.health_checks["knowledge_system"] = self.knowledge_system.get_system_stats
 
         logger.info("Component integrations wired successfully")
 
@@ -209,7 +220,8 @@ class EdgeSystem:
             try:
                 if self.digital_twin and self.knowledge_system:
                     # Sync learned patterns from digital twin to knowledge system
-                    pass  # Implementation would sync knowledge
+                    stats = self.knowledge_system.get_system_stats()
+                    self.system_metrics["knowledge_pieces"] = stats.get("total_knowledge_pieces", 0)
 
                 await asyncio.sleep(300)  # Every 5 minutes
             except Exception as e:
@@ -220,10 +232,12 @@ class EdgeSystem:
         """Background task for cross-component health monitoring"""
         while self.initialized:
             try:
-                # Monitor health of all components
-                if self.device_system:
-                    self.device_system.get_system_status()
-                    # Could trigger alerts or optimizations
+                # Monitor health of registered components
+                for name, check in self.health_checks.items():
+                    try:
+                        self.component_health[name] = check()
+                    except Exception as hc_err:
+                        logger.error(f"{name} health check failed: {hc_err}")
 
                 await asyncio.sleep(30)  # Every 30 seconds
             except Exception as e:
@@ -343,8 +357,12 @@ class EdgeSystem:
 
             # Potentially enhance with knowledge system
             if self.knowledge_system and result.get("mode") == "local":
-                # Could enhance local responses with personal knowledge
-                pass
+                try:
+                    knowledge_hits = await self.knowledge_system.query_knowledge(message, 3)
+                    if knowledge_hits:
+                        result["knowledge"] = [k.content for k in knowledge_hits]
+                except Exception as aug_err:
+                    logger.error(f"Knowledge augmentation failed: {aug_err}")
 
             self.system_metrics["conversations"] += 1
             return result
