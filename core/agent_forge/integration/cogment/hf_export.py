@@ -136,6 +136,11 @@ class CogmentForCausalLM(PreTrainedModel):
             # Apply padding mask
             attn_mask = attn_mask * attention_mask.unsqueeze(1)
 
+        # Determine whether to return intermediate details
+        output_hidden_states = kwargs.get("output_hidden_states", False)
+        output_attentions = kwargs.get("output_attentions", False)
+        need_details = output_hidden_states or output_attentions
+
         # Call Cogment model
         output = self.cogment_model(
             input_ids=input_ids,
@@ -143,7 +148,19 @@ class CogmentForCausalLM(PreTrainedModel):
             attn_mask=attn_mask,
             memory=memory,
             max_refinement_steps=max_refinement_steps,
+            return_refinement_details=need_details,
         )
+
+        hidden_states = None
+        attentions = None
+        if need_details and output.refinement_outputs is not None:
+            if output_hidden_states:
+                # Collect refined states from each refinement step
+                hidden_states = [ro.refined_states for ro in output.refinement_outputs]
+            if output_attentions:
+                # The core Cogment model does not expose transformer attention weights.
+                # We surface ACT halting probabilities as an attention proxy.
+                attentions = [ro.halt_prob for ro in output.refinement_outputs]
 
         if return_dict:
             from transformers.modeling_outputs import CausalLMOutput
@@ -151,8 +168,8 @@ class CogmentForCausalLM(PreTrainedModel):
             return CausalLMOutput(
                 loss=output.loss,
                 logits=output.logits,
-                hidden_states=None,  # Not implemented
-                attentions=None,  # Not implemented
+                hidden_states=hidden_states,
+                attentions=attentions,
             )
         else:
             return (output.loss, output.logits)
