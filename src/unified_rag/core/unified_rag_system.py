@@ -16,11 +16,24 @@ All integrated with strategic MCP server coordination.
 import asyncio
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from datetime import datetime
+from pathlib import Path
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+import sys
+import importlib.util
+
+# Load HippoCache dynamically from integrations path
+_hippo_path = Path(__file__).resolve().parents[3] / "integrations" / "clients" / "py-aivillage" / "rag" / "hippo_cache.py"
+spec = importlib.util.spec_from_file_location("hippo_cache", _hippo_path)
+hippo_cache = importlib.util.module_from_spec(spec)
+sys.modules["hippo_cache"] = hippo_cache
+spec.loader.exec_module(hippo_cache)  # type: ignore[arg-type]
+HippoCache = hippo_cache.HippoCache
+CacheEntry = hippo_cache.CacheEntry
 
 from .mcp_coordinator import MCPCoordinator
 from ..ingestion.advanced_ingestion_engine import AdvancedIngestionEngine
@@ -148,6 +161,7 @@ class UnifiedRAGSystem:
         self.cognitive_nexus: Optional[CognitiveNexusIntegration] = None
         self.creative_search: Optional[CreativeGraphSearch] = None
         self.missing_detector: Optional[MissingNodeDetector] = None
+        self.cache: Optional[HippoCache] = None
         
         # System state
         self.initialized_components: List[str] = []
@@ -156,7 +170,9 @@ class UnifiedRAGSystem:
             "avg_response_time_ms": 0.0,
             "component_usage": {},
             "success_rate": 1.0,
-            "mcp_calls": 0
+            "mcp_calls": 0,
+            "cache_hits": 0,
+            "cache_misses": 0,
         }
         
         # Configuration
@@ -175,6 +191,9 @@ class UnifiedRAGSystem:
         try:
             logger.info("🚀 Initializing Unified RAG System - Ultimate Implementation")
             start_time = time.time()
+
+            # Initialize cache
+            self.cache = HippoCache()
             
             # Initialize MCP coordinator first
             if self.mcp_integration:
@@ -282,8 +301,28 @@ class UnifiedRAGSystem:
         
         logger.info(f"🔍 Processing query: '{question[:50]}...' "
                    f"(type: {query_type.value}, mode: {retrieval_mode.value})")
-        
+
         try:
+            query_embedding: Optional[np.ndarray] = None
+            if self.cache and self.mcp_coordinator:
+                try:
+                    embeddings = await self.mcp_coordinator.generate_embeddings([question])
+                    if embeddings is not None and len(embeddings) > 0:
+                        query_embedding = embeddings[0]
+                        cache_entry = self.cache.get(query_embedding)
+                        if cache_entry and "response" in cache_entry.citation_metadata:
+                            self.performance_metrics["cache_hits"] += 1
+                            cached_response = replace(cache_entry.citation_metadata["response"])
+                            processing_time = (time.time() - start_time) * 1000
+                            cached_response.processing_time_ms = processing_time
+                            self._update_system_metrics(cached_response)
+                            logger.info(f"✅ Cache hit - Query processed in {processing_time:.1f}ms")
+                            return cached_response
+                        else:
+                            self.performance_metrics["cache_misses"] += 1
+                except Exception as cache_err:
+                    logger.debug(f"Cache lookup failed: {cache_err}")
+
             # Create response container
             response = UnifiedResponse(
                 answer="",
@@ -291,7 +330,7 @@ class UnifiedRAGSystem:
                 query_type=query_type,
                 retrieval_mode=retrieval_mode
             )
-            
+
             # Execute retrieval strategy based on mode and available components
             if retrieval_mode == RetrievalMode.COMPREHENSIVE:
                 await self._comprehensive_retrieval(question, context, response)
@@ -303,22 +342,33 @@ class UnifiedRAGSystem:
                 await self._recall_retrieval(question, context, response)
             else:  # BALANCED
                 await self._balanced_retrieval(question, context, response)
-            
+
             # Post-process response
             await self._post_process_response(question, context, response)
-            
+
+            # Cache results
+            if self.cache and query_embedding is not None:
+                entry = CacheEntry(
+                    query_embedding=query_embedding,
+                    retrieved_docs=response.sources,
+                    relevance_scores=[s.get("confidence", 0.0) for s in response.sources],
+                    citation_metadata={"response": response},
+                    timestamp=datetime.utcnow(),
+                )
+                self.cache.set(question, entry)
+
             # Calculate final metrics
             processing_time = (time.time() - start_time) * 1000
             response.processing_time_ms = processing_time
-            
+
             # Update system metrics
             self._update_system_metrics(response)
-            
+
             logger.info(f"✅ Query processed in {processing_time:.1f}ms "
                        f"(confidence: {response.confidence:.3f})")
-            
+
             return response
-            
+
         except Exception as e:
             logger.error(f"❌ Query processing failed: {e}")
             
@@ -667,6 +717,12 @@ class UnifiedRAGSystem:
                 if component not in self.performance_metrics["component_usage"]:
                     self.performance_metrics["component_usage"][component] = 0
                 self.performance_metrics["component_usage"][component] += 1
+
+        if self.cache:
+            cache_stats = self.cache.metrics()
+            cache_stats["hits"] = self.performance_metrics.get("cache_hits", 0)
+            cache_stats["misses"] = self.performance_metrics.get("cache_misses", 0)
+            self.performance_metrics["cache"] = cache_stats
     
     # Reference methods for retrieval modes
     async def _creative_retrieval(self, question: str, context: QueryContext, response: UnifiedResponse):
