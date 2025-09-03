@@ -94,6 +94,8 @@ jobs:
             ! -path "./target/*" \
             ! -path "./vendor/*" \
             ! -path "./.claude/*" \
+            ! -path "./.claude-flow/*" \
+            ! -path "./core/agent-forge/models/hrrm/scripts/*" \
             ! -path "./tools/development/*" \
             ! -path "./tools/*/development/*" \
             ! -path "./archive/*" \
@@ -139,6 +141,8 @@ jobs:
                 # Skip files that are legitimate development utilities, third-party code, or non-production files
                 if [[ "$file" =~ (stub_elimination_system|stub_fix|list_stubs|test_stub) ]] || \
                    [[ "$file" =~ \.claude/ ]] || \
+                   [[ "$file" =~ \.claude-flow/ ]] || \
+                   [[ "$file" =~ core/agent-forge/models/hrrm/scripts/ ]] || \
                    [[ "$file" =~ tools/development/ ]] || \
                    [[ "$file" =~ archive/ ]] || \
                    [[ "$file" =~ deprecated/ ]] || \

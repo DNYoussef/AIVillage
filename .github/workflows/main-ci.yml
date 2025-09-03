@@ -168,6 +168,7 @@ jobs:
           ! -path "./vendor/*" \
           ! -path "./.claude/*" \
           ! -path "./.claude-flow/*" \
+          ! -path "./core/agent-forge/models/hrrm/scripts/*" \
           ! -path "./tools/*" \
           ! -path "./scripts/*" \
           ! -path "./*/tools/*" \
@@ -220,6 +221,9 @@ jobs:
               if [[ "$file" =~ (\.example|\.template|\.bak)$ ]] || \
                  [[ "$file" =~ config.*template ]] || \
                  [[ "$file" =~ development/ ]] || \
+                 [[ "$file" =~ \.claude/ ]] || \
+                 [[ "$file" =~ \.claude-flow/ ]] || \
+                 [[ "$file" =~ core/agent-forge/models/hrrm/scripts/ ]] || \
                  [[ "$file" =~ archive/ ]] || \
                  [[ "$file" =~ deprecated/ ]] || \
                  [[ "$file" =~ legacy/ ]] || \

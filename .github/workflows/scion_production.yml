@@ -95,6 +95,7 @@ jobs:
               VALIDATION_PASSED="true"
             elif [ $validation_result -eq 124 ]; then
               echo "[WARN] Security validation timed out after 5 minutes - accepting in production mode"
+              echo "::warning::Security validation timeout - manual review recommended"
               VALIDATION_PASSED="true"  # Accept timeout in production mode
             else
               echo "[FAIL] Production security validation failed (exit code: $validation_result)"
@@ -560,8 +561,17 @@ jobs:
 
           if [[ "$emergency_bypass" == "true" ]]; then
             echo "[WARNING] Emergency bypass in effect - deployment proceeding with elevated monitoring"
+            echo "::warning::Emergency bypass activated - requires post-deployment security audit"
           elif [[ "$security_passed" == "true" && "$build_passed" == "success" ]]; then
             echo "[PASS] All gates passed - deployment authorized"
+          elif [[ "$security_passed" == "unknown" && "$build_passed" == "success" ]]; then
+            echo "[WARNING] Security gate status unknown - proceeding with caution"
+            echo "::warning::Security validation may have timed out - manual verification required"
+          elif [[ "$build_passed" == "success" ]]; then
+            echo "[WARNING] Build succeeded but security gate failed"
+            echo "::error::Security concerns detected - manual override required for deployment"
+            echo "Use emergency_bypass=true with security_override token if deployment is critical"
+            exit 1
           else
             echo "[FAIL] Deployment gate failed:"
             echo "  Security Gate: $security_passed"

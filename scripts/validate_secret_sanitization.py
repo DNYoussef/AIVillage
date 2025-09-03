@@ -213,19 +213,34 @@ class SecretSanitizationValidator:
         try:
             import signal
             import platform
+            import threading
+            import time
             
             def timeout_handler(signum, frame):
                 raise TimeoutError(f"File validation timed out after {timeout_seconds}s")
-                
-            # Set timeout for file processing (Unix only)
+            
+            # Windows-compatible timeout mechanism
             timeout_enabled = False
+            timer_thread = None
+            
             if platform.system() != 'Windows' and hasattr(signal, 'SIGALRM'):
+                # Unix/Linux systems - use signal-based timeout
                 try:
                     signal.signal(signal.SIGALRM, timeout_handler)
                     signal.alarm(timeout_seconds)
                     timeout_enabled = True
                 except (AttributeError, OSError):
                     pass  # Timeout not available
+            else:
+                # Windows or systems without SIGALRM - use threading timer
+                def timeout_func():
+                    time.sleep(timeout_seconds)
+                    # Note: This won't interrupt file I/O but will track timing
+                
+                timer_thread = threading.Thread(target=timeout_func)
+                timer_thread.daemon = True
+                timer_thread.start()
+                timeout_enabled = True
             
             try:
                 with open(file_path, encoding="utf-8") as f:
@@ -235,8 +250,12 @@ class SecretSanitizationValidator:
                 # Process lines with periodic timeout checks
                 for line_num, line in enumerate(lines, 1):
                     # Reset alarm for each batch of lines (Unix only)
-                    if timeout_enabled and line_num % 1000 == 0:
+                    if timeout_enabled and platform.system() != 'Windows' and line_num % 1000 == 0:
                         signal.alarm(timeout_seconds)
+                    elif timeout_enabled and timer_thread and line_num % 1000 == 0:
+                        # For Windows, check if we should continue processing
+                        if not timer_thread.is_alive():
+                            raise TimeoutError(f"File validation timed out after {timeout_seconds}s")
                 # Check for unsafe secret patterns across all severity levels
                 for severity, patterns in self.security_patterns.items():
                     for pattern_tuple in patterns:
@@ -281,9 +300,11 @@ class SecretSanitizationValidator:
                                 }
                             )
             finally:
-                # Clear the alarm (Unix only)
-                if timeout_enabled:
+                # Clear the alarm (Unix only) or cancel timer (Windows)
+                if timeout_enabled and platform.system() != 'Windows':
                     signal.alarm(0)
+                elif timer_thread:
+                    # For Windows, thread will terminate naturally
                 
         except TimeoutError as e:
             result["issues"].append(f"File validation timeout: {str(e)}")
