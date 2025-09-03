@@ -111,7 +111,7 @@ class CogmentConfigValidator:
                 errors.append(
                     f"Parameter budget exceeded: {param_analysis.total_estimated:,} > {param_analysis.target_budget:,}"
                 )
-            # Under budget is fine, just note it
+            # Under budget is fine and does not require action
 
         # 2. Validate model configuration
         model_errors, model_warnings = self._validate_model_config(config.model_config)

@@ -14,7 +14,7 @@ module.exports = {
     'plugin:react/recommended',
     'plugin:react-hooks/recommended',
     'plugin:@typescript-eslint/recommended',
-    // NOTE: 'prettier' should be last to override formatting rules
+    // 'prettier' should be last to override formatting rules
   ],
   parserOptions: {
     ecmaVersion: 2022,

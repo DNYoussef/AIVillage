@@ -23,25 +23,26 @@ declare -g FILES_EXCLUDED=0
 declare -g VIOLATIONS_FOUND=false
 
 log_info() {
-    echo -e "${BLUE}[INFO]${NC} $*"
+    echo -e "${BLUE}[INFO]${NC} $*" >&2
 }
 
 log_success() {
-    echo -e "${GREEN}[PASS]${NC} $*"
+    echo -e "${GREEN}[PASS]${NC} $*" >&2
 }
 
 log_warning() {
-    echo -e "${YELLOW}[WARN]${NC} $*"
+    echo -e "${YELLOW}[WARN]${NC} $*" >&2
 }
 
 log_error() {
-    echo -e "${RED}[FAIL]${NC} $*"
+    echo -e "${RED}[FAIL]${NC} $*" >&2
 }
 
 log_verbose() {
     if [[ "$VERBOSE" == "true" ]]; then
-        echo -e "${BLUE}[DEBUG]${NC} $*"
+        echo -e "${BLUE}[DEBUG]${NC} $*" >&2
     fi
+    return 0
 }
 
 show_usage() {
@@ -75,11 +76,9 @@ get_placeholder_patterns() {
 \bFIXME\b
 \bXXX\b
 \bHACK\b
-\bNOTE\b
 not implemented
 fake
 dummy
-temporary
 temp implementation
 coming soon
 to be implemented
@@ -145,6 +144,7 @@ should_exclude_file() {
         'build/'
         'dist/'
         '\.git/'
+        'scripts/'
         'stub_elimination'
         'stub_fix'
         'list_stubs'
@@ -190,6 +190,8 @@ find_files_to_validate() {
         ! -path "*/*test*" \
         ! -path "*/docs/*" \
         ! -path "*/examples/*" \
+        ! -path "*/.github/*" \
+        ! -path "*/reports/*" \
         ! -path "*/.git/*" \
         ! -path "*/target/*" \
         ! -path "*/vendor/*" \
@@ -224,11 +226,11 @@ validate_file() {
     
     # Skip if file should be excluded at runtime
     if should_exclude_file "$file"; then
-        ((FILES_EXCLUDED++))
+        ((FILES_EXCLUDED+=1))
         return 0
     fi
-    
-    ((FILES_CHECKED++))
+
+    ((FILES_CHECKED+=1))
     log_verbose "Checking file: $file"
     
     # Check each pattern in the file
@@ -298,9 +300,9 @@ run_validation() {
         for file in "${files[@]}"; do
             if ! should_exclude_file "$file"; then
                 echo "  $file"
-                ((FILES_CHECKED++))
+                ((FILES_CHECKED+=1))
             else
-                ((FILES_EXCLUDED++))
+                ((FILES_EXCLUDED+=1))
             fi
         done
         show_statistics

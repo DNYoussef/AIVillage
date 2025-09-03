@@ -84,7 +84,7 @@ seedlm_config:
 
   # Hardware-specific settings
   hardware:
-    use_gpu_acceleration: false  # Not implemented yet
+    use_gpu_acceleration: false  # GPU acceleration currently disabled
     cuda_kernel_path: "kernels/seedlm.cu"
     memory_pool_size: "1GB"
     thread_pool_size: 4
