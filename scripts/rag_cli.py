@@ -79,6 +79,7 @@ async def query_system(text: str, mode: str) -> None:
     }
     retrieval_mode = mode_map.get(mode, RetrievalMode.BALANCED)
     query_type = query_type_map.get(mode, QueryType.FACTUAL)
+    context = QueryContext(enable_creative_search=(mode == "creative"))
 
     retrieve = getattr(system, "retrieve", system.query)
     try:
@@ -86,7 +87,7 @@ async def query_system(text: str, mode: str) -> None:
             text,
             query_type=query_type,
             retrieval_mode=retrieval_mode,
-            context=QueryContext(),
+            context=context,
         )
     except Exception as exc:  # pragma: no cover
         print(f"Query failed: {exc}")
@@ -132,7 +133,7 @@ def main() -> None:
         "--mode",
         choices=["creative", "balanced", "analytical"],
         default="balanced",
-        help="Retrieval mode to use",
+        help="Retrieval mode to use; 'creative' activates graph-based brainstorming",
     )
 
     sub.add_parser("detect-gaps", help="Detect missing knowledge graph nodes")
