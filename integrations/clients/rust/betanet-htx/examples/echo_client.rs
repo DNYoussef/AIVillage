@@ -7,9 +7,7 @@
 //! - Noise XK handshake
 //! - Stream multiplexing
 
-use betanet_htx::{
-    create_tls_connector, dial_tcp, HtxConfig, HtxError, Result, StreamMux, TlsCamouflageBuilder,
-};
+use betanet_htx::{dial_tcp, HtxConfig, HtxError, Result, StreamMux, TlsCamouflageBuilder};
 use clap::Parser;
 use std::net::SocketAddr;
 use tokio::sync::mpsc;
@@ -32,9 +30,9 @@ struct Args {
     #[arg(long)]
     quic: bool,
 
-    /// Enable ECH stub
+    /// Enable Encrypted Client Hello
     #[arg(long)]
-    ech_stub: bool,
+    enable_ech: bool,
 
     /// JA3 template to use
     #[arg(long)]
@@ -86,23 +84,25 @@ async fn main() -> Result<()> {
         enable_tcp: args.tcp || (!args.tcp && !args.quic), // Default to TCP
         enable_quic: args.quic,
         enable_noise_xk: true,
-        enable_tls_camouflage: args.ech_stub,
+        enable_tls_camouflage: args.enable_ech || args.ja3_template.is_some(),
         camouflage_domain: args.camouflage_domain.clone(),
         ech_config_path: args.ech_config_path.clone().map(Into::into),
         alpn_protocols: vec!["htx/1.1".to_string(), "h2".to_string()],
         ..Default::default()
     };
 
-    if args.ech_stub {
-        info!("ECH stub enabled for TLS camouflage");
+    if args.enable_ech {
+        info!("ECH enabled for TLS camouflage");
     }
 
-    if let Some(template) = &args.ja3_template {
-        info!("Using JA3 template: {}", template);
-        // Apply JA3 template (stub implementation)
-        if let Err(e) = betanet_htx::tls::apply_ja3_template(template) {
-            warn!("Failed to apply JA3 template: {}", e);
+    if args.enable_ech || args.ja3_template.is_some() {
+        let mut builder = TlsCamouflageBuilder::new().with_ech(args.enable_ech);
+        if let Some(template) = &args.ja3_template {
+            info!("Using JA3 template: {}", template);
+            builder = builder.with_ja3_template(template.clone());
         }
+        let connector = builder.build()?;
+        info!("TLS camouflage fingerprint: {}", connector.fingerprint());
     }
 
     // Connect using the appropriate transport
@@ -266,7 +266,7 @@ mod tests {
             "--server",
             "192.168.1.100:8443",
             "--quic",
-            "--ech-stub",
+            "--enable-ech",
             "--ja3-template",
             "firefox_latest",
             "--message",
@@ -281,7 +281,7 @@ mod tests {
         assert_eq!(args.server, "192.168.1.100:8443".parse().unwrap());
         assert!(!args.tcp);
         assert!(args.quic);
-        assert!(args.ech_stub);
+        assert!(args.enable_ech);
         assert_eq!(args.ja3_template, Some("firefox_latest".to_string()));
         assert_eq!(args.message, "Test message");
         assert_eq!(args.count, 3);
