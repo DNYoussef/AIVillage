@@ -194,7 +194,7 @@ jobs:
     name: Scion Production Build
     runs-on: ubuntu-latest
     needs: security-preflight
-    if: needs.security-preflight.outputs.security-gate-passed == 'true' || needs.security-preflight.outputs.emergency-bypass == 'true'
+    if: ${{ (needs.security-preflight.outputs.security-gate-passed || 'unknown') == 'true' || (needs.security-preflight.outputs.emergency-bypass || 'unknown') == 'true' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -563,11 +563,11 @@ jobs:
           echo "" >> compliance-reports/security-report.md
           echo "**Deployment Date:** $(date)" >> compliance-reports/security-report.md
           echo "**Commit SHA:** ${{ github.sha }}" >> compliance-reports/security-report.md
-          echo "**Security Gate Status:** ${{ needs.security-preflight.outputs.security-gate-passed }}" >> compliance-reports/security-report.md
-          echo "**Emergency Bypass:** ${{ needs.security-preflight.outputs.emergency-bypass }}" >> compliance-reports/security-report.md
+          echo "**Security Gate Status:** ${{ needs.security-preflight.outputs.security-gate-passed || 'unknown' }}" >> compliance-reports/security-report.md
+          echo "**Emergency Bypass:** ${{ needs.security-preflight.outputs.emergency-bypass || 'unknown' }}" >> compliance-reports/security-report.md
           echo "" >> compliance-reports/security-report.md
 
-          if [[ "${{ needs.scion-prod.result }}" == "success" ]]; then
+          if [[ "${{ needs.scion-prod.result || 'unknown' }}" == "success" ]]; then
             echo "[PASS] **Overall Status:** PASSED - Safe for production deployment" >> compliance-reports/security-report.md
           else
             echo "[FAIL] **Overall Status:** FAILED - Deployment blocked" >> compliance-reports/security-report.md
@@ -605,11 +605,11 @@ jobs:
           echo
           
           # Gather all job results with enhanced status detection
-          security_passed="${{ needs.security-preflight.outputs.security-gate-passed }}"
-          security_result="${{ needs.security-preflight.result }}"
-          build_passed="${{ needs.scion-prod.result }}"
-          compliance_result="${{ needs.security-compliance.result }}"
-          emergency_bypass="${{ needs.security-preflight.outputs.emergency-bypass }}"
+          security_passed="${{ needs.security-preflight.outputs.security-gate-passed || 'unknown' }}"
+          security_result="${{ needs.security-preflight.result || 'unknown' }}"
+          build_passed="${{ needs.scion-prod.result || 'unknown' }}"
+          compliance_result="${{ needs.security-compliance.result || 'unknown' }}"
+          emergency_bypass="${{ needs.security-preflight.outputs.emergency-bypass || 'unknown' }}"
           
           # Log comprehensive status matrix
           echo "📊 GATE STATUS MATRIX:"
@@ -677,7 +677,12 @@ jobs:
           security_status="${{ steps.status-analysis.outputs.security_status }}"
           build_status="${{ steps.status-analysis.outputs.build_status }}"
           emergency_bypass="${{ steps.status-analysis.outputs.emergency_bypass }}"
-          
+          security_job_result="${{ needs.security-preflight.result || 'unknown' }}"
+
+          if [[ "$security_job_result" == "failure" ]]; then
+            echo "::warning::Security pre-flight job failed. Resolve pre-flight issues and re-run the workflow."
+          fi
+
           # Initialize decision variables
           DEPLOYMENT_AUTHORIZED="false"
           DEPLOYMENT_REASON=""
@@ -849,8 +854,8 @@ jobs:
           echo "Authorization: ${{ steps.gate-decision.outputs.authorized }}"
           echo "Reason: ${{ steps.gate-decision.outputs.reason }}"
           echo "Fallback Path: ${{ steps.gate-decision.outputs.fallback }}"
-          echo "Security Job: ${{ needs.security-preflight.result }}"
-          echo "Build Job: ${{ needs.scion-prod.result }}"
-          echo "Compliance Job: ${{ needs.security-compliance.result }}"
-          echo "Emergency Bypass: ${{ needs.security-preflight.outputs.emergency-bypass }}"
+          echo "Security Job: ${{ needs.security-preflight.result || 'unknown' }}"
+          echo "Build Job: ${{ needs.scion-prod.result || 'unknown' }}"
+          echo "Compliance Job: ${{ needs.security-compliance.result || 'unknown' }}"
+          echo "Emergency Bypass: ${{ needs.security-preflight.outputs.emergency-bypass || 'unknown' }}"
           echo "==================================================="
