@@ -161,6 +161,7 @@ class FogClient:
         api_key: str | None = None,
         namespace: str | None = None,
         timeout: float = 30.0,
+        stream_logs_enabled: bool = True,
     ):
         """
         Initialize fog client
@@ -170,12 +171,14 @@ class FogClient:
             api_key: Authentication API key
             namespace: Default namespace for operations
             timeout: Request timeout in seconds
+            stream_logs_enabled: Enable WebSocket log streaming
         """
 
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.namespace = namespace
         self.timeout = aiohttp.ClientTimeout(total=timeout)
+        self.stream_logs_enabled = stream_logs_enabled
 
         # Headers for authentication
         self.headers = {"Content-Type": "application/json"}
@@ -526,8 +529,10 @@ class FogClient:
         return await self.wait_for_job(job.job_id, timeout=timeout)
 
     async def stream_logs(self, job_id: str, follow: bool = True) -> AsyncGenerator[str, None]:
-        """
-        Stream job logs (placeholder - WebSocket implementation needed)
+        """Stream job logs using WebSocket if enabled.
+
+        Falls back to a one-time HTTP log fetch when WebSocket streaming
+        is disabled via configuration.
 
         Args:
             job_id: Job to stream logs from
@@ -537,13 +542,30 @@ class FogClient:
             Log lines as they become available
         """
 
-        # Implementation required: Implement WebSocket log streaming
-        # For now, just return current logs
-        logs = await self.get_job_logs(job_id)
+        if not self.stream_logs_enabled:
+            logs = await self.get_job_logs(job_id)
+            for line in logs.split("\n"):
+                if line.strip():
+                    yield line
+            return
 
-        for line in logs.split("\n"):
-            if line.strip():
-                yield line
+        if not hasattr(self, "_session"):
+            raise FogClientError("Client must be used as async context manager")
+
+        ws_base = self.base_url.replace("http://", "ws://").replace("https://", "wss://")
+        ws_url = f"{ws_base}/v1/fog/jobs/{job_id}/logs/stream"
+
+        params = {"follow": "true" if follow else "false"}
+
+        try:
+            async with self._session.ws_connect(ws_url, params=params) as ws:
+                async for msg in ws:
+                    if msg.type == aiohttp.WSMsgType.TEXT and msg.data:
+                        yield msg.data
+                    elif msg.type == aiohttp.WSMsgType.ERROR:
+                        break
+        except aiohttp.ClientError as e:
+            raise FogClientError(f"WebSocket connection failed: {e}")
 
     # Marketplace methods
 
