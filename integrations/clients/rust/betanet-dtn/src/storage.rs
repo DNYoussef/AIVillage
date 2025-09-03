@@ -4,13 +4,20 @@
 
 use std::path::Path;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use bytes::Bytes;
+#[cfg(feature = "compression")]
+use flate2::{read::GzDecoder, write::GzEncoder, Compression};
 use serde::{Deserialize, Serialize};
 use sled::{Db, Tree};
 use thiserror::Error;
 use tokio::sync::RwLock;
+
+#[cfg(feature = "encryption")]
+use aes_gcm::{aead::Aead, Aes256Gcm, Key, KeyInit, Nonce};
+#[cfg(feature = "encryption")]
+use rand::RngCore;
 
 use crate::bundle::{Bundle, BundleId, EndpointId};
 
@@ -62,6 +69,7 @@ impl BundleMetadata {
 }
 
 /// Persistent bundle storage
+#[derive(Clone)]
 pub struct BundleStore {
     db: Db,
     bundles: Tree,
@@ -69,11 +77,22 @@ pub struct BundleStore {
     by_destination: Tree,
     by_source: Tree,
     stats: Arc<RwLock<StorageStats>>,
+    #[cfg(feature = "encryption")]
+    encryption_key: Option<[u8; 32]>,
 }
 
 impl BundleStore {
     /// Open or create a bundle store at the given path
     pub async fn open<P: AsRef<Path>>(path: P) -> Result<Self, StorageError> {
+        Self::open_with_opts(path, None, Duration::from_secs(60)).await
+    }
+
+    /// Open store with custom options
+    pub async fn open_with_opts<P: AsRef<Path>>(
+        path: P,
+        #[cfg(feature = "encryption")] key: Option<[u8; 32]>,
+        interval: Duration,
+    ) -> Result<Self, StorageError> {
         let db = sled::open(path).map_err(StorageError::DatabaseError)?;
 
         let bundles = db
@@ -91,18 +110,28 @@ impl BundleStore {
 
         let stats = Arc::new(RwLock::new(StorageStats::default()));
 
-        Ok(Self {
+        let store = Self {
             db,
             bundles,
             metadata,
             by_destination,
             by_source,
             stats,
-        })
+            #[cfg(feature = "encryption")]
+            encryption_key: key,
+        };
+
+        store.start_cleanup_task(interval);
+        Ok(store)
     }
 
     /// Create an in-memory store for testing
     pub async fn memory() -> Result<Self, StorageError> {
+        Self::memory_with_interval(Duration::from_secs(60)).await
+    }
+
+    /// Create an in-memory store with custom cleanup interval
+    pub async fn memory_with_interval(interval: Duration) -> Result<Self, StorageError> {
         let config = sled::Config::new().temporary(true);
         let db = config.open().map_err(StorageError::DatabaseError)?;
 
@@ -121,14 +150,31 @@ impl BundleStore {
 
         let stats = Arc::new(RwLock::new(StorageStats::default()));
 
-        Ok(Self {
+        let store = Self {
             db,
             bundles,
             metadata,
             by_destination,
             by_source,
             stats,
-        })
+            #[cfg(feature = "encryption")]
+            encryption_key: None,
+        };
+
+        store.start_cleanup_task(interval);
+        Ok(store)
+    }
+
+    fn start_cleanup_task(&self, interval: Duration) {
+        let store = self.clone();
+        tokio::spawn(async move {
+            let mut ticker = tokio::time::interval(interval);
+            loop {
+                ticker.tick().await;
+                let _ = store.cleanup_expired().await;
+                let _ = store.cleanup_orphans().await;
+            }
+        });
     }
 
     /// Store a bundle
@@ -146,7 +192,37 @@ impl BundleStore {
         }
 
         // Encode bundle
-        let bundle_data = bundle.encode().map_err(StorageError::BundleError)?;
+        let mut bundle_data = bundle
+            .encode()
+            .map_err(StorageError::BundleError)?
+            .to_vec();
+
+        #[cfg(feature = "compression")]
+        {
+            use std::io::Write;
+            let mut encoder =
+                GzEncoder::new(Vec::new(), Compression::default());
+            encoder
+                .write_all(&bundle_data)
+                .map_err(|e| StorageError::SerializationError(e.to_string()))?;
+            bundle_data = encoder
+                .finish()
+                .map_err(|e| StorageError::SerializationError(e.to_string()))?;
+        }
+
+        #[cfg(feature = "encryption")]
+        if let Some(key_bytes) = self.encryption_key {
+            let key = Key::<Aes256Gcm>::from_slice(&key_bytes);
+            let cipher = Aes256Gcm::new(key);
+            let mut nonce = [0u8; 12];
+            rand::thread_rng().fill_bytes(&mut nonce);
+            let mut encrypted = cipher
+                .encrypt(Nonce::from_slice(&nonce), bundle_data.as_ref())
+                .map_err(|e| StorageError::EncryptionError(e.to_string()))?;
+            let mut out = nonce.to_vec();
+            out.append(&mut encrypted);
+            bundle_data = out;
+        }
 
         // Create metadata
         let metadata = BundleMetadata::from_bundle(&bundle);
@@ -155,7 +231,7 @@ impl BundleStore {
 
         // Store in multiple indexes
         self.bundles
-            .insert(&id_key, bundle_data.as_ref())
+            .insert(&id_key, bundle_data.as_slice())
             .map_err(StorageError::DatabaseError)?;
 
         self.metadata
@@ -199,7 +275,35 @@ impl BundleStore {
             .get(&id_key)
             .map_err(StorageError::DatabaseError)?
         {
-            let bundle = Bundle::decode(Bytes::from(bundle_data.to_vec()))
+            let mut data = bundle_data.to_vec();
+
+            #[cfg(feature = "encryption")]
+            if let Some(key_bytes) = self.encryption_key {
+                if data.len() < 12 {
+                    return Err(StorageError::DecryptionError(
+                        "ciphertext too short".into(),
+                    ));
+                }
+                let (nonce, cipher_text) = data.split_at(12);
+                let key = Key::<Aes256Gcm>::from_slice(&key_bytes);
+                let cipher = Aes256Gcm::new(key);
+                data = cipher
+                    .decrypt(Nonce::from_slice(nonce), cipher_text)
+                    .map_err(|e| StorageError::DecryptionError(e.to_string()))?;
+            }
+
+            #[cfg(feature = "compression")]
+            {
+                use std::io::Read;
+                let mut decoder = GzDecoder::new(&data[..]);
+                let mut decompressed = Vec::new();
+                decoder
+                    .read_to_end(&mut decompressed)
+                    .map_err(|e| StorageError::SerializationError(e.to_string()))?;
+                data = decompressed;
+            }
+
+            let bundle = Bundle::decode(Bytes::from(data))
                 .map_err(StorageError::BundleError)?;
 
             let mut stats = self.stats.write().await;
@@ -343,6 +447,41 @@ impl BundleStore {
         Ok(expired_count)
     }
 
+    /// Remove orphaned index entries
+    pub async fn cleanup_orphans(&self) -> Result<u64, StorageError> {
+        let mut removed = 0;
+
+        for item in self.by_destination.iter() {
+            let (key, id_bytes) = item.map_err(StorageError::DatabaseError)?;
+            if !self
+                .metadata
+                .contains_key(&id_bytes)
+                .map_err(StorageError::DatabaseError)?
+            {
+                self.by_destination
+                    .remove(key)
+                    .map_err(StorageError::DatabaseError)?;
+                removed += 1;
+            }
+        }
+
+        for item in self.by_source.iter() {
+            let (key, id_bytes) = item.map_err(StorageError::DatabaseError)?;
+            if !self
+                .metadata
+                .contains_key(&id_bytes)
+                .map_err(StorageError::DatabaseError)?
+            {
+                self.by_source
+                    .remove(key)
+                    .map_err(StorageError::DatabaseError)?;
+                removed += 1;
+            }
+        }
+
+        Ok(removed)
+    }
+
     /// Get storage statistics
     pub async fn stats(&self) -> StorageStats {
         self.stats.read().await.clone()
@@ -423,6 +562,14 @@ pub enum StorageError {
 
     #[error("Serialization error: {0}")]
     SerializationError(String),
+
+    #[cfg(feature = "encryption")]
+    #[error("Encryption error: {0}")]
+    EncryptionError(String),
+
+    #[cfg(feature = "encryption")]
+    #[error("Decryption error: {0}")]
+    DecryptionError(String),
 
     #[error("Bundle already exists: {0}")]
     BundleExists(BundleId),

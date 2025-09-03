@@ -23,6 +23,8 @@ uuid = { workspace = true }
 
 # Storage
 sled = { workspace = true }
+flate2 = { version = "1", optional = true }
+aes-gcm = { version = "0.10", optional = true }
 
 # Crypto and checksums
 crc = { workspace = true }
@@ -47,3 +49,5 @@ hex = "0.4"
 
 [features]
 default = []
+compression = ["flate2"]
+encryption = ["aes-gcm"]
