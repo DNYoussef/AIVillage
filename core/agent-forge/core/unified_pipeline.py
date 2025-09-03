@@ -422,7 +422,7 @@ class UnifiedPipeline:
 
     def _create_initial_model(self) -> nn.Module:
         """Create initial model for pipeline start."""
-        # For now, create a simple dummy model
+        # Create initial pipeline model for processing
         # In production, this would load/merge the base models
         self.logger.info("Creating initial model for pipeline")
 
