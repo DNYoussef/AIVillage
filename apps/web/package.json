@@ -22,6 +22,7 @@
     "analyze": "vite-bundle-analyzer"
   },
   "dependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@noble/ciphers": "^0.4.1",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",

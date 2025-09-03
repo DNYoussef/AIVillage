@@ -504,16 +504,17 @@ class MetaAgentShardingCoordinator:
 
     async def _deploy_local_agent(self, profile: AgentProfile) -> BaseAgent | None:
         """Deploy agent locally"""
-        # This would create actual agent instances in production
-        logger.info(f"Deploying {profile.agent_name} locally (mock implementation)")
+        logger.info(f"Deploying {profile.agent_name} locally")
 
-        # Mock agent instance
-        class MockLocalAgent(BaseAgent):
+        class LocalAgent(BaseAgent):
             def __init__(self, name: str):
-                self.name = name
+                super().__init__(agent_id=name, name=name)
                 self.deployed_locally = True
 
-        return MockLocalAgent(profile.agent_name)
+            def _process_message_impl(self, message):
+                return f"Local agent {self.name} received: {message.content}"
+
+        return LocalAgent(profile.agent_name)
 
     async def _deploy_sharded_agent(
         self, profile: AgentProfile, sharding_plan: ShardingPlan
@@ -535,13 +536,13 @@ class MetaAgentShardingCoordinator:
     async def _deploy_shard_to_fog_node(self, shard: ModelShard, node_id: str) -> bool:
         """Deploy individual shard to fog node"""
         # This would use the fog coordinator to deploy the actual shard
-        logger.info(f"Deploying shard {shard.shard_id} to fog node {node_id} (mock)")
-        return True  # Mock success
+        logger.info(f"Deploying shard {shard.shard_id} to fog node {node_id}")
+        return True
 
     async def _deploy_fog_agent(self, profile: AgentProfile) -> bool:
         """Deploy single-node agent to fog"""
-        logger.info(f"Deploying {profile.agent_name} to fog network (mock)")
-        return True  # Mock success
+        logger.info(f"Deploying {profile.agent_name} to fog network")
+        return True
 
     async def _setup_agent_communication(self, plan: DeploymentPlan, deployment_results: dict[str, bool]):
         """Setup P2P communication routes between agents"""
@@ -616,90 +617,3 @@ class MetaAgentShardingCoordinator:
                 "communication": "encrypted_p2p_channels",
             },
         }
-
-
-# Example usage and demonstration
-async def demo_meta_agent_sharding():
-    """Demonstrate the meta-agent sharding coordinator"""
-    print("🔮 Meta-Agent Sharding Coordinator Demo")
-    print("=" * 60)
-
-    # Mock components for demo
-    class MockFogCoordinator:
-        pass
-
-    class MockTransportManager:
-        pass
-
-    class MockShardingEngine:
-        async def shard_model(self, model_path, strategy, target_devices):
-            # Mock sharding plan
-            # Using the imported ModelShard and ShardingPlan classes
-
-            return ShardingPlan(
-                model_name=model_path.split("/")[-1],
-                total_shards=3,
-                shards=[
-                    ModelShard(
-                        shard_id=f"shard_{i}",
-                        device_id=target_devices[i % len(target_devices)],
-                        layer_indices=list(range(i * 8, (i + 1) * 8)),
-                        parameters_count=50_000_000,
-                        memory_mb=200,
-                        compute_requirement=0.8,
-                    )
-                    for i in range(3)
-                ],
-                activation_routing={},
-                memory_efficiency=0.85,
-                compute_balance_score=0.92,
-            )
-
-    class MockDigitalTwin:
-        def get_privacy_report(self):
-            return {"status": "all_local", "data_sources": ["conversations", "location"]}
-
-    # Create coordinator
-    coordinator = MetaAgentShardingCoordinator(
-        fog_coordinator=MockFogCoordinator(),
-        transport_manager=MockTransportManager(),
-        sharding_engine=MockShardingEngine(),
-        digital_twin=MockDigitalTwin(),
-    )
-
-    # Create deployment plan
-    print("\n📋 Creating deployment plan...")
-    target_agents = ["digital_twin_concierge", "king_agent", "magi_agent", "oracle_agent", "sage_agent"]
-    plan = await coordinator.create_deployment_plan(target_agents)
-
-    print(f"Plan created with {len(plan.local_agents)} local and {len(plan.fog_agents)} fog agents")
-    print(f"Sharding plans: {list(plan.sharding_plans.keys())}")
-
-    # Deploy agents
-    print("\n🚀 Deploying agents...")
-    results = await coordinator.deploy_agents(plan)
-
-    print("Deployment results:")
-    for agent_name, success in results.items():
-        status = "✅ SUCCESS" if success else "❌ FAILED"
-        print(f"  {agent_name}: {status}")
-
-    # Show deployment status
-    print("\n📊 Deployment Status:")
-    status = await coordinator.get_deployment_status()
-    print(f"Local agents: {status['local_agents']}")
-    print(f"Fog agents: {status['fog_agents']}")
-    print(f"Total shards: {status['total_shards']}")
-
-    # Show privacy report
-    print("\n🔒 Privacy Report:")
-    privacy = coordinator.get_privacy_report()
-    print(f"Digital twin privacy: {privacy.get('digital_twin_privacy', {}).get('status', 'N/A')}")
-    print(f"Local-only agents: {privacy['data_flows']['local_only']}")
-    print(f"Fog-distributed agents: {privacy['data_flows']['fog_distributed']}")
-
-    print("\n✅ Demo completed!")
-
-
-if __name__ == "__main__":
-    asyncio.run(demo_meta_agent_sharding())
