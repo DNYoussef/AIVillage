@@ -94,6 +94,9 @@ impl BundleControlFlags {
     pub const RESERVED_18: Self = Self(1 << 18);
     pub const RESERVED_19: Self = Self(1 << 19);
     pub const RESERVED_20: Self = Self(1 << 20);
+    /// Bits 21-22 encode bundle priority as defined by BPv7
+    pub const PRIORITY_SHIFT: u32 = 21;
+    pub const PRIORITY_MASK: u32 = 0b11 << 21;
 
     pub fn new(value: u32) -> Self {
         Self(value)
@@ -113,6 +116,21 @@ impl BundleControlFlags {
 
     pub fn unset(&mut self, flag: Self) {
         self.0 &= !flag.0;
+    }
+
+    /// Extract the priority encoded in the control flags
+    pub fn priority(self) -> u8 {
+        ((self.0 & Self::PRIORITY_MASK) >> Self::PRIORITY_SHIFT) as u8
+    }
+
+    /// Create flags with the given priority value
+    pub fn with_priority(priority: u8) -> Self {
+        Self((priority as u32) << Self::PRIORITY_SHIFT)
+    }
+
+    /// Set the priority bits, preserving other flags
+    pub fn set_priority(&mut self, priority: u8) {
+        self.0 = (self.0 & !Self::PRIORITY_MASK) | ((priority as u32) << Self::PRIORITY_SHIFT);
     }
 }
 
