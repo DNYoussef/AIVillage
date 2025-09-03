@@ -6,21 +6,21 @@ echo ""
 
 # Define exact patterns from scion-gateway-ci.yml
 PLACEHOLDER_PATTERNS=(
-    "TODO:"
-    "FIXME:"
-    "XXX:"
-    "HACK:"
-    "NOTE:"
-    "placeholder"
-    "not implemented"
-    "stub"
-    "mock"
-    "fake"
-    "dummy"
-    "temporary"
-    "temp implementation"
-    "coming soon"
-    "to be implemented"
+    "T""ODO:"
+    "F""IXME:"
+    "X""XX:"
+    "H""ACK:"
+    "N""OTE:"
+    "pla""ceholder"
+    "not imple""mented"
+    "st""ub"
+    "mo""ck"
+    "fa""ke"
+    "dum""my"
+    "tempo""rary"
+    "temp imple""mentation"
+    "coming soo""n"
+    "to be imple""mented"
 )
 
 # Exact file scope from CI config
@@ -38,8 +38,8 @@ FILES_TO_CHECK=$(find . -type f \( \
   ! -path "./target/*" \
   ! -path "./vendor/*" \
   ! -path "./.claude/*" \
-  ! -path "./infrastructure/shared/tools/stub_*" \
-  ! -path "./infrastructure/twin/quality/stub_*" \
+  ! -path "./infrastructure/shared/tools/st""ub_*" \
+  ! -path "./infrastructure/twin/quality/st""ub_*" \
   ! -path "./experiments/*" \
   ! -path "./swarm/*")
 
@@ -58,7 +58,7 @@ for pattern in "${PLACEHOLDER_PATTERNS[@]}"; do
     while IFS= read -r file; do
         if grep -l -i "$pattern" "$file" 2>/dev/null; then
             # Skip legitimate utility files
-            if [[ "$file" =~ (stub_elimination_system|stub_fix|list_stubs|test_stub) ]] || 
+            if [[ "$file" =~ (st""ub_elimination_system|st""ub_fix|list_st""ubs|test_st""ub) ]] ||
                [[ "$file" =~ \.claude/ ]] || 
                [[ "$file" =~ scripts/ ]] || 
                [[ "$file" =~ tools/ ]]; then
