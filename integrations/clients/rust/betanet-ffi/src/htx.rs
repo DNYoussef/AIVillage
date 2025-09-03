@@ -58,7 +58,8 @@ pub extern "C" fn htx_frame_create(
 ///
 /// # Arguments
 /// * `frame` - Frame handle
-/// * `buffer` - Output buffer (will be allocated)
+/// * `buffer` - Output buffer. Memory will be allocated by the library and must
+///   be released with `betanet_buffer_free` by the caller.
 ///
 /// # Returns
 /// * Result code
@@ -152,7 +153,8 @@ pub extern "C" fn htx_frame_type(frame: *const HTXFrame) -> c_uint {
 ///
 /// # Arguments
 /// * `frame` - Frame handle
-/// * `buffer` - Output buffer (will reference frame data)
+/// * `buffer` - Output buffer referencing frame payload. The returned buffer
+///   borrows memory from the frame and **must not** be freed by the caller.
 ///
 /// # Returns
 /// * Result code

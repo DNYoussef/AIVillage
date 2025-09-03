@@ -18,10 +18,12 @@ betanet-linter = { path = "../betanet-linter" }
 
 libc = "0.2"
 futures = "0.3"
+once_cell = "1"
+tokio = { version = "1", features = ["rt-multi-thread"] }
 
 [features]
 default = []
 static = []
 
-# [build-dependencies]
-# cbindgen = "0.26"
+[build-dependencies]
+cbindgen = "0.26"

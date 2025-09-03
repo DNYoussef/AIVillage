@@ -95,6 +95,7 @@ typedef LinterResultsFFI betanet_LinterResultsFFI;
  * Base library functions
  */
 int betanet_init(void);
+BetanetResult betanet_init_runtime(void);
 void betanet_cleanup(void);
 const char* betanet_version(void);
 BetanetResult betanet_feature_supported(const char* feature);
