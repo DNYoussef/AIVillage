@@ -61,7 +61,7 @@ bandit==1.7.5                           # Security linter
 safety==2.3.4                           # Vulnerability scanner
 pip-audit==2.6.1                        # Audit pip packages
 semgrep==1.45.0                         # SAST analysis
-detect-secrets==1.4.0                   # Secret detection
+detect-secrets==1.5.0                   # Secret detection
 
 # ==============================================================================
 # DEVELOPMENT TOOLING (Dev experience critical)
