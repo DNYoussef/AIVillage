@@ -381,19 +381,39 @@ impl NoiseXKTunnel {
 
     /// Rotate session keys for forward secrecy
     async fn rotate_session_keys(&self, session: &mut NoiseSession) -> Result<()> {
-        // For real forward secrecy, would need to perform a new handshake
-        // or use Noise's rekey functionality if available
+        // Use Noise rekey functionality to derive fresh symmetric keys for the
+        // session.  Both initiator and responder keys are rotated to ensure
+        // forward secrecy for subsequent messages.
 
         if let Some(transport_state) = &mut session.transport_state {
-            // Placeholder for key rotation logic
-            // In practice, would need to coordinate with peer
-            session.key_rotation_count += 1;
-            session.send_sequence = 0;
-            session.receive_sequence = 0;
-
-            debug!("Rotated keys for session {} (rotation: {})",
-                   session.session_id, session.key_rotation_count);
+            transport_state
+                .rekey_initiator()
+                .map_err(|e| BetanetError::Security(SecurityError::Noise(format!(
+                    "Initiator rekey failed: {}",
+                    e
+                ))))?;
+            transport_state
+                .rekey_responder()
+                .map_err(|e| BetanetError::Security(SecurityError::Noise(format!(
+                    "Responder rekey failed: {}",
+                    e
+                ))))?;
+        } else {
+            debug!(
+                "Attempted to rotate keys for session {} without transport state",
+                session.session_id
+            );
         }
+
+        session.key_rotation_count += 1;
+        session.send_sequence = 0;
+        session.receive_sequence = 0;
+        session.created_at = SystemTime::now();
+
+        debug!(
+            "Rotated keys for session {} (rotation: {})",
+            session.session_id, session.key_rotation_count
+        );
 
         Ok(())
     }
@@ -477,9 +497,25 @@ impl NoiseXKTunnel {
 
     /// Static version of key rotation for background task
     async fn rotate_session_keys_static(session: &mut NoiseSession) -> Result<()> {
+        if let Some(transport_state) = &mut session.transport_state {
+            transport_state
+                .rekey_initiator()
+                .map_err(|e| BetanetError::Security(SecurityError::Noise(format!(
+                    "Initiator rekey failed: {}",
+                    e
+                ))))?;
+            transport_state
+                .rekey_responder()
+                .map_err(|e| BetanetError::Security(SecurityError::Noise(format!(
+                    "Responder rekey failed: {}",
+                    e
+                ))))?;
+        }
+
         session.key_rotation_count += 1;
         session.send_sequence = 0;
         session.receive_sequence = 0;
+        session.created_at = SystemTime::now();
         Ok(())
     }
 
@@ -583,5 +619,132 @@ mod tests {
         let manager = KeyRotationManager::new(Duration::from_secs(60));
         // Test would involve mocking time to verify rotation logic
         assert_eq!(manager.rotation_interval, Duration::from_secs(60));
+    }
+
+    fn create_test_transport_state() -> TransportState {
+        let params: snow::params::NoiseParams =
+            "Noise_NN_25519_AESGCM_SHA256".parse().unwrap();
+
+        let builder_i = Builder::new(params);
+        let builder_r = Builder::new(params);
+
+        let mut initiator = builder_i.build_initiator().unwrap();
+        let mut responder = builder_r.build_responder().unwrap();
+
+        let mut buf = [0u8; 1024];
+        let len = initiator.write_message(&[], &mut buf).unwrap();
+        responder.read_message(&buf[..len], &mut []).unwrap();
+        let len = responder.write_message(&[], &mut buf).unwrap();
+        initiator.read_message(&buf[..len], &mut []).unwrap();
+
+        initiator.into_transport_mode().unwrap()
+    }
+
+    #[tokio::test]
+    async fn test_rotate_session_keys_resets_sequences() {
+        let config = NoiseConfig {
+            pattern: "Noise_XK_25519_AESGCM_SHA256".to_string(),
+            private_key_file: PathBuf::from("/tmp/test_noise_key.pem"),
+            forward_secrecy: true,
+            key_rotation_interval: Duration::from_secs(3600),
+        };
+
+        let tunnel = NoiseXKTunnel::new(config).await.unwrap();
+
+        let mut session = NoiseSession {
+            session_id: "s1".to_string(),
+            peer_id: "p1".to_string(),
+            transport_state: Some(create_test_transport_state()),
+            created_at: SystemTime::now(),
+            last_activity: SystemTime::now(),
+            send_sequence: 5,
+            receive_sequence: 7,
+            key_rotation_count: 0,
+        };
+
+        tunnel.rotate_session_keys(&mut session).await.unwrap();
+
+        assert_eq!(session.send_sequence, 0);
+        assert_eq!(session.receive_sequence, 0);
+        assert_eq!(session.key_rotation_count, 1);
+    }
+
+    #[tokio::test]
+    async fn test_rotate_session_keys_without_transport_state() {
+        let config = NoiseConfig {
+            pattern: "Noise_XK_25519_AESGCM_SHA256".to_string(),
+            private_key_file: PathBuf::from("/tmp/test_noise_key.pem"),
+            forward_secrecy: true,
+            key_rotation_interval: Duration::from_secs(3600),
+        };
+
+        let tunnel = NoiseXKTunnel::new(config).await.unwrap();
+
+        let mut session = NoiseSession {
+            session_id: "s2".to_string(),
+            peer_id: "p2".to_string(),
+            transport_state: None,
+            created_at: SystemTime::now(),
+            last_activity: SystemTime::now(),
+            send_sequence: 10,
+            receive_sequence: 12,
+            key_rotation_count: 0,
+        };
+
+        tunnel.rotate_session_keys(&mut session).await.unwrap();
+
+        assert_eq!(session.send_sequence, 0);
+        assert_eq!(session.receive_sequence, 0);
+        assert_eq!(session.key_rotation_count, 1);
+    }
+
+    #[tokio::test]
+    async fn test_should_rotate_keys_triggers_on_message_count() {
+        let config = NoiseConfig {
+            pattern: "Noise_XK_25519_AESGCM_SHA256".to_string(),
+            private_key_file: PathBuf::from("/tmp/test_noise_key.pem"),
+            forward_secrecy: true,
+            key_rotation_interval: Duration::from_secs(3600),
+        };
+
+        let tunnel = NoiseXKTunnel::new(config).await.unwrap();
+
+        let session = NoiseSession {
+            session_id: "s3".to_string(),
+            peer_id: "p3".to_string(),
+            transport_state: None,
+            created_at: SystemTime::now(),
+            last_activity: SystemTime::now(),
+            send_sequence: 1000,
+            receive_sequence: 0,
+            key_rotation_count: 0,
+        };
+
+        assert!(tunnel.should_rotate_keys(&session).await);
+    }
+
+    #[tokio::test]
+    async fn test_should_rotate_keys_triggers_on_time() {
+        let config = NoiseConfig {
+            pattern: "Noise_XK_25519_AESGCM_SHA256".to_string(),
+            private_key_file: PathBuf::from("/tmp/test_noise_key.pem"),
+            forward_secrecy: true,
+            key_rotation_interval: Duration::from_secs(1),
+        };
+
+        let tunnel = NoiseXKTunnel::new(config).await.unwrap();
+
+        let session = NoiseSession {
+            session_id: "s4".to_string(),
+            peer_id: "p4".to_string(),
+            transport_state: None,
+            created_at: SystemTime::now() - Duration::from_secs(2),
+            last_activity: SystemTime::now(),
+            send_sequence: 0,
+            receive_sequence: 0,
+            key_rotation_count: 0,
+        };
+
+        assert!(tunnel.should_rotate_keys(&session).await);
     }
 }
