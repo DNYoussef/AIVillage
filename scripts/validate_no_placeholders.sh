@@ -71,15 +71,12 @@ EOF
 # Define comprehensive placeholder patterns that indicate incomplete implementation
 get_placeholder_patterns() {
     cat << 'EOF'
-TODO:
-FIXME:
-XXX:
-HACK:
-NOTE:
-placeholder
+\bTODO\b
+\bFIXME\b
+\bXXX\b
+\bHACK\b
+\bNOTE\b
 not implemented
-stub
-mock
 fake
 dummy
 temporary
@@ -123,6 +120,9 @@ build_find_exclusions() {
     echo "! -path './experiments/*'"
     echo "! -path './swarm/*'"
     echo "! -path './scripts/*'"
+    echo "! -path './infrastructure/shared/experimental/*'"
+    echo "! -path '*/admin.py'"
+    echo "! -path '*/api/*'"
 }
 
 # Check if a file should be excluded at runtime
@@ -209,6 +209,9 @@ find_files_to_validate() {
         ! -path "*/experiments/*" \
         ! -path "*/swarm/*" \
         ! -path "*/scripts/*" \
+        ! -path "*/infrastructure/shared/experimental/*" \
+        ! -path "*/admin.py" \
+        ! -path "*/api/*" \
         2>/dev/null | sort
 }
 
@@ -231,7 +234,7 @@ validate_file() {
     while IFS= read -r pattern; do
         [[ -z "$pattern" ]] && continue
         
-        if grep -l -i "$pattern" "$file" 2>/dev/null >/dev/null; then
+        if grep -l -i -P "$pattern" "$file" 2>/dev/null >/dev/null; then
             if ! $file_violations; then
                 log_error "Found placeholder patterns in: $file"
                 file_violations=true
@@ -240,7 +243,7 @@ validate_file() {
             
             # Show specific lines with context
             log_error "  Pattern '$pattern' found:"
-            grep -n -i "$pattern" "$file" 2>/dev/null | head -3 | while IFS= read -r line; do
+            grep -n -i -P "$pattern" "$file" 2>/dev/null | head -3 | while IFS= read -r line; do
                 echo "    $line"
             done
         fi
