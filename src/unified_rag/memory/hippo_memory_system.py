@@ -14,6 +14,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,15 @@ class ConsolidationState(Enum):
     CONSOLIDATING = "consolidating" # Being processed
     CONSOLIDATED = "consolidated"   # Stable long-term
     RECONSOLIDATING = "reconsolidating" # Being updated
+
+
+class ConfidenceType(Enum):
+    """Types of confidence measures."""
+
+    TEMPORAL = "temporal"
+    STATISTICAL = "statistical"
+    RETRIEVAL = "retrieval"
+    COMBINED = "combined"
 
 
 @dataclass
@@ -91,6 +101,110 @@ class EpisodicMemory:
         
         # Reset forgetting curve
         self.forgetting_curve = self.encoding_strength
+
+
+@dataclass
+class EpisodicDocument:
+    """Document optimized for episodic storage."""
+
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    content: str = ""
+    doc_type: str = "episodic"
+    user_id: Optional[str] = None
+    created_at: datetime = field(default_factory=datetime.now)
+    confidence: float = 0.8
+    access_pattern: str = "recent"
+    decay_applied: bool = False
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    embedding: Optional[np.ndarray] = None
+
+
+@dataclass
+class HippoNode:
+    """Node optimized for hippocampal-style episodic storage."""
+
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    content: str = ""
+    node_type: str = "episodic"
+    memory_type: MemoryType = MemoryType.EPISODIC
+    user_id: Optional[str] = None
+    confidence: float = 0.7
+    importance_score: float = 0.3
+    decay_rate: float = 0.2
+    ttl: int = 7 * 24 * 3600
+    created_at: datetime = field(default_factory=datetime.now)
+    last_accessed: Optional[datetime] = None
+    access_count: int = 0
+    embedding: Optional[np.ndarray] = None
+    uncertainty: float = 0.0
+    confidence_type: ConfidenceType = ConfidenceType.TEMPORAL
+    gdc_flags: List[str] = field(default_factory=list)
+    popularity_rank: int = 0
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def apply_temporal_decay(self) -> float:
+        if self.last_accessed is None:
+            age_seconds = (datetime.now() - self.created_at).total_seconds()
+        else:
+            age_seconds = (datetime.now() - self.last_accessed).total_seconds()
+        decay_factor = np.exp(-self.decay_rate * age_seconds / 3600)
+        return max(0.0, self.importance_score * decay_factor)
+
+    def update_access(self):
+        self.last_accessed = datetime.now()
+        self.access_count += 1
+        self.importance_score = min(1.0, self.importance_score + 0.05)
+
+
+@dataclass
+class QueryResult:
+    """Result from episodic memory query."""
+
+    nodes: List[HippoNode] = field(default_factory=list)
+    total_count: int = 0
+    query_time_ms: float = 0.0
+    confidence: float = 0.0
+    query_type: str = "episodic"
+    cache_hit: bool = False
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+def create_episodic_document(
+    content: str,
+    doc_type: str = "episodic",
+    user_id: Optional[str] = None,
+) -> EpisodicDocument:
+    """Create an episodic document optimized for hippocampal storage."""
+    return EpisodicDocument(
+        content=content,
+        doc_type=doc_type,
+        user_id=user_id,
+        confidence=0.8,
+        access_pattern="recent",
+        metadata={"memory_system": "hippo", "access_pattern": "recent", "storage_type": "episodic"},
+    )
+
+
+def create_hippo_node(
+    content: str,
+    user_id: Optional[str] = None,
+    ttl_hours: int = 168,
+) -> HippoNode:
+    """Create a hippocampal episodic node with neurobiological parameters."""
+    return HippoNode(
+        content=content,
+        user_id=user_id,
+        ttl=ttl_hours * 3600,
+        confidence=0.7,
+        importance_score=0.3,
+        decay_rate=0.2,
+        confidence_type=ConfidenceType.TEMPORAL,
+        metadata={
+            "memory_system": "hippocampus",
+            "neurobiological_type": "episodic",
+            "decay_model": "exponential_temporal",
+        },
+    )
 
 
 @dataclass
@@ -823,3 +937,7 @@ class HippoMemorySystem:
         
         self.initialized = False
         logger.info("HippoRAG Memory System shutdown complete")
+
+
+# Backwards compatibility alias
+HippoIndex = HippoMemorySystem
