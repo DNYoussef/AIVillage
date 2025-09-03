@@ -220,9 +220,17 @@ class SocialAgent(BaseAgent):
         """Monitor community sentiment and health"""
         try:
             sentiment_scores = []
+            participants_set = set()
 
             for interaction in interactions:
                 content = interaction.get("content", "")
+
+                # Track participants for diversity
+                participants = interaction.get("participants") or []
+                if isinstance(participants, list):
+                    participants_set.update(participants)
+                elif participants:
+                    participants_set.add(participants)
 
                 # Simple sentiment analysis
                 positive_words = ["good", "great", "awesome", "helpful", "thank you"]
@@ -241,6 +249,9 @@ class SocialAgent(BaseAgent):
                 sentiment_scores.append(sentiment)
 
             avg_sentiment = sum(sentiment_scores) / len(sentiment_scores) if sentiment_scores else 0.5
+            diversity_score = (
+                min(1.0, len(participants_set) / len(interactions)) if interactions else 0.0
+            )
 
             return {
                 "overall_sentiment": avg_sentiment,
@@ -253,7 +264,7 @@ class SocialAgent(BaseAgent):
                         "high" if len(interactions) > 50 else "medium" if len(interactions) > 20 else "low"
                     ),
                     "toxicity_level": "low" if avg_sentiment > 0.5 else "moderate",
-                    "diversity_score": 0.8,  # Placeholder for actual diversity analysis
+                    "diversity_score": diversity_score,
                 },
                 "recommendations": [
                     (

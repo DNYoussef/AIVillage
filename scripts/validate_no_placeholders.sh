@@ -152,6 +152,7 @@ should_exclude_file() {
         'mock_'
         'fake_'
         'dummy_'
+        'package-lock.json'
     )
     
     for pattern in "${exclusion_patterns[@]}"; do

@@ -70,6 +70,9 @@ class PostgreSQLOptimizer:
         self.async_pool = None
         self._query_cache = {}
         self._slow_queries = []
+        # Track cache efficiency
+        self._cache_hits = 0
+        self._cache_misses = 0
 
     def initialize_sync_pool(self):
         """Initialize synchronous connection pool"""
@@ -211,9 +214,10 @@ class PostgreSQLOptimizer:
         if cache_key in self._query_cache:
             cached_data, timestamp = self._query_cache[cache_key]
             if time.time() - timestamp < self.config.cache_ttl:
+                self._cache_hits += 1
                 return cached_data
-            else:
-                del self._query_cache[cache_key]
+            del self._query_cache[cache_key]
+        self._cache_misses += 1
         return None
 
     def _cache_result(self, cache_key: str, result: list[dict]):
@@ -266,9 +270,9 @@ class PostgreSQLOptimizer:
         }
 
     def _calculate_cache_hit_rate(self) -> float:
-        """Calculate cache hit rate (simplified)"""
-        # This would need more sophisticated tracking in production
-        return 0.75  # Placeholder
+        """Calculate cache hit rate based on recorded usage"""
+        total = self._cache_hits + self._cache_misses
+        return self._cache_hits / total if total > 0 else 0.0
 
 
 class RedisOptimizer:
