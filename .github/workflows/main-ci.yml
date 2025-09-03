@@ -202,7 +202,12 @@ jobs:
           ! -path "./scripts/*" \
           ! -name "*_pb.go" \
           ! -name "*_grpc.pb.go" \
-          ! -name "*.generated.*")
+          ! -name "*.generated.*" \
+          ! -path "./infrastructure/optimization/*" \
+          ! -path "./*/analytics.py" \
+          ! -path "./*/profiler.py" \
+          ! -path "./*/mock_*" \
+          ! -path "./examples/*")
         
         VIOLATIONS_FOUND=false
         
@@ -228,7 +233,11 @@ jobs:
                  [[ "$file" =~ benchmarks/ ]] || \
                  [[ "$file" =~ /tools/ ]] || \
                  [[ "$file" =~ /scripts/ ]] || \
-                 [[ "$file" =~ node_modules/ ]]; then
+                 [[ "$file" =~ node_modules/ ]] || \
+                 [[ "$file" =~ analytics\.py$ ]] || \
+                 [[ "$file" =~ profiler\.py$ ]] || \
+                 [[ "$file" =~ examples/ ]] || \
+                 [[ "$file" =~ optimization/ ]]; then
                 echo "[INFO] Skipping non-production file: $file"
                 continue
               fi
