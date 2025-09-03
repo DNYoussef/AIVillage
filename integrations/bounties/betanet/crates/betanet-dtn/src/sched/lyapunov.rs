@@ -225,7 +225,7 @@ impl LyapunovScheduler {
             size: bundle.size(),
             creation_time: bundle.primary.creation_timestamp.dtn_time,
             lifetime_ms: bundle.primary.lifetime,
-            priority: 1, // Implementation required: Extract from bundle flags
+            priority: bundle.primary.bundle_control_flags.priority(),
             arrival_time: now,
         };
 
@@ -377,8 +377,8 @@ impl LyapunovScheduler {
         // Account for energy costs
         let energy_penalty = self.config.energy_cost_weight * contact.energy_cost;
 
-        // Account for privacy penalties (simplified - could be more sophisticated)
-        let privacy_penalty = self.config.privacy_penalty_weight * 0.1; // Placeholder
+        // Account for privacy penalties based on destination metadata
+        let privacy_penalty = self.compute_privacy_penalty(destination);
 
         let total_utility = base_utility - energy_penalty - privacy_penalty;
 
@@ -426,6 +426,16 @@ impl LyapunovScheduler {
             penalty_component,
             rationale,
         })
+    }
+
+    /// Compute privacy penalty based on destination metadata
+    fn compute_privacy_penalty(&self, destination: &EndpointId) -> f64 {
+        let sensitivity = if destination.specific_part.contains("private") {
+            1.0
+        } else {
+            0.0
+        };
+        self.config.privacy_penalty_weight * sensitivity
     }
 
     /// Compute the utility of transmitting bundles to a destination
@@ -591,6 +601,7 @@ pub struct LyapunovStatistics {
 mod tests {
     use super::*;
     use crate::bundle::Bundle;
+    use crate::{BundleControlFlags, Priority};
     use std::time::Duration;
 
     fn create_test_bundle(destination: &str, lifetime_ms: u64) -> Bundle {
@@ -789,5 +800,64 @@ mod tests {
         assert_eq!(stats.total_queued_bundles, 2); // 2 still in queue
         assert_eq!(stats.total_delivered_bundles, 3);
         assert_eq!(stats.on_time_delivery_rate, 1.0); // All delivered bundles were on time
+    }
+
+    #[test]
+    fn test_priority_ordering() {
+        let config = LyapunovConfig { energy_cost_weight: 0.0, privacy_penalty_weight: 0.0, ..LyapunovConfig::default() };
+        let mut scheduler = LyapunovScheduler::new(config).unwrap();
+
+        let mut bulk = create_test_bundle("dest1", 60000);
+        bulk.primary.bundle_control_flags = BundleControlFlags::with_priority(Priority::Bulk as u8);
+        let id_bulk = bulk.id();
+        scheduler.enqueue_bundle(&bulk);
+
+        let mut expedited = create_test_bundle("dest1", 60000);
+        expedited.primary.bundle_control_flags = BundleControlFlags::with_priority(Priority::Expedited as u8);
+        let id_exp = expedited.id();
+        scheduler.enqueue_bundle(&expedited);
+
+        let mut normal = create_test_bundle("dest1", 60000);
+        normal.primary.bundle_control_flags = BundleControlFlags::with_priority(Priority::Normal as u8);
+        let id_norm = normal.id();
+        scheduler.enqueue_bundle(&normal);
+
+        let contact = create_test_contact("dest1", 0.0);
+        let decision = scheduler
+            .schedule_transmission(
+                &contact,
+                &[id_bulk.clone(), id_exp.clone(), id_norm.clone()],
+                3,
+            )
+            .unwrap();
+        assert_eq!(decision.bundles_to_transmit, vec![id_exp, id_norm, id_bulk]);
+    }
+
+    #[test]
+    fn test_privacy_penalty_effect() {
+        let config = LyapunovConfig { energy_cost_weight: 0.0, privacy_penalty_weight: 3.0, ..LyapunovConfig::default() };
+        let mut scheduler = LyapunovScheduler::new(config).unwrap();
+
+        let mut public_bundle = create_test_bundle("public", 60000);
+        public_bundle.primary.bundle_control_flags = BundleControlFlags::with_priority(Priority::Normal as u8);
+        let id_public = public_bundle.id();
+        scheduler.enqueue_bundle(&public_bundle);
+
+        let mut private_bundle = create_test_bundle("private", 60000);
+        private_bundle.primary.bundle_control_flags = BundleControlFlags::with_priority(Priority::Normal as u8);
+        let id_private = private_bundle.id();
+        scheduler.enqueue_bundle(&private_bundle);
+
+        let contact_public = create_test_contact("public", 0.0);
+        let decision_public = scheduler
+            .schedule_transmission(&contact_public, &[id_public], 1)
+            .unwrap();
+        assert!(decision_public.should_transmit);
+
+        let contact_private = create_test_contact("private", 0.0);
+        let decision_private = scheduler
+            .schedule_transmission(&contact_private, &[id_private], 1)
+            .unwrap();
+        assert!(!decision_private.should_transmit);
     }
 }
