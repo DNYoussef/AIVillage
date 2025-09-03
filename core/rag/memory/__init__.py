@@ -5,7 +5,7 @@ This module provides hippocampus-inspired rapid storage and retrieval
 with time-based decay patterns.
 """
 
-from .hippo_index import (
+from unified_rag.memory.hippo_memory_system import (
     ConfidenceType,
     EpisodicDocument,
     HippoIndex,

@@ -8,13 +8,155 @@ import logging
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
+from datetime import datetime
 import json
+import uuid
 import numpy as np
 import networkx as nx
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+
+class RelationType(Enum):
+    """Types of relationships in the knowledge graph."""
+
+    SEMANTIC = "semantic"
+    CAUSAL = "causal"
+    TEMPORAL = "temporal"
+    HIERARCHICAL = "hierarchical"
+    ASSOCIATIVE = "associative"
+    CONTRADICTION = "contradiction"
+    EVIDENCE = "evidence"
+    INFERENCE = "inference"
+
+
+class TrustLevel(Enum):
+    """Trust levels for information in the graph."""
+
+    VERY_HIGH = 0.9
+    HIGH = 0.8
+    MEDIUM = 0.6
+    LOW = 0.4
+    VERY_LOW = 0.2
+    UNKNOWN = 0.5
+
+
+@dataclass
+class GraphNode:
+    """Node in the Bayesian trust graph."""
+
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    content: str = ""
+    concept: str = ""
+    trust_score: float = 0.5
+    confidence: float = 0.5
+    belief_strength: float = 0.5
+    evidence_count: int = 0
+    source_reliability: float = 0.5
+    verification_status: str = "unverified"
+    created_at: datetime = field(default_factory=datetime.now)
+    last_updated: datetime = field(default_factory=datetime.now)
+    temporal_decay: float = 0.95
+    incoming_edges: set[str] = field(default_factory=set)
+    outgoing_edges: set[str] = field(default_factory=set)
+    embedding: Optional[np.ndarray] = None
+    tags: List[str] = field(default_factory=list)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class GraphEdge:
+    """Edge representing a relationship between nodes."""
+
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    source_id: str = ""
+    target_id: str = ""
+    relation_type: RelationType = RelationType.ASSOCIATIVE
+    relation_strength: float = 0.5
+    trust_score: float = 0.5
+    evidence_count: int = 0
+    supporting_docs: List[str] = field(default_factory=list)
+    conditional_probability: float = 0.5
+    mutual_information: float = 0.0
+    created_at: datetime = field(default_factory=datetime.now)
+    last_updated: datetime = field(default_factory=datetime.now)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def calculate_trust_propagation(self, source_trust: float) -> float:
+        """Calculate trust propagation through this edge."""
+        propagated_trust = source_trust * self.trust_score * self.relation_strength
+        propagated_trust *= self.conditional_probability
+        return min(1.0, max(0.0, propagated_trust))
+
+
+@dataclass
+class BayesianQueryResult:
+    """Result from Bayesian graph query with probabilistic reasoning."""
+
+    nodes: List[GraphNode] = field(default_factory=list)
+    edges: List[GraphEdge] = field(default_factory=list)
+    trust_scores: Dict[str, float] = field(default_factory=dict)
+    belief_network: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    query_confidence: float = 0.0
+    reasoning_path: List[str] = field(default_factory=list)
+    query_time_ms: float = 0.0
+
+
+class RelationshipType(Enum):
+    """Types of relationships (alias for RelationType)."""
+
+    SEMANTIC = "semantic"
+    CAUSAL = "causal"
+    TEMPORAL = "temporal"
+    HIERARCHICAL = "hierarchical"
+    ASSOCIATIVE = "associative"
+    CONTRADICTION = "contradiction"
+    EVIDENCE = "evidence"
+    INFERENCE = "inference"
+    RELATES_TO = "relates_to"
+    ENABLES = "enables"
+    DEPENDS_ON = "depends_on"
+    CONTAINS = "contains"
+
+
+@dataclass
+class Relationship:
+    """Relationship between graph nodes."""
+
+    subject_id: str
+    predicate: RelationshipType
+    object_id: str
+    confidence: float = 0.5
+    trust_score: float = 0.5
+    evidence: List[str] = field(default_factory=list)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+def create_graph_node(
+    content: str,
+    node_id: Optional[str] = None,
+    concept: Optional[str] = None,
+    concepts: Optional[List[str]] = None,
+    trust_score: float = 0.5,
+    confidence: float = 0.5,
+    metadata: Optional[Dict[str, Any]] = None,
+) -> GraphNode:
+    """Create a new graph node with the given parameters."""
+
+    node = GraphNode(
+        id=node_id or str(uuid.uuid4()),
+        content=content,
+        concept=concept or (concepts[0] if concepts else ""),
+        trust_score=trust_score,
+        confidence=confidence,
+        metadata=metadata or {},
+    )
+
+    if concepts:
+        node.tags.extend(concepts)
+
+    return node
 class EdgeType(Enum):
     """Types of edges in the knowledge graph"""
     CAUSAL = "causal"
@@ -385,3 +527,7 @@ class BayesianKnowledgeGraphRAG:
             'graph_density': nx.density(self.graph),
             'storage_path': str(self.storage_path)
         }
+
+
+# Backwards compatibility alias
+BayesianTrustGraph = BayesianKnowledgeGraphRAG

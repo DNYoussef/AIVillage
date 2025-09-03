@@ -5,10 +5,13 @@ Integrates with existing AIVillage cognitive nexus systems for advanced reasonin
 
 import asyncio
 import logging
+import time
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 import sys
 from pathlib import Path
+import numpy as np
 
 # Add core modules to path for integration
 core_path = Path(__file__).parents[3] / "core"
@@ -30,6 +33,114 @@ except ImportError as e:
         async def analyze(self, data): return {"analysis": "basic", "insights": []}
 
 logger = logging.getLogger(__name__)
+
+class AnalysisType(Enum):
+    """Types of cognitive analysis that can be performed."""
+
+    FACTUAL_VERIFICATION = "factual_verification"
+    CONSISTENCY_CHECK = "consistency_check"
+    RELEVANCE_ASSESSMENT = "relevance_assessment"
+    UNCERTAINTY_QUANTIFICATION = "uncertainty_quantification"
+    SYNTHESIS = "synthesis"
+    CONTRADICTION_DETECTION = "contradiction_detection"
+    BELIEF_PROPAGATION = "belief_propagation"
+    META_REASONING = "meta_reasoning"
+
+
+class ConfidenceLevel(Enum):
+    """Confidence levels for analysis results."""
+
+    VERY_LOW = 0.1
+    LOW = 0.3
+    MODERATE = 0.5
+    HIGH = 0.7
+    VERY_HIGH = 0.9
+
+
+class ReasoningStrategy(Enum):
+    """Different reasoning strategies for analysis."""
+
+    DEDUCTIVE = "deductive"
+    INDUCTIVE = "inductive"
+    ABDUCTIVE = "abductive"
+    ANALOGICAL = "analogical"
+    PROBABILISTIC = "probabilistic"
+
+
+@dataclass
+class RetrievedInformation:
+    """Information retrieved from RAG system with enhanced metadata."""
+
+    id: str
+    content: str
+    source: str
+    relevance_score: float
+    retrieval_confidence: float
+
+    book_summary: str = ""
+    chapter_summary: str = ""
+    embedding_similarity: float = 0.0
+    chunk_index: int = 0
+    graph_connections: List[str] = field(default_factory=list)
+    relationship_types: List[str] = field(default_factory=list)
+    trust_score: float = 0.5
+    centrality_score: float = 0.0
+    recency_score: float = 0.0
+    access_frequency: int = 0
+    decay_applied: bool = False
+    timestamp: float = field(default_factory=time.time)
+
+
+@dataclass
+class BeliefNode:
+    """Node in Bayesian belief network for probabilistic reasoning."""
+
+    id: str
+    statement: str
+    prior_probability: float
+    current_probability: float
+    supporting_evidence: List[str] = field(default_factory=list)
+    contradicting_evidence: List[str] = field(default_factory=list)
+    parent_beliefs: List[str] = field(default_factory=list)
+    child_beliefs: List[str] = field(default_factory=list)
+    confidence: float = 0.5
+    last_updated: float = field(default_factory=time.time)
+    update_count: int = 0
+
+
+@dataclass
+class AnalysisResult:
+    """Result of cognitive analysis with detailed reasoning trace."""
+
+    analysis_type: AnalysisType
+    confidence: ConfidenceLevel
+    result: Dict[str, Any]
+    reasoning: str
+    strategy_used: ReasoningStrategy
+    sources_analyzed: List[str] = field(default_factory=list)
+    contradictions_found: List[Dict[str, Any]] = field(default_factory=list)
+    uncertainties: List[str] = field(default_factory=list)
+    belief_updates: List[Dict[str, Any]] = field(default_factory=list)
+    reasoning_trace: List[str] = field(default_factory=list)
+    alternative_interpretations: List[str] = field(default_factory=list)
+    analysis_duration_ms: float = 0.0
+    timestamp: float = field(default_factory=time.time)
+
+
+@dataclass
+class SynthesizedAnswer:
+    """Final synthesized answer with comprehensive analysis."""
+
+    answer: str
+    confidence: float
+    supporting_sources: List[str]
+    factual_accuracy: float = 0.0
+    consistency_score: float = 0.0
+    relevance_score: float = 0.0
+    completeness_score: float = 0.0
+    conflicting_information: List[str] = field(default_factory=list)
+    knowledge_gaps: List[str] = field(default_factory=list)
+    reliability_concerns: List[str] = field(default_factory=list)
 
 @dataclass
 class CognitiveQuery:
@@ -401,3 +512,7 @@ class CognitiveNexusIntegration:
             'synthesis_threshold': self.synthesis_threshold,
             'integration_status': 'active' if (self.cognitive_nexus and self.reasoning_engine) else 'partial'
         }
+
+
+# Backwards compatibility alias
+CognitiveNexus = CognitiveNexusIntegration

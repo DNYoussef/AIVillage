@@ -5,7 +5,7 @@ This module provides probabilistic knowledge graph capabilities with
 trust propagation and semantic relationship modeling.
 """
 
-from .bayesian_trust_graph import (
+from unified_rag.graph.bayesian_knowledge_graph import (
     BayesianQueryResult,
     BayesianTrustGraph,
     GraphEdge,

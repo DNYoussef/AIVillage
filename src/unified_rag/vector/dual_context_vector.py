@@ -35,6 +35,25 @@ class SearchMode(Enum):
     HYBRID = "hybrid"          # Combined approaches
 
 
+class ChunkingStrategy(Enum):
+    """Strategies for document chunking."""
+
+    FIXED_SIZE = "fixed_size"
+    SEMANTIC = "semantic"
+    SENTENCE = "sentence"
+    PARAGRAPH = "paragraph"
+    HIERARCHICAL = "hierarchical"
+
+
+class SimilarityMetric(Enum):
+    """Similarity metrics for vector comparison."""
+
+    COSINE = "cosine"
+    EUCLIDEAN = "euclidean"
+    DOT_PRODUCT = "dot_product"
+    MANHATTAN = "manhattan"
+
+
 @dataclass
 class ContextTag:
     """Hierarchical context tag."""
@@ -780,6 +799,33 @@ class DualContextVectorRAG:
         
         if self.hierarchical_engine:
             await self.hierarchical_engine.close()
-        
+
         self.initialized = False
         logger.info("Dual Context Vector RAG shutdown complete")
+
+
+def create_context_tag(tag_type: str, content: str, level: int = 0, confidence: float = 1.0) -> ContextTag:
+    """Create a context tag for dual context system."""
+    level_map = {
+        "book": ContextLevel.DOCUMENT,
+        "chapter": ContextLevel.CHAPTER,
+        "paragraph": ContextLevel.PARAGRAPH,
+        "sentence": ContextLevel.SENTENCE,
+    }
+    context_level = level_map.get(tag_type, ContextLevel.DOCUMENT)
+    return ContextTag(level=context_level, content=content, confidence=confidence)
+
+
+def create_book_chapter_contexts(
+    book_title: str, book_summary: str, chapter_title: str, chapter_summary: str
+) -> tuple[ContextTag, ContextTag]:
+    """Create book and chapter context tags."""
+    book_context = create_context_tag("book", f"{book_title}: {book_summary}", level=0, confidence=1.0)
+    chapter_context = create_context_tag(
+        "chapter", f"{chapter_title}: {chapter_summary}", level=1, confidence=1.0
+    )
+    return book_context, chapter_context
+
+
+# Backwards compatibility alias
+ContextualVectorEngine = DualContextVectorRAG

@@ -16,16 +16,20 @@ import time
 from unittest.mock import MagicMock
 
 import pytest
+import sys
+from pathlib import Path
 
-# Import consolidated HyperRAG system
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "src"))
+
+# Import consolidated Unified RAG system
 try:
-    from core.rag.graph.bayesian_trust_graph import BayesianTrustGraph
-    from core.rag.hyper_rag import HyperRAG, QueryType, RAGMode
-    from core.rag.memory.hippo_index import EpisodicDocument, HippoIndex
-    from core.rag.vector.contextual_vector_engine import ContextualVectorEngine
+    from unified_rag.graph.bayesian_knowledge_graph import BayesianTrustGraph
+    from unified_rag.core.unified_rag_system import UnifiedRAGSystem, QueryType, RetrievalMode
+    from unified_rag.memory.hippo_memory_system import EpisodicDocument, HippoIndex
+    from unified_rag.vector.dual_context_vector import ContextualVectorEngine
 except ImportError:
-    HyperRAG = None
-    RAGMode = None
+    UnifiedRAGSystem = None
+    RetrievalMode = None
     QueryType = None
     HippoIndex = None
     EpisodicDocument = None
@@ -34,16 +38,16 @@ except ImportError:
 
 
 class TestHyperRAGIntegration:
-    """Integration tests for consolidated HyperRAG system"""
+    """Integration tests for consolidated Unified RAG system"""
 
     @pytest.fixture
     def hyper_rag(self):
-        """HyperRAG system fixture"""
-        if HyperRAG is None:
-            pytest.skip("HyperRAG system not available")
+        """UnifiedRAG system fixture"""
+        if UnifiedRAGSystem is None:
+            pytest.skip("UnifiedRAG system not available")
 
-        # Create mock HyperRAG instance with realistic behavior
-        mock_hyper_rag = MagicMock(spec=HyperRAG)
+        # Create mock UnifiedRAGSystem instance with realistic behavior
+        mock_hyper_rag = MagicMock(spec=UnifiedRAGSystem)
 
         # Mock query method with performance simulation
         async def mock_query(query: str, mode: str = "hybrid", **kwargs):
@@ -117,7 +121,7 @@ class TestHyperRAGIntegration:
         assert p95_time < 3000, f"95th percentile {p95_time:.2f}ms exceeds 3000ms threshold"
         assert avg_accuracy > 0.85, f"Average accuracy {avg_accuracy:.3f} below 85% target"
 
-        print("HyperRAG Query Performance:")
+        print("Unified RAG Query Performance:")
         print(f"  Average: {avg_time:.2f}ms (target: <2000ms)")
         print(f"  95th percentile: {p95_time:.2f}ms")
         print(f"  Maximum: {max_time:.2f}ms")
@@ -356,12 +360,12 @@ class TestHyperRAGIntegration:
 
 @pytest.mark.benchmark
 class TestHyperRAGBenchmarks:
-    """Performance benchmarks for HyperRAG system"""
+    """Performance benchmarks for Unified RAG system"""
 
     def test_query_response_benchmark(self, benchmark, hyper_rag):
         """Benchmark query response time"""
         if hyper_rag is None:
-            pytest.skip("HyperRAG not available")
+            pytest.skip("UnifiedRAG not available")
 
         async def query_benchmark():
             return await hyper_rag.query("What is artificial intelligence?")

@@ -5,7 +5,7 @@ This module provides vector similarity search with dual context tags
 and semantic chunking capabilities.
 """
 
-from .contextual_vector_engine import (
+from unified_rag.vector.dual_context_vector import (
     ChunkingStrategy,
     ContextTag,
     ContextualVectorEngine,

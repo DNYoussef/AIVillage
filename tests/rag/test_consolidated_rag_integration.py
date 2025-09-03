@@ -22,12 +22,22 @@ import time
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "packages"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "src"))
 
-from rag import HyperRAG, MemoryType, QueryMode
-from rag.graph.bayesian_trust_graph import Relationship, RelationshipType, create_graph_node
-from rag.memory.hippo_index import create_episodic_document, create_hippo_node
-from rag.vector.contextual_vector_engine import VectorDocument
+from unified_rag.core.unified_rag_system import UnifiedRAGSystem, RetrievalMode as QueryMode
+from unified_rag.memory.hippo_memory_system import (
+    MemoryType,
+    create_episodic_document,
+    create_hippo_node,
+)
+from unified_rag.graph.bayesian_knowledge_graph import (
+    Relationship,
+    RelationshipType,
+    create_graph_node,
+)
+from unified_rag.vector.dual_context_vector import VectorDocument
+
+HyperRAG = UnifiedRAGSystem
 
 
 class TestConsolidatedRAGSystem:
