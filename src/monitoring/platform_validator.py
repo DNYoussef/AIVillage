@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class ValidationStatus(Enum):
     """Validation status levels"""
 
-    PASS = "PASS"
+    PASS = "PASS"  # noqa: S105
     WARN = "WARN"
     FAIL = "FAIL"
     SKIP = "SKIP"
@@ -635,7 +635,7 @@ class ObservabilityValidator:
                 host="localhost",
                 port=6379,
                 decode_responses=True,
-                password="aivillage2024",  # nosec B106 - test Redis password for validation
+                password="aivillage2024",  # noqa: S106 - test Redis password for validation
             )
 
             # Test Redis ping
@@ -861,7 +861,7 @@ class ObservabilityValidator:
                         )
 
                 # Test datasources
-                auth = aiohttp.BasicAuth("admin", "aivillage2024")
+                auth = aiohttp.BasicAuth("admin", "aivillage2024")  # noqa: S106
                 async with session.get(
                     f"{self.endpoints['grafana']}/api/datasources", auth=auth, timeout=10
                 ) as response:

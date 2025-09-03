@@ -309,7 +309,7 @@ CMD ["python", "-c", "print('Enclave ready')"]
                 "none" if context.spec.config.network_isolation else "bridge",
                 "--read-only",
                 "--tmpfs",
-                "/tmp",
+                "/tmp",  # noqa: S108
                 f"enclave_{enclave_id}",
             ]
 
@@ -355,7 +355,7 @@ CMD ["python", "-c", "print('Enclave ready')"]
                 "none",
                 "--read-only",
                 "--tmpfs",
-                "/tmp",
+                "/tmp",  # noqa: S108
                 "python:3.11-alpine",
                 "sleep",
                 "infinity",

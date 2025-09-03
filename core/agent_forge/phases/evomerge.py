@@ -696,10 +696,10 @@ class EvoMergePhase:
                 def __init__(self, vocab_size=32000):
                     self._vocab_size = vocab_size
                     super().__init__(
-                        pad_token="<pad>",  # nosec B106 - tokenizer special token, not password
-                        eos_token="</s>",  # nosec B106 - tokenizer special token, not password
-                        bos_token="<s>",  # nosec B106 - tokenizer special token, not password
-                        unk_token="<unk>",  # nosec B106 - tokenizer special token, not password
+                        pad_token="<pad>",  # noqa: S106 - tokenizer special token, not password
+                        eos_token="</s>",  # noqa: S106 - tokenizer special token, not password
+                        bos_token="<s>",  # noqa: S106 - tokenizer special token, not password
+                        unk_token="<unk>",  # noqa: S106 - tokenizer special token, not password
                     )
 
                 @property

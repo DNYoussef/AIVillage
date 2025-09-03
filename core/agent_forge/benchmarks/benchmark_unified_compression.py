@@ -112,7 +112,8 @@ def benchmark_all_methods() -> None:
                 continue
             final_mb = r["size_kb"] / 1024
             fits = final_mb < 1024
-            print(f"  {r['compressor']:<25} -> {final_mb:>6.1f}MB " f"[{'\u2713 FITS' if fits else '\u2717 TOO BIG'}]")
+            status = "✓ FITS" if fits else "✗ TOO BIG"
+            print(f"  {r['compressor']:<25} -> {final_mb:>6.1f}MB [{status}]")
 
 
 if __name__ == "__main__":

@@ -53,7 +53,7 @@ class ExperimentStatus(Enum):
 class ChaosValidationResult(Enum):
     """Results of chaos validation tests."""
 
-    PASS = "pass"
+    PASS = "pass"  # noqa: S105 - enum value
     FAIL = "fail"
     PARTIAL = "partial"
     TIMEOUT = "timeout"

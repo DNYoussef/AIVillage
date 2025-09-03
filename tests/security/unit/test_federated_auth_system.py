@@ -29,7 +29,10 @@ class TestFederatedAuthenticationSystem:
     @pytest.fixture
     def auth_system(self):
         """Create authentication system for testing."""
-        return FederatedAuthenticationSystem(jwt_secret="test_secret_key"  # pragma: allowlist secret - test secret, enable_mfa=True)
+        return FederatedAuthenticationSystem(
+            jwt_secret="test_secret_key",
+            enable_mfa=True,
+        )  # pragma: allowlist secret - test secret
 
     @pytest.fixture
     def mock_bcrypt(self):

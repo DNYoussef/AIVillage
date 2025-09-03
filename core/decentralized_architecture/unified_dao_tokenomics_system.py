@@ -102,7 +102,7 @@ class TokenomicsConfig:
 
     # Token settings
     initial_token_supply: int = 1000000
-    token_symbol: str = "VILLAGE"
+    token_symbol: str = "VILLAGE"  # noqa: S105
     token_decimals: int = 18
 
     # Earning rates (credits per action)

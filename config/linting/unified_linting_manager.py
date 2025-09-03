@@ -21,6 +21,9 @@ import shutil
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+TEMP_DIR = Path(tempfile.gettempdir())
+MYPY_REPORT_PATH = TEMP_DIR / "mypy-report"
+PLATFORM_BANDIT_REPORT = TEMP_DIR / "bandit-report.json"
 # Import error handling system with fallbacks
 try:
     from .error_handler import error_handler, ErrorContext, LintingError, ToolNotFoundError, ConfigurationError
@@ -166,13 +169,13 @@ class UnifiedLintingPipeline:
                     },
                     "mypy": {
                         "enabled": True,
-                        "args": [".", "--ignore-missing-imports", "--json-report=/tmp/mypy-report"],
+                        "args": [".", "--ignore-missing-imports", f"--json-report={MYPY_REPORT_PATH}"] ,
                         "timeout": 180,
                         "fail_on_error": False
                     },
                     "bandit": {
                         "enabled": True,
-                        "args": ["-r", ".", "-f", "json", "-o", "/tmp/bandit-report.json"],
+                        "args": ["-r", ".", "-f", "json", "-o", str(PLATFORM_BANDIT_REPORT)],
                         "timeout": 120,
                         "fail_on_error": False
                     }

@@ -102,9 +102,9 @@ class QuietSTaRConfig:
     output_path: str = ""
 
     # Special tokens (following existing convention)
-    start_thought_token: str = "<|startofthought|>"
-    end_thought_token: str = "<|endofthought|>"
-    no_thought_token: str = "<|nothought|>"
+    start_thought_token: str = "<|startofthought|>"  # noqa: S105
+    end_thought_token: str = "<|endofthought|>"  # noqa: S105
+    no_thought_token: str = "<|nothought|>"  # noqa: S105
 
     # Baking configuration
     max_baking_iterations: int = 5

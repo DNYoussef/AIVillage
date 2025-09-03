@@ -22,8 +22,8 @@ class ReasonerConfig:
     inner_T: int = 4
 
     # Reasoning tokens
-    start_thought_token: str = "<SoT>"
-    end_thought_token: str = "<EoT>"
+    start_thought_token: str = "<SoT>"  # noqa: S105
+    end_thought_token: str = "<EoT>"  # noqa: S105
 
     # Self-consistency parameters
     self_consistency_k: int = 5

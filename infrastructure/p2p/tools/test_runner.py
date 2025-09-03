@@ -36,10 +36,10 @@ except ImportError:
 class TestResult(Enum):
     """Test result status."""
 
-    PASS = "pass"  # nosec B106 - enum value, not password
-    FAIL = "fail"  # nosec B106 - enum value, not password
-    SKIP = "skip"  # nosec B106 - enum value, not password
-    ERROR = "error"  # nosec B106 - enum value, not password
+    PASS = "pass"  # noqa: S105 - enum value, not password
+    FAIL = "fail"  # noqa: S105 - enum value, not password
+    SKIP = "skip"  # noqa: S105 - enum value, not password
+    ERROR = "error"  # noqa: S105 - enum value, not password
 
 
 @dataclass

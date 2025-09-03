@@ -328,7 +328,11 @@ class TestParameterObjects:
 
     def test_factory_functions(self):
         """Test factory functions for backward compatibility"""
-        params = create_mcp_connection_params(uri="http://test.com", agent_id="agent1", api_key="key123"  # pragma: allowlist secret - test API key)
+        params = create_mcp_connection_params(
+            uri="http://test.com",
+            agent_id="agent1",
+            api_key="key123",
+        )  # pragma: allowlist secret - test API key
 
         assert isinstance(params, MCPConnectionParams)
         assert params.uri == "http://test.com"

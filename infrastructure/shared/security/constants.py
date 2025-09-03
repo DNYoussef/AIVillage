@@ -147,7 +147,7 @@ class SecurityMessages:
     SESSION_EXPIRED: Final[str] = "Session has expired"
     PERMISSION_DENIED: Final[str] = "Insufficient permissions"
     RATE_LIMIT_EXCEEDED: Final[str] = "Rate limit exceeded"
-    INVALID_TOKEN: Final[str] = "Invalid or expired token"
+    INVALID_TOKEN: Final[str] = "Invalid or expired token"  # noqa: S105
     ACCOUNT_LOCKED: Final[str] = "Account temporarily locked"
     SECURITY_VIOLATION: Final[str] = "Security policy violation detected"
     ENCRYPTION_FAILED: Final[str] = "Encryption operation failed"

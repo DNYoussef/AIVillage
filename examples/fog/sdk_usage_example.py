@@ -226,7 +226,7 @@ if __name__ == '__main__':
         # 3. Test application in sandbox
         print("3. Testing application...")
         test_result = await client.exec_in_sandbox(
-            dev_sandbox.sandbox_id, "python3", args=["/tmp/app.py", "20"], timeout=60  # nosec B108 - example code
+            dev_sandbox.sandbox_id, "python3", args=["/tmp/app.py", "20"], timeout=60  # noqa: S108 - example code
         )
         print(f"   ✓ Test completed: {test_result.get('exit_code', 'N/A')}")
 

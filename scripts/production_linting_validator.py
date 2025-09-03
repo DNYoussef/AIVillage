@@ -517,7 +517,7 @@ class ProductionValidator:
                                 if pattern in line and not line.strip().startswith('#'):
                                     suspicious_content.append(f"{file_path}:{i+1}")
                 except Exception:
-                    pass
+                    logger.exception("Secret scan iteration failed")
         
         security_checks["no_hardcoded_secrets"] = len(suspicious_content) == 0
         

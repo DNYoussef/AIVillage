@@ -249,13 +249,16 @@ class SecurityLintingManager:
         start_time = datetime.now()
         
         try:
-            # Build bandit command
+            # Build bandit command with secure temporary output file
+            with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as tmp_file:
+                bandit_output = Path(tmp_file.name)
+
             cmd = [
                 "bandit",
                 "-f", "json",
                 "-r",
                 "-ll",  # Medium and high severity only
-                "-o", "/tmp/bandit_output.json"
+                "-o", str(bandit_output)
             ]
             
             # Add target paths
@@ -282,8 +285,8 @@ class SecurityLintingManager:
             findings = []
             critical_count = high_count = medium_count = low_count = 0
             
-            if Path("/tmp/bandit_output.json").exists():
-                with open("/tmp/bandit_output.json", 'r') as f:
+            if bandit_output.exists():
+                with bandit_output.open('r') as f:
                     bandit_data = json.load(f)
                 
                 for issue in bandit_data.get("results", []):
@@ -322,7 +325,7 @@ class SecurityLintingManager:
                         else:
                             low_count += 1
             
-            return SecurityScanResult(
+            result = SecurityScanResult(
                 tool="bandit",
                 scan_type="sast",
                 status="passed" if not findings or (critical_count == 0 and high_count <= 2) else "failed",
@@ -336,6 +339,8 @@ class SecurityLintingManager:
                 metadata={"bandit_version": "1.7.5", "command": " ".join(cmd)},
                 timestamp=datetime.now().isoformat()
             )
+            bandit_output.unlink(missing_ok=True)
+            return result
             
         except Exception as e:
             logger.error(f"Bandit scan failed: {e}")

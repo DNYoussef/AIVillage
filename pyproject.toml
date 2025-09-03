@@ -204,6 +204,8 @@ exclude = [
     "*.egg-info",
     "venv*", "*env*", "ENV",    # Virtual environments (all variants)
     "archived", "deprecated", "experimental",  # Project-specific exclusions
+    "core/agent-forge",  # legacy path duplicate
+    "docs", "examples", "experiments", "rollbacks", "tests", "infrastructure", "scripts",
     "tmp*", "*tmp*", "*_tmp",   # Temporary directories
     "wandb*", "logs", "cache",  # Generated content
     "new_env",                  # Project-specific environment

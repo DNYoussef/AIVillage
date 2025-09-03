@@ -7,6 +7,7 @@ Emergency rollback procedures for failed deployments with MCP coordination
 import json
 import os
 import sys
+import logging
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Any, Optional
@@ -18,6 +19,7 @@ class DeploymentRollbackManager:
     def __init__(self):
         self.project_root = Path(__file__).parent.parent
         self.rollback_dir = self.project_root / 'rollbacks'
+        self.logger = logging.getLogger(__name__)
         self.rollback_dir.mkdir(exist_ok=True)
         
     def create_emergency_rollback_plan(self) -> Dict[str, Any]:
@@ -57,7 +59,7 @@ class DeploymentRollbackManager:
             if result.returncode == 0:
                 return result.stdout.strip()
         except Exception:
-            pass
+            self.logger.exception("Failed to get current commit")
         return "unknown"
     
     def identify_last_stable_commit(self) -> Dict[str, str]:

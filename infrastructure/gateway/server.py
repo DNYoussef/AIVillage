@@ -87,7 +87,7 @@ except ImportError:
             "PORT": int(os.getenv("PORT", "8080")),
             "DEBUG": os.getenv("DEBUG", "true").lower() == "true",
             "MAX_FILE_SIZE": int(os.getenv("MAX_FILE_SIZE", "10485760")),  # 10MB default
-            "UPLOAD_DIR": os.getenv("UPLOAD_DIR", "/tmp/uploads"),
+            "UPLOAD_DIR": os.getenv("UPLOAD_DIR", "/tmp/uploads"),  # noqa: S108
             "ALLOWED_EXTENSIONS": [".txt", ".md", ".pdf", ".docx", ".json"],
             "RATE_LIMIT": int(os.getenv("RATE_LIMIT", "100")),
             "CORS_ORIGINS": os.getenv("CORS_ORIGINS", "*").split(","),
@@ -98,7 +98,7 @@ except ImportError:
             "SECURITY_ENABLED": os.getenv("SECURITY_ENABLED", "true").lower() == "true",
             "RATE_LIMIT_REQUESTS": int(os.getenv("RATE_LIMIT_REQUESTS", "100")),
             "RATE_LIMIT_WINDOW": int(os.getenv("RATE_LIMIT_WINDOW", "60")),
-            "UPLOAD_PATH": os.getenv("UPLOAD_PATH", "/tmp/uploads"),
+            "UPLOAD_PATH": os.getenv("UPLOAD_PATH", "/tmp/uploads"),  # noqa: S108
             "STATIC_FILES": os.getenv("STATIC_FILES", "true").lower() == "true",
         }
 

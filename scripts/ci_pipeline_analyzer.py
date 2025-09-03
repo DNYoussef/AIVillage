@@ -7,10 +7,14 @@ Comprehensive analysis of pipeline status, failures, and deployment readiness
 import json
 import os
 import sys
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 import subprocess
+
+logger = logging.getLogger(__name__)
+
 
 class CIPipelineAnalyzer:
     """Analyzes CI/CD pipeline status and generates reports"""
@@ -162,7 +166,7 @@ class CIPipelineAnalyzer:
                         if 'sudo' in content and 'apt' in content:
                             workflow_analysis['workflow_issues'].append(f"{filename}: Contains sudo/apt commands that may fail on Windows runners")
                 except Exception:
-                    pass
+                    logger.exception("Workflow analysis failed")
         
         return workflow_analysis
     

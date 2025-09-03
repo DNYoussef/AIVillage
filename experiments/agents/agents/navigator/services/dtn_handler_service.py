@@ -89,7 +89,7 @@ class DTNHandlerService(IDTNHandlerService):
         self.event_bus = get_event_bus()
 
         # Storage management
-        self.storage_path = Path(storage_path or "/tmp/navigator_dtn")  # nosec B108 - temp directory
+        self.storage_path = Path(storage_path or "/tmp/navigator_dtn")  # noqa: S108 - temp directory
         self.storage_path.mkdir(parents=True, exist_ok=True)
 
         # Message storage

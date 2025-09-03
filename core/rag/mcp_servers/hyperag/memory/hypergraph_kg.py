@@ -145,7 +145,7 @@ class HypergraphKG(MemoryBackend):
         self,
         neo4j_uri: str = "bolt://localhost:7687",
         neo4j_user: str = "neo4j",
-        neo4j_password: str = "password",  # nosec B107 - default parameter
+        neo4j_password: str = "password",  # noqa: S107 - default parameter
         qdrant_url: str = "http://localhost:6333",
         redis_url: str = "redis://localhost:6379",
         embedding_dim: int = 768,

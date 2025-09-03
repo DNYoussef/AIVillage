@@ -363,8 +363,8 @@ class NATTraversal:
         finally:
             try:
                 sock.close()
-            except:
-                pass
+            except Exception:
+                logger.exception("Failed to close socket")
     
     async def _stun_binding_request(self, sock: socket.socket = None) -> Optional[Tuple[str, int]]:
         """Send STUN binding request to get external address mapping."""
@@ -512,8 +512,8 @@ class NATTraversal:
             finally:
                 try:
                     sock.close()
-                except:
-                    pass
+                except Exception:
+                    logger.exception("Failed to close socket")
         
         return None
     

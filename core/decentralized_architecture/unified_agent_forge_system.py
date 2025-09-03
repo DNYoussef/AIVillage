@@ -114,7 +114,7 @@ class QuietStarBakingConfig:
     enable_reasoning_chains: bool = True
     chain_length: int = 16
     distillation_temperature: float = 4.0
-    reasoning_token: str = "<think>"
+    reasoning_token: str = "<think>"  # noqa: S105
 
     # Training settings
     num_reasoning_samples: int = 8
@@ -395,10 +395,10 @@ class CognateModelCreator:
             class CognateTokenizer(PreTrainedTokenizer):
                 def __init__(self):
                     super().__init__(
-                        pad_token="<pad>",  # nosec B106 - tokenizer special token, not password
-                        eos_token="</s>",  # nosec B106 - tokenizer special token, not password
-                        bos_token="<s>",  # nosec B106 - tokenizer special token, not password
-                        unk_token="<unk>",  # nosec B106 - tokenizer special token, not password
+                        pad_token="<pad>",  # noqa: S106 - tokenizer special token, not password
+                        eos_token="</s>",  # noqa: S106 - tokenizer special token, not password
+                        bos_token="<s>",  # noqa: S106 - tokenizer special token, not password
+                        unk_token="<unk>",  # noqa: S106 - tokenizer special token, not password
                     )
 
                 @property

@@ -29,8 +29,8 @@ BACKUP_LOG_FILENAME: Final[str] = "backup.log"
 
 # Directory structure
 DEFAULT_BACKUP_DIR: Final[str] = "/var/backups/aivillage"
-TEMP_BACKUP_DIR: Final[str] = "/tmp/aivillage_backup"
-RESTORE_TEMP_DIR: Final[str] = "/tmp/aivillage_restore"
+TEMP_BACKUP_DIR: Final[str] = "/tmp/aivillage_backup"  # noqa: S108
+RESTORE_TEMP_DIR: Final[str] = "/tmp/aivillage_restore"  # noqa: S108
 QUARANTINE_DIR: Final[str] = "/var/quarantine/aivillage"
 
 # Database backup

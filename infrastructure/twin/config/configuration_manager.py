@@ -105,10 +105,10 @@ class ConfigurationManager:
                 "DIGITAL_TWIN_DB_PATH": ":memory:",
                 "TEST_DB_PATH": ":memory:",
                 # Temporary paths
-                "RAG_FAISS_INDEX_PATH": "/tmp/test_faiss_index",
-                "DIGITAL_TWIN_VAULT_PATH": "/tmp/test_vault",
-                "AIVILLAGE_LOG_DIR": "/tmp/test_logs",
-                "MESH_FILE_TRANSPORT_DIR": "/tmp/test_mesh",
+                "RAG_FAISS_INDEX_PATH": "/tmp/test_faiss_index",  # noqa: S108
+                "DIGITAL_TWIN_VAULT_PATH": "/tmp/test_vault",  # noqa: S108
+                "AIVILLAGE_LOG_DIR": "/tmp/test_logs",  # noqa: S108
+                "MESH_FILE_TRANSPORT_DIR": "/tmp/test_mesh",  # noqa: S108
                 # Test ports (higher range to avoid conflicts)
                 "LIBP2P_PORT": "14001",
                 "DIGITAL_TWIN_API_PORT": "18080",

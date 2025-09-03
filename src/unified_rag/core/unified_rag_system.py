@@ -585,7 +585,7 @@ class UnifiedRAGSystem:
                 else:
                     return QueryType.SYNTHESIS
             except Exception:
-                pass
+                logger.exception("Failed to classify query")
         
         # Fallback to simple heuristics
         question_lower = question.lower()

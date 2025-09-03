@@ -56,7 +56,7 @@ def create_bpe_tokenizer(vocab_size: int = 32000, sample_size: int = 2000000) ->
         raise ImportError("tokenizers library required for BPE tokenizer")
 
     # Initialize BPE tokenizer
-    tokenizer = Tokenizer(models.BPE(unk_token="<unk>"))  # nosec B106 - tokenizer special token
+    tokenizer = Tokenizer(models.BPE(unk_token="<unk>"))  # noqa: S106 - tokenizer special token
 
     # Set pre-tokenizer
     tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=True)

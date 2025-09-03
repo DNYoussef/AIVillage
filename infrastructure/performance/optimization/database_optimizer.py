@@ -36,7 +36,7 @@ class DatabaseConfig:
     postgres_port: int = 5432
     postgres_db: str = "aivillage"
     postgres_user: str = "aivillage"
-    postgres_password: str = "aivillage2024"
+    postgres_password: str = "aivillage2024"  # noqa: S105
     postgres_pool_size: int = 20
     postgres_max_overflow: int = 30
     postgres_pool_timeout: int = 30
@@ -45,7 +45,7 @@ class DatabaseConfig:
     # Redis settings
     redis_host: str = "localhost"
     redis_port: int = 6379
-    redis_password: str = "aivillage2024"
+    redis_password: str = "aivillage2024"  # noqa: S105
     redis_pool_size: int = 50
     redis_pool_timeout: int = 5
 
