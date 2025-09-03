@@ -73,34 +73,34 @@ jobs:
             echo "Starting detect-secrets at: $(date)"
             if [ -f ".secrets.baseline" ]; then
               echo "Using secrets baseline file"
-              timeout 240 detect-secrets scan --baseline .secrets.baseline \\
-                --exclude-files 'tests/.*\.py$' \\
-                --exclude-files 'examples/.*\.py$' \\
-                --exclude-files '.*/analytics\.py$' \\
-                --exclude-files '.*/profiler\.py$' \\
-                --exclude-files '.*/optimization/.*\.py$' \\
-                --exclude-files '.*/experiments/.*\.py$' \\
-                --exclude-files '.*/integration/.*\.py$' \\
-                --exclude-files '.*/__pycache__/.*' \\
-                --exclude-files '.*/node_modules/.*' \\
-                --exclude-files '.*/\.git/.*' \\
-                --exclude-files '.*/target/.*' \\
-                --exclude-files '.*/build/.*' \\
-                --exclude-files '.*/dist/.*'
+                timeout 240 detect-secrets scan --baseline .secrets.baseline \
+                  --exclude-files 'tests/.*\.py$' \
+                  --exclude-files 'examples/.*\.py$' \
+                  --exclude-files '.*/analytics\.py$' \
+                  --exclude-files '.*/profiler\.py$' \
+                  --exclude-files '.*/optimization/.*\.py$' \
+                  --exclude-files '.*/experiments/.*\.py$' \
+                  --exclude-files '.*/integration/.*\.py$' \
+                  --exclude-files '.*/__pycache__/.*' \
+                  --exclude-files '.*/node_modules/.*' \
+                  --exclude-files '.*/\.git/.*' \
+                  --exclude-files '.*/target/.*' \
+                  --exclude-files '.*/build/.*' \
+                  --exclude-files '.*/dist/.*'
             else
               echo "No secrets baseline found, creating one and scanning"
-              timeout 240 detect-secrets scan \\
-                --exclude-files 'tests/.*\.py$' \\
-                --exclude-files 'examples/.*\.py$' \\
-                --exclude-files '.*/analytics\.py$' \\
-                --exclude-files '.*/profiler\.py$' \\
-                --exclude-files '.*/optimization/.*\.py$' \\
-                --exclude-files '.*/__pycache__/.*' \\
-                --exclude-files '.*/node_modules/.*' \\
-                --exclude-files '.*/\.git/.*' \\
-                --exclude-files '.*/target/.*' \\
-                --exclude-files '.*/build/.*' \\
-                --exclude-files '.*/dist/.*' \\
+              timeout 240 detect-secrets scan \
+                --exclude-files 'tests/.*\.py$' \
+                --exclude-files 'examples/.*\.py$' \
+                --exclude-files '.*/analytics\.py$' \
+                --exclude-files '.*/profiler\.py$' \
+                --exclude-files '.*/optimization/.*\.py$' \
+                --exclude-files '.*/__pycache__/.*' \
+                --exclude-files '.*/node_modules/.*' \
+                --exclude-files '.*/\.git/.*' \
+                --exclude-files '.*/target/.*' \
+                --exclude-files '.*/build/.*' \
+                --exclude-files '.*/dist/.*' \
                 --baseline .secrets.baseline
             fi
             exit_code=$?
