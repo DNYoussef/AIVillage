@@ -18,3 +18,4 @@ The legacy files in `core/rag` have been removed or reduced to thin wrappers tha
 ## Related Documentation
 
 - [Creative Search and Gap Detection](rag/creative_search_and_gap_detection.md)
+- [HippoCache Usage Guide](rag/hippo_cache.md)
