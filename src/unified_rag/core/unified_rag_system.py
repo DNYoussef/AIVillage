@@ -41,8 +41,8 @@ from ..memory.hippo_memory_system import HippoMemorySystem
 from ..vector.dual_context_vector import DualContextVectorRAG
 from ..graph.bayesian_knowledge_graph import BayesianKnowledgeGraphRAG
 from ..cognitive.cognitive_nexus import CognitiveNexusIntegration
-from ..creative.creative_graph_search import CreativeGraphSearch
-from ..detection.missing_node_detector import MissingNodeDetector
+from ..graph.creative_graph_search import CreativeGraphSearch
+from ..graph.missing_node_detector import MissingNodeDetector
 
 logger = logging.getLogger(__name__)
 
