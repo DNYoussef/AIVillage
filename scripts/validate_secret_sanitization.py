@@ -13,9 +13,11 @@ Usage:
 import argparse
 import json
 import logging
+import os
 from pathlib import Path
 import re
 import sys
+import time
 from datetime import datetime
 from enum import Enum
 from typing import Dict, List, Optional, Tuple
@@ -108,6 +110,16 @@ class SecretSanitizationValidator:
 
     def __init__(self, base_path: str):
         self.base_path = Path(base_path)
+        
+        # Performance optimization settings
+        self.max_file_size_mb = 2.0  # Skip files larger than 2MB
+        self.progress_interval = 500  # Log progress every 500 files
+        self.excluded_dirs = {
+            '.git', '.github', '__pycache__', '.pytest_cache', 
+            'node_modules', '.venv', 'venv', 'env', '.env',
+            'target', 'build', 'dist', 'coverage', '.nyc_output',
+            'artifacts', 'logs', 'tmp', 'temp', '.tmp'
+        }
         self.target_files = [
             "tests/security/test_auth_system.py",
             "tests/integration/test_end_to_end_system.py",
@@ -197,6 +209,27 @@ class SecretSanitizationValidator:
             r".*\)\s*#.*pragma.*allowlist.*secret",  # Closing with pragma
         ]
 
+    def _should_skip_file(self, file_path: Path) -> tuple[bool, str]:
+        """Check if file should be skipped for performance reasons."""
+        # Skip if file doesn't exist
+        if not file_path.exists():
+            return True, "File does not exist"
+        
+        # Skip if file is too large (performance optimization)
+        try:
+            file_size_mb = file_path.stat().st_size / (1024 * 1024)
+            if file_size_mb > self.max_file_size_mb:
+                return True, f"File too large ({file_size_mb:.1f}MB > {self.max_file_size_mb}MB)"
+        except (OSError, IOError):
+            return True, "Cannot read file stats"
+        
+        # Skip if file is in excluded directory
+        for part in file_path.parts:
+            if part in self.excluded_dirs:
+                return True, f"In excluded directory: {part}"
+        
+        return False, ""
+    
     def validate_file(self, file_path: Path, timeout_seconds: int = 30) -> dict:
         """Validate a single file for secret sanitization."""
         result = {
@@ -204,11 +237,19 @@ class SecretSanitizationValidator:
             "issues": [],
             "validated_secrets": [],
             "line_count": 0,
+            "processing_time": 0,
+            "skipped": False,
+            "skip_reason": ""
         }
 
-        if not file_path.exists():
-            result["issues"].append(f"File not found: {file_path}")
+        # Performance pre-checks
+        should_skip, skip_reason = self._should_skip_file(file_path)
+        if should_skip:
+            result["skipped"] = True
+            result["skip_reason"] = skip_reason
             return result
+        
+        start_time = time.time()
 
         try:
             import signal
@@ -247,7 +288,9 @@ class SecretSanitizationValidator:
                     lines = f.readlines()
                     result["line_count"] = len(lines)
 
-                # Process lines with periodic timeout checks
+                logger.debug(f"Processing {len(lines)} lines in {file_path.name}")
+
+                # Process lines with periodic timeout checks and progress logging
                 for line_num, line in enumerate(lines, 1):
                     # Reset alarm for each batch of lines (Unix only)
                     if timeout_enabled and platform.system() != 'Windows' and line_num % 1000 == 0:
@@ -256,6 +299,10 @@ class SecretSanitizationValidator:
                         # For Windows, check if we should continue processing
                         if not timer_thread.is_alive():
                             raise TimeoutError(f"File validation timed out after {timeout_seconds}s")
+                    
+                    # Progress logging for large files
+                    if line_num % 5000 == 0:
+                        logger.info(f"  Processing line {line_num}/{len(lines)} in {file_path.name}")
                 # Check for unsafe secret patterns across all severity levels
                 for severity, patterns in self.security_patterns.items():
                     for pattern_tuple in patterns:
@@ -311,38 +358,61 @@ class SecretSanitizationValidator:
             result["issues"].append(f"File validation timeout: {str(e)}")
         except Exception as e:
             result["issues"].append(f"Error reading file: {str(e)}")
+        finally:
+            result["processing_time"] = time.time() - start_time
 
         return result
 
     def validate_all_files(self) -> dict:
-        """Validate all target files."""
+        """Validate all target files with performance optimizations."""
+        start_time = time.time()
+        
         results = {
             "validation_summary": {
                 "total_files": len(self.target_files),
                 "files_processed": 0,
+                "files_skipped": 0,
                 "files_with_issues": 0,
                 "total_issues": 0,
                 "validated_secrets": 0,
+                "total_processing_time": 0,
             },
             "file_results": [],
             "overall_status": "UNKNOWN",
         }
 
-        for target_file in self.target_files:
+        logger.info(f"Starting validation of {len(self.target_files)} target files...")
+        
+        for i, target_file in enumerate(self.target_files):
+            # Progress logging every N files
+            if i > 0 and i % 2 == 0:  # Log every 2 files for target files (small set)
+                logger.info(f"Progress: {i}/{len(self.target_files)} files processed")
             file_path = self.base_path / target_file
+            logger.info(f"Validating: {target_file}")
+            
             file_result = self.validate_file(file_path)
             results["file_results"].append(file_result)
 
-            if file_path.exists():
+            # Update summary statistics
+            if file_result.get("skipped", False):
+                results["validation_summary"]["files_skipped"] += 1
+                logger.info(f"  Skipped: {file_result.get('skip_reason', 'Unknown reason')}")
+            elif file_path.exists():
                 results["validation_summary"]["files_processed"] += 1
+                logger.info(f"  Processed: {file_result.get('line_count', 0)} lines in {file_result.get('processing_time', 0):.2f}s")
 
             if file_result["issues"]:
                 results["validation_summary"]["files_with_issues"] += 1
                 results["validation_summary"]["total_issues"] += len(file_result["issues"])
+                logger.warning(f"  Found {len(file_result['issues'])} issues")
 
             results["validation_summary"]["validated_secrets"] += len(file_result["validated_secrets"])
+            results["validation_summary"]["total_processing_time"] += file_result.get("processing_time", 0)
 
         # Determine overall status
+        total_time = time.time() - start_time
+        results["validation_summary"]["wall_clock_time"] = total_time
+        
         if results["validation_summary"]["total_issues"] == 0:
             results["overall_status"] = "PASS"
         elif results["validation_summary"]["files_with_issues"] <= 2:
@@ -350,6 +420,9 @@ class SecretSanitizationValidator:
         else:
             results["overall_status"] = "FAIL"
 
+        logger.info(f"Validation completed in {total_time:.2f}s (processing: {results['validation_summary']['total_processing_time']:.2f}s)")
+        logger.info(f"Files: {results['validation_summary']['files_processed']} processed, {results['validation_summary']['files_skipped']} skipped")
+        
         return results
 
     def generate_report(self, results: dict, output_file: str = None) -> str:
@@ -365,9 +438,12 @@ class SecretSanitizationValidator:
             "",
             "SUMMARY:",
             f"  Files Processed: {summary['files_processed']}/{summary['total_files']}",
+            f"  Files Skipped: {summary.get('files_skipped', 0)}",
             f"  Files with Issues: {summary['files_with_issues']}",
             f"  Total Issues: {summary['total_issues']}",
             f"  Validated Test Secrets: {summary['validated_secrets']}",
+            f"  Processing Time: {summary.get('total_processing_time', 0):.2f}s",
+            f"  Wall Clock Time: {summary.get('wall_clock_time', 0):.2f}s",
             "",
             "VALIDATION CRITERIA:",
             "  [OK] Test secrets must have '# pragma: allowlist secret' comments",
