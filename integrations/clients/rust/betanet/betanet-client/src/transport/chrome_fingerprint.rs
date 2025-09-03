@@ -154,7 +154,7 @@ impl ChromeFingerprinter {
         // Apply header order and values
         self.apply_header_patterns(request)?;
 
-        // Apply timing behavior (would be applied at connection level)
+        // Record timing patterns for connection-level behavior
         self.apply_timing_patterns(request)?;
 
         // Apply behavioral patterns
@@ -381,9 +381,31 @@ impl ChromeFingerprinter {
     }
 
     /// Apply timing patterns
-    fn apply_timing_patterns(&self, _request: &mut Request<Body>) -> Result<()> {
-        // Timing patterns would be applied at the connection level
-        // This is a placeholder for connection-level timing behavior
+    fn apply_timing_patterns(&self, request: &mut Request<Body>) -> Result<()> {
+        // Store a randomized request delay and connection establishment timings
+        // in the request's extensions so that the caller can apply them at the
+        // transport layer.
+        let delay = self.get_random_delay();
+        request.extensions_mut().insert(delay);
+        request
+            .extensions_mut()
+            .insert(self.timing_patterns.connection_timing.clone());
+
+        Ok(())
+    }
+
+    /// Apply connection-level timing based on previously stored patterns
+    pub async fn apply_connection_timing(&self, request: &Request<Body>) -> Result<()> {
+        if let Some(timing) = request.extensions().get::<ConnectionTiming>() {
+            tokio::time::sleep(timing.dns_delay).await;
+            tokio::time::sleep(timing.tcp_handshake_delay).await;
+            tokio::time::sleep(timing.tls_handshake_delay).await;
+        }
+
+        if let Some(delay) = request.extensions().get::<Duration>() {
+            tokio::time::sleep(*delay).await;
+        }
+
         Ok(())
     }
 
@@ -525,5 +547,52 @@ mod tests {
 
         let invalid_ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Gecko/20100101 Firefox/120.0";
         assert!(!fingerprinter.is_valid_chrome_user_agent(invalid_ua));
+    }
+
+    #[tokio::test]
+    async fn test_connection_timing_behavior() {
+        let mut fingerprinter = ChromeFingerprinter::new().await.unwrap();
+
+        // Reduce delays for faster testing
+        fingerprinter.timing_patterns.base_delay = Duration::from_millis(1);
+        fingerprinter.timing_patterns.delay_variance = Duration::from_millis(0);
+        fingerprinter.timing_patterns.connection_timing = ConnectionTiming {
+            dns_delay: Duration::from_millis(1),
+            tcp_handshake_delay: Duration::from_millis(1),
+            tls_handshake_delay: Duration::from_millis(1),
+        };
+
+        let mut req = Request::builder()
+            .uri("https://example.com")
+            .body(Body::empty())
+            .unwrap();
+        fingerprinter.apply_http_fingerprint(&mut req).unwrap();
+
+        // Ensure timing extensions are present
+        assert!(req.extensions().get::<Duration>().is_some());
+        assert!(req.extensions().get::<ConnectionTiming>().is_some());
+
+        let start = tokio::time::Instant::now();
+        fingerprinter.apply_connection_timing(&req).await.unwrap();
+        let elapsed = start.elapsed();
+
+        // Total delay should be at least sum of individual delays
+        assert!(elapsed >= Duration::from_millis(4));
+    }
+
+    #[tokio::test]
+    async fn test_connection_timing_without_extensions() {
+        let fingerprinter = ChromeFingerprinter::new().await.unwrap();
+        let req = Request::builder()
+            .uri("https://example.com")
+            .body(Body::empty())
+            .unwrap();
+
+        let start = tokio::time::Instant::now();
+        fingerprinter.apply_connection_timing(&req).await.unwrap();
+        let elapsed = start.elapsed();
+
+        // Should return quickly since no timing information is present
+        assert!(elapsed < Duration::from_millis(50));
     }
 }
