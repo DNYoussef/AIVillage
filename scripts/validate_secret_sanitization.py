@@ -305,6 +305,7 @@ class SecretSanitizationValidator:
                     signal.alarm(0)
                 elif timer_thread:
                     # For Windows, thread will terminate naturally
+                    pass
                 
         except TimeoutError as e:
             result["issues"].append(f"File validation timeout: {str(e)}")

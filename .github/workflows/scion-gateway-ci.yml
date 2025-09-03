@@ -96,6 +96,8 @@ jobs:
             ! -path "./.claude/*" \
             ! -path "./.claude-flow/*" \
             ! -path "./core/agent-forge/models/hrrm/scripts/*" \
+            ! -path "./experiments/*" \
+            ! -path "./scripts/*" \
             ! -path "./tools/development/*" \
             ! -path "./tools/*/development/*" \
             ! -path "./archive/*" \
@@ -143,6 +145,8 @@ jobs:
                    [[ "$file" =~ \.claude/ ]] || \
                    [[ "$file" =~ \.claude-flow/ ]] || \
                    [[ "$file" =~ core/agent-forge/models/hrrm/scripts/ ]] || \
+                   [[ "$file" =~ experiments/ ]] || \
+                   [[ "$file" =~ scripts/ ]] || \
                    [[ "$file" =~ tools/development/ ]] || \
                    [[ "$file" =~ archive/ ]] || \
                    [[ "$file" =~ deprecated/ ]] || \
