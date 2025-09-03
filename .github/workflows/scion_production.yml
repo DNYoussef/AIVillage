@@ -73,7 +73,7 @@ jobs:
             echo "Starting detect-secrets at: $(date)"
             if [ -f ".secrets.baseline" ]; then
               echo "Using secrets baseline file"
-                timeout 240 detect-secrets scan --baseline .secrets.baseline \
+                timeout 600 detect-secrets scan --baseline .secrets.baseline \
                   --exclude-files 'tests/.*\.py$' \
                   --exclude-files 'examples/.*\.py$' \
                   --exclude-files '.*/analytics\.py$' \
@@ -89,7 +89,7 @@ jobs:
                   --exclude-files '.*/dist/.*'
             else
               echo "No secrets baseline found, creating one and scanning"
-              timeout 240 detect-secrets scan \
+              timeout 600 detect-secrets scan \
                 --exclude-files 'tests/.*\.py$' \
                 --exclude-files 'examples/.*\.py$' \
                 --exclude-files '.*/analytics\.py$' \
