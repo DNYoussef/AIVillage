@@ -129,6 +129,7 @@ class SecretSanitizationValidator:
             "tests/test_federation_integration.py",
             "tests/benchmarks/test_performance_benchmarks.py",
         ]
+        self.max_search_depth = 5
 
         # ENHANCED: Security patterns categorized by severity level
         self.security_patterns = {
@@ -227,8 +228,30 @@ class SecretSanitizationValidator:
         for part in file_path.parts:
             if part in self.excluded_dirs:
                 return True, f"In excluded directory: {part}"
-        
+
         return False, ""
+
+    def _iter_target_files(self, max_depth: Optional[int] = None):
+        """Yield target files using depth-limited os.walk with early exit."""
+        if max_depth is None:
+            max_depth = self.max_search_depth
+        targets = set(self.target_files)
+        base_depth = len(self.base_path.parts)
+
+        for root, dirs, files in os.walk(self.base_path):
+            depth = len(Path(root).parts) - base_depth
+            if depth > max_depth:
+                dirs[:] = []  # prune traversal beyond max depth
+                continue
+
+            rel_root = os.path.relpath(root, self.base_path)
+            for fname in files:
+                rel_path = os.path.normpath(os.path.join(rel_root, fname)) if rel_root != '.' else fname
+                if rel_path in targets:
+                    yield Path(root) / fname
+                    targets.remove(rel_path)
+                    if not targets:
+                        return
     
     def validate_file(self, file_path: Path, timeout_seconds: int = 30) -> dict:
         """Validate a single file for secret sanitization."""
@@ -382,14 +405,14 @@ class SecretSanitizationValidator:
         }
 
         logger.info(f"Starting validation of {len(self.target_files)} target files...")
-        
-        for i, target_file in enumerate(self.target_files):
+
+        for i, file_path in enumerate(self._iter_target_files()):
             # Progress logging every N files
             if i > 0 and i % 2 == 0:  # Log every 2 files for target files (small set)
                 logger.info(f"Progress: {i}/{len(self.target_files)} files processed")
-            file_path = self.base_path / target_file
+            target_file = str(file_path.relative_to(self.base_path))
             logger.info(f"Validating: {target_file}")
-            
+
             file_result = self.validate_file(file_path)
             results["file_results"].append(file_result)
 

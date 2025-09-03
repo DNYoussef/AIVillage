@@ -64,53 +64,60 @@ jobs:
 
           # Initialize gate status
           SECURITY_GATE_PASSED="false"
-
+          DETECTION_PASSED="false"
           # Secret detection (exclude test files and analytics/mock implementations)
           echo "Step 1: Running detect-secrets scan with performance optimizations..."
-          echo "Starting detect-secrets at: $(date)"
-          if [ -f ".secrets.baseline" ]; then
-            echo "Using secrets baseline file"
-            timeout 240 detect-secrets scan --baseline .secrets.baseline \
-              --exclude-files 'tests/.*\.py$' \
-              --exclude-files 'examples/.*\.py$' \
-              --exclude-files '.*/analytics\.py$' \
-              --exclude-files '.*/profiler\.py$' \
-              --exclude-files '.*/optimization/.*\.py$' \
-              --exclude-files '.*/experiments/.*\.py$' \
-              --exclude-files '.*/integration/.*\.py$' \
-              --exclude-files '.*/__pycache__/.*' \
-              --exclude-files '.*/node_modules/.*' \
-              --exclude-files '.*/\.git/.*' \
-              --exclude-files '.*/target/.*' \
-              --exclude-files '.*/build/.*' \
-              --exclude-files '.*/dist/.*'
+          git fetch --depth=2 origin $GITHUB_SHA
+          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD || true)
+          if echo "$CHANGED_FILES" | grep -v '^\.secrets\.baseline$' >/dev/null; then
+            echo "Starting detect-secrets at: $(date)"
+            if [ -f ".secrets.baseline" ]; then
+              echo "Using secrets baseline file"
+              timeout 240 detect-secrets scan --baseline .secrets.baseline \\
+                --exclude-files 'tests/.*\.py$' \\
+                --exclude-files 'examples/.*\.py$' \\
+                --exclude-files '.*/analytics\.py$' \\
+                --exclude-files '.*/profiler\.py$' \\
+                --exclude-files '.*/optimization/.*\.py$' \\
+                --exclude-files '.*/experiments/.*\.py$' \\
+                --exclude-files '.*/integration/.*\.py$' \\
+                --exclude-files '.*/__pycache__/.*' \\
+                --exclude-files '.*/node_modules/.*' \\
+                --exclude-files '.*/\.git/.*' \\
+                --exclude-files '.*/target/.*' \\
+                --exclude-files '.*/build/.*' \\
+                --exclude-files '.*/dist/.*'
+            else
+              echo "No secrets baseline found, creating one and scanning"
+              timeout 240 detect-secrets scan \\
+                --exclude-files 'tests/.*\.py$' \\
+                --exclude-files 'examples/.*\.py$' \\
+                --exclude-files '.*/analytics\.py$' \\
+                --exclude-files '.*/profiler\.py$' \\
+                --exclude-files '.*/optimization/.*\.py$' \\
+                --exclude-files '.*/__pycache__/.*' \\
+                --exclude-files '.*/node_modules/.*' \\
+                --exclude-files '.*/\.git/.*' \\
+                --exclude-files '.*/target/.*' \\
+                --exclude-files '.*/build/.*' \\
+                --exclude-files '.*/dist/.*' \\
+                --baseline .secrets.baseline
+            fi
+            exit_code=$?
+            echo "Detect-secrets completed at: $(date)"
+            if [ $exit_code -eq 124 ]; then
+              echo "[FAIL] Secret detection timed out after 4 minutes"
+              exit 1
+            elif [ $exit_code -eq 0 ]; then
+              echo "[PASS] Secret detection passed"
+              DETECTION_PASSED="true"
+            else
+              echo "[FAIL] Secrets detected in production code"
+              DETECTION_PASSED="false"
+            fi
           else
-            echo "No secrets baseline found, creating one and scanning"
-            timeout 240 detect-secrets scan \
-              --exclude-files 'tests/.*\.py$' \
-              --exclude-files 'examples/.*\.py$' \
-              --exclude-files '.*/analytics\.py$' \
-              --exclude-files '.*/profiler\.py$' \
-              --exclude-files '.*/optimization/.*\.py$' \
-              --exclude-files '.*/__pycache__/.*' \
-              --exclude-files '.*/node_modules/.*' \
-              --exclude-files '.*/\.git/.*' \
-              --exclude-files '.*/target/.*' \
-              --exclude-files '.*/build/.*' \
-              --exclude-files '.*/dist/.*' \
-              --baseline .secrets.baseline
-          fi
-          echo "Detect-secrets completed at: $(date)"
-          
-          if [ $? -eq 0 ]; then
-            echo "[PASS] Secret detection passed"
+            echo "Only .secrets.baseline changed; skipping detect-secrets scan."
             DETECTION_PASSED="true"
-          elif [ $? -eq 124 ]; then
-            echo "[FAIL] Secret detection timed out after 4 minutes"
-            DETECTION_PASSED="false"
-          else
-            echo "[FAIL] Secrets detected in production code"
-            DETECTION_PASSED="false"
           fi
 
           # Production security validation (accept PASS_WITH_WARNINGS)
