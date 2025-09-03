@@ -28,6 +28,7 @@ import logging
 from pathlib import Path
 import time
 from typing import Any
+import inspect
 
 # Import existing dashboard infrastructure
 try:
@@ -341,13 +342,61 @@ class EnhancedOptimizationDashboard:
 
         try:
             # Try to get P2P metrics from the network optimizer's P2P integration
-            if hasattr(self.network_optimizer, "nat_traversal_optimizer"):
+            nat_opt = getattr(self.network_optimizer, "nat_traversal_optimizer", None)
+            if nat_opt:
                 # BitChat peers (if available)
-                pass  # Would integrate with actual BitChat metrics
+                peer_count = 0
 
-            if hasattr(self.network_optimizer, "protocol_multiplexer"):
+                if hasattr(nat_opt, "get_peer_count"):
+                    result = nat_opt.get_peer_count()
+                    if inspect.isawaitable(result):
+                        result = await result
+                    peer_count = result or 0
+                elif hasattr(nat_opt, "peer_manager") and hasattr(nat_opt.peer_manager, "connected_peers"):
+                    peers = nat_opt.peer_manager.connected_peers
+                    peer_count = len(peers)
+                elif hasattr(nat_opt, "active_peers"):
+                    peers = nat_opt.active_peers
+                    if isinstance(peers, (list, set, tuple, dict)):
+                        peer_count = len(peers)
+                    else:
+                        try:
+                            peer_count = int(peers)
+                        except (TypeError, ValueError):
+                            peer_count = 0
+
+                stats["bitchat_peers"] = int(peer_count)
+
+            multiplexer = getattr(self.network_optimizer, "protocol_multiplexer", None)
+            if multiplexer:
                 # BetaNet circuits (if available)
-                pass  # Would integrate with actual BetaNet metrics
+                circuit_count = 0
+
+                if hasattr(multiplexer, "get_active_circuit_count"):
+                    result = multiplexer.get_active_circuit_count()
+                    if inspect.isawaitable(result):
+                        result = await result
+                    circuit_count = result or 0
+                elif hasattr(multiplexer, "active_circuits"):
+                    circuits = multiplexer.active_circuits
+                    if isinstance(circuits, (list, set, tuple, dict)):
+                        circuit_count = len(circuits)
+                    else:
+                        try:
+                            circuit_count = int(circuits)
+                        except (TypeError, ValueError):
+                            circuit_count = 0
+                elif hasattr(multiplexer, "circuits"):
+                    circuits = multiplexer.circuits
+                    if isinstance(circuits, (list, set, tuple, dict)):
+                        circuit_count = len(circuits)
+                    else:
+                        try:
+                            circuit_count = int(circuits)
+                        except (TypeError, ValueError):
+                            circuit_count = 0
+
+                stats["betanet_circuits"] = int(circuit_count)
 
             # Fog nodes would come from fog infrastructure integration
             # This would be enhanced when fog computing components are integrated
