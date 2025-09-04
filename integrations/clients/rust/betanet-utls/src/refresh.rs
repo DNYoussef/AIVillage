@@ -6,6 +6,9 @@
 use crate::{ChromeVersion, Result, UtlsError};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::time::SystemTime;
+
+use reqwest::Client;
 
 /// Chrome release channel
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -24,10 +27,15 @@ impl ReleaseChannel {
     /// Get the API endpoint for this channel
     pub fn api_endpoint(&self) -> &'static str {
         match self {
-            ReleaseChannel::Stable => "https://versionhistory.googleapis.com/v1/chrome/platforms/all/channels/stable/versions",
-            ReleaseChannel::Beta => "https://versionhistory.googleapis.com/v1/chrome/platforms/all/channels/beta/versions",
-            ReleaseChannel::Dev => "https://versionhistory.googleapis.com/v1/chrome/platforms/all/channels/dev/versions",
-            ReleaseChannel::Canary => "https://versionhistory.googleapis.com/v1/chrome/platforms/all/channels/canary/versions",
+            // Use Windows 64-bit platform to avoid duplicate entries across platforms
+            ReleaseChannel::Stable =>
+                "https://versionhistory.googleapis.com/v1/chrome/platforms/win64/channels/stable/versions",
+            ReleaseChannel::Beta =>
+                "https://versionhistory.googleapis.com/v1/chrome/platforms/win64/channels/beta/versions",
+            ReleaseChannel::Dev =>
+                "https://versionhistory.googleapis.com/v1/chrome/platforms/win64/channels/dev/versions",
+            ReleaseChannel::Canary =>
+                "https://versionhistory.googleapis.com/v1/chrome/platforms/win64/channels/canary/versions",
         }
     }
 
@@ -78,12 +86,12 @@ impl From<VersionComponents> for ChromeVersion {
 
 /// Chrome version refresh manager
 pub struct ChromeRefresh {
-    /// Current cached versions
-    versions_cache: HashMap<ReleaseChannel, Vec<ChromeVersionMetadata>>,
+    /// Current cached versions and their fetch time
+    versions_cache: HashMap<ReleaseChannel, (Vec<ChromeVersionMetadata>, SystemTime)>,
     /// Cache expiry time (in seconds)
     cache_ttl: u64,
-    /// Last refresh timestamp
-    last_refresh: Option<std::time::SystemTime>,
+    /// HTTP client used for fetching version data
+    http_client: Client,
 }
 
 impl ChromeRefresh {
@@ -92,7 +100,10 @@ impl ChromeRefresh {
         Self {
             versions_cache: HashMap::new(),
             cache_ttl: 3600, // 1 hour default
-            last_refresh: None,
+            http_client: Client::builder()
+                .danger_accept_invalid_certs(true)
+                .build()
+                .unwrap(),
         }
     }
 
@@ -102,15 +113,13 @@ impl ChromeRefresh {
         self
     }
 
-    /// Check if cache is expired
-    pub fn is_cache_expired(&self) -> bool {
-        match self.last_refresh {
-            Some(last) => {
-                let elapsed = std::time::SystemTime::now()
-                    .duration_since(last)
-                    .unwrap_or_default();
-                elapsed.as_secs() > self.cache_ttl
-            }
+    /// Check if cache for a channel is expired
+    pub fn is_cache_expired(&self, channel: ReleaseChannel) -> bool {
+        match self.versions_cache.get(&channel) {
+            Some((_, ts)) => ts
+                .elapsed()
+                .map(|e| e.as_secs() > self.cache_ttl)
+                .unwrap_or(true),
             None => true,
         }
     }
@@ -120,67 +129,83 @@ impl ChromeRefresh {
         &mut self,
         channel: ReleaseChannel,
     ) -> Result<Vec<ChromeVersionMetadata>> {
-        // In a real implementation, this would make HTTP requests to Chrome's version API
-        // For now, return mock data based on known stable versions
+        // Use cache if still valid
+        if !self.is_cache_expired(channel) {
+            if let Some((cached, _)) = self.versions_cache.get(&channel) {
+                return Ok(cached.clone());
+            }
+        }
 
-        let mock_versions = match channel {
-            ReleaseChannel::Stable => vec![
-                ChromeVersionMetadata {
-                    version: "121.0.6167.85".to_string(),
-                    channel,
-                    platform: "win64".to_string(),
-                    release_date: Some("2024-01-23".to_string()),
-                    version_components: VersionComponents {
-                        major: 121,
-                        minor: 0,
-                        build: 6167,
-                        patch: 85,
-                    },
-                },
-                ChromeVersionMetadata {
-                    version: "120.0.6099.225".to_string(),
-                    channel,
-                    platform: "win64".to_string(),
-                    release_date: Some("2024-01-10".to_string()),
-                    version_components: VersionComponents {
-                        major: 120,
-                        minor: 0,
-                        build: 6099,
-                        patch: 225,
-                    },
-                },
-                ChromeVersionMetadata {
-                    version: "119.0.6045.199".to_string(),
-                    channel,
-                    platform: "win64".to_string(),
-                    release_date: Some("2023-12-19".to_string()),
-                    version_components: VersionComponents {
-                        major: 119,
-                        minor: 0,
-                        build: 6045,
-                        patch: 199,
-                    },
-                },
-            ],
-            _ => vec![], // Other channels would have different mock data
-        };
+        #[derive(Deserialize)]
+        struct VersionItem {
+            name: String,
+            version: String,
+        }
 
-        // Cache the results
-        self.versions_cache.insert(channel, mock_versions.clone());
-        self.last_refresh = Some(std::time::SystemTime::now());
+        #[derive(Deserialize)]
+        struct ApiResponse {
+            versions: Vec<VersionItem>,
+        }
 
-        Ok(mock_versions)
+        let url = channel.api_endpoint();
+        let resp: ApiResponse = self
+            .http_client
+            .get(url)
+            .send()
+            .await
+            .map_err(|e| UtlsError::Network(e.to_string()))?
+            .json()
+            .await
+            .map_err(|e| UtlsError::Network(e.to_string()))?;
+
+        let versions: Vec<ChromeVersionMetadata> = resp
+            .versions
+            .into_iter()
+            .map(|item| {
+                let platform = item
+                    .name
+                    .split('/')
+                    .nth(2)
+                    .unwrap_or("unknown")
+                    .to_string();
+                let comps: Vec<u16> = item
+                    .version
+                    .split('.')
+                    .filter_map(|p| p.parse().ok())
+                    .collect();
+                let components = VersionComponents {
+                    major: *comps.get(0).unwrap_or(&0),
+                    minor: *comps.get(1).unwrap_or(&0),
+                    build: *comps.get(2).unwrap_or(&0),
+                    patch: *comps.get(3).unwrap_or(&0),
+                };
+                ChromeVersionMetadata {
+                    version: item.version,
+                    channel,
+                    platform,
+                    release_date: None,
+                    version_components: components,
+                }
+            })
+            .collect();
+
+        self
+            .versions_cache
+            .insert(channel, (versions.clone(), SystemTime::now()));
+
+        Ok(versions)
     }
 
     /// Get current stable N-2 version
     pub async fn get_stable_n2_version(&mut self) -> Result<ChromeVersion> {
-        if self.is_cache_expired() {
+        if self.is_cache_expired(ReleaseChannel::Stable) {
             self.fetch_versions(ReleaseChannel::Stable).await?;
         }
 
         let stable_versions = self
             .versions_cache
             .get(&ReleaseChannel::Stable)
+            .map(|(v, _)| v)
             .ok_or_else(|| UtlsError::Config("No stable versions cached".to_string()))?;
 
         // N-2 means 2 versions behind current stable
@@ -199,14 +224,13 @@ impl ChromeRefresh {
         channel: ReleaseChannel,
         position: usize,
     ) -> Result<ChromeVersion> {
-        if self.is_cache_expired() {
+        if self.is_cache_expired(channel) {
             self.fetch_versions(channel).await?;
         }
 
         let versions = self.versions_cache.get(&channel).ok_or_else(|| {
             UtlsError::Config(format!("No versions cached for channel {:?}", channel))
-        })?;
-
+        })?.0.clone();
         versions
             .get(position)
             .map(|v| v.version_components.clone().into())
@@ -237,13 +261,12 @@ impl ChromeRefresh {
         &self,
         channel: ReleaseChannel,
     ) -> Option<&Vec<ChromeVersionMetadata>> {
-        self.versions_cache.get(&channel)
+        self.versions_cache.get(&channel).map(|(v, _)| v)
     }
 
     /// Clear cache
     pub fn clear_cache(&mut self) {
         self.versions_cache.clear();
-        self.last_refresh = None;
     }
 }
 
@@ -402,7 +425,7 @@ mod tests {
     #[test]
     fn test_chrome_refresh_creation() {
         let refresh = ChromeRefresh::new();
-        assert!(refresh.is_cache_expired());
+        assert!(refresh.is_cache_expired(ReleaseChannel::Stable));
 
         let refresh_with_ttl = ChromeRefresh::new().with_cache_ttl(7200);
         assert_eq!(refresh_with_ttl.cache_ttl, 7200);
@@ -417,7 +440,7 @@ mod tests {
             .unwrap();
 
         assert!(!versions.is_empty());
-        assert!(versions.iter().any(|v| v.version_components.major == 119));
+        assert!(versions.iter().all(|v| v.version_components.major > 0));
     }
 
     #[tokio::test]
@@ -425,8 +448,7 @@ mod tests {
         let mut refresh = ChromeRefresh::new();
         let n2_version = refresh.get_stable_n2_version().await.unwrap();
 
-        // Should be version 119 (N-2 from mock data)
-        assert_eq!(n2_version.major, 119);
+        assert!(n2_version.major > 0);
     }
 
     #[test]

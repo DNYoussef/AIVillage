@@ -2,6 +2,7 @@
 
 use crate::{ChromeVersion, Result};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 
 /// uTLS template (legacy)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -88,64 +89,125 @@ impl TlsTemplate {
 
     /// Serialize template to wire format
     pub fn to_wire_format(&self) -> Result<Vec<u8>> {
-        let mut buf = Vec::new();
+        let mut body = Vec::new();
 
-        // This is a stub implementation - in reality would generate
-        // a proper TLS ClientHello message
+        // Legacy version
+        body.extend_from_slice(&[0x03, 0x03]);
 
-        // TLS Record Header (5 bytes)
-        buf.push(0x16); // Content Type: Handshake
-        buf.extend_from_slice(&[0x03, 0x03]); // Version: TLS 1.2
-        let record_length = 0u16; // Placeholder
-        buf.extend_from_slice(&record_length.to_be_bytes());
-
-        // Handshake Header (4 bytes)
-        buf.push(0x01); // Handshake Type: ClientHello
-        let handshake_length = 0u32; // Placeholder (24-bit)
-        let length_bytes = handshake_length.to_be_bytes();
-        buf.extend_from_slice(&length_bytes[1..]); // Skip first byte for 24-bit
-
-        // ClientHello
-        buf.extend_from_slice(&[0x03, 0x03]); // Version: TLS 1.2
-
-        // Random (32 bytes)
+        // Random (deterministic for tests)
         let mut random = [0u8; 32];
         for (i, byte) in random.iter_mut().enumerate() {
-            *byte = (i as u8).wrapping_mul(7); // Deterministic for testing
+            *byte = (i as u8).wrapping_mul(7);
         }
-        buf.extend_from_slice(&random);
+        body.extend_from_slice(&random);
 
-        // Session ID Length + Session ID
-        buf.push(0x20); // Session ID Length: 32 bytes
-        buf.extend_from_slice(&random); // Reuse random as session ID
+        // Session ID
+        body.push(32u8);
+        body.extend_from_slice(&random);
 
-        // Cipher Suites
-        let cipher_length = (self.cipher_suites.len() * 2) as u16;
-        buf.extend_from_slice(&cipher_length.to_be_bytes());
-        for &cipher in &self.cipher_suites {
-            buf.extend_from_slice(&cipher.to_be_bytes());
+        // Cipher suites
+        let mut cipher_bytes = Vec::new();
+        for &c in &self.cipher_suites {
+            cipher_bytes.extend_from_slice(&c.to_be_bytes());
         }
+        body.extend_from_slice(&(cipher_bytes.len() as u16).to_be_bytes());
+        body.extend_from_slice(&cipher_bytes);
 
-        // Compression Methods
-        buf.push(0x01); // Length: 1
-        buf.push(0x00); // null compression
+        // Compression methods
+        body.push(1); // length
+        body.push(0); // null
 
-        // Extensions (simplified)
-        let extensions_length = 100u16; // Placeholder
-        buf.extend_from_slice(&extensions_length.to_be_bytes());
+        // Extensions
+        let mut ext = Vec::new();
 
-        // Add server name extension
-        buf.extend_from_slice(&[0x00, 0x00]); // Extension Type: server_name
-        let name_length = (self.server_name.len() + 5) as u16;
-        buf.extend_from_slice(&name_length.to_be_bytes());
-        let list_length = (self.server_name.len() + 3) as u16;
-        buf.extend_from_slice(&list_length.to_be_bytes());
-        buf.push(0x00); // Name Type: host_name
-        let hostname_length = self.server_name.len() as u16;
-        buf.extend_from_slice(&hostname_length.to_be_bytes());
-        buf.extend_from_slice(self.server_name.as_bytes());
+        // Server Name
+        let mut sni = Vec::new();
+        sni.extend_from_slice(&((self.server_name.len() + 3) as u16).to_be_bytes());
+        sni.push(0); // host_name
+        sni.extend_from_slice(&(self.server_name.len() as u16).to_be_bytes());
+        sni.extend_from_slice(self.server_name.as_bytes());
+        ext.extend_from_slice(&0x0000u16.to_be_bytes());
+        ext.extend_from_slice(&(sni.len() as u16).to_be_bytes());
+        ext.extend_from_slice(&sni);
 
-        Ok(buf)
+        // Supported Groups
+        let mut groups = Vec::new();
+        groups.extend_from_slice(&((self.curves.len() * 2) as u16).to_be_bytes());
+        for &g in &self.curves {
+            groups.extend_from_slice(&g.to_be_bytes());
+        }
+        ext.extend_from_slice(&0x000Au16.to_be_bytes());
+        ext.extend_from_slice(&(groups.len() as u16).to_be_bytes());
+        ext.extend_from_slice(&groups);
+
+        // EC Point Formats
+        let ec_pf = [1u8, 0u8];
+        ext.extend_from_slice(&0x000Bu16.to_be_bytes());
+        ext.extend_from_slice(&(ec_pf.len() as u16).to_be_bytes());
+        ext.extend_from_slice(&ec_pf);
+
+        // Signature Algorithms
+        let mut sig = Vec::new();
+        sig.extend_from_slice(&((self.signature_algorithms.len() * 2) as u16).to_be_bytes());
+        for &alg in &self.signature_algorithms {
+            sig.extend_from_slice(&alg.to_be_bytes());
+        }
+        ext.extend_from_slice(&0x000Du16.to_be_bytes());
+        ext.extend_from_slice(&(sig.len() as u16).to_be_bytes());
+        ext.extend_from_slice(&sig);
+
+        // ALPN
+        let mut alpn_list = Vec::new();
+        for proto in &self.alpn_protocols {
+            alpn_list.push(proto.len() as u8);
+            alpn_list.extend_from_slice(proto.as_bytes());
+        }
+        let mut alpn = Vec::new();
+        alpn.extend_from_slice(&(alpn_list.len() as u16).to_be_bytes());
+        alpn.extend_from_slice(&alpn_list);
+        ext.extend_from_slice(&0x0010u16.to_be_bytes());
+        ext.extend_from_slice(&(alpn.len() as u16).to_be_bytes());
+        ext.extend_from_slice(&alpn);
+
+        // Supported Versions (TLS1.3 & 1.2)
+        let versions = [0x03u8, 0x04, 0x03, 0x03];
+        let mut sv = Vec::new();
+        sv.push(versions.len() as u8);
+        sv.extend_from_slice(&versions);
+        ext.extend_from_slice(&0x002Bu16.to_be_bytes());
+        ext.extend_from_slice(&(sv.len() as u16).to_be_bytes());
+        ext.extend_from_slice(&sv);
+
+        // Key Share (X25519 with zero key)
+        let mut ks = Vec::new();
+        let mut entry = Vec::new();
+        entry.extend_from_slice(&0x001Du16.to_be_bytes());
+        let key = [0u8; 32];
+        entry.extend_from_slice(&(key.len() as u16).to_be_bytes());
+        entry.extend_from_slice(&key);
+        ks.extend_from_slice(&(entry.len() as u16).to_be_bytes());
+        ks.extend_from_slice(&entry);
+        ext.extend_from_slice(&0x0033u16.to_be_bytes());
+        ext.extend_from_slice(&(ks.len() as u16).to_be_bytes());
+        ext.extend_from_slice(&ks);
+
+        body.extend_from_slice(&(ext.len() as u16).to_be_bytes());
+        body.extend_from_slice(&ext);
+
+        // Handshake header
+        let mut handshake = Vec::new();
+        handshake.push(0x01);
+        handshake.extend_from_slice(&(body.len() as u32).to_be_bytes()[1..]);
+        handshake.extend_from_slice(&body);
+
+        // Record header
+        let mut record = Vec::new();
+        record.push(0x16);
+        record.extend_from_slice(&[0x03, 0x03]);
+        record.extend_from_slice(&(handshake.len() as u16).to_be_bytes());
+        record.extend_from_slice(&handshake);
+
+        Ok(record)
     }
 
     /// Get JA3 fingerprint
@@ -176,6 +238,49 @@ impl TlsTemplate {
         format!(
             "{}|{}|{}|{}|{}",
             version, ciphers, extensions, curves, point_formats
+        )
+    }
+
+    /// Get JA4 fingerprint
+    pub fn ja4_fingerprint(&self) -> String {
+        let protocol = "t";
+        let version = "12"; // TLS1.2
+        let alpn = self
+            .alpn_protocols
+            .get(0)
+            .cloned()
+            .unwrap_or_else(|| "00".to_string());
+        let cipher_count = format!("{:02x}", self.cipher_suites.len().min(255));
+        let ext_count = format!("{:02x}", self.extensions.len().min(255));
+        let alpn_ext = if self.alpn_protocols.is_empty() {
+            "00".to_string()
+        } else {
+            alpn.clone()
+        };
+
+        let mut ciphers = self.cipher_suites.clone();
+        ciphers.sort_unstable();
+        let cipher_string = ciphers
+            .iter()
+            .map(|c| c.to_string())
+            .collect::<Vec<_>>()
+            .join(",");
+        let cipher_hash = hex::encode(Sha256::digest(cipher_string.as_bytes()));
+        let cipher_hash = &cipher_hash[..12];
+
+        let mut extensions = self.extensions.clone();
+        extensions.sort_unstable();
+        let ext_string = extensions
+            .iter()
+            .map(|e| e.to_string())
+            .collect::<Vec<_>>()
+            .join(",");
+        let ext_hash = hex::encode(Sha256::digest(ext_string.as_bytes()));
+        let ext_hash = &ext_hash[..12];
+
+        format!(
+            "{}{}{}{}{}{}_{}{}",
+            protocol, alpn, version, cipher_count, ext_count, alpn_ext, cipher_hash, ext_hash
         )
     }
 }
@@ -265,6 +370,8 @@ mod tests {
         assert_eq!(wire[0], 0x16); // Handshake
         assert_eq!(wire[1], 0x03); // TLS 1.2 major
         assert_eq!(wire[2], 0x03); // TLS 1.2 minor
+        let len = u16::from_be_bytes([wire[3], wire[4]]) as usize;
+        assert_eq!(len + 5, wire.len());
     }
 
     #[test]
@@ -274,5 +381,29 @@ mod tests {
         let fingerprint = template.ja3_fingerprint();
         assert!(!fingerprint.is_empty());
         assert!(fingerprint.contains('|')); // Should have JA3 separator
+    }
+
+    #[test]
+    fn test_ja4_fingerprint() {
+        let template = TlsTemplate::for_chrome(ChromeVersion::current_stable_n2(), "example.com");
+        let fingerprint = template.ja4_fingerprint();
+        assert!(!fingerprint.is_empty());
+        assert!(fingerprint.contains('_'));
+    }
+
+    #[test]
+    fn test_multiple_version_fingerprints() {
+        let versions = vec![
+            ChromeVersion::new(119, 0, 6045, 199),
+            ChromeVersion::new(120, 0, 6099, 225),
+        ];
+
+        for v in versions {
+            let template = TlsTemplate::for_chrome(v, "example.com");
+            let ja3 = template.ja3_fingerprint();
+            let ja4 = template.ja4_fingerprint();
+            assert!(ja3.contains('|'));
+            assert!(ja4.contains('_'));
+        }
     }
 }

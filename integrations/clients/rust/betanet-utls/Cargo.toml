@@ -30,8 +30,8 @@ tokio = { workspace = true, features = ["full"] }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 
-# HTTP client for Chrome version fetching (disabled for compatibility)
-# reqwest = { version = "0.11", features = ["json"], optional = true }
+# HTTP client for Chrome version fetching
+reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
 chrono = { version = "0.4", features = ["serde"] }
 
 [[bin]]
