@@ -9,26 +9,12 @@
 
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex, RwLock};
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, Instant, SystemTime};
 use rand::Rng;
 use thiserror::Error;
 use tokio::time::{interval, Interval};
-
-// Stub implementations for betanet-utls types
-pub type UtlsError = std::io::Error;
-
-#[derive(Debug, Clone)]
-pub enum ChromeVersion {
-    Chrome110,
-    Chrome114,
-    Chrome118,
-}
-
-impl ChromeVersion {
-    pub fn current_stable_n2() -> Self {
-        Self::Chrome118
-    }
-}
+use reqwest::Client;
+use betanet_utls::{ChromeVersion, TlsTemplate, UtlsError};
 
 /// TLS camouflage errors
 #[derive(Debug, Error)]
@@ -512,7 +498,12 @@ impl BackgroundCalibrator {
 
                 let key = TemplateKey::new(origin, *pop, *alpn);
 
-                // Create new template (stub implementation)
+                // Attempt to gather real network data
+                if let Ok((timing, size)) = self.fetch_network_data(origin).await {
+                    self.update_mixture_model(site_class, timing, size);
+                }
+
+                // Create new template from observed data
                 let template = self.create_calibrated_template(&key, site_class).await?;
                 let cached_template = CachedTemplate::new(
                     template,
@@ -529,26 +520,53 @@ impl BackgroundCalibrator {
         Ok(())
     }
 
+    async fn fetch_network_data(&self, origin: &str) -> Result<(Duration, usize)> {
+        let client = Client::builder()
+            .timeout(Duration::from_secs(10))
+            .build()
+            .map_err(|e| TlsCamouflageError::Calibration(e.to_string()))?;
+
+        let url = format!("https://{}/", origin);
+        let start = Instant::now();
+        let resp = client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| TlsCamouflageError::Calibration(e.to_string()))?;
+        let bytes = resp
+            .bytes()
+            .await
+            .map_err(|e| TlsCamouflageError::Calibration(e.to_string()))?;
+        let elapsed = start.elapsed();
+        Ok((elapsed, bytes.len()))
+    }
+
+    fn update_mixture_model(&self, site_class: SiteClass, timing: Duration, size: usize) {
+        let mut models = self.mixture_models.lock().unwrap();
+        let model = models.entry(site_class).or_insert_with(|| MixtureModel::new(site_class));
+
+        let log_t = (timing.as_millis().max(1) as f64).ln();
+        if let Some(comp) = model.timing_components.get_mut(0) {
+            let diff = log_t - comp.mu;
+            comp.mu += 0.1 * diff;
+            comp.sigma = 0.9 * comp.sigma + 0.1 * diff.abs();
+        }
+
+        let log_s = (size.max(1) as f64).ln();
+        if let Some(comp) = model.size_components.get_mut(0) {
+            let diff = log_s - comp.mu;
+            comp.mu += 0.1 * diff;
+            comp.sigma = 0.9 * comp.sigma + 0.1 * diff.abs();
+        }
+    }
+
     async fn create_calibrated_template(&self, key: &TemplateKey, site_class: SiteClass) -> Result<TlsTemplate> {
-        // This is a stub implementation. In reality, this would:
-        // 1. Connect to the actual origin to observe real TLS parameters
-        // 2. Capture timing characteristics and connection patterns
-        // 3. Build realistic templates based on observed behavior
-
-        let _rng = rand::thread_rng();
         let chrome_version = ChromeVersion::current_stable_n2();
-
-        // Create template with site-class-specific characteristics
-        let template = TlsTemplate {
-            version: chrome_version,
-            cipher_suites: self.generate_site_specific_ciphers(site_class)?,
-            extensions: self.generate_site_specific_extensions(site_class, &key.alpn)?,
-            curves: vec![0x001d, 0x0017, 0x0018], // X25519, secp256r1, secp384r1
-            signature_algorithms: vec![0x0804, 0x0805, 0x0806], // RSA-PSS variants
-            alpn_protocols: vec![key.alpn.clone()],
-            server_name: key.origin.clone(),
-        };
-
+        let mut template = TlsTemplate::for_chrome(chrome_version, &key.origin);
+        template.cipher_suites = self.generate_site_specific_ciphers(site_class)?;
+        template.extensions = self.generate_site_specific_extensions(site_class, &key.alpn)?;
+        template.alpn_protocols = vec![key.alpn.clone()];
+        template.server_name = key.origin.clone();
         Ok(template)
     }
 
@@ -942,18 +960,6 @@ impl FallbackReducer {
         let mut cover_pool = self.cover_pool.lock().unwrap();
         cover_pool.pop_front()
     }
-}
-
-// Stub implementation for TlsTemplate (would normally be in betanet-utls)
-#[derive(Debug, Clone)]
-pub struct TlsTemplate {
-    pub version: ChromeVersion,
-    pub cipher_suites: Vec<u16>,
-    pub extensions: Vec<u16>,
-    pub curves: Vec<u16>,
-    pub signature_algorithms: Vec<u16>,
-    pub alpn_protocols: Vec<String>,
-    pub server_name: String,
 }
 
 #[cfg(test)]
