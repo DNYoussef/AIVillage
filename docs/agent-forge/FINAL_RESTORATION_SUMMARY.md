@@ -71,7 +71,7 @@ EvoMergeConfig.__init__() got an unexpected keyword argument 'techniques'
 **Status**: **IDENTIFIED BUT NOT FULLY RESOLVED**
 
 **Solutions Available**:
-- Fixed import paths in `unified_pipeline_fixed.py`
+- Fixed import paths in `unified_pipeline.py`
 - Absolute import patterns documented
 - Error handling for missing imports implemented
 
@@ -150,7 +150,7 @@ from phases.evomerge import EvoMergeConfig, EvoMergePhase
 # Run comprehensive validation:
 python tests/agent_forge_simplified_test.py      # Should pass 7/7 tests
 python tests/agent_forge_integration_test.py     # Should show FUNCTIONAL status
-python unified_pipeline_fixed.py                 # Should create pipeline with >0 phases
+python unified_pipeline.py                 # Should create pipeline with >0 phases
 ```
 
 ## 🎯 Performance Claims Validation Strategy

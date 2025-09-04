@@ -7,7 +7,7 @@
 ```python
 import asyncio
 from pathlib import Path
-from unified_pipeline_fixed import UnifiedPipeline, UnifiedConfig
+from unified_pipeline import UnifiedPipeline, UnifiedConfig
 
 # Create basic configuration
 config = UnifiedConfig(
