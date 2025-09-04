@@ -34,8 +34,9 @@ bincode = { workspace = true }
 # rcgen = { version = "0.13", optional = true }
 # Transport and multiplexing
 futures = { workspace = true }
-# TLS fingerprint integration (temporarily disabled)
-# betanet-utls = { path = "../betanet-utls", optional = true }
+# TLS fingerprint integration via betanet-utls
+betanet-utls = { path = "../betanet-utls" }
+reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
 rand_distr = { version = "0.4", optional = true }
 # Flow control and stream management
 dashmap = { workspace = true }
@@ -54,6 +55,7 @@ tempfile = { workspace = true }
 clap = { version = "4.0", features = ["derive"] }
 tracing-subscriber = "0.3"
 rand_distr = "0.4"
+criterion = { version = "0.5", features = ["async"] }
 
 [features]
 default = ["tcp", "noise-xk"]
