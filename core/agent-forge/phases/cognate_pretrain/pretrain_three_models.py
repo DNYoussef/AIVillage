@@ -84,105 +84,11 @@ try:
 except ImportError as e:
     logger.error(f"Import error: {e}")
     logger.error(f"Current sys.path includes: {sys.path[:5]}")  # Show first 5 paths for debugging
-    # NO MORE MOCKS - FAIL HARD TO FORCE REAL FIXES
-    logger.error("NO MORE MOCK IMPLEMENTATIONS - REAL TRAINING MUST WORK!")
-    raise Exception(f"Import failed: {e}. Fix the imports properly!")
-
-    from dataclasses import dataclass
-
-    class MockConfig:
-        def __init__(self, **kwargs):
-            for k, v in kwargs.items():
-                setattr(self, k, v)
-
-    @dataclass
-    class TrainingConfig:
-        # Model architecture
-        model_size: str = "25M"
-        hidden_dim: int = 216
-        num_layers: int = 11
-        num_heads: int = 4
-
-        # Training dynamics
-        t_max_train: int = 16
-        t_min_train: int = 8
-        t_max_infer: int = 6
-        t_min_infer: int = 2
-
-        # Dataset curriculum
-        short_ratio: float = 0.45
-        long_ratio: float = 0.55
-
-        # Hyperparameters
-        batch_size: int = 8
-        learning_rate: float = 2e-4
-        weight_decay: float = 0.1
-        warmup_steps: int = 2000
-        max_steps: int = 50000
-        beta1: float = 0.9
-        beta2: float = 0.95
-
-        # GrokFast settings
-        grokfast_alpha: float = 0.98
-        grokfast_lamb: float = 2.0
-        grokfast_warmup: int = 2000
-
-        # Optimization
-        mixed_precision: bool = True
-        gradient_accumulation_steps: int = 4
-        max_grad_norm: float = 1.0
-
-        # Memory settings
-        memory_bank_size: int = 100000
-        memory_dim: int = 216
-
-        # Directories
-        checkpoint_dir: str = "./checkpoints"
-
-    class CognateDataset:
-        def __init__(self, config, data_files=None, tokenizer=None, split="train"):
-            self.config = config
-            self.data_files = data_files or []
-            self.tokenizer = tokenizer
-            self.split = split
-
-        def __len__(self):
-            return 1000  # Mock dataset size
-
-        def __getitem__(self, idx):
-            return {"input_ids": [1, 2, 3], "labels": [2, 3, 4], "attention_mask": [1, 1, 1]}
-
-    class CognateTrainingPipeline:
-        def __init__(self, config, model, tokenizer):
-            self.config = config
-            self.model = model
-            self.tokenizer = tokenizer
-
-        def train(self, train_dataset, eval_dataset=None, resume_from_checkpoint=None):
-            logger.info("Mock training started")
-            return []
-            self.d_model = 216
-            self.n_layers = 11
-            self.n_heads = 4
-
-    class MockModel:
-        def __init__(self, config):
-            self.config = config
-            self.variant_name = getattr(config, "variant_name", "mock")
-
-        def count_parameters(self):
-            return {"total": 25000000, "accuracy": "100.0%"}
-
-        def state_dict(self):
-            return {"mock": torch.randn(100, 100)}
-
-    class MockDataset:
-        def __init__(self, *args, **kwargs):
-            pass
-
-    CognateConfig = MockConfig
-    Enhanced25MCognate = MockModel
-    CognateDataset = MockDataset
+    raise ImportError(
+        "Required dependencies for Cognate pretraining are missing. "
+        "Install the agent-forge training components (e.g., run `pip install -e .` from the project root). "
+        f"Original error: {e}"
+    ) from e
 
 
 class SyntheticCognateDataset(CognateDataset):
