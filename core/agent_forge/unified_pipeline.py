@@ -94,6 +94,9 @@ class UnifiedConfig:
     grokfast_lambda_init: float = 0.05
     grokfast_lambda_max: float = 0.25
 
+    # DSPy prompt optimization
+    enable_dspy_optimization: bool = False
+
     # Edge-of-chaos settings
     edge_control_enabled: bool = True
     target_success_range: tuple[float, float] = (0.55, 0.75)
@@ -210,6 +213,7 @@ class UnifiedPipeline:
                     enable_grokfast=self.config.grokfast_enabled,
                     grokfast_ema_alpha=self.config.grokfast_ema_alpha,
                     grokfast_lambda_init=self.config.grokfast_lambda_init,
+                    enable_dspy_optimization=self.config.enable_dspy_optimization,
                 )
                 phases.append(("QuietSTaRPhase", QuietSTaRPhase(quietstar_config)))
 
@@ -254,6 +258,7 @@ class UnifiedPipeline:
                     grokfast_lambda=self.config.grokfast_lambda_init,
                     baking_iterations=10,
                     convergence_threshold=0.001,
+                    enable_dspy_optimization=self.config.enable_dspy_optimization,
                 )
                 phases.append(("ToolPersonaBakingPhase", ToolPersonaBakingPhase(toolbaking_config)))
 

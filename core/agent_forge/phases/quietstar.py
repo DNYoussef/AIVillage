@@ -42,6 +42,11 @@ from transformers import (
     TrainingArguments,
 )
 
+try:  # Optional DSPy integration
+    from src.coordination.dspy_integration import DSPyAgentOptimizer
+except Exception:  # pragma: no cover - DSPy optional
+    DSPyAgentOptimizer = None  # type: ignore[misc]
+
 # Try to import PhaseController, with fallback for direct imports
 try:
     from ..core.phase_controller import PhaseController, PhaseResult
@@ -155,6 +160,10 @@ class QuietSTaRConfig:
     device: str = "auto"
     mixed_precision: bool = True
     seed: int = 42
+
+    # DSPy optimization
+    enable_dspy_optimization: bool = False
+    dspy_optimized_prompt: str | None = None
 
     # W&B tracking
     wandb_project: str = "agent_forge"
@@ -1033,6 +1042,18 @@ class QuietSTaRPhase(PhaseController):
             training_data = []
             for example in eval_dataset.examples[:50]:  # Use subset for training
                 training_data.append({"prompt": example["input"], "target": example["target"]})
+
+            # Apply DSPy prompt optimization if available
+            if self.config.enable_dspy_optimization and DSPyAgentOptimizer is not None:
+                try:
+                    optimizer = DSPyAgentOptimizer()
+                    optimized = optimizer.get_optimized_prompt("quietstar")
+                    if optimized:
+                        for item in training_data:
+                            item["prompt"] = optimized
+                        self.config.dspy_optimized_prompt = optimized
+                except Exception as opt_err:  # pragma: no cover - best effort
+                    logger.warning(f"DSPy optimization skipped: {opt_err}")
 
             # Test prompts for convergence testing
             test_prompts = [example["input"] for example in eval_dataset.examples[50:70]]
