@@ -4,13 +4,20 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+use bytes::Bytes;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{broadcast, RwLock};
 use tracing::{debug, error, info, warn};
 
 use crate::{
-    config::MixnodeConfig, delay::DelayQueue, packet::Packet, routing::RoutingTable, Mixnode,
-    MixnodeError, MixnodeStats, Result,
+    config::MixnodeConfig,
+    delay::DelayQueue,
+    packet::{Packet, PacketType},
+    routing::RoutingTable,
+    Mixnode,
+    MixnodeError,
+    MixnodeStats,
+    Result,
 };
 
 /// Standard mixnode implementation
@@ -20,6 +27,7 @@ pub struct StandardMixnode {
     delay_queue: Arc<RwLock<DelayQueue>>,
     routing_table: Arc<RwLock<RoutingTable>>,
     shutdown_tx: Option<broadcast::Sender<()>>,
+    start_time: Instant,
 }
 
 impl StandardMixnode {
@@ -33,6 +41,7 @@ impl StandardMixnode {
             delay_queue: Arc::new(RwLock::new(DelayQueue::new())),
             routing_table: Arc::new(RwLock::new(RoutingTable::new())),
             shutdown_tx: None,
+            start_time: Instant::now(),
         })
     }
 
@@ -44,37 +53,43 @@ impl StandardMixnode {
 
         loop {
             match tokio::time::timeout(self.config.connection_timeout, stream.readable()).await {
-                Ok(Ok(())) => {
-                    match stream.try_read(&mut buffer) {
-                        Ok(0) => {
-                            debug!("Connection closed by peer {}", peer_addr);
-                            break;
-                        }
-                        Ok(n) => {
+                Ok(Ok(())) => match stream.try_read(&mut buffer) {
+                    Ok(0) => {
+                        debug!("Connection closed by peer {}", peer_addr);
+                        break;
+                    }
+                    Ok(n) => {
+                        let packet = Packet::parse(&buffer[..n])?;
+                        if packet.header.packet_type == PacketType::Control
+                            && packet.payload.as_ref() == b"stats"
+                        {
+                            let mut stats = self.stats.read().await.clone();
+                            stats.uptime_secs = self.start_time.elapsed().as_secs();
+                            let json = serde_json::to_vec(&stats)
+                                .map_err(|e| MixnodeError::Network(e.to_string()))?;
+                            let response = Packet::control(Bytes::from(json)).encode()?;
+                            stream.writable().await.map_err(MixnodeError::Io)?;
+                            stream.try_write(&response).map_err(MixnodeError::Io)?;
+                        } else {
                             let start_time = Instant::now();
 
-                            // Process the packet
                             if let Some(processed) = self.process_packet(&buffer[..n]).await? {
-                                // Queue for delayed forwarding
                                 let delay = self.calculate_delay().await;
                                 let mut delay_queue = self.delay_queue.write().await;
                                 delay_queue.add_packet(processed, delay).await;
                             }
 
-                            // Update statistics
                             let processing_time = start_time.elapsed();
                             let mut stats = self.stats.write().await;
                             stats.record_processed(processing_time);
                         }
-                        Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                            continue;
-                        }
-                        Err(e) => {
-                            error!("Failed to read from {}: {}", peer_addr, e);
-                            break;
-                        }
                     }
-                }
+                    Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => continue,
+                    Err(e) => {
+                        error!("Failed to read from {}: {}", peer_addr, e);
+                        break;
+                    }
+                },
                 Ok(Err(e)) => {
                     error!("Stream error for {}: {}", peer_addr, e);
                     break;
@@ -208,6 +223,7 @@ impl Mixnode for StandardMixnode {
             let stats = Arc::clone(&self.stats);
             let delay_queue = Arc::clone(&self.delay_queue);
             let routing_table = Arc::clone(&self.routing_table);
+            let start_time = self.start_time;
             let mut shutdown_rx = shutdown_tx.subscribe();
 
             async move {
@@ -224,6 +240,7 @@ impl Mixnode for StandardMixnode {
                                         delay_queue: Arc::clone(&delay_queue),
                                         routing_table: Arc::clone(&routing_table),
                                         shutdown_tx: None,
+                                        start_time,
                                     };
 
                                     tokio::spawn(async move {

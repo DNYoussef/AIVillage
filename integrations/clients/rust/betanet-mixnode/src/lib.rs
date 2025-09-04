@@ -11,6 +11,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
 use thiserror::Error;
@@ -79,7 +80,7 @@ pub enum MixnodeError {
 pub type Result<T> = std::result::Result<T, MixnodeError>;
 
 /// Mixnode statistics
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct MixnodeStats {
     /// Packets processed
     pub packets_processed: u64,

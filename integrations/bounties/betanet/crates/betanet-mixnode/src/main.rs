@@ -3,10 +3,20 @@
 use std::net::SocketAddr;
 
 use clap::{Parser, Subcommand};
-use tracing::info;
-// use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tracing::{info, Level};
+use tracing_subscriber::FmtSubscriber;
 
-use betanet_mixnode::{config::MixnodeConfig, mixnode::StandardMixnode, Mixnode, Result};
+use betanet_mixnode::{
+    config::MixnodeConfig,
+    mixnode::StandardMixnode,
+    packet::Packet,
+    Mixnode,
+    MixnodeError,
+    MixnodeStats,
+    Result,
+};
+use bytes::Bytes;
 
 /// Betanet Mixnode CLI
 #[derive(Parser)]
@@ -62,11 +72,12 @@ enum Commands {
 async fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    // Initialize tracing (simplified)
-    if cli.verbose {
-        // Enable verbose logging (placeholder for now)
-        println!("Verbose logging enabled");
-    }
+    // Initialize tracing subscriber with level based on --verbose flag
+    let subscriber = FmtSubscriber::builder()
+        .with_max_level(if cli.verbose { Level::DEBUG } else { Level::INFO })
+        .finish();
+    tracing::subscriber::set_global_default(subscriber)
+        .expect("setting default subscriber failed");
 
     match cli.command {
         Commands::Start {
@@ -98,21 +109,39 @@ async fn main() -> Result<()> {
         Commands::Keygen { output } => {
             info!("Generating keypair to {:?}", output);
 
-            // Use a deterministic key for now (Reference implementation: cryptographically secure random generation)
-            let private_key = [42u8; 32];
+            use rand::rngs::OsRng;
+            use rand::RngCore;
+            let mut private_key = [0u8; 32];
+            OsRng.fill_bytes(&mut private_key);
 
-            std::fs::write(output, private_key).map_err(betanet_mixnode::MixnodeError::Io)?;
+            std::fs::write(output, private_key).map_err(MixnodeError::Io)?;
 
             info!("Keypair generated successfully");
         }
 
         Commands::Stats { node } => {
             info!("Querying statistics from {}", node);
-            // This would connect to the node and fetch stats
-            // For now, just print a placeholder
+            let mut stream = tokio::net::TcpStream::connect(node)
+                .await
+                .map_err(MixnodeError::Io)?;
+
+            let packet = Packet::control(Bytes::from_static(b"stats"));
+            let request = packet.encode()?;
+            stream.write_all(&request).await.map_err(MixnodeError::Io)?;
+
+            let mut buf = vec![0u8; 1024];
+            let n = stream.read(&mut buf).await.map_err(MixnodeError::Io)?;
+            let response = Packet::parse(&buf[..n])?;
+            let stats: MixnodeStats =
+                serde_json::from_slice(&response.payload).map_err(|e| MixnodeError::Network(e.to_string()))?;
+
             println!("Statistics for node {}:", node);
-            println!("  Packets processed: N/A");
-            println!("  Uptime: N/A");
+            println!("  Packets processed: {}", stats.packets_processed);
+            println!("  Packets forwarded: {}", stats.packets_forwarded);
+            println!("  Packets dropped: {}", stats.packets_dropped);
+            println!("  Cover traffic sent: {}", stats.cover_traffic_sent);
+            println!("  Avg processing time: {:.2} µs", stats.avg_processing_time_us);
+            println!("  Uptime: {} s", stats.uptime_secs);
         }
     }
 

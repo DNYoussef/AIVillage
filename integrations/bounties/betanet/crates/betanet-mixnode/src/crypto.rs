@@ -76,8 +76,10 @@ pub struct Ed25519Signer {
 impl Ed25519Signer {
     /// Create new signer with random key
     pub fn new() -> Self {
-        // Use a deterministic key for now to avoid RNG compatibility issues
-        let secret_bytes = [42u8; 32]; // Reference implementation: cryptographically secure random generation
+        use rand::RngCore;
+        let mut rng = OsRng;
+        let mut secret_bytes = [0u8; 32];
+        rng.fill_bytes(&mut secret_bytes);
         let secret = SecretKey::from_bytes(&secret_bytes).unwrap();
         let public = Ed25519PublicKey::from(&secret);
         let keypair = Keypair { secret, public };
@@ -132,8 +134,10 @@ pub struct X25519KeyExchange {
 impl X25519KeyExchange {
     /// Create new key exchange with random key
     pub fn new() -> Self {
-        // Use deterministic key for now to avoid RNG compatibility issues
-        let secret_bytes = [42u8; 32]; // Reference implementation: cryptographically secure random generation
+        use rand::RngCore;
+        let mut rng = OsRng;
+        let mut secret_bytes = [0u8; 32];
+        rng.fill_bytes(&mut secret_bytes);
         let secret = StaticSecret::from(secret_bytes);
         Self { secret }
     }

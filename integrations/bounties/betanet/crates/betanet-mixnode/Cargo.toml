@@ -29,6 +29,7 @@ clap = { workspace = true }
 sysinfo = "0.30"
 chrono = { version = "0.4", features = ["serde"] }
 num_cpus = "1.16"
+tracing-subscriber = { workspace = true, features = ["fmt"] }
 
 # VRF dependencies
 curve25519-dalek = { version = "4.1", optional = true }
@@ -38,7 +39,6 @@ schnorrkel = { version = "0.11", optional = true }
 tokio = { workspace = true, features = ["test-util"] }
 proptest = { workspace = true }
 tempfile = { workspace = true }
-tracing-subscriber = { version = "0.3", features = ["fmt"] }
 
 [features]
 default = ["sphinx", "cover-traffic"]
