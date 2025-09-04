@@ -53,6 +53,7 @@ pub struct BleCla {
     connections: Arc<Mutex<HashMap<String, ConnectionState>>>,
     is_advertising: Arc<Mutex<bool>>,
     is_scanning: Arc<Mutex<bool>>,
+    gatt_queues: Arc<Mutex<HashMap<String, Vec<Vec<u8>>>>>,
 }
 
 impl BleCla {
@@ -67,6 +68,7 @@ impl BleCla {
             connections: Arc::new(Mutex::new(HashMap::new())),
             is_advertising: Arc::new(Mutex::new(false)),
             is_scanning: Arc::new(Mutex::new(false)),
+            gatt_queues: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -92,6 +94,75 @@ impl BleCla {
         }
         *scanning = true;
         Ok(())
+    }
+
+    /// Stop BLE scanning
+    pub fn stop_scanning(&self) -> Result<(), BleError> {
+        let mut scanning = self.is_scanning.lock().map_err(|_| BleError::LockError)?;
+        *scanning = false;
+        Ok(())
+    }
+
+    /// Register a discovered device during scanning
+    pub fn register_device(&self, device: BleDevice) -> Result<(), BleError> {
+        let mut devices = self.discovered_devices.lock().map_err(|_| BleError::LockError)?;
+        devices.insert(device.address.clone(), device);
+        Ok(())
+    }
+
+    /// Establish a GATT connection with a device
+    pub fn connect(&self, address: &str) -> Result<(), BleError> {
+        let mut connections = self.connections.lock().map_err(|_| BleError::LockError)?;
+
+        if connections.len() >= self.config.max_connections {
+            return Err(BleError::MaxConnectionsReached);
+        }
+
+        let state = connections.entry(address.to_string()).or_insert(ConnectionState::Disconnected);
+        if *state == ConnectionState::Connected {
+            return Ok(());
+        }
+
+        // Simplified: immediately mark as connected
+        *state = ConnectionState::Connected;
+
+        // Initialize GATT queue for the connection
+        let mut queues = self.gatt_queues.lock().map_err(|_| BleError::LockError)?;
+        queues.entry(address.to_string()).or_default();
+
+        Ok(())
+    }
+
+    /// Disconnect from a device
+    pub fn disconnect(&self, address: &str) -> Result<(), BleError> {
+        let mut connections = self.connections.lock().map_err(|_| BleError::LockError)?;
+        connections.remove(address);
+        let mut queues = self.gatt_queues.lock().map_err(|_| BleError::LockError)?;
+        queues.remove(address);
+        Ok(())
+    }
+
+    /// Send a GATT message to a connected device
+    pub fn send_gatt(&self, address: &str, data: Vec<u8>) -> Result<(), BleError> {
+        if !self.is_connected(address)? {
+            return Err(BleError::ConnectionFailed(address.to_string()));
+        }
+
+        let mut queues = self.gatt_queues.lock().map_err(|_| BleError::LockError)?;
+        let queue = queues.get_mut(address).ok_or_else(|| BleError::DeviceNotFound(address.to_string()))?;
+        queue.push(data);
+        Ok(())
+    }
+
+    /// Receive a GATT message for a connected device
+    pub fn receive_gatt(&self, address: &str) -> Result<Option<Vec<u8>>, BleError> {
+        if !self.is_connected(address)? {
+            return Err(BleError::ConnectionFailed(address.to_string()));
+        }
+
+        let mut queues = self.gatt_queues.lock().map_err(|_| BleError::LockError)?;
+        let queue = queues.get_mut(address).ok_or_else(|| BleError::DeviceNotFound(address.to_string()))?;
+        Ok(queue.pop())
     }
 
     pub fn is_connected(&self, address: &str) -> Result<bool, BleError> {
