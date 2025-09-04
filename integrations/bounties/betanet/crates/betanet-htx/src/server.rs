@@ -47,8 +47,13 @@ impl HtxServer {
         #[cfg(feature = "quic")]
         if self.config.enable_quic {
             let config = self.config.clone();
+            let handler_clone = handler.clone();
             tokio::spawn(async move {
-                if let Err(e) = crate::quic::QuicTransport::listen(config, handler).await {
+                if let Err(e) = crate::quic::QuicTransport::listen(config, move |conn| {
+                    handler_clone(Box::new(conn));
+                })
+                .await
+                {
                     error!("QUIC listener error: {}", e);
                 }
             });

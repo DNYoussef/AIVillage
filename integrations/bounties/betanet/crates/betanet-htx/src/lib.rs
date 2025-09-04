@@ -134,6 +134,22 @@ pub enum HtxError {
 /// Result type for HTX operations
 pub type Result<T> = std::result::Result<T, HtxError>;
 
+/// Connection abstraction for HTX transports
+#[async_trait::async_trait]
+pub trait HtxConnection: Send + Sync {
+    /// Send raw bytes over the connection
+    async fn send(&mut self, data: &[u8]) -> Result<()>;
+
+    /// Receive bytes from the connection into the provided buffer
+    async fn recv(&mut self, buf: &mut [u8]) -> Result<usize>;
+
+    /// Get the remote peer address
+    fn remote_addr(&self) -> Result<SocketAddr>;
+
+    /// Close the connection
+    async fn close(self) -> Result<()>;
+}
+
 /// HTX configuration
 #[derive(Debug, Clone)]
 pub struct HtxConfig {

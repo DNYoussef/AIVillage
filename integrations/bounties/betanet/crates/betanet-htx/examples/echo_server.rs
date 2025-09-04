@@ -185,20 +185,29 @@ async fn handle_tcp_connection(
     Ok(())
 }
 
-/// Run QUIC-based HTX server (stub implementation)
+/// Run QUIC-based HTX server
 async fn run_quic_server(config: HtxConfig) -> Result<()> {
     #[cfg(feature = "quic")]
     {
         info!("QUIC server starting on {}", config.listen_addr);
 
-        // This would use the QuicTransport implementation
-        // For now, this is a stub that demonstrates the interface
-
         use betanet_htx::quic::QuicTransport;
 
-        // Create a dummy handler for QUIC connections
-        let handler = |_connection: Box<dyn betanet_htx::HtxConnection>| {
-            info!("QUIC connection accepted");
+        let handler = |mut connection: QuicTransport| {
+            tokio::spawn(async move {
+                info!("QUIC connection accepted");
+                while let Ok(opt) = connection.recv_datagram().await {
+                    match opt {
+                        Some(frame) => {
+                            if let Err(e) = connection.send_datagram(frame).await {
+                                warn!("Failed to echo datagram: {}", e);
+                                break;
+                            }
+                        }
+                        None => break,
+                    }
+                }
+            });
         };
 
         QuicTransport::listen(config, handler).await?;
