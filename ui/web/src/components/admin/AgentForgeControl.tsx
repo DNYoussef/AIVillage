@@ -76,10 +76,14 @@ export const AgentForgeControl: React.FC = () => {
   });
   const [lastPingTime, setLastPingTime] = useState<number>(0);
 
-  const API_BASE = 'http://localhost:8083';
-  const CHAT_API = 'http://localhost:8084';
-  const WS_URL = 'ws://localhost:8085/ws';
-  const AGENT_API = 'http://localhost:8086';
+  const API_BASE =
+    import.meta.env.VITE_AGENT_FORGE_API_URL || 'http://localhost:8083';
+  const CHAT_API =
+    import.meta.env.VITE_AGENT_FORGE_CHAT_API_URL || 'http://localhost:8084';
+  const WS_URL =
+    import.meta.env.VITE_AGENT_FORGE_WS_URL || 'ws://localhost:8085/ws';
+  const AGENT_API =
+    import.meta.env.VITE_AGENT_FORGE_AGENT_API_URL || 'http://localhost:8086';
 
   useEffect(() => {
     // Connect to WebSocket for real-time updates
