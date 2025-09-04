@@ -1,6 +1,6 @@
 //! VRF-based delay calculation
 
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use crate::Result;
 
@@ -8,16 +8,36 @@ use crate::Result;
 pub async fn calculate_vrf_delay(min_delay: &Duration, max_delay: &Duration) -> Result<Duration> {
     #[cfg(feature = "vrf")]
     {
-        // VRF-based delay calculation stub
-        // In a real implementation this would:
-        // 1. Generate VRF proof
-        // 2. Extract randomness from proof
-        // 3. Map to delay range
+        use rand::rngs::OsRng;
+        use schnorrkel::{signing_context, Keypair};
 
-        use rand::Rng;
-        let mut rng = rand::thread_rng();
-        let delay_ms = rng.gen_range(min_delay.as_millis()..=max_delay.as_millis());
-        Ok(Duration::from_millis(delay_ms as u64))
+        // Generate ephemeral keypair for delay calculation
+        let mut csprng = OsRng;
+        let keypair = Keypair::generate_with(&mut csprng);
+
+        // Use current timestamp as the VRF message
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+            .to_be_bytes();
+        let ctx = signing_context(b"betanet-mixnode-delay");
+
+        // Generate VRF proof and extract randomness
+        let (io, proof, _) = keypair.vrf_sign(ctx.bytes(&now));
+        // Verify proof for safety
+        keypair
+            .public
+            .vrf_verify(ctx.bytes(&now), &io.to_preout(), &proof)
+            .map_err(|e| crate::MixnodeError::Vrf(format!("VRF proof verification failed: {e}")))?;
+
+        // Map VRF output to delay range
+        let bytes: [u8; 8] = io.make_bytes(b"delay");
+        let value = u64::from_be_bytes(bytes);
+        let range = max_delay.as_millis() - min_delay.as_millis();
+        let delay_offset = (value as u128) % range;
+
+        Ok(Duration::from_millis((min_delay.as_millis() + delay_offset) as u64))
     }
 
     #[cfg(not(feature = "vrf"))]
@@ -31,57 +51,69 @@ pub async fn calculate_vrf_delay(min_delay: &Duration, max_delay: &Duration) -> 
 /// VRF key pair
 #[cfg(feature = "vrf")]
 pub struct VrfKeyPair {
-    // VRF implementation would go here
-    _phantom: std::marker::PhantomData<()>,
+    keypair: schnorrkel::Keypair,
 }
 
 #[cfg(feature = "vrf")]
 impl VrfKeyPair {
-    /// Generate new VRF keypair
+    /// Generate new VRF keypair using system randomness
     pub fn generate() -> Self {
-        Self {
-            _phantom: std::marker::PhantomData,
-        }
+        use rand::rngs::OsRng;
+        let mut csprng = OsRng;
+        let keypair = schnorrkel::Keypair::generate_with(&mut csprng);
+        Self { keypair }
     }
 
-    /// Prove value
-    pub fn prove(&self, _message: &[u8]) -> Result<VrfProof> {
-        // VRF proof generation stub
-        Ok(VrfProof {
-            proof: vec![0u8; 64],
-            output: [0u8; 32],
-        })
+    /// Construct keypair from a fixed seed (useful for tests)
+    pub fn from_seed(seed: [u8; 32]) -> Result<Self> {
+        use schnorrkel::{ExpansionMode, MiniSecretKey};
+        let mini = MiniSecretKey::from_bytes(&seed)
+            .map_err(|e| crate::MixnodeError::Vrf(format!("Invalid seed: {e}")))?;
+        let keypair = mini.expand_to_keypair(ExpansionMode::Ed25519);
+        Ok(Self { keypair })
     }
 
-    /// Verify proof
-    pub fn verify(&self, _message: &[u8], _proof: &VrfProof) -> bool {
-        // VRF verification stub
-        true
+    /// Get public key bytes
+    pub fn public_key(&self) -> [u8; 32] {
+        self.keypair.public.to_bytes()
+    }
+
+    /// Prove value and return VRF proof
+    pub fn prove(&self, message: &[u8]) -> Result<VrfProof> {
+        use schnorrkel::signing_context;
+        let ctx = signing_context(b"betanet-mixnode-vrf");
+        let (io, proof, _) = self.keypair.vrf_sign(ctx.bytes(message));
+        Ok(VrfProof { io, proof })
+    }
+
+    /// Verify proof for message
+    pub fn verify(&self, message: &[u8], proof: &VrfProof) -> bool {
+        use schnorrkel::signing_context;
+        let ctx = signing_context(b"betanet-mixnode-vrf");
+        self.keypair
+            .public
+            .vrf_verify(ctx.bytes(message), &proof.io.to_preout(), &proof.proof)
+            .is_ok()
     }
 }
 
 /// VRF proof
 #[cfg(feature = "vrf")]
 pub struct VrfProof {
-    /// Proof bytes
-    pub proof: Vec<u8>,
-    /// VRF output
-    pub output: [u8; 32],
+    /// Input/output pair from VRF
+    pub io: schnorrkel::vrf::VRFInOut,
+    /// VRF proof bytes
+    pub proof: schnorrkel::vrf::VRFProof,
 }
 
 #[cfg(feature = "vrf")]
 impl VrfProof {
     /// Extract delay from VRF output
     pub fn extract_delay(&self, min_delay: Duration, max_delay: Duration) -> Duration {
-        // Extract first 8 bytes as u64
-        let mut bytes = [0u8; 8];
-        bytes.copy_from_slice(&self.output[..8]);
+        let bytes: [u8; 8] = self.io.make_bytes(b"delay");
         let value = u64::from_be_bytes(bytes);
-
-        // Map to delay range
         let range = max_delay.as_millis() - min_delay.as_millis();
         let delay_offset = (value as u128) % range;
-
         Duration::from_millis((min_delay.as_millis() + delay_offset) as u64)
     }
 }

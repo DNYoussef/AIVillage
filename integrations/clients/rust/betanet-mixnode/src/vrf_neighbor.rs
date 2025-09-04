@@ -15,6 +15,9 @@ use sha2::{Digest, Sha256};
 
 use crate::{crypto::CryptoUtils, MixnodeError, Result};
 
+#[cfg(feature = "vrf")]
+use crate::vrf_delay::VrfProof;
+
 /// AS (Autonomous System) number
 pub type AsNumber = u32;
 
@@ -141,11 +144,11 @@ impl VrfNeighborSelector {
     /// Derive VRF public key from private key
     #[cfg(feature = "vrf")]
     fn derive_vrf_public_key(private_key: &[u8; 32]) -> [u8; 32] {
-        use schnorrkel::SecretKey;
+        use schnorrkel::{ExpansionMode, MiniSecretKey};
 
-        if let Ok(secret_key) = SecretKey::from_bytes(private_key) {
-            let public_key = secret_key.to_public();
-            public_key.to_bytes()
+        if let Ok(mini) = MiniSecretKey::from_bytes(private_key) {
+            let kp = mini.expand_to_keypair(ExpansionMode::Ed25519);
+            kp.public.to_bytes()
         } else {
             // Fallback to hash-based derivation if key is invalid
             CryptoUtils::sha256(private_key)
@@ -197,7 +200,45 @@ impl VrfNeighborSelector {
         self.selection_cache.clear();
     }
 
-    /// Select neighbors using VRF with AS diversity
+    /// Select neighbors using VRF with AS diversity and return proof
+    #[cfg(feature = "vrf")]
+    pub fn select_neighbors(&mut self, seed: &[u8]) -> Result<(Vec<SocketAddr>, VrfProof)> {
+        // Create cache key from seed
+        let cache_key = CryptoUtils::sha256(seed);
+
+        // Check cache first
+        if let Some(cached) = self.selection_cache.get(&cache_key) {
+            let proof = self.generate_vrf_proof(seed)?;
+            return Ok((cached.clone(), proof));
+        }
+
+        // Clean up stale nodes
+        self.cleanup_stale_nodes();
+
+        // Ensure minimum diversity is possible
+        if self.as_groups.len() < self.config.min_as_diversity {
+            return Err(MixnodeError::Routing(format!(
+                "Insufficient AS diversity: {} available, {} required",
+                self.as_groups.len(),
+                self.config.min_as_diversity
+            )));
+        }
+
+        // Generate VRF proof for seed
+        let proof = self.generate_vrf_proof(seed)?;
+        let vrf_output: [u8; 32] = proof.io.make_bytes(b"neighbor-selection");
+
+        // Select nodes with AS diversity constraints
+        let selected = self.select_with_diversity(&vrf_output)?;
+
+        // Cache the result
+        self.selection_cache.insert(cache_key, selected.clone());
+
+        Ok((selected, proof))
+    }
+
+    /// Select neighbors without VRF proofs (fallback)
+    #[cfg(not(feature = "vrf"))]
     pub fn select_neighbors(&mut self, seed: &[u8]) -> Result<Vec<SocketAddr>> {
         // Create cache key from seed
         let cache_key = CryptoUtils::sha256(seed);
@@ -219,7 +260,7 @@ impl VrfNeighborSelector {
             )));
         }
 
-        // Generate VRF proof for seed
+        // Generate pseudo-random output
         let vrf_output = self.generate_vrf_output(seed)?;
 
         // Select nodes with AS diversity constraints
@@ -231,31 +272,26 @@ impl VrfNeighborSelector {
         Ok(selected)
     }
 
-    /// Generate VRF output using Schnorrkel (Ed25519-based VRF)
+    /// Generate VRF proof using Schnorrkel (Ed25519-based VRF)
     #[cfg(feature = "vrf")]
-    fn generate_vrf_output(&self, seed: &[u8]) -> Result<[u8; 32]> {
-        use schnorrkel::{SecretKey, vrf::VrfInOut, vrf::VrfPreOut, context::SigningContext};
+    fn generate_vrf_proof(&self, seed: &[u8]) -> Result<VrfProof> {
+        use schnorrkel::{signing_context, MiniSecretKey, ExpansionMode};
 
-        // Convert private key to Schnorrkel format
-        let secret_key = SecretKey::from_bytes(&self.vrf_private_key)
-            .map_err(|e| MixnodeError::Vrf(format!("Invalid VRF secret key: {}", e)))?;
+        // Convert private key seed to Schnorrkel keypair
+        let mini = MiniSecretKey::from_bytes(&self.vrf_private_key)
+            .map_err(|e| MixnodeError::Vrf(format!("Invalid VRF secret key: {e}")))?;
+        let keypair = mini.expand_to_keypair(ExpansionMode::Ed25519);
 
-        // Create signing context
-        let context = SigningContext::new(b"betanet-mixnode-vrf");
-
-        // Generate VRF input
-        let (vrf_in_out, vrf_proof, _) = secret_key.vrf_sign(context.bytes(seed));
-
-        // Extract VRF output
-        let vrf_output = vrf_in_out.make_bytes(b"vrf-output");
+        let ctx = signing_context(b"betanet-mixnode-vrf");
+        let (io, proof, _) = keypair.vrf_sign(ctx.bytes(seed));
 
         // Verify proof to ensure correctness
-        let public_key = secret_key.to_public();
-        if !public_key.vrf_verify(context.bytes(seed), &vrf_in_out, &vrf_proof) {
-            return Err(MixnodeError::Vrf("VRF proof verification failed".to_string()));
-        }
+        keypair
+            .public
+            .vrf_verify(ctx.bytes(seed), &io.to_preout(), &proof)
+            .map_err(|e| MixnodeError::Vrf(format!("VRF proof verification failed: {e}")))?;
 
-        Ok(vrf_output)
+        Ok(VrfProof { io, proof })
     }
 
     /// Generate VRF output (fallback implementation without VRF feature)
@@ -522,6 +558,10 @@ mod tests {
 
         // Test neighbor selection
         let seed = b"test_seed_for_selection";
+
+        #[cfg(feature = "vrf")]
+        let (neighbors, proof) = selector.select_neighbors(seed).unwrap();
+        #[cfg(not(feature = "vrf"))]
         let neighbors = selector.select_neighbors(seed).unwrap();
 
         assert!(neighbors.len() <= 6);
@@ -536,11 +576,28 @@ mod tests {
         }
         assert!(as_numbers.len() >= 3);
 
+        // Verify proof
+        #[cfg(feature = "vrf")]
+        {
+            use schnorrkel::{signing_context, PublicKey};
+            let pk = PublicKey::from_bytes(selector.vrf_public_key()).unwrap();
+            let ctx = signing_context(b"betanet-mixnode-vrf");
+            assert!(pk
+                .vrf_verify(ctx.bytes(seed), &proof.io.to_preout(), &proof.proof)
+                .is_ok());
+        }
+
         // Test deterministic selection (same seed should give same result)
+        #[cfg(feature = "vrf")]
+        let (neighbors2, _) = selector.select_neighbors(seed).unwrap();
+        #[cfg(not(feature = "vrf"))]
         let neighbors2 = selector.select_neighbors(seed).unwrap();
         assert_eq!(neighbors, neighbors2);
 
         // Test different seed gives different result (highly likely)
+        #[cfg(feature = "vrf")]
+        let (neighbors3, _) = selector.select_neighbors(b"different_seed").unwrap();
+        #[cfg(not(feature = "vrf"))]
         let neighbors3 = selector.select_neighbors(b"different_seed").unwrap();
         // Note: This may occasionally fail due to randomness, but very unlikely
         assert_ne!(neighbors, neighbors3);
@@ -564,6 +621,9 @@ mod tests {
 
         // Sufficient AS numbers - should succeed
         selector.simulate_topology(&[(1001, 2), (1002, 2), (1003, 2), (1004, 2), (1005, 2)]);
+        #[cfg(feature = "vrf")]
+        let (neighbors, _) = selector.select_neighbors(b"test").unwrap();
+        #[cfg(not(feature = "vrf"))]
         let neighbors = selector.select_neighbors(b"test").unwrap();
         assert!(neighbors.len() >= 5);
 
