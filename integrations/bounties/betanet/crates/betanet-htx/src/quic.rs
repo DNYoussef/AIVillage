@@ -8,13 +8,29 @@ use std::path::Path;
 use std::sync::Arc;
 
 #[cfg(feature = "quic")]
-use quinn::{ClientConfig, Endpoint, ServerConfig, Connection, SendDatagramError};
+use quinn::{ClientConfig, Connection, Endpoint, SendDatagramError, ServerConfig, TransportConfig};
 #[cfg(feature = "quic")]
-use rustls::pki_types::{CertificateDer, PrivatePkcs8KeyDer};
+use rcgen::generate_simple_self_signed;
+#[cfg(feature = "quic")]
+use rustls::client::danger::ServerCertVerifier;
+#[cfg(feature = "quic")]
+use rustls::pki_types::{CertificateDer, PrivatePkcs8KeyDer, ServerName, UnixTime};
+#[cfg(feature = "quic")]
+use rustls::{OwnedTrustAnchor, RootCertStore};
 #[cfg(feature = "quic")]
 use tracing::{debug, error, info, warn};
 #[cfg(feature = "quic")]
 use bytes::Bytes;
+#[cfg(feature = "quic")]
+use webpki_roots::TLS_SERVER_ROOTS;
+#[cfg(feature = "quic")]
+use dashmap::DashMap;
+#[cfg(feature = "quic")]
+use once_cell::sync::Lazy;
+#[cfg(feature = "quic")]
+use std::time::{Duration, Instant};
+#[cfg(feature = "quic")]
+use trust_dns_resolver::TokioAsyncResolver;
 
 #[cfg(feature = "quic")]
 use crate::{transport::TransportStats, HtxConfig, HtxError, Result, Frame};
@@ -57,6 +73,16 @@ impl Default for EchConfig {
         }
     }
 }
+
+#[cfg(feature = "quic")]
+static DNS_ECH_CACHE: Lazy<DashMap<String, (Instant, EchConfig)>> = Lazy::new(|| DashMap::new());
+#[cfg(feature = "quic")]
+const DNS_ECH_TTL: Duration = Duration::from_secs(3600);
+
+#[cfg(feature = "quic")]
+static DNS_RESOLVER: Lazy<TokioAsyncResolver> = Lazy::new(|| {
+    TokioAsyncResolver::tokio_from_system_conf().expect("failed to create DNS resolver")
+});
 
 #[cfg(feature = "quic")]
 impl EchConfig {
@@ -125,9 +151,43 @@ impl EchConfig {
         Self::from_bytes(&data, public_name)
     }
 
-    pub async fn from_dns(_domain: &str) -> Result<Self> {
-        // DNS ECH resolution disabled due to dependency issues
-        Err(HtxError::Config("ECH DNS resolution not available".to_string()))
+    pub async fn from_dns(domain: &str) -> Result<Self> {
+        if let Some(entry) = DNS_ECH_CACHE.get(domain) {
+            if entry.value().0.elapsed() < DNS_ECH_TTL {
+                return Ok(entry.value().1.clone());
+            } else {
+                DNS_ECH_CACHE.remove(domain);
+            }
+        }
+
+        let lookup_name = format!("_echconfig.{}", domain);
+        let response = DNS_RESOLVER
+            .txt_lookup(lookup_name.clone())
+            .await
+            .map_err(|e| {
+                HtxError::Config(format!("ECH TXT lookup failed for {}: {}", lookup_name, e))
+            })?;
+
+        let mut txt = String::new();
+        for record in response.iter() {
+            for data in record.txt_data().iter() {
+                if let Ok(part) = std::str::from_utf8(data) {
+                    txt.push_str(part);
+                }
+            }
+        }
+
+        if txt.trim().is_empty() {
+            return Err(HtxError::Config("ECH TXT record empty".into()));
+        }
+
+        let data = base64::engine::general_purpose::STANDARD
+            .decode(txt.trim())
+            .map_err(|e| HtxError::Config(format!("invalid ECH base64: {}", e)))?;
+        let cfg = Self::from_bytes(&data, domain.to_string())?;
+
+        DNS_ECH_CACHE.insert(domain.to_string(), (Instant::now(), cfg.clone()));
+        Ok(cfg)
     }
 
     pub fn validate(&self) -> Result<()> {
@@ -155,9 +215,122 @@ pub struct QuicDatagramFrame {
 #[cfg(feature = "quic")]
 impl QuicTransport {
     /// Connect to a remote QUIC endpoint with H3 ALPN and DATAGRAM support
-    pub async fn connect(_addr: SocketAddr, _config: &HtxConfig) -> Result<Self> {
-        // Certificate generation disabled for compatibility
-        Err(HtxError::Config("QUIC requires rcgen for certificate generation".to_string()))
+    pub async fn connect(addr: SocketAddr, config: &HtxConfig) -> Result<Self> {
+        // Build rustls client config with system/root certificates
+        let mut root_store = RootCertStore::empty();
+        root_store.add_trust_anchors(TLS_SERVER_ROOTS.iter().map(|ta| {
+            OwnedTrustAnchor::from_subject_spki_name_constraints(
+                ta.subject,
+                ta.spki,
+                ta.name_constraints,
+            )
+        }));
+
+        // Insecure verifier that accepts any certificate (useful for self-signed demo)
+        struct NoVerifier;
+        impl ServerCertVerifier for NoVerifier {
+            fn verify_server_cert(
+                &self,
+                _end_entity: &CertificateDer<'_>,
+                _intermediates: &[CertificateDer<'_>],
+                _server_name: &ServerName,
+                _scts: &mut dyn Iterator<Item = &[u8]>,
+                _ocsp: &[u8],
+                _now: UnixTime,
+            ) -> std::result::Result<rustls::client::danger::ServerCertVerified, rustls::Error> {
+                Ok(rustls::client::danger::ServerCertVerified::assertion())
+            }
+
+            fn verify_tls13_signature(
+                &self,
+                _msg: &[u8],
+                _sig: &rustls::pki_types::DigitallySignedStruct,
+            ) -> std::result::Result<rustls::client::danger::SignatureVerified, rustls::Error> {
+                Ok(rustls::client::danger::SignatureVerified::assertion())
+            }
+
+            fn verify_tls12_signature(
+                &self,
+                _msg: &[u8],
+                _sig: &rustls::pki_types::DigitallySignedStruct,
+            ) -> std::result::Result<rustls::client::danger::SignatureVerified, rustls::Error> {
+                Ok(rustls::client::danger::SignatureVerified::assertion())
+            }
+
+            fn supported_verify_schemes(&self) -> Vec<rustls::SignatureScheme> {
+                vec![
+                    rustls::SignatureScheme::ECDSA_NISTP256_SHA256,
+                    rustls::SignatureScheme::ED25519,
+                    rustls::SignatureScheme::RSA_PKCS1_SHA256,
+                ]
+            }
+        }
+
+        let mut builder = rustls::ClientConfig::builder().with_safe_defaults();
+        let mut crypto = builder
+            .with_custom_certificate_verifier(Arc::new(NoVerifier))
+            .with_no_client_auth();
+
+        crypto.alpn_protocols = config
+            .alpn_protocols
+            .iter()
+            .map(|p| p.as_bytes().to_vec())
+            .collect();
+
+        let mut transport = TransportConfig::default();
+        transport.max_datagram_frame_size(Some(65535));
+
+        let mut client_cfg = ClientConfig::new(Arc::new(crypto));
+        client_cfg.transport_config(Arc::new(transport));
+
+        let mut endpoint = Endpoint::client("0.0.0.0:0".parse().unwrap())
+            .map_err(|e| HtxError::Transport(format!("Failed to create client endpoint: {}", e)))?;
+        endpoint.set_default_client_config(client_cfg);
+
+        // Optional ECH configuration loading
+        let ech_config = if config.enable_tls_camouflage {
+            if let Some(path) = &config.ech_config_path {
+                match EchConfig::from_file(
+                    path,
+                    config.camouflage_domain.clone().unwrap_or_default(),
+                ) {
+                    Ok(cfg) => Some(cfg),
+                    Err(e) => {
+                        warn!("Failed to load ECH config: {}", e);
+                        None
+                    }
+                }
+            } else if let Some(domain) = &config.camouflage_domain {
+                match EchConfig::from_dns(domain).await {
+                    Ok(cfg) => Some(cfg),
+                    Err(e) => {
+                        warn!("Failed to resolve ECH config: {}", e);
+                        None
+                    }
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
+        let connecting = endpoint
+            .connect(addr, "localhost")
+            .map_err(|e| HtxError::Transport(format!("Connection error: {}", e)))?;
+
+        let connection = connecting
+            .await
+            .map_err(|e| HtxError::Transport(format!("Handshake failed: {}", e)))?;
+
+        let enable_datagrams = connection.max_datagram_size().is_some();
+
+        Ok(Self {
+            connection,
+            stats: TransportStats::new(),
+            enable_datagrams,
+            ech_config,
+        })
     }
 
     /// Send HTX frame as QUIC DATAGRAM (for small frames)
@@ -244,12 +417,83 @@ impl QuicTransport {
     }
 
     /// Listen for incoming QUIC connections
-    pub async fn listen<F>(_config: HtxConfig, _handler: F) -> Result<()>
+    pub async fn listen<F>(config: HtxConfig, handler: F) -> Result<()>
     where
         F: Fn(Box<dyn HtxConnection>) + Send + Sync + 'static,
     {
-        // Certificate generation disabled for compatibility
-        Err(HtxError::Config("QUIC requires rcgen for certificate generation".to_string()))
+        // Generate self-signed certificate for the server
+        let cert = generate_simple_self_signed(vec!["localhost".to_string()])
+            .map_err(|e| HtxError::Config(format!("Certificate generation failed: {}", e)))?;
+        let cert_der = CertificateDer::from(cert.cert);
+        let key_der = PrivatePkcs8KeyDer::from(cert.key_pair.serialize_der());
+
+        let mut server_config = ServerConfig::with_single_cert(vec![cert_der], key_der.into())
+            .map_err(|e| HtxError::Transport(format!("Server config error: {}", e)))?;
+
+        if let Some(crypto) = Arc::get_mut(&mut server_config.crypto) {
+            crypto.alpn_protocols = config
+                .alpn_protocols
+                .iter()
+                .map(|p| p.as_bytes().to_vec())
+                .collect();
+        }
+
+        let mut transport = TransportConfig::default();
+        transport.max_datagram_frame_size(Some(65535));
+        server_config.transport = Arc::new(transport);
+
+        let mut endpoint = Endpoint::server(server_config, config.listen_addr)
+            .map_err(|e| HtxError::Transport(format!("Failed to create server endpoint: {}", e)))?;
+
+        // Optional ECH configuration loading
+        let ech_config = if config.enable_tls_camouflage {
+            if let Some(path) = &config.ech_config_path {
+                match EchConfig::from_file(
+                    path,
+                    config.camouflage_domain.clone().unwrap_or_default(),
+                ) {
+                    Ok(cfg) => Some(cfg),
+                    Err(e) => {
+                        warn!("Failed to load ECH config: {}", e);
+                        None
+                    }
+                }
+            } else if let Some(domain) = &config.camouflage_domain {
+                match EchConfig::from_dns(domain).await {
+                    Ok(cfg) => Some(cfg),
+                    Err(e) => {
+                        warn!("Failed to resolve ECH config: {}", e);
+                        None
+                    }
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
+        let handler = Arc::new(handler);
+        while let Some(connecting) = endpoint.accept().await {
+            let handler = handler.clone();
+            let ech_cfg = ech_config.clone();
+            tokio::spawn(async move {
+                match connecting.await {
+                    Ok(conn) => {
+                        let transport = QuicTransport {
+                            enable_datagrams: conn.max_datagram_size().is_some(),
+                            connection: conn,
+                            stats: TransportStats::new(),
+                            ech_config: ech_cfg,
+                        };
+                        handler(Box::new(transport));
+                    }
+                    Err(e) => warn!("Failed to accept QUIC connection: {}", e),
+                }
+            });
+        }
+
+        Ok(())
     }
 }
 

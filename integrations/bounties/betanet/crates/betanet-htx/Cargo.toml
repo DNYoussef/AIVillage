@@ -31,7 +31,7 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 bincode = { workspace = true }
-# rcgen = { version = "0.13", optional = true }
+rcgen = { version = "0.13", optional = true }
 # Transport and multiplexing
 futures = { workspace = true }
 # TLS fingerprint integration (temporarily disabled)
@@ -44,8 +44,8 @@ webpki-roots = { workspace = true }
 base64 = "0.21"
 urlencoding = "2.1"
 hex = "0.4"
-# rcgen = "0.13"
-# trust-dns-resolver = { version = "0.23", optional = true }
+trust-dns-resolver = { version = "0.23", optional = true, default-features = false, features = ["tokio-runtime", "system-config"] }
+once_cell = "1.19"
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["test-util"] }
@@ -58,7 +58,7 @@ rand_distr = "0.4"
 [features]
 default = ["tcp", "noise-xk"]
 tcp = []
-quic = ["dep:quinn"]
+quic = ["dep:quinn", "dep:rcgen", "dep:trust-dns-resolver"]
 noise-xk = []
 hybrid-kem-stub = []
 tls-fingerprint = []
