@@ -10,5 +10,7 @@ export default defineConfig({
   build: {
     outDir: 'dist'
   },
-  root: '.'
+  root: '.',
+  // Expose VITE_ prefixed variables to the client
+  envPrefix: 'VITE_'
 })
