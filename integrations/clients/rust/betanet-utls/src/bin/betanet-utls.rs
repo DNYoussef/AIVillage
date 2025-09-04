@@ -4,8 +4,10 @@
 //! computing JA3/JA4 fingerprints, and running self-tests.
 
 use betanet_utls::{
-    ja3, ja4, refresh::ChromeRefresh, template::TlsTemplate, ChromeVersion,
-    ClientHello, Result,
+    ja3, ja4,
+    refresh::{ChromeRefresh, ReleaseChannel},
+    template::TlsTemplate,
+    ChromeVersion, ClientHello, Result,
 };
 use clap::{Parser, Subcommand};
 use serde_json::{json, Value};
@@ -376,7 +378,7 @@ async fn cmd_refresh(force: bool) -> Result<()> {
     let mut refresh = ChromeRefresh::new();
 
     // Check if refresh is needed (unless forced)
-    if !force && !refresh.is_cache_expired() {
+    if !force && !refresh.is_cache_expired(ReleaseChannel::Stable) {
         println!("Templates are up to date");
         println!("Use --force to refresh anyway");
         return Ok(());

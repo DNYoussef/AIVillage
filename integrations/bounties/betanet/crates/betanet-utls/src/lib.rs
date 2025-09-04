@@ -51,6 +51,10 @@ pub enum UtlsError {
     /// Configuration error
     #[error("Configuration error: {0}")]
     Config(String),
+
+    /// Network error
+    #[error("Network error: {0}")]
+    Network(String),
 }
 
 /// Result type for uTLS operations
