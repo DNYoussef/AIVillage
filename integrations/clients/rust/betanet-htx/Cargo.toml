@@ -62,5 +62,7 @@ quic = ["dep:quinn", "dep:rcgen", "dep:trust-dns-resolver"]
 noise-xk = []
 hybrid-kem-stub = []
 tls-fingerprint = []
+# Allow compilation without Noise-XK only when explicitly enabled
+insecure-handshake = []
 # Temporarily disable problematic features
 # utls-integration = ["dep:betanet-utls", "dep:rand_distr", "tls-fingerprint"]
