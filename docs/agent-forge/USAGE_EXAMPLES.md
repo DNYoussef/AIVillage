@@ -19,6 +19,7 @@ config = UnifiedConfig(
     enable_evomerge=True,
     enable_quietstar=True,
     enable_training=True,
+    enable_dspy_optimization=True,
 
     # Fast settings for development
     evomerge_generations=10,
@@ -50,6 +51,10 @@ async def main():
 # Run the pipeline
 model = asyncio.run(main())
 ```
+
+Enable DSPy prompt optimization globally by setting `enable_dspy_optimization=True` in
+`UnifiedConfig`. This applies DSPy-optimized prompts during phases like Quiet-STaR and
+tool/persona baking. Set the flag to `False` to disable the optimization.
 
 ### Production Configuration
 
@@ -87,6 +92,7 @@ production_config = UnifiedConfig(
     edge_control_enabled=True,
     self_model_enabled=True,
     dream_enabled=True,
+    enable_dspy_optimization=True,
 
     # Monitoring
     wandb_project="agent-forge-production",

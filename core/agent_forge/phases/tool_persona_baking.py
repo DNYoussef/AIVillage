@@ -30,6 +30,11 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+try:  # Optional DSPy integration
+    from src.coordination.dspy_integration import DSPyAgentOptimizer
+except Exception:  # pragma: no cover - DSPy optional
+    DSPyAgentOptimizer = None  # type: ignore[misc]
+
 # Try to import PhaseController, with fallback for direct imports
 try:
     from ..core.phase_controller import PhaseController, PhaseResult
@@ -202,6 +207,10 @@ class ToolPersonaBakingConfig(PhaseConfig):
     device: str = "auto"
     mixed_precision: bool = True
     seed: int = 42
+
+    # DSPy optimization
+    enable_dspy_optimization: bool = False
+    dspy_optimized_prompt: str | None = None
 
     # Logging and monitoring
     log_interval: int = 20
@@ -495,6 +504,16 @@ class PersonaOptimizer:
         """Generate training examples for a specific persona."""
         template = self.config.persona_templates.get(persona, "I'll help with {task}.")
         base_prompt = template.format(task=task)
+
+        if self.config.enable_dspy_optimization and DSPyAgentOptimizer is not None:
+            try:
+                optimizer = DSPyAgentOptimizer()
+                optimized = optimizer.get_optimized_prompt("tool_persona_baking")
+                if optimized:
+                    base_prompt = optimized.format(task=task)
+                    self.config.dspy_optimized_prompt = optimized
+            except Exception as opt_err:  # pragma: no cover - best effort
+                logger.warning(f"DSPy optimization skipped: {opt_err}")
 
         # Generate variations
         examples = [base_prompt]
