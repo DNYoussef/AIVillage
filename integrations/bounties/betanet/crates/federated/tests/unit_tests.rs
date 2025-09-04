@@ -174,3 +174,63 @@ fn test_fl_receipt_creation() {
     assert!(receipt.timestamp > 0);
     assert!(receipt.signature.is_empty()); // No signature by default
 }
+
+#[test]
+fn test_receipt_sign_verify_and_storage() {
+    let pop = ProofOfParticipation::new();
+    let participant = ParticipantId::new(
+        agent_fabric::AgentId::new("tester", "device"),
+        DeviceType::Phone,
+        DeviceCapabilities::default(),
+    );
+    let metrics = ResourceMetrics {
+        num_examples: 10,
+        flops: 100,
+        energy_joules: 1.0,
+        peak_memory_mb: 1.0,
+    };
+
+    let receipt = pop
+        .generate_receipt(participant.clone(), &metrics)
+        .unwrap();
+    assert!(pop.verify_receipt(&receipt).unwrap());
+    let stored = pop
+        .get_receipt(&participant, receipt.timestamp)
+        .unwrap()
+        .unwrap();
+    assert_eq!(stored.num_examples, metrics.num_examples);
+}
+
+#[test]
+fn test_gossip_peer_exchange_membership() {
+    let mut g1 = GossipProtocol::new();
+    let mut g2 = GossipProtocol::new();
+    let p1 = ParticipantId::new(
+        agent_fabric::AgentId::new("p1", "dev"),
+        DeviceType::Phone,
+        DeviceCapabilities::default(),
+    );
+    let p2 = ParticipantId::new(
+        agent_fabric::AgentId::new("p2", "dev"),
+        DeviceType::Tablet,
+        DeviceCapabilities::default(),
+    );
+    g1.add_peer(p1.clone());
+    g2.add_peer(p2.clone());
+    PeerExchange::exchange(&mut g1, &g2.peers());
+    assert_eq!(g1.peers().len(), 2);
+    assert!(g1
+        .peers()
+        .iter()
+        .any(|p| p.agent_id.to_string() == p2.agent_id.to_string()));
+}
+
+#[test]
+fn test_split_learning_workflow() {
+    let mut split = SplitLearning::new();
+    let batches = vec![vec![1.0, 2.0], vec![2.0, 4.0]];
+    let agg = split.train_round(batches.clone()).unwrap();
+    assert_eq!(agg, vec![1.5, 3.0]);
+    let replay = split.replay_microbatches().unwrap();
+    assert_eq!(replay, batches);
+}
