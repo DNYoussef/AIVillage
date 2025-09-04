@@ -184,7 +184,7 @@ class UnifiedPipeline:
                 phases.append(("CognatePhase", CognatePhase(cognate_config)))
 
             if self.config.enable_evomerge:
-                from ..phases.evomerge import EvoMergeConfig, EvoMergePhase
+                from .phases.evomerge import EvoMergeConfig, EvoMergePhase
 
                 evomerge_config = EvoMergeConfig(
                     population_size=self.config.evomerge_population_size,
@@ -197,7 +197,7 @@ class UnifiedPipeline:
                 phases.append(("EvoMergePhase", EvoMergePhase(evomerge_config)))
 
             if self.config.enable_quietstar:
-                from ..phases.quietstar import QuietSTaRConfig, QuietSTaRPhase
+                from .phases.quietstar import QuietSTaRConfig, QuietSTaRPhase
 
                 quietstar_config = QuietSTaRConfig(
                     thought_length=self.config.quietstar_thought_length,
@@ -210,7 +210,7 @@ class UnifiedPipeline:
                 phases.append(("QuietSTaRPhase", QuietSTaRPhase(quietstar_config)))
 
             if self.config.enable_initial_compression:
-                from ..phases.bitnet_compression import BitNetCompressionPhase, BitNetConfig
+                from .phases.bitnet_compression import BitNetCompressionPhase, BitNetConfig
 
                 bitnet_config = BitNetConfig(
                     bits=self.config.bitnet_bits,
@@ -221,7 +221,7 @@ class UnifiedPipeline:
                 phases.append(("BitNetCompressionPhase", BitNetCompressionPhase(bitnet_config)))
 
             if self.config.enable_training:
-                from ..phases.forge_training import ForgeTrainingConfig, ForgeTrainingPhase
+                from .phases.forge_training import ForgeTrainingConfig, ForgeTrainingPhase
 
                 training_config = ForgeTrainingConfig(
                     training_steps=self.config.training_steps,
@@ -240,7 +240,7 @@ class UnifiedPipeline:
                 phases.append(("ForgeTrainingPhase", ForgeTrainingPhase(training_config)))
 
             if self.config.enable_tool_baking:
-                from ..phases.tool_persona_baking import ToolPersonaBakingConfig, ToolPersonaBakingPhase
+                from .phases.tool_persona_baking import ToolPersonaBakingConfig, ToolPersonaBakingPhase
 
                 toolbaking_config = ToolPersonaBakingConfig(
                     tools_to_bake=self.config.tools_to_bake,
@@ -254,7 +254,7 @@ class UnifiedPipeline:
                 phases.append(("ToolPersonaBakingPhase", ToolPersonaBakingPhase(toolbaking_config)))
 
             if self.config.enable_adas:
-                from ..phases.adas import ADASConfig, ADASPhase
+                from .phases.adas import ADASConfig, ADASPhase
 
                 adas_config = ADASConfig(
                     population_size=20,
@@ -267,7 +267,7 @@ class UnifiedPipeline:
                 phases.append(("ADASPhase", ADASPhase(adas_config)))
 
             if self.config.enable_final_compression:
-                from ..phases.final_compression import FinalCompressionConfig, FinalCompressionPhase
+                from .phases.final_compression import FinalCompressionConfig, FinalCompressionPhase
 
                 compression_config = FinalCompressionConfig(
                     enable_seedlm=True,
