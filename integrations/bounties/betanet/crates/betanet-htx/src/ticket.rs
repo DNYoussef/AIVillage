@@ -8,6 +8,7 @@
 //! - Ticket expiration and renewal
 
 use bytes::{Buf, BufMut, Bytes, BytesMut};
+use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use rand::rngs::OsRng;
 use std::collections::{HashMap, HashSet};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -23,11 +24,6 @@ const DUPLICATE_WINDOW_SECONDS: u64 = 2 * 3600;
 const ED25519_KEY_LEN: usize = 32;
 /// Ed25519 signature length
 const ED25519_SIG_LEN: usize = 64;
-
-// Stub types for Ed25519 (would normally use ed25519-dalek)
-type SigningKey = [u8; 32];
-type VerifyingKey = [u8; 32];
-type Signature = [u8; 64];
 
 /// Access ticket errors
 #[derive(Debug, Error)]
@@ -155,8 +151,8 @@ impl TokenBucket {
 
         // Refill tokens based on elapsed time
         let elapsed = (now - self.last_refill) as f64;
-        self.tokens = (self.config.capacity as f64)
-            .min(self.tokens + (elapsed * self.config.refill_rate));
+        self.tokens =
+            (self.config.capacity as f64).min(self.tokens + (elapsed * self.config.refill_rate));
         self.last_refill = now;
 
         // Check if we have enough tokens
@@ -198,12 +194,12 @@ pub struct AccessTicket {
     pub max_bandwidth_bps: u32,
     pub max_connections: u32,
     pub allowed_protocols: Vec<String>,
-    pub issued_at: u64,       // Unix timestamp in milliseconds
-    pub expires_at: u64,      // Unix timestamp in milliseconds
-    pub nonce: Bytes,         // 12 bytes for replay protection
+    pub issued_at: u64,  // Unix timestamp in milliseconds
+    pub expires_at: u64, // Unix timestamp in milliseconds
+    pub nonce: Bytes,    // 12 bytes for replay protection
     pub sequence_number: u64,
-    pub signature: Bytes,     // Ed25519 signature
-    pub issuer_public_key: Bytes, // Ed25519 public key
+    pub signature: Option<Signature>,            // Ed25519 signature
+    pub issuer_public_key: Option<VerifyingKey>, // Ed25519 public key
 }
 
 impl AccessTicket {
@@ -232,8 +228,8 @@ impl AccessTicket {
             expires_at: now + (validity_seconds * 1000),
             nonce: Bytes::from(nonce),
             sequence_number: now, // Use timestamp as sequence number
-            signature: Bytes::new(),
-            issuer_public_key: Bytes::new(),
+            signature: None,
+            issuer_public_key: None,
         }
     }
 
@@ -296,7 +292,11 @@ impl AccessTicket {
 
         let final_size = buf.len();
         if final_size > MAX_TICKET_SIZE {
-            return Err(TicketError::InvalidSize(final_size, MIN_TICKET_SIZE, MAX_TICKET_SIZE));
+            return Err(TicketError::InvalidSize(
+                final_size,
+                MIN_TICKET_SIZE,
+                MAX_TICKET_SIZE,
+            ));
         }
 
         Ok(buf.freeze())
@@ -305,7 +305,11 @@ impl AccessTicket {
     /// Deserialize ticket from bytes
     pub fn deserialize(data: &[u8]) -> Result<Self, TicketError> {
         if data.len() < MIN_TICKET_SIZE {
-            return Err(TicketError::InvalidSize(data.len(), MIN_TICKET_SIZE, MAX_TICKET_SIZE));
+            return Err(TicketError::InvalidSize(
+                data.len(),
+                MIN_TICKET_SIZE,
+                MAX_TICKET_SIZE,
+            ));
         }
 
         let mut buf = Bytes::from(data.to_vec());
@@ -352,91 +356,57 @@ impl AccessTicket {
             expires_at,
             nonce,
             sequence_number: issued_at, // Use timestamp as sequence number
-            signature: Bytes::new(),
-            issuer_public_key: Bytes::new(),
+            signature: None,
+            issuer_public_key: None,
         })
     }
 
     /// Sign ticket with Ed25519 private key
-    pub fn sign(&mut self, private_key: &[u8]) -> Result<(), TicketError> {
-        use ed25519_dalek::{SigningKey, Signature, Signer, VerifyingKey};
-
-        if private_key.len() != ED25519_KEY_LEN {
-            return Err(TicketError::InvalidKeyLength {
-                expected: ED25519_KEY_LEN,
-                actual: private_key.len(),
-            });
-        }
-
-        // SECURITY FIX: Use proper Ed25519 signing
-        let signing_key = SigningKey::from_bytes(
-            private_key.try_into()
-                .map_err(|_| TicketError::InvalidKey("Invalid private key format".to_string()))?
-        );
-
+    pub fn sign(&mut self, private_key: &SigningKey) -> Result<(), TicketError> {
         // Derive the correct public key from the private key
-        let verifying_key: VerifyingKey = (&signing_key).into();
-        self.issuer_public_key = Bytes::from(verifying_key.to_bytes().to_vec());
+        let verifying_key: VerifyingKey = private_key.verifying_key();
+        self.issuer_public_key = Some(verifying_key);
 
         // Create ticket message to sign
         let mut message = Vec::new();
-        message.extend_from_slice(&self.subject);
+        message.extend_from_slice(self.subject_id.as_bytes());
         message.extend_from_slice(&self.issued_at.to_le_bytes());
         message.extend_from_slice(&self.expires_at.to_le_bytes());
         message.push(self.ticket_type as u8);
-        message.extend_from_slice(&self.nonce);
+        message.extend_from_slice(self.nonce.as_ref());
 
         // Sign the message
-        let signature: Signature = signing_key.sign(&message);
-        self.signature = Bytes::from(signature.to_bytes().to_vec());
+        let signature: Signature = private_key.sign(&message);
+        self.signature = Some(signature);
 
         Ok(())
     }
 
     /// Verify ticket signature using Ed25519
-    pub fn verify(&self, public_key: &[u8]) -> Result<bool, TicketError> {
-        use ed25519_dalek::{VerifyingKey, Signature, Verifier};
-
-        if public_key.len() != ED25519_KEY_LEN {
-            return Err(TicketError::InvalidKeyLength {
-                expected: ED25519_KEY_LEN,
-                actual: public_key.len(),
-            });
-        }
-
-        if self.signature.len() != ED25519_SIG_LEN {
-            return Ok(false);
-        }
-
-        // SECURITY FIX: Use proper Ed25519 verification
-        let verifying_key = VerifyingKey::from_bytes(
-            public_key.try_into()
-                .map_err(|_| TicketError::InvalidKey("Invalid public key format".to_string()))?
-        ).map_err(|_| TicketError::InvalidKey("Invalid public key".to_string()))?;
-
-        let signature = Signature::from_bytes(
-            self.signature.as_ref().try_into()
-                .map_err(|_| TicketError::InvalidKey("Invalid signature format".to_string()))?
-        );
+    pub fn verify(&self, public_key: &VerifyingKey) -> Result<bool, TicketError> {
+        let signature = match &self.signature {
+            Some(sig) => sig,
+            None => return Ok(false),
+        };
 
         // Recreate the message that was signed
         let mut message = Vec::new();
-        message.extend_from_slice(&self.subject);
+        message.extend_from_slice(self.subject_id.as_bytes());
         message.extend_from_slice(&self.issued_at.to_le_bytes());
         message.extend_from_slice(&self.expires_at.to_le_bytes());
         message.push(self.ticket_type as u8);
-        message.extend_from_slice(&self.nonce);
+        message.extend_from_slice(self.nonce.as_ref());
 
         // Verify the signature
-        Ok(verifying_key.verify(&message, &signature).is_ok())
+        Ok(public_key.verify(&message, signature).is_ok())
     }
 
     fn default_bandwidth(ticket_type: TicketType) -> u32 {
         match ticket_type {
-            TicketType::Standard => 1_000_000,     // 1 Mbps
-            TicketType::Premium => 10_000_000,     // 10 Mbps
-            TicketType::Burst => 100_000_000,      // 100 Mbps
-            TicketType::Maintenance => 100_000,    // 100 Kbps
+            TicketType::Standard => 1_000_000,  // 1 Mbps
+            TicketType::Premium => 10_000_000,  // 10 Mbps
+            TicketType::Burst => 100_000_000,   // 100 Mbps
+            TicketType::Maintenance => 100_000, // 100 Kbps
         }
     }
 
@@ -502,18 +472,12 @@ impl AccessTicketManager {
     }
 
     /// Add trusted issuer public key
-    pub fn add_trusted_issuer(&mut self, issuer_id: String, public_key: &[u8]) -> Result<(), TicketError> {
-        if public_key.len() != ED25519_KEY_LEN {
-            return Err(TicketError::InvalidKeyLength {
-                expected: ED25519_KEY_LEN,
-                actual: public_key.len(),
-            });
-        }
-
-        let mut verifying_key = [0u8; 32];
-        verifying_key.copy_from_slice(public_key);
-
-        self.trusted_issuers.insert(issuer_id, verifying_key);
+    pub fn add_trusted_issuer(
+        &mut self,
+        issuer_id: String,
+        public_key: &VerifyingKey,
+    ) -> Result<(), TicketError> {
+        self.trusted_issuers.insert(issuer_id, *public_key);
         Ok(())
     }
 
@@ -533,11 +497,11 @@ impl AccessTicketManager {
 
         // 3. Verify signature
         match ticket.verify(issuer_key) {
-            Ok(true) => {},
+            Ok(true) => {}
             Ok(false) => {
                 self.stats.tickets_rejected += 1;
                 return TicketStatus::InvalidSignature;
-            },
+            }
             Err(_) => {
                 self.stats.tickets_rejected += 1;
                 return TicketStatus::Malformed;
@@ -569,7 +533,7 @@ impl AccessTicketManager {
         subject_id: String,
         ticket_type: TicketType,
         validity_seconds: u64,
-        private_key: &[u8],
+        private_key: &SigningKey,
     ) -> Result<AccessTicket, TicketError> {
         if !self.trusted_issuers.contains_key(&issuer_id) {
             return Err(TicketError::UnknownIssuer(issuer_id));
@@ -752,18 +716,12 @@ pub struct ManagerStats {
 }
 
 /// Generate Ed25519 keypair for ticket issuing
-pub fn generate_issuer_keypair() -> (Bytes, Bytes) {
-    // SECURITY FIX: Use proper Ed25519 key generation
-    use ed25519_dalek::{SigningKey, VerifyingKey};
-
+pub fn generate_issuer_keypair() -> (SigningKey, VerifyingKey) {
     // Generate cryptographically secure signing key
     let signing_key = SigningKey::generate(&mut OsRng);
-    let verifying_key: VerifyingKey = (&signing_key).into();
+    let verifying_key = signing_key.verifying_key();
 
-    (
-        Bytes::from(signing_key.to_bytes().to_vec()),
-        Bytes::from(verifying_key.to_bytes().to_vec()),
-    )
+    (signing_key, verifying_key)
 }
 
 /// Get current Unix timestamp in seconds
@@ -855,35 +813,39 @@ pub mod rotation {
             // Define realistic transition probabilities based on web traffic patterns
 
             // From Cookie state
-            chain.add_transition(MarkovTransition::new(CarrierState::Cookie)
-                .add_transition(CarrierState::Cookie, 0.4) // Stay in cookie (session persistence)
-                .add_transition(CarrierState::QueryParam, 0.3) // Move to query params
-                .add_transition(CarrierState::BodyField, 0.2) // POST requests
-                .add_transition(CarrierState::Header, 0.1) // Custom headers
+            chain.add_transition(
+                MarkovTransition::new(CarrierState::Cookie)
+                    .add_transition(CarrierState::Cookie, 0.4) // Stay in cookie (session persistence)
+                    .add_transition(CarrierState::QueryParam, 0.3) // Move to query params
+                    .add_transition(CarrierState::BodyField, 0.2) // POST requests
+                    .add_transition(CarrierState::Header, 0.1), // Custom headers
             );
 
             // From QueryParam state
-            chain.add_transition(MarkovTransition::new(CarrierState::QueryParam)
-                .add_transition(CarrierState::Cookie, 0.35) // Back to cookies
-                .add_transition(CarrierState::QueryParam, 0.25) // Stay in query params
-                .add_transition(CarrierState::BodyField, 0.3) // Form submissions
-                .add_transition(CarrierState::Header, 0.1) // Custom headers
+            chain.add_transition(
+                MarkovTransition::new(CarrierState::QueryParam)
+                    .add_transition(CarrierState::Cookie, 0.35) // Back to cookies
+                    .add_transition(CarrierState::QueryParam, 0.25) // Stay in query params
+                    .add_transition(CarrierState::BodyField, 0.3) // Form submissions
+                    .add_transition(CarrierState::Header, 0.1), // Custom headers
             );
 
             // From BodyField state
-            chain.add_transition(MarkovTransition::new(CarrierState::BodyField)
-                .add_transition(CarrierState::Cookie, 0.45) // Response sets cookies
-                .add_transition(CarrierState::QueryParam, 0.2) // Redirect with params
-                .add_transition(CarrierState::BodyField, 0.25) // Multiple form fields
-                .add_transition(CarrierState::Header, 0.1) // API responses
+            chain.add_transition(
+                MarkovTransition::new(CarrierState::BodyField)
+                    .add_transition(CarrierState::Cookie, 0.45) // Response sets cookies
+                    .add_transition(CarrierState::QueryParam, 0.2) // Redirect with params
+                    .add_transition(CarrierState::BodyField, 0.25) // Multiple form fields
+                    .add_transition(CarrierState::Header, 0.1), // API responses
             );
 
             // From Header state
-            chain.add_transition(MarkovTransition::new(CarrierState::Header)
-                .add_transition(CarrierState::Cookie, 0.4) // Headers often set cookies
-                .add_transition(CarrierState::QueryParam, 0.25) // API parameters
-                .add_transition(CarrierState::BodyField, 0.25) // POST data
-                .add_transition(CarrierState::Header, 0.1) // Stay in headers
+            chain.add_transition(
+                MarkovTransition::new(CarrierState::Header)
+                    .add_transition(CarrierState::Cookie, 0.4) // Headers often set cookies
+                    .add_transition(CarrierState::QueryParam, 0.25) // API parameters
+                    .add_transition(CarrierState::BodyField, 0.25) // POST data
+                    .add_transition(CarrierState::Header, 0.1), // Stay in headers
             );
 
             chain
@@ -961,17 +923,17 @@ pub mod rotation {
             // σ ≈ 1.2 for reasonable spread
 
             let sizes = vec![
-                (50, 0.02),    // Very small padding
-                (100, 0.05),   // Small padding
-                (200, 0.10),   // Common small
-                (400, 0.15),   // Common medium-small
-                (600, 0.20),   // Peak of distribution
-                (800, 0.18),   // Common medium-large
-                (1200, 0.12),  // Large padding
-                (1800, 0.08),  // Larger padding
-                (2500, 0.05),  // Very large
-                (3500, 0.03),  // Rare very large
-                (4096, 0.02),  // Maximum size
+                (50, 0.02),   // Very small padding
+                (100, 0.05),  // Small padding
+                (200, 0.10),  // Common small
+                (400, 0.15),  // Common medium-small
+                (600, 0.20),  // Peak of distribution
+                (800, 0.18),  // Common medium-large
+                (1200, 0.12), // Large padding
+                (1800, 0.08), // Larger padding
+                (2500, 0.05), // Very large
+                (3500, 0.03), // Rare very large
+                (4096, 0.02), // Maximum size
             ];
 
             histogram.extend(sizes);
@@ -1068,30 +1030,48 @@ pub mod rotation {
             match carrier_type {
                 CarrierState::Cookie => {
                     let cookie_names = vec![
-                        "session_id", "auth_token", "user_prefs", "csrf_token",
-                        "tracking_id", "analytics", "cart_id", "locale",
+                        "session_id",
+                        "auth_token",
+                        "user_prefs",
+                        "csrf_token",
+                        "tracking_id",
+                        "analytics",
+                        "cart_id",
+                        "locale",
                     ];
                     cookie_names[rng.gen_range(0..cookie_names.len())].to_string()
                 }
                 CarrierState::QueryParam => {
                     let param_names = vec![
-                        "q", "search", "filter", "sort", "page", "limit",
-                        "category", "type", "format", "callback", "v", "ts",
+                        "q", "search", "filter", "sort", "page", "limit", "category", "type",
+                        "format", "callback", "v", "ts",
                     ];
                     param_names[rng.gen_range(0..param_names.len())].to_string()
                 }
                 CarrierState::BodyField => {
                     let field_names = vec![
-                        "data", "payload", "content", "message", "text",
-                        "description", "details", "metadata", "config",
+                        "data",
+                        "payload",
+                        "content",
+                        "message",
+                        "text",
+                        "description",
+                        "details",
+                        "metadata",
+                        "config",
                     ];
                     field_names[rng.gen_range(0..field_names.len())].to_string()
                 }
                 CarrierState::Header => {
                     let header_names = vec![
-                        "X-Request-ID", "X-Session-Token", "X-API-Key",
-                        "X-Client-Version", "X-Forwarded-For", "X-Real-IP",
-                        "X-Correlation-ID", "X-Trace-ID",
+                        "X-Request-ID",
+                        "X-Session-Token",
+                        "X-API-Key",
+                        "X-Client-Version",
+                        "X-Forwarded-For",
+                        "X-Real-IP",
+                        "X-Correlation-ID",
+                        "X-Trace-ID",
                     ];
                     header_names[rng.gen_range(0..header_names.len())].to_string()
                 }
@@ -1114,7 +1094,9 @@ pub mod rotation {
             // Split field value at the first '.' to separate ticket from padding
             let parts: Vec<&str> = self.field_value.splitn(2, '.').collect();
             if parts.is_empty() {
-                return Err(TicketError::Malformed("Invalid field value format".to_string()));
+                return Err(TicketError::Malformed(
+                    "Invalid field value format".to_string(),
+                ));
             }
 
             let ticket_b64 = parts[0];
@@ -1136,10 +1118,18 @@ pub mod rotation {
                     format!("{}={}", self.field_name, self.field_value)
                 }
                 CarrierState::QueryParam => {
-                    format!("{}={}", self.field_name, urlencoding::encode(&self.field_value))
+                    format!(
+                        "{}={}",
+                        self.field_name,
+                        urlencoding::encode(&self.field_value)
+                    )
                 }
                 CarrierState::BodyField => {
-                    format!("{}={}", self.field_name, urlencoding::encode(&self.field_value))
+                    format!(
+                        "{}={}",
+                        self.field_name,
+                        urlencoding::encode(&self.field_value)
+                    )
                 }
                 CarrierState::Header => {
                     format!("{}: {}", self.field_name, self.field_value)
@@ -1193,10 +1183,14 @@ pub mod rotation {
 
             // Update statistics
             self.rotation_stats.total_rotations += 1;
-            *self.rotation_stats.carrier_usage.entry(carrier_type).or_insert(0) += 1;
+            *self
+                .rotation_stats
+                .carrier_usage
+                .entry(carrier_type)
+                .or_insert(0) += 1;
             self.rotation_stats.total_padding_bytes += padding_size as u64;
-            self.rotation_stats.avg_padding_size =
-                self.rotation_stats.total_padding_bytes as f64 / self.rotation_stats.total_rotations as f64;
+            self.rotation_stats.avg_padding_size = self.rotation_stats.total_padding_bytes as f64
+                / self.rotation_stats.total_rotations as f64;
 
             // Create carrier
             TicketCarrier::new(carrier_type, ticket_data, padding_size, rng)
@@ -1218,8 +1212,8 @@ pub mod rotation {
 
 // Additional imports for ticket rotation features
 use base64;
-use urlencoding;
 use std::collections::VecDeque;
+use urlencoding;
 
 #[cfg(test)]
 mod tests {
@@ -1228,8 +1222,8 @@ mod tests {
     #[test]
     fn test_keypair_generation() {
         let (private_key, public_key) = generate_issuer_keypair();
-        assert_eq!(private_key.len(), 32);
-        assert_eq!(public_key.len(), 32);
+        assert_eq!(private_key.to_bytes().len(), ED25519_KEY_LEN);
+        assert_eq!(public_key.to_bytes().len(), ED25519_KEY_LEN);
     }
 
     #[test]
@@ -1261,8 +1255,14 @@ mod tests {
 
         let deserialized = AccessTicket::deserialize(&serialized).unwrap();
         // Note: issuer_id and subject_id are truncated to 8 bytes in compact format
-        assert_eq!(&ticket.issuer_id[..ticket.issuer_id.len().min(8)], &deserialized.issuer_id[..deserialized.issuer_id.len().min(8)]);
-        assert_eq!(&ticket.subject_id[..ticket.subject_id.len().min(8)], &deserialized.subject_id[..deserialized.subject_id.len().min(8)]);
+        assert_eq!(
+            &ticket.issuer_id[..ticket.issuer_id.len().min(8)],
+            &deserialized.issuer_id[..deserialized.issuer_id.len().min(8)]
+        );
+        assert_eq!(
+            &ticket.subject_id[..ticket.subject_id.len().min(8)],
+            &deserialized.subject_id[..deserialized.subject_id.len().min(8)]
+        );
         assert_eq!(ticket.ticket_type, deserialized.ticket_type);
     }
 
@@ -1270,7 +1270,9 @@ mod tests {
     fn test_ticket_validation() {
         let (private_key, public_key) = generate_issuer_keypair();
         let mut manager = AccessTicketManager::new(1000);
-        manager.add_trusted_issuer("test-issuer".to_string(), &public_key).unwrap();
+        manager
+            .add_trusted_issuer("test-issuer".to_string(), &public_key)
+            .unwrap();
 
         let ticket = manager
             .issue_ticket(
@@ -1318,7 +1320,9 @@ mod tests {
     fn test_replay_detection() {
         let (private_key, public_key) = generate_issuer_keypair();
         let mut manager = AccessTicketManager::new(1000);
-        manager.add_trusted_issuer("test-issuer".to_string(), &public_key).unwrap();
+        manager
+            .add_trusted_issuer("test-issuer".to_string(), &public_key)
+            .unwrap();
 
         let ticket = manager
             .issue_ticket(
@@ -1334,7 +1338,10 @@ mod tests {
         assert_eq!(manager.validate_ticket(&ticket), TicketStatus::Valid);
 
         // Second validation with same nonce should fail
-        assert_eq!(manager.validate_ticket(&ticket), TicketStatus::ReplayDetected);
+        assert_eq!(
+            manager.validate_ticket(&ticket),
+            TicketStatus::ReplayDetected
+        );
     }
 
     proptest::proptest! {
