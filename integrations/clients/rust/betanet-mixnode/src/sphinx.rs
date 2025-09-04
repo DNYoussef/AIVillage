@@ -11,6 +11,8 @@ use std::sync::{Arc, RwLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use hkdf::Hkdf;
+use rand::rngs::OsRng;
+use rand::RngCore;
 use sha2::{Digest, Sha256};
 use x25519_dalek::{PublicKey, StaticSecret};
 
@@ -284,8 +286,9 @@ pub struct SphinxStats {
 impl SphinxProcessor {
     /// Create new Sphinx processor
     pub fn new() -> Self {
-        // Use deterministic key for now to avoid RNG compatibility issues
-        let private_key_bytes = [42u8; 32]; // Reference implementation: cryptographically secure random generation
+        let mut rng = OsRng;
+        let mut private_key_bytes = [0u8; 32];
+        rng.fill_bytes(&mut private_key_bytes);
         let private_key = StaticSecret::from(private_key_bytes);
         let public_key = PublicKey::from(&private_key);
 
