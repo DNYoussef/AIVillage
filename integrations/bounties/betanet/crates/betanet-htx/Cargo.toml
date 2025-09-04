@@ -62,6 +62,8 @@ quic = ["dep:quinn"]
 noise-xk = []
 hybrid-kem-stub = []
 tls-fingerprint = []
+# Allow compilation without Noise-XK only when explicitly enabled
+insecure-handshake = []
 # Unstable examples are gated behind this feature
 unstable = []
 # Temporarily disable problematic features

@@ -5,6 +5,11 @@ use tracing::{debug, trace};
 
 use crate::{HtxError, Result};
 
+#[cfg(all(not(feature = "noise-xk"), not(feature = "insecure-handshake")))]
+compile_error!(
+    "Noise-XK negotiation is required. Enable the 'insecure-handshake' feature to bypass at your own risk."
+);
+
 /// Handshake state
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HandshakeState {
@@ -23,7 +28,7 @@ pub enum HandshakeState {
 /// HTX handshake
 pub struct Handshake {
     state: HandshakeState,
-    #[cfg(feature = "noise-xk")]
+    #[cfg(all(feature = "noise-xk", not(feature = "insecure-handshake")))]
     noise_handshake: Option<snow::HandshakeState>,
 }
 
@@ -32,7 +37,7 @@ impl Handshake {
     pub fn new_initiator() -> Result<Self> {
         debug!("Creating new initiator handshake");
 
-        #[cfg(feature = "noise-xk")]
+        #[cfg(all(feature = "noise-xk", not(feature = "insecure-handshake")))]
         {
             let params = "Noise_XK_25519_ChaChaPoly_SHA256";
             let builder = snow::Builder::new(params.parse().map_err(|e| {
@@ -54,7 +59,7 @@ impl Handshake {
             })
         }
 
-        #[cfg(not(feature = "noise-xk"))]
+        #[cfg(feature = "insecure-handshake")]
         Ok(Self {
             state: HandshakeState::Initial,
         })
@@ -64,7 +69,7 @@ impl Handshake {
     pub fn new_responder() -> Result<Self> {
         debug!("Creating new responder handshake");
 
-        #[cfg(feature = "noise-xk")]
+        #[cfg(all(feature = "noise-xk", not(feature = "insecure-handshake")))]
         {
             let params = "Noise_XK_25519_ChaChaPoly_SHA256";
             let builder = snow::Builder::new(params.parse().map_err(|e| {
@@ -86,7 +91,7 @@ impl Handshake {
             })
         }
 
-        #[cfg(not(feature = "noise-xk"))]
+        #[cfg(feature = "insecure-handshake")]
         Ok(Self {
             state: HandshakeState::Initial,
         })
@@ -96,7 +101,7 @@ impl Handshake {
     pub fn process_message(&mut self, message: &[u8]) -> Result<Option<Bytes>> {
         trace!("Processing handshake message of {} bytes", message.len());
 
-        #[cfg(feature = "noise-xk")]
+        #[cfg(all(feature = "noise-xk", not(feature = "insecure-handshake")))]
         {
             if let Some(ref mut noise) = self.noise_handshake {
                 let mut buf = vec![0u8; 65535];
@@ -116,16 +121,22 @@ impl Handshake {
             }
         }
 
-        // Stub implementation without Noise
-        self.state = HandshakeState::Completed;
-        Ok(Some(Bytes::from(message.to_vec())))
+        #[cfg(feature = "insecure-handshake")]
+        {
+            // Stub implementation when explicitly opted-out of Noise
+            self.state = HandshakeState::Completed;
+            return Ok(Some(Bytes::from(message.to_vec())));
+        }
+
+        // If we reach here with Noise disabled, something is wrong
+        Err(HtxError::Handshake("Noise-XK handshake not negotiated".into()))
     }
 
     /// Generate next handshake message
     pub fn generate_message(&mut self) -> Result<Bytes> {
         trace!("Generating handshake message");
 
-        #[cfg(feature = "noise-xk")]
+        #[cfg(all(feature = "noise-xk", not(feature = "insecure-handshake")))]
         {
             if let Some(ref mut noise) = self.noise_handshake {
                 let mut buf = vec![0u8; 65535];
@@ -140,8 +151,14 @@ impl Handshake {
             }
         }
 
-        // Stub implementation without Noise
-        Ok(Bytes::from("HELLO"))
+        #[cfg(feature = "insecure-handshake")]
+        {
+            // Stub implementation when explicitly opted-out of Noise
+            self.state = HandshakeState::Completed;
+            return Ok(Bytes::from("HELLO"));
+        }
+
+        Err(HtxError::Handshake("Noise-XK handshake not negotiated".into()))
     }
 
     /// Check if handshake is complete
@@ -169,5 +186,38 @@ mod tests {
         let handshake = Handshake::new_initiator().unwrap();
         assert_eq!(handshake.state, HandshakeState::Initial);
         assert!(!handshake.is_complete());
+    }
+
+    #[cfg(feature = "noise-xk")]
+    #[test]
+    fn handshake_fails_on_malformed_initiator_message() {
+        let mut initiator = Handshake::new_initiator().unwrap();
+        let mut responder = Handshake::new_responder().unwrap();
+
+        // Initiator generates first message
+        let mut msg = initiator.generate_message().unwrap().to_vec();
+        // Corrupt the message
+        if !msg.is_empty() {
+            msg[0] ^= 0x01;
+        }
+        assert!(responder.process_message(&msg).is_err());
+    }
+
+    #[cfg(feature = "noise-xk")]
+    #[test]
+    fn handshake_fails_on_malformed_responder_message() {
+        let mut initiator = Handshake::new_initiator().unwrap();
+        let mut responder = Handshake::new_responder().unwrap();
+
+        // Normal first flight
+        let msg1 = initiator.generate_message().unwrap();
+        responder.process_message(&msg1).unwrap();
+
+        // Responder message gets corrupted
+        let mut msg2 = responder.generate_message().unwrap().to_vec();
+        if !msg2.is_empty() {
+            msg2[0] ^= 0x01;
+        }
+        assert!(initiator.process_message(&msg2).is_err());
     }
 }
