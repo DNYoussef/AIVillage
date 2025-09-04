@@ -127,10 +127,44 @@ impl SphinxPacket {
         bytes
     }
 
-    /// Process packet (simple stub for tests)
+    /// Process packet by inspecting routing information and applying replay
+    /// protection. When the packet is destined for the final hop the decrypted
+    /// payload is returned. Otherwise `None` is returned signalling the packet
+    /// should be forwarded. The actual cryptographic transformation is handled
+    /// by the caller; here we focus on routing decisions and replay checking.
     pub fn process(&self) -> Result<Option<Vec<u8>>> {
-        // Simple test implementation - just return the payload
-        Ok(Some(self.payload.to_vec()))
+        use std::sync::OnceLock;
+
+        // Global replay protection instance. In a real node this would live on
+        // the processor, but for this simplified interface we keep a static
+        // bloom filter so tests can exercise replay behaviour without additional
+        // setup.
+        static REPLAY_PROTECTION: OnceLock<ReplayProtection> = OnceLock::new();
+        let replay = REPLAY_PROTECTION.get_or_init(ReplayProtection::new);
+
+        // Calculate hash of the packet for the bloom filter check
+        let mut hasher = Sha256::new();
+        hasher.update(self.header.to_bytes());
+        hasher.update(self.payload);
+        let packet_hash: [u8; 32] = hasher.finalize().into();
+
+        // Drop packet if it was seen before
+        if !replay.check_and_record(packet_hash) {
+            return Ok(None);
+        }
+
+        // Interpret the routing information. In this lightweight implementation
+        // we assume the routing info is already in plaintext form.
+        let routing = RoutingInfo::from_bytes(&self.header.routing_info);
+
+        if routing.is_final {
+            Ok(Some(self.payload.to_vec()))
+        } else {
+            // For non-final hops the caller is expected to forward the packet.
+            // We don't modify the packet here; returning `None` indicates it
+            // should be forwarded unchanged.
+            Ok(None)
+        }
     }
 }
 
@@ -143,6 +177,7 @@ impl Default for SphinxPacket {
 /// Replay protection system using memory-efficient Bloom filter
 pub struct ReplayProtection {
     seen_packets: Arc<RwLock<HashMap<[u8; 32], u64>>>,
+    bloom: RwLock<Vec<u8>>, // Simple bit-vector bloom filter
     _cleanup_interval: Duration,
 }
 
@@ -155,8 +190,11 @@ impl Default for ReplayProtection {
 impl ReplayProtection {
     /// Create new replay protection
     pub fn new() -> Self {
+        // Bloom filter with 1<<20 bits (~1MB)
+        let bloom_size = 1 << 20;
         Self {
             seen_packets: Arc::new(RwLock::new(HashMap::new())),
+            bloom: RwLock::new(vec![0u8; bloom_size / 8]),
             _cleanup_interval: Duration::from_secs(300), // Cleanup every 5 minutes
         }
     }
@@ -168,14 +206,17 @@ impl ReplayProtection {
             .unwrap()
             .as_secs();
 
-        let mut seen = self.seen_packets.write().unwrap();
+        // Fast path bloom filter check
+        if !self.insert_bloom(&packet_hash) {
+            return false; // Probable replay
+        }
 
-        // Check if already seen
+        let mut seen = self.seen_packets.write().unwrap();
         if seen.contains_key(&packet_hash) {
             return false; // Replay detected
         }
 
-        // Record packet
+        // Record packet with timestamp
         seen.insert(packet_hash, now);
 
         // Periodic cleanup
@@ -184,6 +225,23 @@ impl ReplayProtection {
         }
 
         true // New packet
+    }
+
+    /// Insert hash into bloom filter returning whether it was likely unseen.
+    fn insert_bloom(&self, hash: &[u8; 32]) -> bool {
+        let mut bloom = self.bloom.write().unwrap();
+        let bits = bloom.len() * 8;
+
+        // Two simple hash positions derived from SHA256 output
+        let h1 = u64::from_be_bytes(hash[0..8].try_into().unwrap()) as usize % bits;
+        let h2 = u64::from_be_bytes(hash[8..16].try_into().unwrap()) as usize % bits;
+
+        let bit1 = (bloom[h1 / 8] >> (h1 % 8)) & 1;
+        let bit2 = (bloom[h2 / 8] >> (h2 % 8)) & 1;
+        bloom[h1 / 8] |= 1 << (h1 % 8);
+        bloom[h2 / 8] |= 1 << (h2 % 8);
+
+        bit1 == 0 || bit2 == 0
     }
 
     /// Get number of tracked packets
@@ -531,13 +589,20 @@ mod tests {
         let packet = SphinxPacket::new();
         let result = packet.process();
         assert!(result.is_ok());
-        assert!(result.unwrap().is_some()); // Should return some data
+        assert!(result.unwrap().is_none());
 
-        let bytes = packet.to_bytes();
+        // Final destination packet should return payload
+        let mut final_packet = SphinxPacket::new();
+        final_packet.header.routing_info = RoutingInfo::new([0u8;16], 0, 0, true).to_bytes();
+        final_packet.payload[..3].copy_from_slice(b"end");
+        let final_res = final_packet.process();
+        assert_eq!(final_res.unwrap(), Some(final_packet.payload.to_vec()));
+
+        let bytes = final_packet.to_bytes();
         assert_eq!(bytes.len(), SPHINX_HEADER_SIZE + SPHINX_PAYLOAD_SIZE);
 
         let parsed = SphinxPacket::from_bytes(&bytes).unwrap();
-        assert_eq!(parsed.header, packet.header);
-        assert_eq!(parsed.payload, packet.payload);
+        assert_eq!(parsed.header, final_packet.header);
+        assert_eq!(parsed.payload, final_packet.payload);
     }
 }
