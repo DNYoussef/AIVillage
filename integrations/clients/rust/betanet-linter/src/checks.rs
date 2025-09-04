@@ -56,6 +56,18 @@ pub struct CheckContext {
     pub content: String,
 }
 
+impl CheckContext {
+    /// Get iterator over lines with line numbers starting at 1
+    pub fn lines(&self) -> impl Iterator<Item = (usize, &str)> {
+        self.content.lines().enumerate().map(|(i, line)| (i + 1, line))
+    }
+
+    /// Get reference to the file path being checked
+    pub fn path(&self) -> &std::path::Path {
+        &self.file_path
+    }
+}
+
 /// Security rule for unsafe code
 pub struct UnsafeCodeRule;
 
