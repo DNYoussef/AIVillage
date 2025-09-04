@@ -31,7 +31,6 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 bincode = { workspace = true }
-# rcgen = { version = "0.13", optional = true }
 # Transport and multiplexing
 futures = { workspace = true }
 # TLS fingerprint integration (temporarily disabled)
@@ -44,7 +43,8 @@ webpki-roots = { workspace = true }
 base64 = "0.21"
 urlencoding = "2.1"
 hex = "0.4"
-# rcgen = "0.13"
+# Self-signed certificate generation for tests
+rcgen = "0.13"
 # trust-dns-resolver = { version = "0.23", optional = true }
 
 [dev-dependencies]

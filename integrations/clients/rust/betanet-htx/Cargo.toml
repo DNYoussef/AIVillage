@@ -31,7 +31,7 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 bincode = { workspace = true }
-rcgen = { version = "0.13", optional = true }
+rcgen = "0.13"
 # Transport and multiplexing
 futures = { workspace = true }
 # TLS fingerprint integration (temporarily disabled)
@@ -58,7 +58,7 @@ rand_distr = "0.4"
 [features]
 default = ["tcp", "noise-xk"]
 tcp = []
-quic = ["dep:quinn", "dep:rcgen", "dep:trust-dns-resolver"]
+quic = ["dep:quinn", "dep:trust-dns-resolver"]
 noise-xk = []
 hybrid-kem-stub = []
 tls-fingerprint = []
