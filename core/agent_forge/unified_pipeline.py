@@ -26,7 +26,11 @@ import torch
 import torch.nn as nn
 
 # Import phase controller infrastructure
-from .core.phase_controller import PhaseController, PhaseOrchestrator, PhaseResult
+from agent_forge.core.phase_controller import (
+    PhaseController,
+    PhaseOrchestrator,
+    PhaseResult,
+)
 
 logger = logging.getLogger(__name__)
 
