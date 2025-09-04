@@ -2,6 +2,9 @@
 //!
 //! Implements the Transport trait for TCP connections with TLS encryption
 //! and optional fingerprint camouflage.
+//!
+//! In production, override the self-signed defaults by supplying a
+//! [`TlsAcceptor`] with real certificates via [`TcpTransport::with_server_tls`].
 
 use crate::transport::{
     StreamId, Transport, TransportConfig, TransportConnection, TransportListener, TransportStats,
@@ -10,7 +13,8 @@ use crate::transport::{
 use crate::{Frame, FrameBuffer, HtxError, NoiseXK, Result};
 use async_trait::async_trait;
 use bytes::{Bytes, BytesMut};
-use rustls::pki_types::ServerName;
+use rcgen::generate_simple_self_signed;
+use rustls::pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer, ServerName};
 use rustls::{ClientConfig, RootCertStore, ServerConfig};
 use std::net::SocketAddr;
 use std::pin::Pin;
@@ -96,14 +100,27 @@ impl TcpTransport {
         Ok(config)
     }
 
-    /// Create default server TLS configuration (for testing)
-    /// Note: This is a placeholder - users must provide their own certificates
-    pub fn default_server_tls_config() -> Result<ServerConfig> {
-        Err(HtxError::Config(
-            "Server TLS configuration requires external certificates. \
-             Use with_server_tls() with your own TlsAcceptor."
-                .to_string(),
-        ))
+    /// Create default server TLS configuration using a self-signed certificate.
+    ///
+    /// This is intended for tests and local development. For production,
+    /// generate a [`TlsAcceptor`] with your real certificates and provide it
+    /// via [`TcpTransport::with_server_tls`].
+    pub fn default_server_tls_config() -> Result<(ServerConfig, CertificateDer<'static>)> {
+        let cert = generate_simple_self_signed(["localhost".to_string()]).map_err(|e| {
+            HtxError::Config(format!("failed to generate self-signed cert: {e}"))
+        })?;
+
+        let cert_der = CertificateDer::from(cert.cert.der().to_vec());
+        let key_der = PrivateKeyDer::from(PrivatePkcs8KeyDer::from(
+            cert.key_pair.serialize_der(),
+        ));
+
+        let config = ServerConfig::builder()
+            .with_no_client_auth()
+            .with_single_cert(vec![cert_der.clone()], key_der)
+            .map_err(|e| HtxError::Config(format!("TLS config error: {e}")))?;
+
+        Ok((config, cert_der))
     }
 }
 
@@ -440,5 +457,41 @@ mod tests {
         let stats = TransportStats::new();
         assert_eq!(stats.bytes_sent, 0);
         assert_eq!(stats.bytes_received, 0);
+    }
+
+    #[tokio::test]
+    async fn test_loopback_tls_server() {
+        let config = TransportConfig::default();
+
+        let (server_cfg, cert) = TcpTransport::default_server_tls_config().unwrap();
+        let acceptor = TlsAcceptor::from(Arc::new(server_cfg));
+        let mut server = TcpTransport::new(config.clone()).with_server_tls(acceptor);
+        let mut listener = server
+            .bind("127.0.0.1:0".parse().unwrap())
+            .await
+            .unwrap();
+        let addr = listener.local_addr().unwrap();
+
+        let accept_task = tokio::spawn(async move {
+            listener.accept().await.unwrap();
+        });
+
+        let mut root_store = RootCertStore::empty();
+        root_store.add(cert).unwrap();
+        root_store.extend(webpki_roots::TLS_SERVER_ROOTS.iter().map(|ta| {
+            rustls::pki_types::TrustAnchor {
+                subject: ta.subject.into(),
+                subject_public_key_info: ta.spki.into(),
+                name_constraints: ta.name_constraints.map(|nc| nc.into()),
+            }
+        }));
+        let client_cfg = ClientConfig::builder()
+            .with_root_certificates(root_store)
+            .with_no_client_auth();
+        let connector = TlsConnector::from(Arc::new(client_cfg));
+        let client = TcpTransport::new(config).with_client_tls(connector);
+
+        let _conn = client.connect(addr).await.unwrap();
+        accept_task.await.unwrap();
     }
 }
