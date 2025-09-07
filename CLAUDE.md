@@ -114,7 +114,144 @@ This project uses SPARC (Specification, Pseudocode, Architecture, Refinement, Co
 ### Migration & Planning
 `migration-planner`, `swarm-init`
 
-## Claude Code vs MCP Tools
+## 🧠 Gemini CLI Integration - Large Context Analysis
+
+### Dual-AI Decision Matrix
+
+**Use Gemini CLI for**:
+- Large codebase analysis (>100KB files or >50 files)
+- Implementation verification across entire projects
+- Architectural understanding and pattern detection
+- Multi-directory comparative analysis
+- Research with Google Search grounding
+- Security vulnerability scanning across codebase
+- Feature implementation validation
+
+**Use Claude Code for**:
+- File editing and implementation
+- MCP agent coordination and swarm orchestration
+- SPARC methodology execution
+- Concurrent task execution
+- Git operations and project management
+- TodoWrite and task tracking
+
+### Gemini CLI Command Patterns and File Inclusion Syntax
+
+**Use the `@` syntax to include files and directories in your Gemini prompts. The paths should be relative to WHERE you run the gemini command:**
+
+#### Basic File and Directory Analysis:
+```bash
+# Single file analysis
+gemini -p "@src/main.py Explain this file's purpose and structure"
+
+# Multiple files
+gemini -p "@package.json @src/index.js Analyze the dependencies used in the code"
+
+# Entire directory
+gemini -p "@src/ Summarize the architecture of this codebase"
+
+# Multiple directories
+gemini -p "@src/ @tests/ Analyze test coverage for the source code"
+
+# Current directory and subdirectories
+gemini -p "@./ Give me an overview of this entire project"
+
+# All files flag (alternative)
+gemini --all_files -p "Analyze the project structure and dependencies"
+```
+
+#### Implementation Verification Examples:
+```bash
+# Check if a feature is implemented
+gemini -p "@src/ @lib/ Has dark mode been implemented in this codebase? Show me the relevant files and functions"
+
+# Verify authentication implementation
+gemini -p "@src/ @middleware/ Is JWT authentication implemented? List all auth-related endpoints and middleware"
+
+# Check for specific patterns
+gemini -p "@src/ Are there any React hooks that handle WebSocket connections? List them with file paths"
+
+# Verify error handling
+gemini -p "@src/ @api/ Is proper error handling implemented for all API endpoints? Show examples of try-catch blocks"
+
+# Check for rate limiting
+gemini -p "@backend/ @middleware/ Is rate limiting implemented for the API? Show the implementation details"
+
+# Verify caching strategy
+gemini -p "@src/ @lib/ @services/ Is Redis caching implemented? List all cache-related functions and their usage"
+
+# Check for specific security measures
+gemini -p "@src/ @api/ Are SQL injection protections implemented? Show how user inputs are sanitized"
+
+# Verify test coverage for features
+gemini -p "@src/payment/ @tests/ Is the payment processing module fully tested? List all test cases"
+```
+
+#### Architecture and Pattern Analysis:
+```bash
+# Architecture Analysis
+gemini -p "@./ Analyze entire project architecture and dependencies"
+
+# Implementation Verification
+gemini -p "@src/ @tests/ Verify [feature] implementation with test coverage"
+
+# Security Analysis
+gemini --all_files -p "Scan for security vulnerabilities and implementation gaps"
+
+# Multi-directory Analysis
+gemini -p "@backend/ @frontend/ @shared/ Check API consistency across layers"
+
+# Pattern Detection
+gemini -p "@./ Find all instances of [pattern] and suggest improvements"
+```
+
+### When to Use Gemini CLI
+
+**Use `gemini -p` when:**
+- Analyzing entire codebases or large directories
+- Comparing multiple large files
+- Need to understand project-wide patterns or architecture
+- Current context window is insufficient for the task
+- Working with files totaling more than 100KB
+- Verifying if specific features, patterns, or security measures are implemented
+- Checking for the presence of certain coding patterns across the entire codebase
+
+### Important Notes for Gemini CLI Usage
+
+- **Paths in `@` syntax are relative to your current working directory** when invoking gemini
+- **The CLI will include file contents directly in the context**
+- **No need for --yolo flag for read-only analysis**
+- **Gemini's context window can handle entire codebases** that would overflow Claude's context
+- **When checking implementations, be specific** about what you're looking for to get accurate results
+- **Authentication required**: Set `GEMINI_API_KEY` environment variable
+- **Rate limits apply**: Free tier has quota restrictions, use `gemini-2.5-flash` for higher limits
+
+### 🔄 Dual-AI Workflow Patterns
+
+#### Three-Phase Integration Pattern
+
+**Phase 1: Analysis (Gemini CLI)**
+```bash
+gemini -p "@./ Analyze codebase for [specific requirement or issue]"
+```
+
+**Phase 2: Implementation (Claude Code + MCP)**
+```javascript
+[Single Message - ALL operations]:
+  Task("Implement based on Gemini analysis", analysis_results, "coder")
+  Task("Create comprehensive tests", test_requirements, "tester")
+  Task("Review security implications", security_analysis, "reviewer")
+  mcp__claude-flow__task_orchestrate { task: "coordinate_implementation" }
+  TodoWrite({ todos: [...8-10 todos based on Gemini analysis...] })
+  Write("multiple files based on analysis...")
+```
+
+**Phase 3: Verification (Gemini CLI)**
+```bash
+gemini -p "@./ @tests/ Verify implementation meets requirements and standards"
+```
+
+## Claude Code vs MCP Tools vs Gemini CLI
 
 ### Claude Code Handles ALL EXECUTION:
 - **Task tool**: Spawn and run agents concurrently for actual work
@@ -137,7 +274,15 @@ This project uses SPARC (Specification, Pseudocode, Architecture, Refinement, Co
 - Performance tracking
 - GitHub integration
 
-**KEY**: MCP coordinates the strategy, Claude Code's Task tool executes with real agents.
+### Gemini CLI Handles LARGE-SCALE ANALYSIS:
+- Massive context window analysis (1M tokens)
+- Google Search grounding for real-time information
+- Implementation verification across entire codebases
+- Architectural pattern detection
+- Security vulnerability scanning
+- Cross-directory comparative analysis
+
+**KEY**: MCP coordinates strategy, Claude Code executes with real agents, Gemini CLI provides large-context analysis and verification.
 
 ## Quick Setup
 

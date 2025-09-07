@@ -1,0 +1,229 @@
+{
+  "security_monitoring_config": {
+    "version": "1.0",
+    "enabled": true,
+    "monitoring_intervals": {
+      "realtime_events": 5,
+      "threat_analysis": 30,
+      "reputation_updates": 60,
+      "security_reports": 3600
+    },
+    "threat_detection": {
+      "enabled_detectors": [
+        "byzantine_behavior",
+        "sybil_attack",
+        "eclipse_attack",
+        "dos_attack",
+        "gradient_inversion",
+        "model_poisoning",
+        "timing_attack",
+        "collusion_detection"
+      ],
+      "detection_thresholds": {
+        "byzantine": 0.7,
+        "sybil": 0.8,
+        "eclipse": 0.6,
+        "dos": 0.9,
+        "gradient_inversion": 0.8,
+        "model_poisoning": 0.7,
+        "timing_attack": 0.6,
+        "collusion": 0.8
+      },
+      "reputation_thresholds": {
+        "trusted": 0.8,
+        "suspicious": 0.5,
+        "malicious": 0.2
+      }
+    },
+    "p2p_security": {
+      "connection_monitoring": {
+        "max_connections_per_minute": 5,
+        "max_messages_per_minute": 100,
+        "connection_timeout": 30,
+        "heartbeat_interval": 10
+      },
+      "message_validation": {
+        "max_message_size": 1048576,
+        "max_ttl": 100,
+        "require_signature": true,
+        "enable_replay_protection": true
+      },
+      "peer_reputation": {
+        "initial_score": 0.3,
+        "decay_rate": 0.1,
+        "penalty_multiplier": 0.3,
+        "reward_multiplier": 0.1
+      }
+    },
+    "api_security": {
+      "rate_limiting": {
+        "requests_per_minute": 60,
+        "burst_allowance": 10,
+        "ban_duration": 3600
+      },
+      "input_validation": {
+        "max_request_size": 10485760,
+        "sanitize_html": true,
+        "block_sql_patterns": true,
+        "require_csrf_token": true
+      },
+      "authentication": {
+        "max_login_attempts": 5,
+        "lockout_duration": 1800,
+        "session_timeout": 3600,
+        "require_mfa": false
+      }
+    },
+    "cryptographic_security": {
+      "key_management": {
+        "key_rotation_interval": 2592000,
+        "backup_threshold": 24,
+        "encryption_algorithm": "AES-256-GCM",
+        "signature_algorithm": "ECDSA-P256"
+      },
+      "threshold_cryptography": {
+        "default_threshold": 3,
+        "max_participants": 10,
+        "key_share_validation": true,
+        "dkg_timeout": 300
+      }
+    },
+    "alert_configuration": {
+      "severity_levels": {
+        "critical": {
+          "immediate_response": true,
+          "notification_channels": ["email", "slack", "sms"],
+          "auto_mitigation": true
+        },
+        "high": {
+          "immediate_response": true,
+          "notification_channels": ["email", "slack"],
+          "auto_mitigation": false
+        },
+        "medium": {
+          "immediate_response": false,
+          "notification_channels": ["email"],
+          "auto_mitigation": false
+        },
+        "low": {
+          "immediate_response": false,
+          "notification_channels": ["log"],
+          "auto_mitigation": false
+        }
+      },
+      "notification_settings": {
+        "email": {
+          "enabled": true,
+          "recipients": ["security@aivillage.com"],
+          "rate_limit": 10
+        },
+        "slack": {
+          "enabled": true,
+          "webhook_url": "${SLACK_WEBHOOK_URL}",
+          "channel": "#security-alerts"
+        },
+        "sms": {
+          "enabled": false,
+          "provider": "twilio",
+          "recipients": []
+        }
+      }
+    },
+    "automated_responses": {
+      "ip_blocking": {
+        "enabled": true,
+        "block_duration": 3600,
+        "threshold_violations": 3
+      },
+      "peer_isolation": {
+        "enabled": true,
+        "isolation_duration": 1800,
+        "reputation_threshold": 0.2
+      },
+      "service_isolation": {
+        "enabled": false,
+        "circuit_breaker_threshold": 10,
+        "recovery_timeout": 300
+      }
+    },
+    "logging_configuration": {
+      "security_events": {
+        "enabled": true,
+        "log_level": "INFO",
+        "retention_days": 90,
+        "encrypt_logs": true
+      },
+      "audit_trail": {
+        "enabled": true,
+        "include_request_body": false,
+        "include_response_body": false,
+        "retention_days": 365
+      },
+      "performance_metrics": {
+        "enabled": true,
+        "sample_rate": 0.1,
+        "retention_days": 30
+      }
+    },
+    "compliance_requirements": {
+      "data_protection": {
+        "encrypt_pii": true,
+        "anonymize_logs": true,
+        "data_retention_policy": 365
+      },
+      "access_control": {
+        "principle_least_privilege": true,
+        "regular_access_review": true,
+        "segregation_of_duties": true
+      }
+    },
+    "security_testing": {
+      "automated_tests": {
+        "enabled": true,
+        "schedule": "0 2 * * *",
+        "test_suites": [
+          "authentication",
+          "authorization",
+          "input_validation",
+          "crypto_validation",
+          "p2p_security"
+        ]
+      },
+      "penetration_testing": {
+        "frequency": "monthly",
+        "external_provider": true,
+        "scope": ["api", "p2p", "infrastructure"]
+      }
+    },
+    "incident_response": {
+      "escalation_matrix": {
+        "critical": ["security_team", "engineering_lead", "cto"],
+        "high": ["security_team", "engineering_lead"],
+        "medium": ["security_team"],
+        "low": ["on_call_engineer"]
+      },
+      "response_procedures": {
+        "containment": {
+          "isolate_affected_systems": true,
+          "preserve_evidence": true,
+          "notify_stakeholders": true
+        },
+        "eradication": {
+          "remove_threat": true,
+          "patch_vulnerabilities": true,
+          "update_security_controls": true
+        },
+        "recovery": {
+          "restore_systems": true,
+          "monitor_closely": true,
+          "validate_security": true
+        },
+        "lessons_learned": {
+          "conduct_postmortem": true,
+          "update_procedures": true,
+          "share_knowledge": true
+        }
+      }
+    }
+  }
+}
