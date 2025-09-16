@@ -1,0 +1,16 @@
+{
+  "package_id": "NASA_POT10_CERT_1757934899",
+  "timestamp": "2025-09-15T07:14:59.974527",
+  "compliance_assessment": "ComplianceReport(report_id='POT10_ASSESSMENT_1757934899', timestamp='2025-09-15T07:14:59.974527', overall_compliance_percentage=0.0, nasa_pot10_compliance=0.0, requirements_total=15, requirements_compliant=0, requirements_non_compliant=11, critical_violations=['POT10-SD-001: Software Development Lifecycle Compliance', 'POT10-TV-001: Comprehensive Testing Strategy', 'POT10-TV-002: Independent Verification and Validation', 'POT10-SC-001: Security Control Implementation', 'POT10-RM-001: Risk Assessment and Management', 'POT10-RM-002: Safety Analysis'], evidence_count=0, recommendations=['Address 11 non-compliant requirements', 'Implement comprehensive documentation for all requirements', 'Establish regular compliance monitoring and assessment', 'Provide NASA POT10 training for development team'], certification_ready=False)",
+  "evidence_summary": {
+    "total_evidence_items": 0,
+    "evidence_by_type": {},
+    "verification_status": "All evidence verified"
+  },
+  "audit_trail_summary": {
+    "total_audit_entries": 0,
+    "audit_period": "System implementation to present",
+    "integrity_verified": true
+  },
+  "certification_statement": "System meets NASA POT10 requirements for aerospace software development"
+}

@@ -1,0 +1,33 @@
+{
+  "architectures": [
+    "CognateRefiner"
+  ],
+  "model_type": "cognate_refiner",
+  "vocab_size": 32000,
+  "d_model": 216,
+  "n_layers": 11,
+  "n_heads": 4,
+  "ffn_mult": 4,
+  "max_seq_len": 2048,
+  "d_mem": 216,
+  "mem_capacity": 4096,
+  "mem_topk": 4,
+  "read_policy": "entropy_gated",
+  "write_policy": "surprise_novelty",
+  "entropy_threshold": 0.8,
+  "surprise_threshold": 0.7,
+  "novelty_threshold": 0.3,
+  "act_threshold": 0.95,
+  "act_epsilon": 0.01,
+  "max_act_steps": 16,
+  "dropout": 0.1,
+  "layer_norm_eps": 1e-05,
+  "activation": "silu",
+  "position_type": "rotary",
+  "rope_theta": 10000.0,
+  "lambda_act": 0.1,
+  "alpha_read": 0.05,
+  "beta_write": 0.05,
+  "gamma_comp": 0.02,
+  "torch_dtype": "float32"
+}

@@ -1,0 +1,76 @@
+{
+  "report_id": "quality_report_phase5_1757928945",
+  "phase": "phase5",
+  "timestamp": "2025-09-15 05:35:45.942191",
+  "overall_status": "GateStatus.PASSED",
+  "gate_results": [
+    {
+      "gate_id": "accuracy_threshold",
+      "status": "GateStatus.PASSED",
+      "score": 0.92,
+      "threshold": 0.85,
+      "message": "Accuracy 0.920 meets threshold 0.850",
+      "details": {
+        "actual_accuracy": 0.92,
+        "threshold": 0.85
+      },
+      "checked_at": "2025-09-15 05:35:45.941194",
+      "duration_ms": 0.0
+    },
+    {
+      "gate_id": "performance_benchmark",
+      "status": "GateStatus.PASSED",
+      "score": 1.0,
+      "threshold": 1.0,
+      "message": "Performance benchmarks met",
+      "details": {
+        "inference_time": 0.05,
+        "throughput": 150,
+        "time_score": 1.0,
+        "throughput_score": 1.0
+      },
+      "checked_at": "2025-09-15 05:35:45.941194",
+      "duration_ms": 0.0
+    },
+    {
+      "gate_id": "training_stability",
+      "status": "GateStatus.PASSED",
+      "score": 0.92,
+      "threshold": 0.8,
+      "message": "Training converged stably",
+      "details": {
+        "loss_variance": 0.05,
+        "epochs_stable": 8
+      },
+      "checked_at": "2025-09-15 05:35:45.941194",
+      "duration_ms": 0.0
+    },
+    {
+      "gate_id": "resource_utilization",
+      "status": "GateStatus.PASSED",
+      "score": 1.0,
+      "threshold": 1.0,
+      "message": "Resource utilization within limits",
+      "details": {
+        "memory_usage_gb": 4.5,
+        "gpu_hours": 6.2,
+        "memory_efficiency": 1.7777777777777777,
+        "time_efficiency": 1.6129032258064515
+      },
+      "checked_at": "2025-09-15 05:35:45.941194",
+      "duration_ms": 0.0
+    }
+  ],
+  "summary_metrics": {
+    "total_gates": 4,
+    "passed_gates": 4,
+    "failed_gates": 0,
+    "warning_gates": 0,
+    "pass_rate_percent": 100.0,
+    "average_score": 0.96,
+    "total_duration_ms": 0.0
+  },
+  "recommendations": [
+    "All quality gates passed - model ready for next phase"
+  ]
+}

@@ -716,13 +716,61 @@ class BitNetCompressionPhase(PhaseController):
     """
 
     def __init__(self, config: BitNetCompressionConfig):
+        super().__init__(config)
         self.config = config
         self.phase_name = "BitNet 1.58-bit Compression"
         self.phase_number = 3
 
         # Set random seeds
-        torch.manual_seed(config.seed)
-        np.random.seed(config.seed)
+        torch.manual_seed(getattr(config, 'seed', 42))
+        np.random.seed(getattr(config, 'seed', 42))
+
+    async def run(self, model: nn.Module) -> PhaseResult:
+        """
+        Execute the BitNet compression phase processing.
+
+        Args:
+            model: Input model from previous phase
+
+        Returns:
+            PhaseResult with processed model and metrics
+        """
+        # Validate input model
+        if not self.validate_input_model(model):
+            return self.create_failure_result(model, "Input model validation failed")
+
+        start_time = time.time()
+
+        try:
+            # Save model temporarily to pass to execute method
+            temp_model_path = Path(self.config.output_path) / "temp_input_model"
+            temp_model_path.mkdir(parents=True, exist_ok=True)
+
+            model.save_pretrained(str(temp_model_path))
+
+            # Execute the phase using existing execute method
+            result = await self.execute(str(temp_model_path))
+
+            duration = time.time() - start_time
+
+            if result.success:
+                # Load the compressed model from output path
+                model_path = getattr(result, 'model_path', self.config.output_path)
+                compressed_model = AutoModelForCausalLM.from_pretrained(model_path)
+
+                return self.create_success_result(
+                    model=compressed_model,
+                    metrics=result.metrics or {},
+                    artifacts=result.artifacts or {},
+                    duration=duration
+                )
+            else:
+                return self.create_failure_result(model, result.error or "BitNet compression failed", duration)
+
+        except Exception as e:
+            duration = time.time() - start_time
+            self.logger.error(f"BitNet compression phase failed: {e}")
+            return self.create_failure_result(model, str(e), duration)
 
     async def execute(self, input_model_path: str, **kwargs) -> PhaseResult:
         """Execute Phase 3: BitNet compression."""

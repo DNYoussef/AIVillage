@@ -1,0 +1,1183 @@
+openapi: 3.0.0
+info:
+  title: FIPS 140-2 Cryptographic Services API
+  version: 1.0.0
+  description: |
+    FIPS 140-2 Level 3 compliant cryptographic services API for defense industry
+    applications requiring the highest level of security for Controlled Unclassified
+    Information (CUI) protection.
+
+    **Classification: CONTROLLED UNCLASSIFIED INFORMATION (CUI)**
+
+    **Compliance Standards:**
+    - FIPS 140-2 Level 3 Hardware Security Module
+    - NIST SP 800-57 Key Management
+    - DFARS 252.204-7012 CUI Protection
+    - Common Criteria EAL4+ Certification
+
+    **Cryptographic Capabilities:**
+    - AES-256-GCM encryption/decryption
+    - RSA-4096 asymmetric operations
+    - SHA-256/384/512 hashing
+    - HMAC message authentication
+    - PBKDF2/HKDF key derivation
+    - X.509 certificate operations
+
+  contact:
+    name: Cryptographic Services Team
+    email: crypto@defense.contractor
+  license:
+    name: Proprietary Defense Contractor License
+    url: https://defense.contractor/crypto-license
+
+servers:
+  - url: https://crypto-api.defense.contractor/v1
+    description: Production Cryptographic Services (HSM-backed)
+  - url: https://crypto-staging.defense.contractor/v1
+    description: Staging Environment (Software-only testing)
+
+security:
+  - CryptoApiKey: []
+  - PIVAuthentication: []
+  - HSMAccess: []
+
+paths:
+  /crypto/encrypt:
+    post:
+      summary: Encrypt Data with FIPS-Approved Algorithm
+      description: |
+        Encrypts data using FIPS 140-2 approved symmetric encryption algorithms.
+        All operations are performed within the certified Hardware Security Module.
+
+        **Supported Algorithms:**
+        - AES-256-GCM (Recommended for CUI)
+        - AES-256-CBC (Legacy compatibility)
+        - ChaCha20-Poly1305 (High-performance alternative)
+
+        **Security Features:**
+        - Authenticated encryption with associated data (AEAD)
+        - Cryptographically secure random IV generation
+        - Key derivation from master keys in HSM
+        - Comprehensive audit logging
+
+      operationId: encryptData
+      tags:
+        - Symmetric Encryption
+      security:
+        - CryptoApiKey: []
+        - HSMAccess: [encrypt]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EncryptRequest'
+            example:
+              algorithm: "AES-256-GCM"
+              data: "VGhpcyBpcyBzZW5zaXRpdmUgQ1VJIGRhdGE="
+              key_id: "cui-master-key-2025"
+              associated_data: "CUI//SP-PRIV classification"
+              context:
+                classification: "CUI//SP-PRIV"
+                handling_caveat: "NOFORN"
+                originator: "defense.contractor"
+      responses:
+        '200':
+          description: Data encrypted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncryptResponse'
+              example:
+                operation_id: "enc_20250914_001"
+                encrypted_data: "Zm9vYmFyYmF6cXV4"
+                iv: "MTIzNDU2Nzg5MGFiY2RlZg=="
+                auth_tag: "YWJjZGVmZ2hpamtsbW5vcA=="
+                key_id: "cui-master-key-2025"
+                algorithm: "AES-256-GCM"
+                timestamp: "2025-09-14T15:30:00Z"
+        '400':
+          $ref: '#/components/responses/CryptoError'
+        '403':
+          $ref: '#/components/responses/HSMAccessDenied'
+
+  /crypto/decrypt:
+    post:
+      summary: Decrypt Data with FIPS-Approved Algorithm
+      description: |
+        Decrypts data using the same algorithm and key used for encryption.
+        Verifies authentication tag for AEAD modes to ensure data integrity.
+
+      operationId: decryptData
+      tags:
+        - Symmetric Encryption
+      security:
+        - CryptoApiKey: []
+        - HSMAccess: [decrypt]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecryptRequest'
+      responses:
+        '200':
+          description: Data decrypted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecryptResponse'
+        '400':
+          $ref: '#/components/responses/CryptoError'
+        '401':
+          description: Authentication tag verification failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CryptoErrorResponse'
+
+  /crypto/sign:
+    post:
+      summary: Generate Digital Signature
+      description: |
+        Generates cryptographic digital signatures using FIPS-approved algorithms.
+        Signatures provide authentication, integrity, and non-repudiation.
+
+        **Supported Algorithms:**
+        - RSA-PSS with SHA-256 (Recommended)
+        - RSA-PKCS#1 v1.5 with SHA-256
+        - ECDSA with P-384 curve
+
+      operationId: signData
+      tags:
+        - Digital Signatures
+      security:
+        - CryptoApiKey: []
+        - HSMAccess: [sign]
+        - PIVAuthentication: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignRequest'
+      responses:
+        '200':
+          description: Digital signature generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignResponse'
+
+  /crypto/verify:
+    post:
+      summary: Verify Digital Signature
+      description: |
+        Verifies digital signatures using the corresponding public key.
+        Returns verification status and signature details.
+
+      operationId: verifySignature
+      tags:
+        - Digital Signatures
+      security:
+        - CryptoApiKey: []
+        - HSMAccess: [verify]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyRequest'
+      responses:
+        '200':
+          description: Signature verification completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyResponse'
+
+  /crypto/hash:
+    post:
+      summary: Calculate Cryptographic Hash
+      description: |
+        Calculates cryptographic hashes using FIPS-approved algorithms.
+        Supports multiple hash algorithms for different security requirements.
+
+        **Supported Algorithms:**
+        - SHA-256 (Standard security)
+        - SHA-384 (Enhanced security)
+        - SHA-512 (Maximum security)
+        - SHA-3-256 (Alternative standard)
+
+      operationId: calculateHash
+      tags:
+        - Hashing
+      security:
+        - CryptoApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HashRequest'
+      responses:
+        '200':
+          description: Hash calculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HashResponse'
+
+  /crypto/hmac:
+    post:
+      summary: Calculate HMAC Message Authentication Code
+      description: |
+        Calculates Hash-based Message Authentication Code (HMAC) for message
+        integrity and authenticity verification.
+
+      operationId: calculateHMAC
+      tags:
+        - Message Authentication
+      security:
+        - CryptoApiKey: []
+        - HSMAccess: [hmac]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HMACRequest'
+      responses:
+        '200':
+          description: HMAC calculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HMACResponse'
+
+  /crypto/keys/derive:
+    post:
+      summary: Derive Cryptographic Keys
+      description: |
+        Derives cryptographic keys using FIPS-approved key derivation functions.
+        Supports both password-based and key-based derivation.
+
+        **Supported KDFs:**
+        - PBKDF2 with SHA-256
+        - HKDF with SHA-256
+        - HKDF with SHA-384
+        - Scrypt (for password-based derivation)
+
+      operationId: deriveKey
+      tags:
+        - Key Management
+      security:
+        - CryptoApiKey: []
+        - HSMAccess: [derive_key]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KeyDerivationRequest'
+      responses:
+        '200':
+          description: Key derived successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeyDerivationResponse'
+
+  /crypto/keys/generate:
+    post:
+      summary: Generate Cryptographic Keys
+      description: |
+        Generates new cryptographic keys within the Hardware Security Module.
+        Keys are generated using certified true random number generators.
+
+        **Supported Key Types:**
+        - AES symmetric keys (128, 192, 256 bits)
+        - RSA asymmetric key pairs (2048, 3072, 4096 bits)
+        - Elliptic Curve key pairs (P-256, P-384, P-521)
+        - HMAC keys (variable length)
+
+      operationId: generateKey
+      tags:
+        - Key Management
+      security:
+        - CryptoApiKey: []
+        - HSMAccess: [generate_key]
+        - PIVAuthentication: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KeyGenerationRequest'
+      responses:
+        '200':
+          description: Key generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeyGenerationResponse'
+
+  /crypto/keys/{keyId}/info:
+    get:
+      summary: Get Key Information
+      description: |
+        Retrieves metadata and information about a cryptographic key.
+        Does not return the actual key material for security.
+
+      operationId: getKeyInfo
+      tags:
+        - Key Management
+      security:
+        - CryptoApiKey: []
+        - HSMAccess: [read_key_info]
+      parameters:
+        - name: keyId
+          in: path
+          required: true
+          description: Unique identifier for the cryptographic key
+          schema:
+            type: string
+          example: "cui-master-key-2025"
+      responses:
+        '200':
+          description: Key information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeyInfoResponse'
+        '404':
+          description: Key not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CryptoErrorResponse'
+
+  /crypto/keys/{keyId}/rotate:
+    post:
+      summary: Rotate Cryptographic Key
+      description: |
+        Rotates a cryptographic key according to security policy.
+        Creates new key version while maintaining access to previous versions
+        for decryption of existing data.
+
+      operationId: rotateKey
+      tags:
+        - Key Management
+      security:
+        - CryptoApiKey: []
+        - HSMAccess: [rotate_key]
+        - PIVAuthentication: []
+      parameters:
+        - name: keyId
+          in: path
+          required: true
+          description: Unique identifier for the key to rotate
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KeyRotationRequest'
+      responses:
+        '200':
+          description: Key rotated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeyRotationResponse'
+
+  /crypto/certificates/validate:
+    post:
+      summary: Validate X.509 Certificate
+      description: |
+        Validates X.509 certificates including chain verification,
+        revocation checking, and policy compliance verification.
+
+      operationId: validateCertificate
+      tags:
+        - Certificate Operations
+      security:
+        - CryptoApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CertificateValidationRequest'
+      responses:
+        '200':
+          description: Certificate validation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CertificateValidationResponse'
+
+  /crypto/random:
+    post:
+      summary: Generate Cryptographically Secure Random Data
+      description: |
+        Generates cryptographically secure random data using the
+        Hardware Security Module's certified true random number generator.
+
+      operationId: generateRandom
+      tags:
+        - Random Number Generation
+      security:
+        - CryptoApiKey: []
+        - HSMAccess: [generate_random]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RandomGenerationRequest'
+      responses:
+        '200':
+          description: Random data generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RandomGenerationResponse'
+
+  /crypto/audit/operations:
+    get:
+      summary: Get Cryptographic Operations Audit Log
+      description: |
+        Retrieves audit log of all cryptographic operations for compliance
+        and security monitoring purposes.
+
+      operationId: getCryptoAuditLog
+      tags:
+        - Audit and Compliance
+      security:
+        - CryptoApiKey: []
+        - HSMAccess: [audit_read]
+      parameters:
+        - name: start_date
+          in: query
+          description: Start date for audit log retrieval
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          description: End date for audit log retrieval
+          schema:
+            type: string
+            format: date-time
+        - name: operation_type
+          in: query
+          description: Filter by operation type
+          schema:
+            type: string
+            enum: [encrypt, decrypt, sign, verify, hash, hmac, key_generate, key_derive]
+        - name: user_id
+          in: query
+          description: Filter by user ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Audit log retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CryptoAuditResponse'
+
+components:
+  schemas:
+    EncryptRequest:
+      type: object
+      required:
+        - algorithm
+        - data
+        - key_id
+      properties:
+        algorithm:
+          type: string
+          enum: [AES-256-GCM, AES-256-CBC, ChaCha20-Poly1305]
+          description: FIPS-approved encryption algorithm
+        data:
+          type: string
+          format: base64
+          description: Data to encrypt (base64 encoded)
+        key_id:
+          type: string
+          description: Identifier for encryption key in HSM
+        associated_data:
+          type: string
+          description: Additional authenticated data (for AEAD modes)
+        context:
+          type: object
+          properties:
+            classification:
+              type: string
+              enum: [CUI//BASIC, CUI//SP-PRIV, CUI//SP-PROP]
+            handling_caveat:
+              type: string
+            originator:
+              type: string
+
+    EncryptResponse:
+      type: object
+      required:
+        - operation_id
+        - encrypted_data
+        - algorithm
+        - key_id
+        - timestamp
+      properties:
+        operation_id:
+          type: string
+          description: Unique identifier for this operation
+        encrypted_data:
+          type: string
+          format: base64
+          description: Encrypted data (base64 encoded)
+        iv:
+          type: string
+          format: base64
+          description: Initialization vector (base64 encoded)
+        auth_tag:
+          type: string
+          format: base64
+          description: Authentication tag for AEAD modes
+        key_id:
+          type: string
+          description: Key identifier used for encryption
+        algorithm:
+          type: string
+          description: Algorithm used for encryption
+        timestamp:
+          type: string
+          format: date-time
+          description: Operation timestamp
+        audit_trail_id:
+          type: string
+          description: Audit trail reference
+
+    DecryptRequest:
+      type: object
+      required:
+        - encrypted_data
+        - key_id
+        - algorithm
+      properties:
+        encrypted_data:
+          type: string
+          format: base64
+          description: Data to decrypt (base64 encoded)
+        key_id:
+          type: string
+          description: Key identifier for decryption
+        algorithm:
+          type: string
+          description: Algorithm used for original encryption
+        iv:
+          type: string
+          format: base64
+          description: Initialization vector
+        auth_tag:
+          type: string
+          format: base64
+          description: Authentication tag for verification
+        associated_data:
+          type: string
+          description: Associated data for AEAD verification
+
+    DecryptResponse:
+      type: object
+      properties:
+        operation_id:
+          type: string
+        decrypted_data:
+          type: string
+          format: base64
+          description: Decrypted data (base64 encoded)
+        verification_status:
+          type: string
+          enum: [verified, failed]
+          description: Authentication verification status
+        timestamp:
+          type: string
+          format: date-time
+        audit_trail_id:
+          type: string
+
+    SignRequest:
+      type: object
+      required:
+        - data
+        - key_id
+        - algorithm
+      properties:
+        data:
+          type: string
+          format: base64
+          description: Data to sign (base64 encoded)
+        key_id:
+          type: string
+          description: Private key identifier for signing
+        algorithm:
+          type: string
+          enum: [RSA-PSS-SHA256, RSA-PKCS1-SHA256, ECDSA-P384]
+          description: Signature algorithm
+        hash_algorithm:
+          type: string
+          enum: [SHA-256, SHA-384, SHA-512]
+          default: SHA-256
+          description: Hash algorithm for signature
+
+    SignResponse:
+      type: object
+      properties:
+        operation_id:
+          type: string
+        signature:
+          type: string
+          format: base64
+          description: Digital signature (base64 encoded)
+        algorithm:
+          type: string
+          description: Algorithm used for signing
+        key_id:
+          type: string
+          description: Key used for signing
+        timestamp:
+          type: string
+          format: date-time
+        certificate_chain:
+          type: array
+          items:
+            type: string
+            format: base64
+          description: Certificate chain for signature verification
+
+    VerifyRequest:
+      type: object
+      required:
+        - data
+        - signature
+        - public_key_id
+        - algorithm
+      properties:
+        data:
+          type: string
+          format: base64
+          description: Original data that was signed
+        signature:
+          type: string
+          format: base64
+          description: Digital signature to verify
+        public_key_id:
+          type: string
+          description: Public key identifier for verification
+        algorithm:
+          type: string
+          description: Signature algorithm used
+        certificate:
+          type: string
+          format: base64
+          description: X.509 certificate containing public key
+
+    VerifyResponse:
+      type: object
+      properties:
+        operation_id:
+          type: string
+        verification_result:
+          type: boolean
+          description: True if signature is valid
+        algorithm:
+          type: string
+        public_key_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        certificate_validation:
+          type: object
+          properties:
+            valid:
+              type: boolean
+            chain_valid:
+              type: boolean
+            revocation_status:
+              type: string
+              enum: [valid, revoked, unknown]
+
+    HashRequest:
+      type: object
+      required:
+        - data
+        - algorithm
+      properties:
+        data:
+          type: string
+          format: base64
+          description: Data to hash (base64 encoded)
+        algorithm:
+          type: string
+          enum: [SHA-256, SHA-384, SHA-512, SHA-3-256]
+          description: Hash algorithm to use
+
+    HashResponse:
+      type: object
+      properties:
+        operation_id:
+          type: string
+        hash:
+          type: string
+          format: base64
+          description: Calculated hash (base64 encoded)
+        algorithm:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    HMACRequest:
+      type: object
+      required:
+        - data
+        - key_id
+        - algorithm
+      properties:
+        data:
+          type: string
+          format: base64
+          description: Data for HMAC calculation
+        key_id:
+          type: string
+          description: HMAC key identifier
+        algorithm:
+          type: string
+          enum: [HMAC-SHA256, HMAC-SHA384, HMAC-SHA512]
+          description: HMAC algorithm
+
+    HMACResponse:
+      type: object
+      properties:
+        operation_id:
+          type: string
+        hmac:
+          type: string
+          format: base64
+          description: Calculated HMAC (base64 encoded)
+        algorithm:
+          type: string
+        key_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    KeyDerivationRequest:
+      type: object
+      required:
+        - kdf_algorithm
+        - key_length
+      properties:
+        kdf_algorithm:
+          type: string
+          enum: [PBKDF2-SHA256, HKDF-SHA256, HKDF-SHA384, Scrypt]
+          description: Key derivation function
+        source_key_id:
+          type: string
+          description: Source key for derivation (if key-based)
+        password:
+          type: string
+          description: Password for derivation (if password-based)
+        salt:
+          type: string
+          format: base64
+          description: Salt for derivation
+        iterations:
+          type: integer
+          description: Iteration count for PBKDF2
+        key_length:
+          type: integer
+          description: Desired key length in bytes
+        info:
+          type: string
+          description: Info parameter for HKDF
+
+    KeyDerivationResponse:
+      type: object
+      properties:
+        operation_id:
+          type: string
+        derived_key_id:
+          type: string
+          description: Identifier for the derived key
+        kdf_algorithm:
+          type: string
+        key_length:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+
+    KeyGenerationRequest:
+      type: object
+      required:
+        - key_type
+        - key_usage
+      properties:
+        key_type:
+          type: string
+          enum: [AES-128, AES-192, AES-256, RSA-2048, RSA-3072, RSA-4096, EC-P256, EC-P384, EC-P521, HMAC]
+          description: Type of key to generate
+        key_usage:
+          type: array
+          items:
+            type: string
+            enum: [encrypt, decrypt, sign, verify, derive, hmac]
+          description: Intended usage for the key
+        key_id:
+          type: string
+          description: Custom identifier for the key
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional key metadata
+
+    KeyGenerationResponse:
+      type: object
+      properties:
+        operation_id:
+          type: string
+        key_id:
+          type: string
+          description: Unique identifier for the generated key
+        key_type:
+          type: string
+        public_key:
+          type: string
+          format: base64
+          description: Public key (for asymmetric keys)
+        key_usage:
+          type: array
+          items:
+            type: string
+        timestamp:
+          type: string
+          format: date-time
+        certificate:
+          type: string
+          format: base64
+          description: Generated certificate (if applicable)
+
+    KeyInfoResponse:
+      type: object
+      properties:
+        key_id:
+          type: string
+        key_type:
+          type: string
+        key_usage:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [active, expired, revoked, compromised]
+        metadata:
+          type: object
+          additionalProperties: true
+        public_key:
+          type: string
+          format: base64
+          description: Public key component (if applicable)
+
+    KeyRotationRequest:
+      type: object
+      properties:
+        retain_previous_versions:
+          type: integer
+          default: 3
+          description: Number of previous key versions to retain
+        effective_date:
+          type: string
+          format: date-time
+          description: When the new key becomes active
+
+    KeyRotationResponse:
+      type: object
+      properties:
+        operation_id:
+          type: string
+        old_key_id:
+          type: string
+        new_key_id:
+          type: string
+        rotation_timestamp:
+          type: string
+          format: date-time
+        previous_versions_retained:
+          type: integer
+
+    CertificateValidationRequest:
+      type: object
+      required:
+        - certificate
+      properties:
+        certificate:
+          type: string
+          format: base64
+          description: X.509 certificate to validate
+        certificate_chain:
+          type: array
+          items:
+            type: string
+            format: base64
+          description: Certificate chain for validation
+        check_revocation:
+          type: boolean
+          default: true
+          description: Whether to check revocation status
+
+    CertificateValidationResponse:
+      type: object
+      properties:
+        operation_id:
+          type: string
+        valid:
+          type: boolean
+          description: Overall validation result
+        chain_valid:
+          type: boolean
+          description: Certificate chain validation result
+        signature_valid:
+          type: boolean
+          description: Certificate signature validation
+        not_expired:
+          type: boolean
+          description: Certificate expiration status
+        revocation_status:
+          type: string
+          enum: [valid, revoked, unknown, error]
+        validation_errors:
+          type: array
+          items:
+            type: string
+          description: Validation error messages
+        certificate_info:
+          type: object
+          properties:
+            subject:
+              type: string
+            issuer:
+              type: string
+            serial_number:
+              type: string
+            not_before:
+              type: string
+              format: date-time
+            not_after:
+              type: string
+              format: date-time
+
+    RandomGenerationRequest:
+      type: object
+      required:
+        - length
+      properties:
+        length:
+          type: integer
+          minimum: 1
+          maximum: 1024
+          description: Number of random bytes to generate
+        encoding:
+          type: string
+          enum: [base64, hex, raw]
+          default: base64
+          description: Output encoding format
+
+    RandomGenerationResponse:
+      type: object
+      properties:
+        operation_id:
+          type: string
+        random_data:
+          type: string
+          description: Generated random data in specified encoding
+        length:
+          type: integer
+          description: Number of bytes generated
+        encoding:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        entropy_source:
+          type: string
+          description: Source of entropy (e.g., "HSM-TRNG")
+
+    CryptoAuditResponse:
+      type: object
+      properties:
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/CryptoAuditEvent'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        summary:
+          type: object
+          properties:
+            total_operations:
+              type: integer
+            operations_by_type:
+              type: object
+              additionalProperties:
+                type: integer
+            success_rate:
+              type: number
+              format: float
+
+    CryptoAuditEvent:
+      type: object
+      properties:
+        operation_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        operation_type:
+          type: string
+        user_id:
+          type: string
+        source_ip:
+          type: string
+        key_id:
+          type: string
+        algorithm:
+          type: string
+        success:
+          type: boolean
+        error_message:
+          type: string
+        duration_ms:
+          type: integer
+          description: Operation duration in milliseconds
+
+    CryptoErrorResponse:
+      type: object
+      required:
+        - error_code
+        - message
+      properties:
+        error_code:
+          type: string
+          enum: [INVALID_ALGORITHM, KEY_NOT_FOUND, HSM_ERROR, VALIDATION_FAILED, UNAUTHORIZED]
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: string
+          description: Additional error details
+        operation_id:
+          type: string
+          description: Failed operation identifier
+        timestamp:
+          type: string
+          format: date-time
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total_pages:
+          type: integer
+        total_items:
+          type: integer
+
+  responses:
+    CryptoError:
+      description: Cryptographic operation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CryptoErrorResponse'
+
+    HSMAccessDenied:
+      description: Access denied to Hardware Security Module
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CryptoErrorResponse'
+          example:
+            error_code: "UNAUTHORIZED"
+            message: "HSM access requires PIV authentication"
+            timestamp: "2025-09-14T15:30:00Z"
+
+  securitySchemes:
+    CryptoApiKey:
+      type: apiKey
+      in: header
+      name: X-Crypto-API-Key
+      description: API key for cryptographic services access
+
+    PIVAuthentication:
+      type: http
+      scheme: bearer
+      bearerFormat: PIV
+      description: Personal Identity Verification card authentication
+
+    HSMAccess:
+      type: oauth2
+      description: Hardware Security Module access control
+      flows:
+        clientCredentials:
+          tokenUrl: https://hsm-auth.defense.contractor/oauth/token
+          scopes:
+            encrypt: Encryption operations
+            decrypt: Decryption operations
+            sign: Digital signature generation
+            verify: Signature verification
+            hmac: HMAC operations
+            generate_key: Key generation
+            derive_key: Key derivation
+            rotate_key: Key rotation
+            generate_random: Random number generation
+            read_key_info: Key information access
+            audit_read: Audit log access
+
+tags:
+  - name: Symmetric Encryption
+    description: FIPS-approved symmetric encryption and decryption
+  - name: Digital Signatures
+    description: Digital signature generation and verification
+  - name: Hashing
+    description: Cryptographic hash calculation
+  - name: Message Authentication
+    description: HMAC and message authentication codes
+  - name: Key Management
+    description: Cryptographic key lifecycle management
+  - name: Certificate Operations
+    description: X.509 certificate validation and operations
+  - name: Random Number Generation
+    description: Cryptographically secure random data generation
+  - name: Audit and Compliance
+    description: Cryptographic operations audit and compliance
+
+externalDocs:
+  description: FIPS 140-2 Cryptographic Module Validation Program
+  url: https://csrc.nist.gov/projects/cryptographic-module-validation-program

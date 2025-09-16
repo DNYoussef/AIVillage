@@ -1,0 +1,27 @@
+{
+  "pipeline_id": "PIPELINE_61f093d3",
+  "state": {
+    "pipeline_id": "PIPELINE_61f093d3",
+    "status": "FAILED",
+    "current_stage": "model_preparation",
+    "progress_percentage": 0.0,
+    "start_time": 1757934881.47829,
+    "end_time": 1757934884.5047166,
+    "error_message": "Stage model_preparation failed: Model validation failed",
+    "metadata": {}
+  },
+  "stage_results": [
+    {
+      "stage_name": "model_preparation",
+      "success": false,
+      "duration": 0.0,
+      "output_data": null,
+      "error_message": "Model validation failed",
+      "metadata": {
+        "stage_type": "preparation",
+        "validation_passed": false
+      }
+    }
+  ],
+  "final_output_available": false
+}

@@ -1,0 +1,27 @@
+{
+  "pipeline_id": "PIPELINE_9511156b",
+  "state": {
+    "pipeline_id": "PIPELINE_9511156b",
+    "status": "FAILED",
+    "current_stage": "model_preparation",
+    "progress_percentage": 0.0,
+    "start_time": 1757934892.5451152,
+    "end_time": 1757934895.569073,
+    "error_message": "Stage model_preparation failed: Model validation failed",
+    "metadata": {}
+  },
+  "stage_results": [
+    {
+      "stage_name": "model_preparation",
+      "success": false,
+      "duration": 0.0,
+      "output_data": null,
+      "error_message": "Model validation failed",
+      "metadata": {
+        "stage_type": "preparation",
+        "validation_passed": false
+      }
+    }
+  ],
+  "final_output_available": false
+}

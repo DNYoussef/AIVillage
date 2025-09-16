@@ -1,0 +1,38 @@
+{
+  "report_id": "EMERGENCY_REMEDIATION_1757934866",
+  "timestamp": "2025-09-15T07:15:01.910039",
+  "remediation_successful": false,
+  "overall_improvement_percentage": 67.85714285714286,
+  "system_completeness_before": 0.0,
+  "system_completeness_after": 71.42857142857143,
+  "performance_targets_before": 0,
+  "performance_targets_after": 5,
+  "nasa_compliance_before": 64.0,
+  "nasa_compliance_after": 64.0,
+  "quality_gates_before": 0,
+  "quality_gates_after": 4,
+  "core_infrastructure_deployed": true,
+  "performance_fixes_deployed": true,
+  "quality_gates_deployed": true,
+  "compliance_fixes_deployed": false,
+  "integration_fixes_deployed": false,
+  "security_fixes_deployed": true,
+  "validation_framework_deployed": true,
+  "phase6_complete": false,
+  "phase7_ready": false,
+  "production_ready": false,
+  "certification_ready": false,
+  "total_execution_time": 35.658202171325684,
+  "critical_issues_resolved": 30,
+  "remaining_issues": [
+    "Compliance Fixes not deployed",
+    "Integration Fixes not deployed"
+  ],
+  "recommendations": [
+    "Complete NASA POT10 compliance requirements",
+    "Fix integration issues for end-to-end functionality"
+  ],
+  "validation_report_path": "emergency\\evidence\\final_validation_report.json",
+  "compliance_certificate_path": "emergency\\evidence\\nasa_pot10_certificate.json",
+  "performance_report_path": "emergency\\evidence\\performance_optimization_report.json"
+}

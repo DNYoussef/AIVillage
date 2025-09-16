@@ -1,0 +1,1119 @@
+openapi: 3.0.0
+info:
+  title: Phase 5 Training API
+  version: 2.0.0
+  description: |
+    Comprehensive API for Agent Forge Phase 5 BitNet Training with Grokfast optimization.
+
+    Phase 5 Training provides:
+    - Distributed BitNet training with 8x memory reduction
+    - Grokfast rapid capability acquisition
+    - Multi-GPU coordination and scaling
+    - NASA POT10 compliant training workflows
+    - Phase 4-6 integration with full audit trails
+
+    ## Key Features
+    - **BitNet Training**: Quantization-aware training with 1-bit precision
+    - **Grokfast Integration**: Rapid learning acceleration
+    - **Distributed Training**: Multi-GPU and multi-node coordination
+    - **Performance Monitoring**: Real-time training metrics and optimization
+    - **Phase Integration**: Seamless Phase 4 input and Phase 6 output
+    - **NASA Compliance**: Defense-grade training with full audit trails
+
+  contact:
+    name: Phase 5 Training Team
+    email: training@agentforge.dev
+  license:
+    name: NASA POT10 Compliant
+    url: https://nasa.gov/pot10
+
+servers:
+  - url: http://localhost:8001/api/v2
+    description: Development training server
+  - url: https://training.agentforge.dev/api/v2
+    description: Production training server
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+paths:
+  /training/experiments:
+    post:
+      summary: Create training experiment
+      description: |
+        Create a new BitNet training experiment with comprehensive configuration.
+
+        Supports multiple training modes:
+        - **Development**: Fast iteration with basic BitNet optimization
+        - **Production**: Full optimization with NASA POT10 compliance
+        - **Research**: Advanced hyperparameter exploration
+        - **Defense**: Military-grade training with full audit trails
+      tags:
+        - Training Experiments
+      operationId: createTrainingExperiment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentCreateRequest'
+            examples:
+              development:
+                summary: Development experiment
+                value:
+                  experiment_name: "bitnet_dev_001"
+                  model_config:
+                    model_size: "small"
+                    hidden_size: 512
+                    num_layers: 8
+                  training_config:
+                    num_epochs: 10
+                    batch_size: 16
+                    learning_rate: 0.0001
+                  bitnet_config:
+                    quantization_enabled: true
+                    bit_width: 1
+              production:
+                summary: Production experiment
+                value:
+                  experiment_name: "bitnet_prod_001"
+                  model_config:
+                    model_size: "base"
+                    hidden_size: 768
+                    num_layers: 12
+                  training_config:
+                    num_epochs: 50
+                    batch_size: 32
+                    learning_rate: 0.00005
+                  distributed_config:
+                    enabled: true
+                    world_size: 4
+                  nasa_compliance:
+                    compliance_level: "enhanced"
+      responses:
+        '201':
+          description: Training experiment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentCreateResponse'
+              example:
+                experiment_id: "exp_bitnet_001"
+                status: "created"
+                estimated_training_time_hours: 4.5
+                resource_allocation:
+                  gpus_allocated: 4
+                  memory_reserved_gb: 64
+                  storage_reserved_gb: 100
+
+    get:
+      summary: List training experiments
+      description: Retrieve list of training experiments with filtering
+      tags:
+        - Training Experiments
+      operationId: listExperiments
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [created, running, completed, failed, cancelled]
+          description: Filter by experiment status
+        - name: experiment_type
+          in: query
+          schema:
+            type: string
+            enum: [development, production, research, defense]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Experiments retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentListResponse'
+
+  /training/experiments/{experiment_id}:
+    get:
+      summary: Get experiment details
+      description: Retrieve comprehensive experiment information
+      tags:
+        - Training Experiments
+      operationId: getExperiment
+      parameters:
+        - name: experiment_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Experiment details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentDetails'
+
+    delete:
+      summary: Cancel experiment
+      description: Cancel running experiment and cleanup resources
+      tags:
+        - Training Experiments
+      operationId: cancelExperiment
+      parameters:
+        - name: experiment_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Experiment cancelled successfully
+
+  /training/experiments/{experiment_id}/start:
+    post:
+      summary: Start training experiment
+      description: |
+        Start the training process for a created experiment.
+
+        Initialization includes:
+        - Distributed training setup across GPUs
+        - BitNet model initialization with quantization
+        - Grokfast accelerator configuration
+        - Phase 4 model loading (if available)
+        - NASA compliance monitoring activation
+      tags:
+        - Training Execution
+      operationId: startTraining
+      parameters:
+        - name: experiment_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainingStartRequest'
+            example:
+              resume_from_checkpoint: false
+              phase4_integration:
+                load_compressed_model: true
+                model_path: "/phase4/compressed_model.pt"
+      responses:
+        '200':
+          description: Training started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingStartResponse'
+
+  /training/experiments/{experiment_id}/stop:
+    post:
+      summary: Stop training experiment
+      description: Gracefully stop training and save checkpoint
+      tags:
+        - Training Execution
+      operationId: stopTraining
+      parameters:
+        - name: experiment_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Training stopped successfully
+
+  /training/experiments/{experiment_id}/metrics:
+    get:
+      summary: Get training metrics
+      description: |
+        Retrieve real-time training metrics and performance data.
+
+        Metrics include:
+        - Training and validation loss curves
+        - Learning rate schedules
+        - GPU utilization and memory usage
+        - BitNet quantization statistics
+        - Grokfast acceleration indicators
+        - NASA compliance scores
+      tags:
+        - Training Monitoring
+      operationId: getTrainingMetrics
+      parameters:
+        - name: experiment_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: metric_type
+          in: query
+          schema:
+            type: string
+            enum: [loss, performance, memory, compliance, all]
+            default: all
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum: [last_hour, last_day, all]
+            default: all
+      responses:
+        '200':
+          description: Training metrics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingMetrics'
+
+  /training/experiments/{experiment_id}/checkpoints:
+    get:
+      summary: List experiment checkpoints
+      description: Retrieve available checkpoints for experiment
+      tags:
+        - Checkpoint Management
+      operationId: listCheckpoints
+      parameters:
+        - name: experiment_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Checkpoints retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckpointList'
+
+    post:
+      summary: Create checkpoint
+      description: Create manual checkpoint during training
+      tags:
+        - Checkpoint Management
+      operationId: createCheckpoint
+      parameters:
+        - name: experiment_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckpointCreateRequest'
+      responses:
+        '201':
+          description: Checkpoint created successfully
+
+  /training/experiments/{experiment_id}/checkpoints/{checkpoint_id}:
+    get:
+      summary: Get checkpoint details
+      description: Retrieve checkpoint metadata and download links
+      tags:
+        - Checkpoint Management
+      operationId: getCheckpoint
+      parameters:
+        - name: experiment_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: checkpoint_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Checkpoint details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckpointDetails'
+
+  /training/optimization/hyperparameters:
+    post:
+      summary: Optimize hyperparameters
+      description: |
+        Run hyperparameter optimization for BitNet training.
+
+        Optimization strategies:
+        - Bayesian optimization for efficient search
+        - Population-based training for parallel exploration
+        - Grokfast-aware learning rate scheduling
+        - BitNet-specific quantization parameters
+      tags:
+        - Optimization
+      operationId: optimizeHyperparameters
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HyperparameterOptimizationRequest'
+      responses:
+        '200':
+          description: Optimization started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OptimizationResponse'
+
+  /training/distributed/cluster:
+    get:
+      summary: Get cluster status
+      description: Retrieve distributed training cluster information
+      tags:
+        - Distributed Training
+      operationId: getClusterStatus
+      responses:
+        '200':
+          description: Cluster status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClusterStatus'
+
+    post:
+      summary: Scale cluster
+      description: Scale distributed training cluster
+      tags:
+        - Distributed Training
+      operationId: scaleCluster
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClusterScaleRequest'
+      responses:
+        '200':
+          description: Cluster scaled successfully
+
+  /training/phase-integration/phase4:
+    post:
+      summary: Load Phase 4 models
+      description: |
+        Load compressed models from Phase 4 for training initialization.
+
+        Integration features:
+        - Compatible weight loading from BitNet compression
+        - Metadata validation and consistency checks
+        - Performance statistics integration
+        - Audit trail continuation
+      tags:
+        - Phase Integration
+      operationId: loadPhase4Models
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Phase4LoadRequest'
+      responses:
+        '200':
+          description: Phase 4 models loaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Phase4LoadResponse'
+
+  /training/phase-integration/phase6:
+    post:
+      summary: Prepare Phase 6 output
+      description: |
+        Prepare trained models for Phase 6 baking process.
+
+        Preparation includes:
+        - Model state optimization for baking
+        - Training metadata export
+        - Performance benchmarks
+        - NASA compliance certification
+      tags:
+        - Phase Integration
+      operationId: preparePhase6Output
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Phase6PrepareRequest'
+      responses:
+        '200':
+          description: Phase 6 output prepared
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Phase6PrepareResponse'
+
+  /training/validation/nasa-compliance:
+    post:
+      summary: Validate NASA POT10 compliance
+      description: |
+        Comprehensive NASA POT10 compliance validation for training.
+
+        Validation areas:
+        - Training process documentation
+        - Performance monitoring compliance
+        - Security and audit trail verification
+        - Quality assurance standards
+      tags:
+        - Compliance Validation
+      operationId: validateNASACompliance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NASAValidationRequest'
+      responses:
+        '200':
+          description: Compliance validation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NASAValidationResponse'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authenticated access
+
+  schemas:
+    ExperimentCreateRequest:
+      type: object
+      required:
+        - experiment_name
+        - model_config
+        - training_config
+      properties:
+        experiment_name:
+          type: string
+          description: Unique experiment identifier
+          pattern: '^[a-zA-Z0-9_-]+$'
+          example: "bitnet_production_001"
+        model_config:
+          $ref: '#/components/schemas/ModelConfig'
+        training_config:
+          $ref: '#/components/schemas/TrainingConfig'
+        bitnet_config:
+          $ref: '#/components/schemas/BitNetConfig'
+        grokfast_config:
+          $ref: '#/components/schemas/GrokfastConfig'
+        distributed_config:
+          $ref: '#/components/schemas/DistributedConfig'
+        nasa_compliance:
+          $ref: '#/components/schemas/NASAComplianceConfig'
+
+    ModelConfig:
+      type: object
+      required:
+        - model_size
+        - hidden_size
+        - num_layers
+      properties:
+        model_size:
+          type: string
+          enum: [tiny, small, base, large, xlarge]
+          description: Predefined model size
+        hidden_size:
+          type: integer
+          minimum: 64
+          description: Hidden layer dimension
+        num_layers:
+          type: integer
+          minimum: 1
+          description: Number of transformer layers
+        num_heads:
+          type: integer
+          minimum: 1
+          description: Number of attention heads
+        vocab_size:
+          type: integer
+          minimum: 1000
+          description: Vocabulary size
+        max_sequence_length:
+          type: integer
+          minimum: 128
+          description: Maximum sequence length
+
+    TrainingConfig:
+      type: object
+      required:
+        - num_epochs
+        - batch_size
+        - learning_rate
+      properties:
+        num_epochs:
+          type: integer
+          minimum: 1
+          description: Number of training epochs
+        batch_size:
+          type: integer
+          minimum: 1
+          description: Training batch size
+        eval_batch_size:
+          type: integer
+          minimum: 1
+          description: Evaluation batch size
+        learning_rate:
+          type: number
+          format: float
+          minimum: 0
+          description: Initial learning rate
+        weight_decay:
+          type: number
+          format: float
+          minimum: 0
+          description: Weight decay coefficient
+        gradient_accumulation_steps:
+          type: integer
+          minimum: 1
+          description: Gradient accumulation steps
+        max_grad_norm:
+          type: number
+          format: float
+          description: Gradient clipping norm
+        warmup_steps:
+          type: integer
+          minimum: 0
+          description: Learning rate warmup steps
+
+    BitNetConfig:
+      type: object
+      properties:
+        quantization_enabled:
+          type: boolean
+          description: Enable BitNet quantization
+          default: true
+        bit_width:
+          type: integer
+          enum: [1, 2, 4, 8]
+          description: Quantization bit width
+          default: 1
+        quantization_strategy:
+          type: string
+          enum: [symmetric, asymmetric, learned]
+          description: Quantization strategy
+        use_custom_kernels:
+          type: boolean
+          description: Use optimized CUDA kernels
+        memory_optimization:
+          type: boolean
+          description: Enable memory optimizations
+
+    GrokfastConfig:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          description: Enable Grokfast acceleration
+          default: true
+        acceleration_factor:
+          type: number
+          format: float
+          minimum: 1.0
+          description: Target acceleration factor
+        check_interval:
+          type: integer
+          minimum: 100
+          description: Acceleration check interval
+        trigger_threshold:
+          type: number
+          format: float
+          description: Loss improvement threshold
+
+    DistributedConfig:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          description: Enable distributed training
+        backend:
+          type: string
+          enum: [nccl, gloo, mpi]
+          description: Distributed backend
+        world_size:
+          type: integer
+          minimum: 1
+          description: Number of processes
+        master_addr:
+          type: string
+          description: Master node address
+        master_port:
+          type: integer
+          description: Master node port
+
+    NASAComplianceConfig:
+      type: object
+      properties:
+        compliance_level:
+          type: string
+          enum: [standard, enhanced, defense_grade]
+          description: Required compliance level
+        enable_audit_trail:
+          type: boolean
+          description: Enable audit logging
+        min_compliance_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Minimum compliance score
+
+    ExperimentCreateResponse:
+      type: object
+      properties:
+        experiment_id:
+          type: string
+          description: Unique experiment identifier
+        status:
+          type: string
+          enum: [created, initializing, ready, error]
+        estimated_training_time_hours:
+          type: number
+          format: float
+        resource_allocation:
+          type: object
+          properties:
+            gpus_allocated:
+              type: integer
+            memory_reserved_gb:
+              type: integer
+            storage_reserved_gb:
+              type: integer
+
+    ExperimentListResponse:
+      type: object
+      properties:
+        experiments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentSummary'
+        total_count:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    ExperimentSummary:
+      type: object
+      properties:
+        experiment_id:
+          type: string
+        experiment_name:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        training_progress:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+
+    ExperimentDetails:
+      type: object
+      properties:
+        experiment_id:
+          type: string
+        experiment_name:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        config:
+          type: object
+        current_metrics:
+          $ref: '#/components/schemas/TrainingMetrics'
+        resource_usage:
+          $ref: '#/components/schemas/ResourceUsage'
+
+    TrainingStartRequest:
+      type: object
+      properties:
+        resume_from_checkpoint:
+          type: boolean
+          description: Resume from latest checkpoint
+        checkpoint_id:
+          type: string
+          description: Specific checkpoint to resume from
+        phase4_integration:
+          type: object
+          properties:
+            load_compressed_model:
+              type: boolean
+            model_path:
+              type: string
+
+    TrainingStartResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [started, starting, error]
+        training_job_id:
+          type: string
+        estimated_completion:
+          type: string
+          format: date-time
+
+    TrainingMetrics:
+      type: object
+      properties:
+        current_epoch:
+          type: integer
+        total_epochs:
+          type: integer
+        training_progress:
+          type: number
+          format: float
+        current_loss:
+          type: number
+          format: float
+        validation_loss:
+          type: number
+          format: float
+        learning_rate:
+          type: number
+          format: float
+        gpu_utilization:
+          type: array
+          items:
+            type: number
+            format: float
+        memory_usage:
+          $ref: '#/components/schemas/MemoryUsage'
+        bitnet_metrics:
+          $ref: '#/components/schemas/BitNetMetrics'
+        grokfast_metrics:
+          $ref: '#/components/schemas/GrokfastMetrics'
+        nasa_compliance_score:
+          type: number
+          format: float
+
+    MemoryUsage:
+      type: object
+      properties:
+        total_memory_gb:
+          type: number
+          format: float
+        used_memory_gb:
+          type: number
+          format: float
+        memory_efficiency:
+          type: number
+          format: float
+        peak_memory_gb:
+          type: number
+          format: float
+
+    BitNetMetrics:
+      type: object
+      properties:
+        quantization_error:
+          type: number
+          format: float
+        compression_ratio:
+          type: number
+          format: float
+        kernel_efficiency:
+          type: number
+          format: float
+
+    GrokfastMetrics:
+      type: object
+      properties:
+        acceleration_active:
+          type: boolean
+        current_acceleration_factor:
+          type: number
+          format: float
+        learning_rate_boost:
+          type: number
+          format: float
+
+    ResourceUsage:
+      type: object
+      properties:
+        gpu_count:
+          type: integer
+        gpu_utilization_avg:
+          type: number
+          format: float
+        memory_usage:
+          $ref: '#/components/schemas/MemoryUsage'
+        network_io_gbps:
+          type: number
+          format: float
+
+    CheckpointList:
+      type: object
+      properties:
+        checkpoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/CheckpointSummary'
+
+    CheckpointSummary:
+      type: object
+      properties:
+        checkpoint_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        epoch:
+          type: integer
+        loss:
+          type: number
+          format: float
+        size_mb:
+          type: number
+          format: float
+
+    CheckpointCreateRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          description: Checkpoint description
+        include_optimizer:
+          type: boolean
+          description: Include optimizer state
+
+    CheckpointDetails:
+      type: object
+      properties:
+        checkpoint_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        epoch:
+          type: integer
+        metrics:
+          type: object
+        download_url:
+          type: string
+        metadata:
+          type: object
+
+    HyperparameterOptimizationRequest:
+      type: object
+      required:
+        - optimization_strategy
+        - parameter_space
+      properties:
+        optimization_strategy:
+          type: string
+          enum: [bayesian, random, grid, population_based]
+        parameter_space:
+          type: object
+          description: Hyperparameter search space
+        max_trials:
+          type: integer
+          minimum: 1
+        max_duration_hours:
+          type: integer
+          minimum: 1
+
+    OptimizationResponse:
+      type: object
+      properties:
+        optimization_id:
+          type: string
+        status:
+          type: string
+        estimated_completion:
+          type: string
+          format: date-time
+
+    ClusterStatus:
+      type: object
+      properties:
+        total_nodes:
+          type: integer
+        active_nodes:
+          type: integer
+        total_gpus:
+          type: integer
+        available_gpus:
+          type: integer
+        cluster_utilization:
+          type: number
+          format: float
+
+    ClusterScaleRequest:
+      type: object
+      required:
+        - target_nodes
+      properties:
+        target_nodes:
+          type: integer
+          minimum: 1
+        node_type:
+          type: string
+          description: GPU node type
+
+    Phase4LoadRequest:
+      type: object
+      required:
+        - phase4_output_path
+      properties:
+        phase4_output_path:
+          type: string
+          description: Path to Phase 4 output directory
+        validate_compatibility:
+          type: boolean
+          description: Validate model compatibility
+
+    Phase4LoadResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        models_loaded:
+          type: integer
+        compatibility_score:
+          type: number
+          format: float
+        load_time_seconds:
+          type: number
+          format: float
+
+    Phase6PrepareRequest:
+      type: object
+      required:
+        - experiment_id
+      properties:
+        experiment_id:
+          type: string
+        include_training_history:
+          type: boolean
+        optimization_level:
+          type: string
+          enum: [basic, comprehensive]
+
+    Phase6PrepareResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        output_path:
+          type: string
+        preparation_time_seconds:
+          type: number
+          format: float
+        phase6_ready:
+          type: boolean
+
+    NASAValidationRequest:
+      type: object
+      required:
+        - experiment_id
+      properties:
+        experiment_id:
+          type: string
+        validation_level:
+          type: string
+          enum: [basic, comprehensive, defense_grade]
+
+    NASAValidationResponse:
+      type: object
+      properties:
+        compliance_score:
+          type: number
+          format: float
+        validation_status:
+          type: string
+          enum: [PASSED, FAILED, WARNING]
+        compliance_report:
+          type: object
+        recommendations:
+          type: array
+          items:
+            type: string
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+        request_id:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+tags:
+  - name: Training Experiments
+    description: Training experiment lifecycle management
+  - name: Training Execution
+    description: Training process control and monitoring
+  - name: Training Monitoring
+    description: Real-time metrics and performance tracking
+  - name: Checkpoint Management
+    description: Training checkpoint operations
+  - name: Optimization
+    description: Hyperparameter and performance optimization
+  - name: Distributed Training
+    description: Multi-GPU and cluster management
+  - name: Phase Integration
+    description: Cross-phase workflow integration
+  - name: Compliance Validation
+    description: NASA POT10 compliance verification

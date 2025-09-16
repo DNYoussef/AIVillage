@@ -1,0 +1,66 @@
+{
+  "performance_optimization": {
+    "success": true,
+    "optimized_model": "RecursiveScriptModule(original_name=TestModel)",
+    "original_metrics": "PerformanceMetrics(inference_latency_ms=5.658830994507298, compression_ratio=0.0, accuracy_retention=0.125, throughput_samples_per_sec=1413.7195487486974, memory_usage_mb=296.38671875, optimization_time_sec=0.0, model_size_mb=2.3008193969726562, flops_reduction=0.0)",
+    "final_metrics": "PerformanceMetrics(inference_latency_ms=4.745671996497549, compression_ratio=1.0, accuracy_retention=1.0, throughput_samples_per_sec=1685.7465087988053, memory_usage_mb=300.0390625, optimization_time_sec=0.0, model_size_mb=0.0, flops_reduction=0.0)",
+    "optimization_results": {
+      "dynamic_quantization": "applied",
+      "pruning": "applied",
+      "tensor_fusion": "applied"
+    },
+    "optimization_time": 1.1626272201538086,
+    "targets_met": {
+      "inference_latency": "True",
+      "compression_ratio": true,
+      "accuracy_retention": true,
+      "throughput": "True",
+      "memory_usage": true
+    },
+    "techniques_applied": [
+      "dynamic_quantization",
+      "pruning",
+      "tensor_fusion"
+    ]
+  },
+  "realtime_optimization": {
+    "success": true,
+    "optimization_results": {
+      "torch_inference_mode": "enabled",
+      "gradient_disabled": "enabled"
+    },
+    "realtime_metrics": {
+      "avg_latency_ms": 4.4694190012523904,
+      "p95_latency_ms": 4.984190023969859,
+      "p99_latency_ms": 6.948577038710938,
+      "max_latency_ms": 7.1838999865576625,
+      "throughput_samples_per_sec": 223.74272801896325,
+      "avg_memory_delta_mb": 0.10375,
+      "meets_realtime_target": "True"
+    },
+    "optimization_time": 0.7669036388397217
+  },
+  "memory_optimization": {
+    "success": true,
+    "initial_memory_mb": 290.390625,
+    "final_memory_mb": 290.390625,
+    "memory_reduction_mb": 0.0,
+    "optimizations": {
+      "gradient_checkpointing": "not_available",
+      "memory_efficient_attention": "not_applicable",
+      "buffer_optimization": "optimized",
+      "activation_checkpointing": "not_implemented"
+    },
+    "meets_target": true
+  },
+  "overall_success": true,
+  "summary": {
+    "inference_latency_ms": 4.745671996497549,
+    "compression_ratio": 1.0,
+    "accuracy_retention": 1.0,
+    "throughput_samples_per_sec": 1685.7465087988053,
+    "memory_usage_mb": 300.0390625,
+    "targets_met_count": "5",
+    "total_targets": 5
+  }
+}

@@ -1,0 +1,182 @@
+{
+  "pipeline_id": "PIPELINE_7d683d55",
+  "state": {
+    "pipeline_id": "PIPELINE_7d683d55",
+    "status": "FAILED",
+    "current_stage": "packaging",
+    "progress_percentage": 75.0,
+    "start_time": 1757934889.3876913,
+    "end_time": 1757934892.5371366,
+    "error_message": "Stage packaging failed: Object of type bool_ is not JSON serializable",
+    "metadata": {}
+  },
+  "stage_results": [
+    {
+      "stage_name": "model_preparation",
+      "success": true,
+      "duration": 0.0,
+      "output_data": {
+        "prepared_model": "TestModel(\n  (fc): Linear(in_features=10, out_features=5, bias=True)\n)",
+        "model_metadata": {
+          "parameter_count": 55,
+          "model_size_mb": 0.000209808349609375,
+          "input_shape": [
+            4,
+            10
+          ],
+          "model_type": "TestModel",
+          "device": "cpu",
+          "output_shape": [
+            4,
+            5
+          ]
+        },
+        "sample_inputs": "tensor([[-0.4510, -0.8702, -0.2949, -0.9995, -0.9821,  2.2816,  0.5496,  0.3750,\n          0.9286, -0.2859],\n        [-0.6283,  2.2470, -1.5570,  1.1426,  0.1879, -2.2944,  0.3407,  1.0584,\n          0.2795,  0.1203],\n        [-0.5790,  0.9195, -0.7637,  1.9394, -0.9459,  0.2903,  0.0368, -0.6818,\n         -0.2656,  0.9357],\n        [ 1.4354,  0.2932, -0.3853,  0.8054,  0.6573,  0.3827, -0.0403,  0.5946,\n          0.5347,  1.4590]])"
+      },
+      "error_message": null,
+      "metadata": {
+        "stage_type": "preparation",
+        "validation_passed": true
+      }
+    },
+    {
+      "stage_name": "optimization",
+      "success": true,
+      "duration": 0.013962268829345703,
+      "output_data": {
+        "optimized_model": "TestModel(\n  (fc): DynamicQuantizedLinear(in_features=10, out_features=5, dtype=torch.qint8, qscheme=torch.per_tensor_affine)\n)",
+        "optimization_metrics": {
+          "inference_latency_ms": 0.09439700283110142,
+          "compression_ratio": 1.0,
+          "accuracy_retention": 1.0,
+          "throughput_samples_per_sec": 42374.22672366989,
+          "memory_usage_mb": 277.6640625,
+          "optimization_time_sec": 0.0,
+          "model_size_mb": 0.0,
+          "flops_reduction": 0.0
+        },
+        "optimization_result": {
+          "success": true,
+          "optimized_model": "TestModel(\n  (fc): DynamicQuantizedLinear(in_features=10, out_features=5, dtype=torch.qint8, qscheme=torch.per_tensor_affine)\n)",
+          "original_metrics": {
+            "inference_latency_ms": 0.026069000596180558,
+            "compression_ratio": 0.0,
+            "accuracy_retention": 1.0,
+            "throughput_samples_per_sec": 153438.94696853287,
+            "memory_usage_mb": 277.6640625,
+            "optimization_time_sec": 0.0,
+            "model_size_mb": 0.000209808349609375,
+            "flops_reduction": 0.0
+          },
+          "final_metrics": {
+            "inference_latency_ms": 0.09439700283110142,
+            "compression_ratio": 1.0,
+            "accuracy_retention": 1.0,
+            "throughput_samples_per_sec": 42374.22672366989,
+            "memory_usage_mb": 277.6640625,
+            "optimization_time_sec": 0.0,
+            "model_size_mb": 0.0,
+            "flops_reduction": 0.0
+          },
+          "optimization_results": {
+            "dynamic_quantization": "applied",
+            "pruning": "applied"
+          },
+          "optimization_time": 0.013962268829345703,
+          "targets_met": {
+            "inference_latency": "True",
+            "compression_ratio": true,
+            "accuracy_retention": true,
+            "throughput": "True",
+            "memory_usage": true
+          },
+          "techniques_applied": [
+            "dynamic_quantization",
+            "pruning"
+          ]
+        },
+        "sample_inputs": "tensor([[-0.4510, -0.8702, -0.2949, -0.9995, -0.9821,  2.2816,  0.5496,  0.3750,\n          0.9286, -0.2859],\n        [-0.6283,  2.2470, -1.5570,  1.1426,  0.1879, -2.2944,  0.3407,  1.0584,\n          0.2795,  0.1203],\n        [-0.5790,  0.9195, -0.7637,  1.9394, -0.9459,  0.2903,  0.0368, -0.6818,\n         -0.2656,  0.9357],\n        [ 1.4354,  0.2932, -0.3853,  0.8054,  0.6573,  0.3827, -0.0403,  0.5946,\n          0.5347,  1.4590]])"
+      },
+      "error_message": null,
+      "metadata": {
+        "stage_type": "optimization",
+        "techniques_applied": [
+          "dynamic_quantization",
+          "pruning"
+        ],
+        "targets_met": {
+          "inference_latency": "True",
+          "compression_ratio": true,
+          "accuracy_retention": true,
+          "throughput": "True",
+          "memory_usage": true
+        }
+      }
+    },
+    {
+      "stage_name": "validation",
+      "success": true,
+      "duration": 0.045963287353515625,
+      "output_data": {
+        "validated_model": "TestModel(\n  (fc): DynamicQuantizedLinear(in_features=10, out_features=5, dtype=torch.qint8, qscheme=torch.per_tensor_affine)\n)",
+        "validation_results": {
+          "inference_capability": {
+            "passed": true,
+            "avg_latency_ms": 0.11963500292040408,
+            "max_latency_ms": 0.1762000028975308,
+            "inference_count": 20
+          },
+          "performance": {
+            "passed": true,
+            "performance_checks": {
+              "latency_ok": "True",
+              "compression_ok": true,
+              "accuracy_ok": true
+            },
+            "metrics": {
+              "inference_latency_ms": 0.09439700283110142,
+              "compression_ratio": 1.0,
+              "accuracy_retention": 1.0,
+              "throughput_samples_per_sec": 42374.22672366989,
+              "memory_usage_mb": 277.6640625,
+              "optimization_time_sec": 0.0,
+              "model_size_mb": 0.0,
+              "flops_reduction": 0.0
+            }
+          },
+          "consistency": {
+            "passed": true,
+            "output_count": 5,
+            "consistency_check": true
+          },
+          "memory_usage": {
+            "passed": true,
+            "initial_memory_mb": 277.44140625,
+            "final_memory_mb": 277.44140625,
+            "memory_increase_mb": 0.0
+          }
+        },
+        "validation_passed": true,
+        "sample_inputs": "tensor([[-0.4510, -0.8702, -0.2949, -0.9995, -0.9821,  2.2816,  0.5496,  0.3750,\n          0.9286, -0.2859],\n        [-0.6283,  2.2470, -1.5570,  1.1426,  0.1879, -2.2944,  0.3407,  1.0584,\n          0.2795,  0.1203],\n        [-0.5790,  0.9195, -0.7637,  1.9394, -0.9459,  0.2903,  0.0368, -0.6818,\n         -0.2656,  0.9357],\n        [ 1.4354,  0.2932, -0.3853,  0.8054,  0.6573,  0.3827, -0.0403,  0.5946,\n          0.5347,  1.4590]])"
+      },
+      "error_message": null,
+      "metadata": {
+        "stage_type": "validation",
+        "validation_count": 4,
+        "passed_count": 4
+      }
+    },
+    {
+      "stage_name": "packaging",
+      "success": false,
+      "duration": 0.014963626861572266,
+      "output_data": null,
+      "error_message": "Object of type bool_ is not JSON serializable",
+      "metadata": {
+        "stage_type": "packaging",
+        "error_details": "Traceback (most recent call last):\n  File \"C:\\Users\\17175\\Desktop\\spek template\\emergency\\integration_fixes.py\", line 486, in execute\n    package_result = await self._package_model(validated_model, validation_results, sample_inputs, context)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\17175\\Desktop\\spek template\\emergency\\integration_fixes.py\", line 575, in _package_model\n    json.dump(package_metadata, f, indent=2)\n  File \"C:\\Python312\\Lib\\json\\__init__.py\", line 179, in dump\n    for chunk in iterable:\n                 ^^^^^^^^\n  File \"C:\\Python312\\Lib\\json\\encoder.py\", line 432, in _iterencode\n    yield from _iterencode_dict(o, _current_indent_level)\n  File \"C:\\Python312\\Lib\\json\\encoder.py\", line 406, in _iterencode_dict\n    yield from chunks\n  File \"C:\\Python312\\Lib\\json\\encoder.py\", line 406, in _iterencode_dict\n    yield from chunks\n  File \"C:\\Python312\\Lib\\json\\encoder.py\", line 406, in _iterencode_dict\n    yield from chunks\n  [Previous line repeated 1 more time]\n  File \"C:\\Python312\\Lib\\json\\encoder.py\", line 439, in _iterencode\n    o = _default(o)\n        ^^^^^^^^^^^\n  File \"C:\\Python312\\Lib\\json\\encoder.py\", line 180, in default\n    raise TypeError(f'Object of type {o.__class__.__name__} '\nTypeError: Object of type bool_ is not JSON serializable\n"
+      }
+    }
+  ],
+  "final_output_available": false
+}

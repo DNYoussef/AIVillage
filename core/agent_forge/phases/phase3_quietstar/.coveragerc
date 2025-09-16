@@ -1,0 +1,73 @@
+# Coverage configuration for Quiet-STaR test suite
+
+[run]
+# Coverage source
+source = ../../../../../src/quiet_star
+
+# Files to include/exclude
+omit =
+    */tests/*
+    */test_*
+    */__pycache__/*
+    */venv/*
+    */env/*
+    */.venv/*
+    */node_modules/*
+    */build/*
+    */dist/*
+
+# Coverage measurement
+branch = true
+parallel = true
+concurrency = thread,multiprocessing
+
+# Context tracking
+dynamic_contexts = test_function
+
+[report]
+# Reporting options
+precision = 2
+show_missing = true
+skip_covered = false
+sort = Cover
+
+# Failure conditions
+fail_under = 85
+
+# Exclude lines from coverage
+exclude_lines =
+    # Standard exclusions
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod
+
+    # Quiet-STaR specific exclusions
+    # Mock model implementations
+    class .*MockModel.*:
+    # Demonstration code
+    def main():
+    if __name__ == "__main__":
+
+[html]
+# HTML report configuration
+directory = htmlcov
+title = Quiet-STaR Test Coverage Report
+show_contexts = true
+
+[xml]
+# XML report for CI/CD
+output = coverage.xml
+
+[paths]
+# Path mapping for different environments
+source =
+    ../../../../../src/quiet_star
+    /workspaces/*/src/quiet_star
+    C:\*\src\quiet_star

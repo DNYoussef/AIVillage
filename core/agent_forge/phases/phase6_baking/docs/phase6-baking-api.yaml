@@ -1,0 +1,1032 @@
+openapi: 3.0.0
+info:
+  title: Phase 6 Baking System API
+  version: 1.0.0
+  description: |
+    Comprehensive API for Phase 6 Model Baking and Optimization System.
+
+    The Phase 6 Baking System provides advanced model optimization, performance tuning,
+    and production-ready model baking capabilities with defense-grade quality assurance.
+
+    Key Features:
+    - Model optimization and compression
+    - Performance profiling and benchmarking
+    - Production-ready model baking
+    - Real-time monitoring and validation
+    - Integration with Phase 5 training outputs
+  contact:
+    name: SPEK Development Team
+    email: support@spek.dev
+  license:
+    name: Defense Industry Licensed
+    url: https://spek.dev/licenses/defense
+
+servers:
+  - url: https://api.spek.dev/v1
+    description: Production server
+  - url: https://staging.spek.dev/v1
+    description: Staging server
+  - url: http://localhost:8080/v1
+    description: Development server
+
+tags:
+  - name: Baking
+    description: Model baking and optimization operations
+  - name: Performance
+    description: Performance monitoring and benchmarking
+  - name: Optimization
+    description: Model optimization and tuning
+  - name: Validation
+    description: Validation and quality assurance
+  - name: Monitoring
+    description: Real-time monitoring and metrics
+
+paths:
+  /baking/optimize:
+    post:
+      tags:
+        - Baking
+        - Optimization
+      summary: Optimize model for production deployment
+      description: |
+        Optimizes a trained model using various optimization techniques including
+        quantization, pruning, and graph optimization for production deployment.
+      operationId: optimizeModel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OptimizationRequest'
+            examples:
+              quantization:
+                summary: 8-bit quantization optimization
+                value:
+                  model_id: "phase5_trained_model_v1.2.3"
+                  optimization_type: "quantization"
+                  target_format: "torchscript"
+                  optimization_config:
+                    quantization_bits: 8
+                    preserve_accuracy: true
+                    target_latency_ms: 50
+              pruning:
+                summary: Structured pruning optimization
+                value:
+                  model_id: "phase5_trained_model_v1.2.3"
+                  optimization_type: "pruning"
+                  target_format: "onnx"
+                  optimization_config:
+                    pruning_ratio: 0.3
+                    preserve_layers: ["attention", "output"]
+      responses:
+        '200':
+          description: Model optimization completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OptimizationResponse'
+              examples:
+                success:
+                  summary: Successful optimization
+                  value:
+                    optimization_id: "opt_abc123def456"
+                    model_id: "phase5_trained_model_v1.2.3"
+                    status: "completed"
+                    optimization_metrics:
+                      size_reduction: 0.65
+                      latency_improvement: 0.45
+                      accuracy_retention: 0.98
+                    optimized_model_url: "https://storage.spek.dev/optimized/opt_abc123def456.pth"
+                    baking_manifest:
+                      model_format: "torchscript"
+                      optimization_passes: ["quantization", "graph_optimization"]
+                      validation_results:
+                        accuracy_test: "PASS"
+                        performance_test: "PASS"
+                        security_scan: "PASS"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimit'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /baking/status/{optimization_id}:
+    get:
+      tags:
+        - Baking
+      summary: Get optimization status
+      description: Retrieve the current status and progress of a model optimization job
+      operationId: getOptimizationStatus
+      parameters:
+        - name: optimization_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the optimization job
+          example: "opt_abc123def456"
+      responses:
+        '200':
+          description: Optimization status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OptimizationStatus'
+              examples:
+                in_progress:
+                  summary: Optimization in progress
+                  value:
+                    optimization_id: "opt_abc123def456"
+                    status: "in_progress"
+                    progress: 0.67
+                    current_stage: "graph_optimization"
+                    stages_completed: ["quantization", "pruning"]
+                    estimated_completion: "2025-09-15T10:30:00Z"
+                completed:
+                  summary: Optimization completed
+                  value:
+                    optimization_id: "opt_abc123def456"
+                    status: "completed"
+                    progress: 1.0
+                    current_stage: "validation"
+                    stages_completed: ["quantization", "pruning", "graph_optimization", "validation"]
+                    completion_time: "2025-09-15T10:25:33Z"
+
+  /performance/benchmark:
+    post:
+      tags:
+        - Performance
+      summary: Run comprehensive performance benchmarks
+      description: |
+        Execute comprehensive performance benchmarks on optimized models including
+        latency, throughput, memory usage, and accuracy validation.
+      operationId: runBenchmark
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BenchmarkRequest'
+            examples:
+              full_benchmark:
+                summary: Full performance benchmark suite
+                value:
+                  model_id: "opt_abc123def456"
+                  benchmark_config:
+                    test_suites: ["latency", "throughput", "memory", "accuracy"]
+                    batch_sizes: [1, 8, 32, 128]
+                    input_shapes: [[1, 3, 224, 224]]
+                    warmup_iterations: 100
+                    measurement_iterations: 1000
+                    target_devices: ["cpu", "cuda"]
+      responses:
+        '200':
+          description: Benchmark completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchmarkResults'
+
+  /performance/profile:
+    post:
+      tags:
+        - Performance
+      summary: Profile model performance
+      description: |
+        Generate detailed performance profiles including bottleneck analysis,
+        memory allocation patterns, and optimization recommendations.
+      operationId: profileModel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfilingRequest'
+      responses:
+        '200':
+          description: Profiling completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfilingResults'
+
+  /optimization/recommendations:
+    get:
+      tags:
+        - Optimization
+      summary: Get optimization recommendations
+      description: |
+        Retrieve AI-generated optimization recommendations based on model analysis
+        and performance profiling results.
+      operationId: getOptimizationRecommendations
+      parameters:
+        - name: model_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Model identifier for recommendation analysis
+        - name: target_metric
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [latency, throughput, memory, accuracy, size]
+          description: Primary optimization target metric
+      responses:
+        '200':
+          description: Recommendations generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OptimizationRecommendations'
+
+  /validation/quality-gate:
+    post:
+      tags:
+        - Validation
+      summary: Execute quality gate validation
+      description: |
+        Run comprehensive quality gate validation ensuring NASA POT10 compliance,
+        security scanning, and performance requirements before production deployment.
+      operationId: validateQualityGate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QualityGateRequest'
+      responses:
+        '200':
+          description: Quality gate validation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityGateResults'
+
+  /monitoring/metrics:
+    get:
+      tags:
+        - Monitoring
+      summary: Get real-time performance metrics
+      description: Retrieve real-time performance metrics for deployed models
+      operationId: getPerformanceMetrics
+      parameters:
+        - name: model_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: time_range
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [1h, 6h, 24h, 7d, 30d]
+          description: Time range for metrics
+          default: "1h"
+        - name: metrics
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [latency, throughput, memory, cpu, gpu, accuracy]
+          description: Specific metrics to retrieve
+      responses:
+        '200':
+          description: Metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+
+  /integration/phase5-handoff:
+    post:
+      tags:
+        - Baking
+      summary: Process Phase 5 training handoff
+      description: |
+        Process trained model artifacts from Phase 5 training system and prepare
+        for baking optimization pipeline.
+      operationId: processPhase5Handoff
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Phase5HandoffRequest'
+      responses:
+        '200':
+          description: Phase 5 handoff processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Phase5HandoffResponse'
+
+  /integration/phase7-prepare:
+    post:
+      tags:
+        - Baking
+      summary: Prepare optimized models for Phase 7 ADAS
+      description: |
+        Prepare optimized and validated models for deployment in Phase 7 ADAS system
+        with proper packaging and deployment manifests.
+      operationId: preparePhase7Deployment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Phase7PreparationRequest'
+      responses:
+        '200':
+          description: Phase 7 preparation completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Phase7PreparationResponse'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    OptimizationRequest:
+      type: object
+      required:
+        - model_id
+        - optimization_type
+      properties:
+        model_id:
+          type: string
+          description: Identifier for the trained model to optimize
+          example: "phase5_trained_model_v1.2.3"
+        optimization_type:
+          type: string
+          enum: [quantization, pruning, distillation, graph_optimization, full_optimization]
+          description: Type of optimization to apply
+        target_format:
+          type: string
+          enum: [torchscript, onnx, tensorrt, openvino, tflite]
+          description: Target format for optimized model
+          default: torchscript
+        optimization_config:
+          type: object
+          description: Optimization-specific configuration parameters
+          properties:
+            quantization_bits:
+              type: integer
+              minimum: 4
+              maximum: 16
+              description: Number of bits for quantization
+            pruning_ratio:
+              type: number
+              minimum: 0.1
+              maximum: 0.9
+              description: Fraction of weights to prune
+            preserve_accuracy:
+              type: boolean
+              description: Whether to preserve accuracy during optimization
+              default: true
+            target_latency_ms:
+              type: number
+              minimum: 1
+              description: Target inference latency in milliseconds
+            preserve_layers:
+              type: array
+              items:
+                type: string
+              description: Layer types to preserve during optimization
+
+    OptimizationResponse:
+      type: object
+      required:
+        - optimization_id
+        - model_id
+        - status
+      properties:
+        optimization_id:
+          type: string
+          description: Unique identifier for the optimization job
+          example: "opt_abc123def456"
+        model_id:
+          type: string
+          description: Original model identifier
+        status:
+          type: string
+          enum: [queued, in_progress, completed, failed, cancelled]
+          description: Current optimization status
+        optimization_metrics:
+          type: object
+          properties:
+            size_reduction:
+              type: number
+              description: Model size reduction ratio
+            latency_improvement:
+              type: number
+              description: Latency improvement ratio
+            accuracy_retention:
+              type: number
+              description: Accuracy retention ratio
+            memory_reduction:
+              type: number
+              description: Memory usage reduction ratio
+        optimized_model_url:
+          type: string
+          format: uri
+          description: URL to download optimized model
+        baking_manifest:
+          $ref: '#/components/schemas/BakingManifest'
+
+    OptimizationStatus:
+      type: object
+      required:
+        - optimization_id
+        - status
+        - progress
+      properties:
+        optimization_id:
+          type: string
+          description: Unique identifier for the optimization job
+        status:
+          type: string
+          enum: [queued, in_progress, completed, failed, cancelled]
+          description: Current optimization status
+        progress:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Completion progress (0.0 to 1.0)
+        current_stage:
+          type: string
+          description: Currently executing optimization stage
+        stages_completed:
+          type: array
+          items:
+            type: string
+          description: List of completed optimization stages
+        estimated_completion:
+          type: string
+          format: date-time
+          description: Estimated completion time (ISO 8601)
+        completion_time:
+          type: string
+          format: date-time
+          description: Actual completion time (ISO 8601)
+        error_message:
+          type: string
+          description: Error message if optimization failed
+
+    BakingManifest:
+      type: object
+      properties:
+        model_format:
+          type: string
+          description: Format of the baked model
+        optimization_passes:
+          type: array
+          items:
+            type: string
+          description: List of optimization passes applied
+        validation_results:
+          type: object
+          properties:
+            accuracy_test:
+              type: string
+              enum: [PASS, FAIL, SKIP]
+            performance_test:
+              type: string
+              enum: [PASS, FAIL, SKIP]
+            security_scan:
+              type: string
+              enum: [PASS, FAIL, SKIP]
+            compliance_check:
+              type: string
+              enum: [PASS, FAIL, SKIP]
+        deployment_config:
+          type: object
+          properties:
+            min_memory_mb:
+              type: integer
+            recommended_batch_size:
+              type: integer
+            supported_devices:
+              type: array
+              items:
+                type: string
+
+    BenchmarkRequest:
+      type: object
+      required:
+        - model_id
+      properties:
+        model_id:
+          type: string
+          description: Model identifier to benchmark
+        benchmark_config:
+          type: object
+          properties:
+            test_suites:
+              type: array
+              items:
+                type: string
+                enum: [latency, throughput, memory, accuracy, stability]
+            batch_sizes:
+              type: array
+              items:
+                type: integer
+            input_shapes:
+              type: array
+              items:
+                type: array
+                items:
+                  type: integer
+            warmup_iterations:
+              type: integer
+              default: 100
+            measurement_iterations:
+              type: integer
+              default: 1000
+            target_devices:
+              type: array
+              items:
+                type: string
+                enum: [cpu, cuda, opencl, vulkan]
+
+    BenchmarkResults:
+      type: object
+      properties:
+        benchmark_id:
+          type: string
+          description: Unique identifier for benchmark run
+        model_id:
+          type: string
+          description: Benchmarked model identifier
+        execution_time:
+          type: string
+          format: date-time
+        results:
+          type: object
+          properties:
+            latency:
+              $ref: '#/components/schemas/LatencyMetrics'
+            throughput:
+              $ref: '#/components/schemas/ThroughputMetrics'
+            memory:
+              $ref: '#/components/schemas/MemoryMetrics'
+            accuracy:
+              $ref: '#/components/schemas/AccuracyMetrics'
+
+    LatencyMetrics:
+      type: object
+      properties:
+        mean_ms:
+          type: number
+        median_ms:
+          type: number
+        p95_ms:
+          type: number
+        p99_ms:
+          type: number
+        std_dev_ms:
+          type: number
+
+    ThroughputMetrics:
+      type: object
+      properties:
+        requests_per_second:
+          type: number
+        samples_per_second:
+          type: number
+        tokens_per_second:
+          type: number
+
+    MemoryMetrics:
+      type: object
+      properties:
+        peak_memory_mb:
+          type: number
+        average_memory_mb:
+          type: number
+        memory_efficiency:
+          type: number
+
+    AccuracyMetrics:
+      type: object
+      properties:
+        top1_accuracy:
+          type: number
+        top5_accuracy:
+          type: number
+        f1_score:
+          type: number
+        precision:
+          type: number
+        recall:
+          type: number
+
+    ProfilingRequest:
+      type: object
+      required:
+        - model_id
+      properties:
+        model_id:
+          type: string
+        profiling_config:
+          type: object
+          properties:
+            profile_memory:
+              type: boolean
+              default: true
+            profile_compute:
+              type: boolean
+              default: true
+            profile_io:
+              type: boolean
+              default: true
+            sample_duration_seconds:
+              type: integer
+              default: 60
+
+    ProfilingResults:
+      type: object
+      properties:
+        profile_id:
+          type: string
+        model_id:
+          type: string
+        bottlenecks:
+          type: array
+          items:
+            type: object
+            properties:
+              component:
+                type: string
+              severity:
+                type: string
+                enum: [low, medium, high, critical]
+              description:
+                type: string
+              recommendation:
+                type: string
+
+    OptimizationRecommendations:
+      type: object
+      properties:
+        model_id:
+          type: string
+        recommendations:
+          type: array
+          items:
+            type: object
+            properties:
+              optimization_type:
+                type: string
+              expected_improvement:
+                type: number
+              confidence_score:
+                type: number
+              description:
+                type: string
+              implementation_complexity:
+                type: string
+                enum: [low, medium, high]
+
+    QualityGateRequest:
+      type: object
+      required:
+        - model_id
+      properties:
+        model_id:
+          type: string
+        gate_config:
+          type: object
+          properties:
+            nasa_pot10_compliance:
+              type: boolean
+              default: true
+            security_scan:
+              type: boolean
+              default: true
+            performance_validation:
+              type: boolean
+              default: true
+            accuracy_threshold:
+              type: number
+              minimum: 0
+              maximum: 1
+
+    QualityGateResults:
+      type: object
+      properties:
+        model_id:
+          type: string
+        overall_status:
+          type: string
+          enum: [PASS, FAIL, WARNING]
+        gate_results:
+          type: object
+          properties:
+            nasa_compliance:
+              $ref: '#/components/schemas/ComplianceResult'
+            security_scan:
+              $ref: '#/components/schemas/SecurityScanResult'
+            performance_validation:
+              $ref: '#/components/schemas/PerformanceValidationResult'
+        deployment_approved:
+          type: boolean
+        remediation_actions:
+          type: array
+          items:
+            type: string
+
+    ComplianceResult:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [PASS, FAIL, WARNING]
+        compliance_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        violations:
+          type: array
+          items:
+            type: object
+            properties:
+              rule:
+                type: string
+              severity:
+                type: string
+              description:
+                type: string
+
+    SecurityScanResult:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [PASS, FAIL, WARNING]
+        vulnerabilities:
+          type: array
+          items:
+            type: object
+            properties:
+              cve_id:
+                type: string
+              severity:
+                type: string
+                enum: [low, medium, high, critical]
+              description:
+                type: string
+              remediation:
+                type: string
+
+    PerformanceValidationResult:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [PASS, FAIL, WARNING]
+        metrics:
+          $ref: '#/components/schemas/ValidationMetrics'
+        thresholds_met:
+          type: boolean
+
+    ValidationMetrics:
+      type: object
+      properties:
+        latency_ms:
+          type: number
+        throughput_rps:
+          type: number
+        memory_mb:
+          type: number
+        accuracy:
+          type: number
+
+    MetricsResponse:
+      type: object
+      properties:
+        model_id:
+          type: string
+        time_range:
+          type: string
+        metrics:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: object
+              properties:
+                timestamp:
+                  type: string
+                  format: date-time
+                value:
+                  type: number
+
+    Phase5HandoffRequest:
+      type: object
+      required:
+        - training_job_id
+        - model_artifacts
+      properties:
+        training_job_id:
+          type: string
+          description: Phase 5 training job identifier
+        model_artifacts:
+          type: object
+          properties:
+            model_weights_url:
+              type: string
+              format: uri
+            training_config:
+              type: object
+            validation_metrics:
+              type: object
+            training_logs_url:
+              type: string
+              format: uri
+
+    Phase5HandoffResponse:
+      type: object
+      properties:
+        handoff_id:
+          type: string
+        model_id:
+          type: string
+        status:
+          type: string
+          enum: [accepted, validation_required, rejected]
+        validation_results:
+          type: object
+        next_steps:
+          type: array
+          items:
+            type: string
+
+    Phase7PreparationRequest:
+      type: object
+      required:
+        - optimized_model_id
+        - deployment_target
+      properties:
+        optimized_model_id:
+          type: string
+        deployment_target:
+          type: string
+          enum: [adas_inference, edge_deployment, cloud_deployment]
+        deployment_config:
+          type: object
+          properties:
+            resource_constraints:
+              type: object
+            performance_requirements:
+              type: object
+            security_requirements:
+              type: object
+
+    Phase7PreparationResponse:
+      type: object
+      properties:
+        preparation_id:
+          type: string
+        deployment_package_url:
+          type: string
+          format: uri
+        deployment_manifest:
+          type: object
+        validation_report:
+          type: object
+        deployment_instructions:
+          type: array
+          items:
+            type: string
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code identifier
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details
+        timestamp:
+          type: string
+          format: date-time
+          description: Error occurrence timestamp
+        trace_id:
+          type: string
+          description: Request trace identifier for debugging
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            invalid_model_id:
+              summary: Invalid model identifier
+              value:
+                code: "INVALID_MODEL_ID"
+                message: "The specified model_id does not exist or is invalid"
+                details:
+                  model_id: "invalid_model_123"
+                timestamp: "2025-09-15T10:15:30Z"
+                trace_id: "tr_abc123def456"
+
+    Unauthorized:
+      description: Unauthorized - invalid or missing authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            missing_auth:
+              summary: Missing authentication
+              value:
+                code: "MISSING_AUTHENTICATION"
+                message: "Authentication required to access this resource"
+                timestamp: "2025-09-15T10:15:30Z"
+                trace_id: "tr_abc123def456"
+
+    RateLimit:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            rate_limit:
+              summary: Rate limit exceeded
+              value:
+                code: "RATE_LIMIT_EXCEEDED"
+                message: "Too many requests. Please try again later."
+                details:
+                  limit: 100
+                  window: "1h"
+                  retry_after: 3600
+                timestamp: "2025-09-15T10:15:30Z"
+                trace_id: "tr_abc123def456"
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+          description: Request limit per time window
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+          description: Remaining requests in current window
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+          description: Time when rate limit resets (Unix timestamp)
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds to wait before retrying
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            internal_error:
+              summary: Internal server error
+              value:
+                code: "INTERNAL_SERVER_ERROR"
+                message: "An unexpected error occurred while processing your request"
+                timestamp: "2025-09-15T10:15:30Z"
+                trace_id: "tr_abc123def456"
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+externalDocs:
+  description: Phase 6 Baking System Documentation
+  url: https://docs.spek.dev/phase6/baking

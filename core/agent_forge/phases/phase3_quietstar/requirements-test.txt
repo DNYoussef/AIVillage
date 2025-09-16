@@ -1,0 +1,64 @@
+# Test requirements for Quiet-STaR test suite
+# Comprehensive testing dependencies with version pinning for reproducibility
+
+# Core testing framework
+pytest>=7.4.0,<8.0.0
+pytest-cov>=4.1.0,<5.0.0
+pytest-xdist>=3.3.1,<4.0.0  # Parallel test execution
+pytest-mock>=3.11.1,<4.0.0  # Enhanced mocking
+pytest-timeout>=2.1.0,<3.0.0  # Test timeout management
+pytest-benchmark>=4.0.0,<5.0.0  # Performance benchmarking
+pytest-randomly>=3.12.0,<4.0.0  # Test order randomization
+
+# Property-based testing
+hypothesis>=6.82.0,<7.0.0  # Property-based test generation
+
+# Performance and profiling
+memory-profiler>=0.61.0,<1.0.0  # Memory usage tracking
+psutil>=5.9.5,<6.0.0  # System resource monitoring
+py-spy>=0.3.14,<1.0.0  # Python profiler
+
+# ML/AI testing utilities
+torch>=2.0.0,<3.0.0  # PyTorch for neural components
+numpy>=1.24.0,<2.0.0  # Numerical computing
+scipy>=1.11.0,<2.0.0  # Scientific computing
+
+# Coverage and reporting
+coverage[toml]>=7.2.7,<8.0.0  # Coverage measurement
+pytest-html>=3.2.0,<4.0.0  # HTML test reports
+pytest-json-report>=1.5.0,<2.0.0  # JSON test reports
+
+# Test data generation
+faker>=19.3.0,<20.0.0  # Fake data generation
+factory-boy>=3.3.0,<4.0.0  # Test fixture factories
+
+# Quality assurance
+flake8>=6.0.0,<7.0.0  # Code style checking
+black>=23.7.0,<24.0.0  # Code formatting
+isort>=5.12.0,<6.0.0  # Import sorting
+mypy>=1.5.0,<2.0.0  # Type checking
+
+# Utilities
+tqdm>=4.65.0,<5.0.0  # Progress bars
+colorama>=0.4.6,<1.0.0  # Colored terminal output
+tabulate>=0.9.0,<1.0.0  # Table formatting
+pyyaml>=6.0.1,<7.0.0  # YAML configuration
+
+# Development utilities
+ipython>=8.14.0,<9.0.0  # Interactive development
+jupyter>=1.0.0,<2.0.0  # Notebook support for analysis
+matplotlib>=3.7.0,<4.0.0  # Plotting for analysis
+seaborn>=0.12.0,<1.0.0  # Statistical visualization
+
+# Testing infrastructure
+pytest-env>=0.8.2,<1.0.0  # Environment variable management
+pytest-datadir>=1.4.1,<2.0.0  # Test data directory management
+pytest-subtests>=0.11.1,<1.0.0  # Subtests support
+
+# Continuous integration
+pytest-github-actions-annotate-failures>=0.2.0,<1.0.0  # CI annotations
+pytest-clarity>=1.0.1,<2.0.0  # Clear test output
+
+# Security testing
+bandit>=1.7.5,<2.0.0  # Security vulnerability scanner
+safety>=2.3.0,<3.0.0  # Dependency vulnerability checker

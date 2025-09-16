@@ -194,12 +194,12 @@ class UnifiedPipeline:
                 from .phases.evomerge import EvoMergeConfig, EvoMergePhase
 
                 evomerge_config = EvoMergeConfig(
+                    base_models=self.config.base_models,
                     population_size=self.config.evomerge_population_size,
                     generations=self.config.evomerge_generations,
-                    techniques=self.config.evomerge_techniques,
-                    num_objectives=3,
-                    tournament_size=3,
-                    enable_grokfast=self.config.grokfast_enabled,
+                    merge_techniques=self.config.evomerge_techniques,
+                    output_dir=str(self.config.output_dir / "evomerge"),
+                    device=self.config.device,
                 )
                 phases.append(("EvoMergePhase", EvoMergePhase(evomerge_config)))
 
@@ -207,22 +207,25 @@ class UnifiedPipeline:
                 from .phases.quietstar import QuietSTaRConfig, QuietSTaRPhase
 
                 quietstar_config = QuietSTaRConfig(
-                    thought_length=self.config.quietstar_thought_length,
-                    num_thoughts=self.config.quietstar_num_thoughts,
-                    training_steps=self.config.quietstar_training_steps,
-                    enable_grokfast=self.config.grokfast_enabled,
-                    grokfast_ema_alpha=self.config.grokfast_ema_alpha,
-                    grokfast_lambda_init=self.config.grokfast_lambda_init,
-                    enable_dspy_optimization=self.config.enable_dspy_optimization,
+                    model_path="",  # Will be set from previous phase output
+                    output_path=str(self.config.output_dir / "quietstar"),
+                    max_thought_length=self.config.quietstar_thought_length,
+                    convergence_threshold=0.95,
+                    thought_probability=0.5,
+                    learning_rate=1e-5,
+                    num_epochs=3,
                 )
                 phases.append(("QuietSTaRPhase", QuietSTaRPhase(quietstar_config)))
 
             if self.config.enable_initial_compression:
-                from .phases.bitnet_compression import BitNetCompressionPhase, BitNetConfig
+                from .phases.bitnet_compression import BitNetCompressionPhase, BitNetCompressionConfig
 
-                bitnet_config = BitNetConfig(
-                    bits=self.config.bitnet_bits,
-                    group_size=self.config.bitnet_group_size,
+                bitnet_config = BitNetCompressionConfig(
+                    model_path="",  # Will be set from previous phase output
+                    output_path=str(self.config.output_dir / "bitnet"),
+                    quantization_bits=self.config.bitnet_bits,
+                    enable_grokfast=self.config.grokfast_enabled,
+                    device=self.config.device,
                     calibration_samples=100,
                     enable_fine_tuning=True,
                 )
@@ -232,18 +235,14 @@ class UnifiedPipeline:
                 from .phases.forge_training import ForgeTrainingConfig, ForgeTrainingPhase
 
                 training_config = ForgeTrainingConfig(
-                    training_steps=self.config.training_steps,
+                    model_path="",  # Will be set from previous phase output
+                    output_path=str(self.config.output_dir / "forge_training"),
+                    max_steps=self.config.training_steps,
                     batch_size=self.config.batch_size,
                     learning_rate=self.config.learning_rate,
                     enable_grokfast=self.config.grokfast_enabled,
                     grokfast_ema_alpha=self.config.grokfast_ema_alpha,
                     grokfast_lambda_init=self.config.grokfast_lambda_init,
-                    enable_edge_control=self.config.edge_control_enabled,
-                    target_success_range=self.config.target_success_range,
-                    enable_self_model=self.config.self_model_enabled,
-                    tap_layers=self.config.tap_layers,
-                    enable_dream=self.config.dream_enabled,
-                    dream_interval=self.config.dream_interval,
                 )
                 phases.append(("ForgeTrainingPhase", ForgeTrainingPhase(training_config)))
 
@@ -251,14 +250,13 @@ class UnifiedPipeline:
                 from .phases.tool_persona_baking import ToolPersonaBakingConfig, ToolPersonaBakingPhase
 
                 toolbaking_config = ToolPersonaBakingConfig(
-                    tools_to_bake=self.config.tools_to_bake,
-                    persona_traits=self.config.persona_traits,
+                    model_path="",  # Will be set from previous phase output
+                    output_path=str(self.config.output_dir / "tool_persona_baking"),
                     enable_grokfast=self.config.grokfast_enabled,
                     grokfast_ema_alpha=self.config.grokfast_ema_alpha,
-                    grokfast_lambda=self.config.grokfast_lambda_init,
-                    baking_iterations=10,
-                    convergence_threshold=0.001,
-                    enable_dspy_optimization=self.config.enable_dspy_optimization,
+                    grokfast_lambda_init=self.config.grokfast_lambda_init,
+                    baking_iterations=5,
+                    convergence_threshold=0.90,
                 )
                 phases.append(("ToolPersonaBakingPhase", ToolPersonaBakingPhase(toolbaking_config)))
 

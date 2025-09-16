@@ -1,0 +1,35 @@
+# ADAS Backend API Requirements - Production Ready
+# Core web framework
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+
+# Security and authentication
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+python-multipart>=0.0.6
+
+# Database and caching
+redis>=5.0.1
+asyncpg>=0.29.0
+databases[postgresql]>=0.8.0
+
+# Data validation and processing
+pydantic>=2.5.0
+numpy>=1.24.3
+scipy>=1.11.4
+
+# System monitoring
+psutil>=5.9.6
+prometheus-client>=0.19.0
+
+# HTTP client and utilities
+httpx>=0.25.2
+aiofiles>=23.2.1
+
+# Development and testing
+pytest>=7.4.3
+pytest-asyncio>=0.21.1
+httpx>=0.25.2
+
+# Production deployment
+gunicorn>=21.2.0

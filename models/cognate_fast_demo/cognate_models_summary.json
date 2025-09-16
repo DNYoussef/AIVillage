@@ -1,0 +1,160 @@
+{
+  "creation_timestamp": "2025-09-15T16:50:34.247059",
+  "total_models": 3,
+  "target_parameters_per_model": 25000000,
+  "models": [
+    {
+      "name": "cognate_foundation_1",
+      "path": "C:\\Users\\17175\\Desktop\\AIVillage\\models\\cognate_fast_demo\\cognate_foundation_1",
+      "parameter_count": 25069534,
+      "focus": "reasoning",
+      "metadata": {
+        "model_name": "cognate_foundation_1",
+        "model_index": 0,
+        "focus": "reasoning",
+        "parameter_count": 25069534,
+        "target_parameters": 25000000,
+        "parameter_accuracy": 0.278136,
+        "training_stats": {
+          "final_loss": 10.381137924194336,
+          "initial_loss": 10.374208450317383,
+          "loss_improvement": -0.0011959075927734375,
+          "steps": 50,
+          "mode": "fast_real_training",
+          "model_name": "cognate_foundation_1"
+        },
+        "architecture": {
+          "d_model": 216,
+          "n_layers": 11,
+          "n_heads": 4,
+          "ffn_mult": 4,
+          "vocab_size": 32000
+        },
+        "cognate_features": {
+          "act_halting": true,
+          "act_threshold": 0.95,
+          "ltm_memory": true,
+          "memory_capacity": 4096,
+          "memory_cross_attn": true,
+          "surprise_weight": 0.7,
+          "novelty_weight": 0.3
+        },
+        "training_config": {
+          "train_max_steps": 8,
+          "infer_max_steps": 2
+        },
+        "created_at": "2025-09-15T16:50:10.037067",
+        "ready_for_evomerge": true
+      }
+    },
+    {
+      "name": "cognate_foundation_2",
+      "path": "C:\\Users\\17175\\Desktop\\AIVillage\\models\\cognate_fast_demo\\cognate_foundation_2",
+      "parameter_count": 25069534,
+      "focus": "memory_integration",
+      "metadata": {
+        "model_name": "cognate_foundation_2",
+        "model_index": 1,
+        "focus": "memory_integration",
+        "parameter_count": 25069534,
+        "target_parameters": 25000000,
+        "parameter_accuracy": 0.278136,
+        "training_stats": {
+          "final_loss": 10.379395408630371,
+          "initial_loss": 10.384491920471191,
+          "loss_improvement": 0.0035572052001953125,
+          "steps": 50,
+          "mode": "fast_real_training",
+          "model_name": "cognate_foundation_2"
+        },
+        "architecture": {
+          "d_model": 216,
+          "n_layers": 11,
+          "n_heads": 4,
+          "ffn_mult": 4,
+          "vocab_size": 32000
+        },
+        "cognate_features": {
+          "act_halting": true,
+          "act_threshold": 0.9,
+          "ltm_memory": true,
+          "memory_capacity": 8192,
+          "memory_cross_attn": true,
+          "surprise_weight": 0.5,
+          "novelty_weight": 0.5
+        },
+        "training_config": {
+          "train_max_steps": 8,
+          "infer_max_steps": 2
+        },
+        "created_at": "2025-09-15T16:50:22.064697",
+        "ready_for_evomerge": true
+      }
+    },
+    {
+      "name": "cognate_foundation_3",
+      "path": "C:\\Users\\17175\\Desktop\\AIVillage\\models\\cognate_fast_demo\\cognate_foundation_3",
+      "parameter_count": 25069534,
+      "focus": "adaptive_computation",
+      "metadata": {
+        "model_name": "cognate_foundation_3",
+        "model_index": 2,
+        "focus": "adaptive_computation",
+        "parameter_count": 25069534,
+        "target_parameters": 25000000,
+        "parameter_accuracy": 0.278136,
+        "training_stats": {
+          "final_loss": 10.379443950653076,
+          "initial_loss": 10.376750946044922,
+          "loss_improvement": -0.006501197814941406,
+          "steps": 50,
+          "mode": "fast_real_training",
+          "model_name": "cognate_foundation_3"
+        },
+        "architecture": {
+          "d_model": 216,
+          "n_layers": 11,
+          "n_heads": 4,
+          "ffn_mult": 4,
+          "vocab_size": 32000
+        },
+        "cognate_features": {
+          "act_halting": true,
+          "act_threshold": 0.99,
+          "ltm_memory": true,
+          "memory_capacity": 2048,
+          "memory_cross_attn": true,
+          "surprise_weight": 0.3,
+          "novelty_weight": 0.7
+        },
+        "training_config": {
+          "train_max_steps": 8,
+          "infer_max_steps": 2
+        },
+        "created_at": "2025-09-15T16:50:34.238922",
+        "ready_for_evomerge": true
+      }
+    }
+  ],
+  "total_parameters": 75208602,
+  "average_parameters": 25069534.0,
+  "parameter_accuracy": {
+    "cognate_foundation_1": {
+      "count": 25069534,
+      "target": 25000000,
+      "accuracy_pct": 0.278136
+    },
+    "cognate_foundation_2": {
+      "count": 25069534,
+      "target": 25000000,
+      "accuracy_pct": 0.278136
+    },
+    "cognate_foundation_3": {
+      "count": 25069534,
+      "target": 25000000,
+      "accuracy_pct": 0.278136
+    }
+  },
+  "next_phase": "evomerge",
+  "pipeline_status": "ready_for_evomerge"
+}

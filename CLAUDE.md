@@ -347,6 +347,29 @@ claude mcp add claude-flow npx claude-flow@alpha mcp start
     - Coverage: 96% of web content, intelligent content filtering
     - Tools: FIRECRAWL_SCRAPE_EXTRACT_DATA_LLM, FIRECRAWL_CRAWL_URLS, FIRECRAWL_BATCH_SCRAPE
 
+11. **Ref MCP** - Token-efficient documentation search with agentic capabilities
+    - Tools: ref_search_documentation, ref_read_url (fallback: search_web)
+    - Performance: Optimized for minimal token usage with smart chunking
+    - Setup: HTTP server (recommended) or NPX local with REF_API_KEY
+    - Use for: API documentation, technical references, library docs
+    - Features: Intelligent context filtering, reduces "context rot"
+
+12. **Playwright MCP** - Structured browser automation via accessibility tree
+    - Tools: browser_click, browser_navigate, browser_fill_form, browser_file_upload
+    - Additional: browser_evaluate, browser_take_screenshot, browser_press_key, browser_handle_dialog
+    - Performance: Fast and lightweight, no pixel-based input required
+    - Setup: Microsoft official server via `npx @playwright/mcp@latest`
+    - Use for: Web testing, automation, accessibility-focused interactions
+    - Features: LLM-friendly structured data, deterministic tool application
+
+13. **Exa MCP** - AI-powered web search and deep research capabilities
+    - Tools: web_search_exa, company_research, crawling, linkedin_search
+    - Advanced: deep_researcher_start, deep_researcher_check for comprehensive analysis
+    - Performance: Real-time web search with AI-enhanced result processing
+    - Setup: NPX server with EXA_API_KEY or remote server at https://mcp.exa.ai/mcp
+    - Use for: Market research, competitive analysis, LinkedIn prospecting
+    - Features: Intelligent agent-driven research, comprehensive report generation
+
 ### MCP Tool Categories
 
 #### Coordination & Orchestration
@@ -374,6 +397,9 @@ claude mcp add claude-flow npx claude-flow@alpha mcp start
 - **Context7 MCP**: Real-time documentation retrieval, version-specific, multi-platform
 - **DeepWiki MCP**: GitHub repository documentation access, technical Q&A
 - **Apify MCP**: 5,000+ web scraping actors, browser automation, ethical scraping
+- **Ref MCP**: Token-efficient documentation search, smart chunking, context optimization
+- **Playwright MCP**: Accessibility-focused browser automation, deterministic interactions
+- **Exa MCP**: AI-powered web search, deep research agents, market intelligence
 
 ## Agent Execution Flow with Claude Code
 
@@ -385,25 +411,38 @@ claude mcp add claude-flow npx claude-flow@alpha mcp start
 4. **REQUIRED**: Batch all operations in single messages
 5. **NEW**: Leverage MCP servers for enhanced capabilities
 
-### Example Full-Stack Development:
+### Example Full-Stack Development with Enhanced MCP Integration:
 
 ```javascript
 // Single message with all agent spawning via Claude Code's Task tool
-[Parallel Agent Execution]:
-  Task("Backend Developer", "Build REST API with Express. Use hooks for coordination.", "backend-dev")
-  Task("Frontend Developer", "Create React UI. Coordinate with backend via memory.", "coder")
-  Task("Database Architect", "Design PostgreSQL schema. Store schema in memory.", "code-analyzer")
-  Task("Test Engineer", "Write Jest tests. Check memory for API contracts.", "tester")
-  Task("DevOps Engineer", "Setup Docker and CI/CD. Document in memory.", "cicd-engineer")
-  Task("Security Auditor", "Review authentication. Report findings via hooks.", "reviewer")
+[Parallel Agent Execution with Enhanced MCP]:
+  Task("Backend Developer", "Build REST API with Express. Use Ref MCP for API docs, Memory MCP for patterns.", "backend-dev")
+  Task("Frontend Developer", "Create React UI. Use Context7 MCP for React docs, Playwright MCP for testing.", "coder")
+  Task("Database Architect", "Design PostgreSQL schema. Use Ref MCP for SQL docs, store schema in Memory MCP.", "code-analyzer")
+  Task("Test Engineer", "Write Jest tests. Use Playwright MCP for E2E tests, Memory MCP for test patterns.", "tester")
+  Task("DevOps Engineer", "Setup Docker and CI/CD. Use Ref MCP for Docker docs, store configs in Memory MCP.", "cicd-engineer")
+  Task("Security Auditor", "Review authentication. Use Exa MCP for security research, Sequential Thinking for analysis.", "reviewer")
+  Task("Research Agent", "Market analysis and competitor research using Exa MCP deep research capabilities.", "researcher")
+  Task("Documentation Agent", "Create comprehensive docs using MarkItDown MCP and technical references from Ref MCP.", "api-docs")
   
-  // All todos batched together
-  TodoWrite { todos: [...8-10 todos...] }
+  // All todos batched together with MCP-enhanced capabilities
+  TodoWrite { todos: [
+    {content: "API documentation research via Ref MCP", status: "in_progress", priority: "high"},
+    {content: "React component patterns via Context7 MCP", status: "in_progress", priority: "high"},
+    {content: "Database schema design and storage", status: "in_progress", priority: "high"},
+    {content: "E2E test automation via Playwright MCP", status: "pending", priority: "high"},
+    {content: "Security research via Exa MCP", status: "pending", priority: "medium"},
+    {content: "Competitor analysis via Exa deep research", status: "pending", priority: "medium"},
+    {content: "Docker configuration and CI/CD setup", status: "pending", priority: "medium"},
+    {content: "Documentation generation via MarkItDown MCP", status: "pending", priority: "low"}
+  ]}
   
   // All file operations together
   Write "backend/server.js"
   Write "frontend/App.jsx"
   Write "database/schema.sql"
+  Write "tests/e2e/user-flow.spec.js"
+  Write "docs/api/README.md"
 ```
 
 ## Enhanced Agent Coordination Protocol
@@ -633,11 +672,26 @@ knowledge = await system.research("Best practices for microservices")
 - DeepWiki MCP: GitHub repository documentation analysis
 - Memory MCP: Persistent research findings and patterns
 
-**For Web Automation**:
-- Primary: Apify MCP + Firecrawl MCP + Sequential Thinking MCP
-- Apify MCP: 5,000+ web scraping actors with ethical automation
-- Firecrawl MCP: Modern JavaScript-heavy sites with smart page settlement
+**For Web Automation & Testing**:
+- Primary: Playwright MCP + Apify MCP + Sequential Thinking MCP + Memory MCP
+- Playwright MCP: Structured browser automation via accessibility tree (deterministic)
+- Apify MCP: 5,000+ web scraping actors with ethical automation (massive scale)
 - Sequential Thinking MCP: Multi-step reasoning for complex automation workflows
+- Memory MCP: Store automation patterns and test results
+
+**For Documentation & Technical Research**:
+- Primary: Ref MCP + Context7 MCP + DeepWiki MCP + Memory MCP
+- Ref MCP: Token-efficient documentation search with smart chunking
+- Context7 MCP: Real-time library documentation with version specificity
+- DeepWiki MCP: GitHub repository documentation analysis
+- Memory MCP: Persistent documentation patterns and technical knowledge
+
+**For Market Intelligence & Deep Research**:
+- Primary: Exa MCP + Firecrawl MCP + Sequential Thinking MCP + Memory MCP
+- Exa MCP: AI-powered web search with deep research agents
+- Firecrawl MCP: Modern JavaScript-heavy sites with smart page settlement
+- Sequential Thinking MCP: Complex multi-step research methodology
+- Memory MCP: Persistent research findings and competitive intelligence
 
 **For Comprehensive Analysis**:
 - All servers coordinated through Memory MCP as central hub
@@ -646,10 +700,39 @@ knowledge = await system.research("Best practices for microservices")
 
 ### Performance Characteristics:
 
-**High-Speed Servers**: Firecrawl, Memory, Context7 (sub-second to millisecond responses)
-**High-Concurrency**: HuggingFace (164+ clients), Sequential Thinking, Memory
-**Rate-Limited**: GitHub (5K req/hour), Apify (30 req/sec) - plan accordingly
-**Processing-Intensive**: MarkItDown, HuggingFace - consider resource allocation
+**High-Speed Servers**: 
+- Firecrawl, Memory, Context7, Ref (sub-second to millisecond responses)
+- Playwright (deterministic, no visual processing delays)
+
+**High-Concurrency**: 
+- HuggingFace (164+ clients), Sequential Thinking, Memory
+- Exa (real-time search with AI enhancement)
+
+**Rate-Limited**: 
+- GitHub (5K req/hour), Apify (30 req/sec) - plan accordingly
+- Exa API (depends on subscription tier)
+- Ref API (usage-based pricing)
+
+**Processing-Intensive**: 
+- MarkItDown, HuggingFace - consider resource allocation
+- Exa deep research (multi-step analysis)
+- Playwright automation (browser resource usage)
+
+### Quick Setup Commands:
+
+```bash
+# Core MCP servers
+claude mcp add claude-flow npx claude-flow@alpha mcp start
+
+# New MCP servers - Quick Installation
+claude mcp add ref -e REF_API_KEY=YOUR_API_KEY -- npx -y ref-tools-mcp@latest
+claude mcp add playwright -- npx -y @playwright/mcp@latest  
+claude mcp add exa -e EXA_API_KEY=YOUR_API_KEY -- npx -y exa-mcp-server
+
+# Alternative HTTP setup for Ref (recommended)
+claude mcp add ref-http --type http --url "https://api.ref.tools/mcp?apiKey=YOUR_API_KEY"
+claude mcp add exa-remote --type http --url "https://mcp.exa.ai/mcp?exaApiKey=YOUR_API_KEY"
+```
 
 ## Support
 

@@ -1,0 +1,114 @@
+checkpoint:
+  backup_to_cloud: false
+  checkpoint_dir: ./checkpoints
+  compress_checkpoints: false
+  keep_last_n: 5
+  max_checkpoint_size_gb: 10.0
+  save_best: true
+  save_interval: 1000
+  save_on_epoch_end: true
+  verify_integrity: true
+data:
+  batch_size: 32
+  dataset_path: ''
+  drop_last: true
+  eval_batch_size: 64
+  max_length: 512
+  num_workers: 4
+  persistent_workers: true
+  pin_memory: true
+  preprocessing_workers: 8
+  shuffle_train: true
+  test_split: 0.1
+  train_split: 0.8
+  val_split: 0.1
+distributed:
+  backend: nccl
+  bucket_cap_mb: 25
+  enabled: false
+  find_unused_parameters: false
+  local_rank: 0
+  master_addr: localhost
+  master_port: '12355'
+  rank: 0
+  timeout_minutes: 30
+  world_size: 1
+early_stopping_patience: null
+environment: development
+experiment_name: default
+grokfast:
+  alpha: 0.98
+  capability_threshold: 0.85
+  consolidation_interval: 500
+  enabled: true
+  lambda_reg: 2.0
+  lr_acceleration_factor: 2.0
+  lr_deceleration_factor: 0.5
+  phase_duration: 1000
+  rapid_learning_phases: 3
+  use_adaptive_lr: true
+logging:
+  eval_interval: 500
+  log_dir: ./logs
+  log_interval: 100
+  log_level: INFO
+  performance_tracking: true
+  report_to:
+  - tensorboard
+  save_interval: 1000
+  tensorboard_enabled: true
+  wandb_enabled: false
+  wandb_project: agent-forge-phase5
+max_steps: null
+model:
+  bitnet_layers:
+  - all
+  dropout_prob: 0.1
+  hidden_size: 768
+  intermediate_size: 3072
+  layer_norm_eps: 1.0e-12
+  max_position_embeddings: 2048
+  model_type: bitnet
+  num_heads: 12
+  num_layers: 12
+  use_bitnet_linear: true
+  use_cache: true
+  vocab_size: 50000
+nasa_compliance:
+  checkpoint_validation: true
+  distributed_coordination: true
+  enforce_compliance: true
+  error_handling_validation: true
+  logging_requirements: true
+  memory_efficiency_check: true
+  min_compliance_score: 90.0
+  performance_tracking: true
+  required_documentation: true
+  training_stability_check: true
+num_epochs: 10
+optimization:
+  adam_betas: !!python/tuple
+  - 0.9
+  - 0.999
+  adam_epsilon: 1.0e-08
+  gradient_accumulation_steps: 1
+  gradient_clipping: 1.0
+  learning_rate: 0.0001
+  loss_scaling: 1.0
+  max_grad_norm: 1.0
+  optimizer_type: adamw
+  scheduler_type: !!python/object/apply:phase5.training_config.SchedulerType
+  - cosine
+  use_fp16: true
+  warmup_steps: 1000
+  weight_decay: 0.01
+output_dir: ./output
+phase_integration:
+  compress_transfer: true
+  cross_phase_logging: true
+  metadata_preservation: true
+  model_transfer_format: pytorch
+  phase4_input_dir: ./phase4/output
+  phase6_output_dir: ./phase6/input
+  validate_transfer: true
+random_seed: 42

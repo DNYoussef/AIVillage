@@ -1,0 +1,1107 @@
+openapi: 3.0.0
+info:
+  title: DFARS 252.204-7012 Compliance API
+  version: 1.0.0
+  description: |
+    Defense Federal Acquisition Regulation Supplement (DFARS) 252.204-7012
+    Compliance Framework API for Controlled Unclassified Information (CUI) protection.
+
+    This API provides comprehensive compliance monitoring, assessment, and
+    remediation capabilities for defense industry systems requiring DFARS compliance.
+
+    **Classification: CONTROLLED UNCLASSIFIED INFORMATION (CUI)**
+
+    **Features:**
+    - Real-time compliance monitoring
+    - Automated violation detection
+    - CUI asset identification and protection
+    - Audit trail management
+    - FIPS 140-2 cryptographic operations
+    - Incident response automation
+
+  contact:
+    name: Defense Compliance Team
+    email: compliance@defense.contractor
+  license:
+    name: Proprietary
+    url: https://defense.contractor/license
+  termsOfService: https://defense.contractor/terms
+
+servers:
+  - url: https://api.defense.contractor/v1
+    description: Production DFARS Compliance API
+  - url: https://staging-api.defense.contractor/v1
+    description: Staging Environment
+  - url: https://localhost:8443/v1
+    description: Local Development (HTTPS Required)
+
+security:
+  - DFARSApiKey: []
+  - CUIAccess: []
+  - PIVCard: []
+
+paths:
+  /compliance/scan:
+    post:
+      summary: Execute DFARS Compliance Scan
+      description: |
+        Initiates a comprehensive DFARS 252.204-7012 compliance scan across
+        all system components and assets.
+
+        **Security Requirements:**
+        - Requires CUI access clearance
+        - All scan results are encrypted at rest
+        - Audit trail automatically generated
+
+      operationId: executeDFARSScan
+      tags:
+        - Compliance Assessment
+      security:
+        - DFARSApiKey: []
+        - CUIAccess: [read, scan]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComplianceScanRequest'
+            example:
+              scan_type: "full"
+              target_systems: ["web_app", "database", "file_storage"]
+              include_cui_analysis: true
+              priority_level: "high"
+              notification_email: "security@defense.contractor"
+      responses:
+        '200':
+          description: Compliance scan initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplianceScanResponse'
+              example:
+                scan_id: "dfars-scan-20250914-001"
+                status: "initiated"
+                estimated_completion: "2025-09-14T15:30:00Z"
+                compliance_score: 0.95
+                priority_findings: 3
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /compliance/scan/{scanId}/status:
+    get:
+      summary: Get Compliance Scan Status
+      description: |
+        Retrieves the current status and progress of a DFARS compliance scan.
+
+        **Real-time Updates:**
+        - Progress percentage
+        - Current scanning module
+        - Preliminary findings count
+        - Estimated completion time
+
+      operationId: getComplianceScanStatus
+      tags:
+        - Compliance Assessment
+      security:
+        - DFARSApiKey: []
+        - CUIAccess: [read]
+      parameters:
+        - name: scanId
+          in: path
+          required: true
+          description: Unique identifier for the compliance scan
+          schema:
+            type: string
+            pattern: '^dfars-scan-[0-9]{8}-[0-9]{3}$'
+          example: "dfars-scan-20250914-001"
+      responses:
+        '200':
+          description: Scan status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanStatusResponse'
+              example:
+                scan_id: "dfars-scan-20250914-001"
+                status: "in_progress"
+                progress_percentage: 67.5
+                current_module: "audit_accountability"
+                findings_count: 15
+                estimated_completion: "2025-09-14T15:30:00Z"
+        '404':
+          description: Scan not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /compliance/scan/{scanId}/results:
+    get:
+      summary: Get Compliance Scan Results
+      description: |
+        Retrieves comprehensive results from a completed DFARS compliance scan.
+
+        **Results Include:**
+        - Overall compliance score
+        - Detailed findings by DFARS control
+        - CUI asset inventory
+        - Remediation recommendations
+        - Executive summary
+
+      operationId: getComplianceScanResults
+      tags:
+        - Compliance Assessment
+      security:
+        - DFARSApiKey: []
+        - CUIAccess: [read]
+      parameters:
+        - name: scanId
+          in: path
+          required: true
+          description: Unique identifier for the compliance scan
+          schema:
+            type: string
+          example: "dfars-scan-20250914-001"
+        - name: format
+          in: query
+          description: Output format for results
+          schema:
+            type: string
+            enum: [json, pdf, excel]
+            default: json
+        - name: include_remediation
+          in: query
+          description: Include detailed remediation plan
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Scan results retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplianceResults'
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.ms-excel:
+              schema:
+                type: string
+                format: binary
+
+  /cui/assets:
+    get:
+      summary: List CUI Assets
+      description: |
+        Retrieves inventory of all Controlled Unclassified Information (CUI) assets
+        identified within the system.
+
+        **Asset Information:**
+        - Classification level
+        - Handling requirements
+        - Access controls
+        - Retention policies
+
+      operationId: listCUIAssets
+      tags:
+        - CUI Management
+      security:
+        - DFARSApiKey: []
+        - CUIAccess: [read, cui_access]
+      parameters:
+        - name: classification_level
+          in: query
+          description: Filter by CUI classification level
+          schema:
+            type: string
+            enum: ["CUI//BASIC", "CUI//SP-PRIV", "CUI//SP-PROP", "CUI//SP-LEI"]
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of assets per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: CUI assets retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CUIAssetsResponse'
+
+  /cui/assets/{assetId}/access-log:
+    get:
+      summary: Get CUI Asset Access Log
+      description: |
+        Retrieves detailed access log for a specific CUI asset.
+        Required for DFARS audit trail compliance.
+
+      operationId: getCUIAssetAccessLog
+      tags:
+        - CUI Management
+        - Audit Trail
+      security:
+        - DFARSApiKey: []
+        - CUIAccess: [read, audit]
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          description: Unique identifier for the CUI asset
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          description: Start date for log retrieval (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          description: End date for log retrieval (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Access log retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessLogResponse'
+
+  /crypto/operations:
+    post:
+      summary: Execute FIPS Cryptographic Operation
+      description: |
+        Performs FIPS 140-2 Level 3 compliant cryptographic operations
+        for CUI protection and system security.
+
+        **Supported Operations:**
+        - Data encryption/decryption
+        - Digital signature generation/verification
+        - Key derivation and management
+        - Hash calculation and verification
+
+      operationId: executeCryptoOperation
+      tags:
+        - Cryptographic Services
+      security:
+        - DFARSApiKey: []
+        - CUIAccess: [write, crypto]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CryptoOperationRequest'
+      responses:
+        '200':
+          description: Cryptographic operation completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CryptoOperationResponse'
+
+  /audit/trail:
+    get:
+      summary: Retrieve Audit Trail
+      description: |
+        Retrieves comprehensive audit trail records for compliance verification.
+        Supports DFARS requirement for audit record retention and analysis.
+
+      operationId: getAuditTrail
+      tags:
+        - Audit Trail
+      security:
+        - DFARSApiKey: []
+        - CUIAccess: [read, audit]
+      parameters:
+        - name: event_type
+          in: query
+          description: Filter by event type
+          schema:
+            type: string
+            enum: [authentication, authorization, data_access, system_event, security_event]
+        - name: start_date
+          in: query
+          description: Start date for audit trail (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          description: End date for audit trail (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: user_id
+          in: query
+          description: Filter by specific user
+          schema:
+            type: string
+        - name: severity
+          in: query
+          description: Filter by event severity
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+      responses:
+        '200':
+          description: Audit trail retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditTrailResponse'
+
+  /incident/response:
+    post:
+      summary: Initiate Incident Response
+      description: |
+        Initiates automated incident response procedures as required
+        by DFARS for security incidents affecting CUI.
+
+        **Capabilities:**
+        - Automated containment
+        - Evidence preservation
+        - Stakeholder notification
+        - 72-hour reporting compliance
+
+      operationId: initiateIncidentResponse
+      tags:
+        - Incident Response
+      security:
+        - DFARSApiKey: []
+        - CUIAccess: [write, incident_response]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IncidentRequest'
+      responses:
+        '200':
+          description: Incident response initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentResponse'
+
+  /compliance/metrics:
+    get:
+      summary: Get Compliance Metrics Dashboard
+      description: |
+        Retrieves real-time compliance metrics and KPIs for DFARS 252.204-7012.
+
+        **Metrics Include:**
+        - Overall compliance score
+        - Control implementation status
+        - Trend analysis
+        - Risk indicators
+
+      operationId: getComplianceMetrics
+      tags:
+        - Compliance Assessment
+        - Reporting
+      security:
+        - DFARSApiKey: []
+        - CUIAccess: [read]
+      responses:
+        '200':
+          description: Compliance metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplianceMetrics'
+
+components:
+  schemas:
+    ComplianceScanRequest:
+      type: object
+      required:
+        - scan_type
+        - target_systems
+      properties:
+        scan_type:
+          type: string
+          enum: [full, incremental, focused]
+          description: Type of compliance scan to perform
+        target_systems:
+          type: array
+          items:
+            type: string
+          description: List of systems to include in scan
+        include_cui_analysis:
+          type: boolean
+          default: true
+          description: Include CUI asset identification
+        priority_level:
+          type: string
+          enum: [low, medium, high, critical]
+          default: medium
+          description: Scan priority level
+        notification_email:
+          type: string
+          format: email
+          description: Email for scan completion notification
+        custom_controls:
+          type: array
+          items:
+            type: string
+          description: Additional DFARS controls to evaluate
+
+    ComplianceScanResponse:
+      type: object
+      required:
+        - scan_id
+        - status
+        - estimated_completion
+      properties:
+        scan_id:
+          type: string
+          description: Unique identifier for the initiated scan
+        status:
+          type: string
+          enum: [initiated, queued, in_progress, completed, failed]
+          description: Current scan status
+        estimated_completion:
+          type: string
+          format: date-time
+          description: Estimated completion time
+        compliance_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Preliminary compliance score
+        priority_findings:
+          type: integer
+          description: Number of high-priority findings detected
+
+    ScanStatusResponse:
+      type: object
+      required:
+        - scan_id
+        - status
+        - progress_percentage
+      properties:
+        scan_id:
+          type: string
+          description: Scan identifier
+        status:
+          type: string
+          enum: [initiated, queued, in_progress, completed, failed]
+        progress_percentage:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+          description: Scan completion percentage
+        current_module:
+          type: string
+          description: Currently executing scan module
+        findings_count:
+          type: integer
+          description: Total findings identified so far
+        estimated_completion:
+          type: string
+          format: date-time
+          description: Updated completion estimate
+
+    ComplianceResults:
+      type: object
+      required:
+        - scan_id
+        - timestamp
+        - compliance_score
+        - summary
+      properties:
+        scan_id:
+          type: string
+          description: Scan identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Scan completion timestamp
+        compliance_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Overall DFARS compliance score
+        summary:
+          $ref: '#/components/schemas/ComplianceSummary'
+        findings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Finding'
+          description: Detailed compliance findings
+        cui_assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/CUIAsset'
+          description: Identified CUI assets
+        remediation_plan:
+          $ref: '#/components/schemas/RemediationPlan'
+        metrics:
+          $ref: '#/components/schemas/ComplianceMetrics'
+
+    ComplianceSummary:
+      type: object
+      properties:
+        total_findings:
+          type: integer
+          description: Total number of findings
+        critical_findings:
+          type: integer
+          description: Critical severity findings
+        high_findings:
+          type: integer
+          description: High severity findings
+        cui_assets_found:
+          type: integer
+          description: Number of CUI assets identified
+        compliance_percentage:
+          type: number
+          format: float
+          description: Compliance percentage (0-100)
+        dfars_ready:
+          type: boolean
+          description: Whether system meets DFARS requirements
+
+    Finding:
+      type: object
+      required:
+        - control_id
+        - control_name
+        - finding_type
+        - severity
+        - description
+      properties:
+        control_id:
+          type: string
+          description: DFARS control identifier (e.g., "3.1.1")
+        control_name:
+          type: string
+          description: Human-readable control name
+        finding_type:
+          type: string
+          enum: [violation, gap, enhancement]
+          description: Type of compliance finding
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+          description: Severity level of finding
+        description:
+          type: string
+          description: Detailed description of the finding
+        file_path:
+          type: string
+          description: File path where finding was identified
+        line_number:
+          type: integer
+          description: Line number in file (if applicable)
+        remediation:
+          type: string
+          description: Recommended remediation steps
+        cui_impact:
+          type: boolean
+          description: Whether finding affects CUI handling
+
+    CUIAsset:
+      type: object
+      required:
+        - file_path
+        - cui_level
+        - classification_rationale
+      properties:
+        asset_id:
+          type: string
+          description: Unique asset identifier
+        file_path:
+          type: string
+          description: Path to the CUI asset
+        cui_level:
+          type: string
+          enum: ["CUI//BASIC", "CUI//SP-PRIV", "CUI//SP-PROP", "CUI//SP-LEI"]
+          description: CUI classification level
+        classification_rationale:
+          type: string
+          description: Reason for CUI classification
+        access_controls:
+          type: array
+          items:
+            type: string
+          description: Applied access controls
+        handling_requirements:
+          type: array
+          items:
+            type: string
+          description: Required handling procedures
+        retention_period:
+          type: integer
+          description: Required retention period in days
+        last_accessed:
+          type: string
+          format: date-time
+          description: Last access timestamp
+        encryption_status:
+          type: string
+          enum: [encrypted, unencrypted, partially_encrypted]
+          description: Current encryption status
+
+    CUIAssetsResponse:
+      type: object
+      properties:
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/CUIAsset'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        summary:
+          type: object
+          properties:
+            total_assets:
+              type: integer
+            by_classification:
+              type: object
+              additionalProperties:
+                type: integer
+            encryption_coverage:
+              type: number
+              format: float
+
+    AccessLogResponse:
+      type: object
+      properties:
+        asset_id:
+          type: string
+        access_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessEvent'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    AccessEvent:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        user_id:
+          type: string
+        action:
+          type: string
+          enum: [read, write, delete, copy, print, export]
+        source_ip:
+          type: string
+        user_agent:
+          type: string
+        success:
+          type: boolean
+        audit_id:
+          type: string
+          description: Unique audit trail identifier
+
+    CryptoOperationRequest:
+      type: object
+      required:
+        - operation_type
+      properties:
+        operation_type:
+          type: string
+          enum: [encrypt, decrypt, sign, verify, hash, derive_key]
+        algorithm:
+          type: string
+          enum: [AES-256-GCM, RSA-4096, SHA-256, PBKDF2-SHA256]
+        data:
+          type: string
+          format: base64
+          description: Data to process (base64 encoded)
+        key_id:
+          type: string
+          description: Key identifier for operation
+        parameters:
+          type: object
+          additionalProperties: true
+          description: Algorithm-specific parameters
+
+    CryptoOperationResponse:
+      type: object
+      properties:
+        operation_id:
+          type: string
+          description: Unique operation identifier
+        result:
+          type: string
+          format: base64
+          description: Operation result (base64 encoded)
+        algorithm_used:
+          type: string
+          description: Cryptographic algorithm used
+        timestamp:
+          type: string
+          format: date-time
+        integrity_hash:
+          type: string
+          description: SHA-256 hash of operation for audit trail
+
+    AuditTrailResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEvent'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        integrity_verification:
+          type: object
+          properties:
+            chain_valid:
+              type: boolean
+            last_verified:
+              type: string
+              format: date-time
+            verification_hash:
+              type: string
+
+    AuditEvent:
+      type: object
+      properties:
+        event_id:
+          type: string
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+        event_type:
+          type: string
+          enum: [authentication, authorization, data_access, system_event, security_event]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        user_id:
+          type: string
+        source_ip:
+          type: string
+        description:
+          type: string
+        additional_data:
+          type: object
+          additionalProperties: true
+        integrity_hash:
+          type: string
+          description: SHA-256 hash for chain integrity
+        previous_hash:
+          type: string
+          description: Hash of previous event in chain
+
+    IncidentRequest:
+      type: object
+      required:
+        - incident_type
+        - severity
+        - description
+      properties:
+        incident_type:
+          type: string
+          enum: [security_breach, data_loss, unauthorized_access, malware, other]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        description:
+          type: string
+          description: Detailed incident description
+        affected_systems:
+          type: array
+          items:
+            type: string
+        affected_cui_assets:
+          type: array
+          items:
+            type: string
+        reporter_id:
+          type: string
+        contact_email:
+          type: string
+          format: email
+
+    IncidentResponse:
+      type: object
+      properties:
+        incident_id:
+          type: string
+          description: Unique incident identifier
+        status:
+          type: string
+          enum: [reported, triaged, investigating, contained, resolved]
+        response_team_assigned:
+          type: boolean
+        estimated_resolution:
+          type: string
+          format: date-time
+        containment_actions:
+          type: array
+          items:
+            type: string
+        notification_sent:
+          type: boolean
+        compliance_reporting_required:
+          type: boolean
+
+    RemediationPlan:
+      type: object
+      properties:
+        phases:
+          type: array
+          items:
+            $ref: '#/components/schemas/RemediationPhase'
+        total_effort_hours:
+          type: integer
+        estimated_completion:
+          type: string
+        compliance_target:
+          type: string
+        next_steps:
+          type: array
+          items:
+            type: string
+
+    RemediationPhase:
+      type: object
+      properties:
+        phase_name:
+          type: string
+        timeline:
+          type: string
+        priority:
+          type: string
+          enum: [IMMEDIATE, HIGH, MEDIUM, LOW]
+        findings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Finding'
+        effort_estimate:
+          type: integer
+          description: Estimated effort in hours
+        business_risk:
+          type: string
+
+    ComplianceMetrics:
+      type: object
+      properties:
+        controls_implemented:
+          type: integer
+        controls_total:
+          type: integer
+        findings_by_severity:
+          type: object
+          properties:
+            critical:
+              type: integer
+            high:
+              type: integer
+            medium:
+              type: integer
+            low:
+              type: integer
+        cui_assets_protected:
+          type: integer
+        cui_assets_total:
+          type: integer
+        compliance_score:
+          type: number
+          format: float
+        trend_data:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              score:
+                type: number
+                format: float
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total_pages:
+          type: integer
+        total_items:
+          type: integer
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: string
+          description: Additional error details
+        timestamp:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+          description: Request identifier for troubleshooting
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "BAD_REQUEST"
+            message: "Invalid scan_type parameter"
+            details: "scan_type must be one of: full, incremental, focused"
+            timestamp: "2025-09-14T10:30:00Z"
+            request_id: "req_123456789"
+
+    Unauthorized:
+      description: Authentication credentials missing or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "UNAUTHORIZED"
+            message: "Invalid API key"
+            timestamp: "2025-09-14T10:30:00Z"
+            request_id: "req_123456789"
+
+    Forbidden:
+      description: Insufficient permissions for requested operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "FORBIDDEN"
+            message: "CUI access clearance required"
+            timestamp: "2025-09-14T10:30:00Z"
+            request_id: "req_123456789"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "INTERNAL_ERROR"
+            message: "Compliance scan service temporarily unavailable"
+            timestamp: "2025-09-14T10:30:00Z"
+            request_id: "req_123456789"
+
+  securitySchemes:
+    DFARSApiKey:
+      type: apiKey
+      in: header
+      name: X-DFARS-API-Key
+      description: |
+        DFARS compliance API key for authentication.
+        Required for all API operations.
+
+    CUIAccess:
+      type: oauth2
+      description: |
+        OAuth 2.0 flows for CUI access control.
+        Scopes define specific permissions for CUI operations.
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.defense.contractor/oauth/token
+          scopes:
+            read: Read access to compliance data
+            write: Write access for configuration changes
+            scan: Permission to initiate compliance scans
+            cui_access: Access to CUI assets and data
+            audit: Access to audit trails and logs
+            crypto: Cryptographic operations permissions
+            incident_response: Incident response operations
+            admin: Administrative access to all functions
+
+    PIVCard:
+      type: http
+      scheme: bearer
+      bearerFormat: PIV
+      description: |
+        Personal Identity Verification (PIV) card authentication
+        for high-security operations requiring physical token.
+
+tags:
+  - name: Compliance Assessment
+    description: DFARS compliance scanning and assessment operations
+    externalDocs:
+      description: DFARS 252.204-7012 Requirements
+      url: https://www.acquisition.gov/dfars/252.204-7012-safeguarding-covered-defense-information-and-cyber-incident-reporting.
+  - name: CUI Management
+    description: Controlled Unclassified Information asset management
+    externalDocs:
+      description: CUI Program
+      url: https://www.archives.gov/cui
+  - name: Cryptographic Services
+    description: FIPS 140-2 compliant cryptographic operations
+    externalDocs:
+      description: FIPS 140-2 Standard
+      url: https://csrc.nist.gov/publications/detail/fips/140/2/final
+  - name: Audit Trail
+    description: Comprehensive audit logging and trail management
+  - name: Incident Response
+    description: Automated incident response and notification
+  - name: Reporting
+    description: Compliance reporting and metrics
+
+externalDocs:
+  description: Complete DFARS Compliance Documentation
+  url: https://defense.contractor/docs/dfars-compliance
+
+x-compliance-certifications:
+  - "DFARS 252.204-7012"
+  - "NIST SP 800-171"
+  - "FIPS 140-2 Level 3"
+  - "ISO 27001:2013"
+  - "SOC 2 Type II"
+
+x-security-classifications:
+  - "CUI//BASIC"
+  - "CUI//SP-PRIV"
+  - "CUI//SP-PROP"

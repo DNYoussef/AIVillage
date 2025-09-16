@@ -1,0 +1,269 @@
+{
+  "timestamp": "2025-09-15 07:25:32",
+  "system_info": {
+    "device": "cpu",
+    "torch_version": "2.8.0+cpu",
+    "cuda_available": false,
+    "validation_time_seconds": 3.8477463722229004,
+    "python_version": "3.12.5 (tags/v3.12.5:ff3bc82, Aug  6 2024, 20:45:27) [MSC v.1940 64 bit (AMD64)]",
+    "platform": "win32"
+  },
+  "validation_results": [
+    {
+      "check_name": "baking_agents_operational",
+      "passed": false,
+      "score": 0.6,
+      "details": {
+        "agent_status": {
+          "neural_model_optimizer": {
+            "operational": true,
+            "initialized": true,
+            "component_type": "model_optimizer"
+          },
+          "inference_accelerator": {
+            "operational": true,
+            "initialized": true,
+            "component_type": "inference_accelerator"
+          },
+          "quality_preservation_monitor": {
+            "operational": true,
+            "initialized": true,
+            "component_type": "quality_validator"
+          },
+          "performance_profiler": {
+            "operational": true,
+            "initialized": true,
+            "component_type": "performance_profiler"
+          },
+          "baking_orchestrator": {
+            "operational": true,
+            "initialized": true,
+            "component_type": "hardware_adapter"
+          }
+        },
+        "operational_agents": 5,
+        "total_required_agents": 9,
+        "coordination_score": 0.5555555555555556,
+        "agent_checks": {
+          "all_agents_defined": false,
+          "agents_operational": false,
+          "coordination_framework": true,
+          "communication_protocols": true,
+          "error_handling": true
+        }
+      },
+      "error_message": "",
+      "execution_time": 0.09955668449401855
+    },
+    {
+      "check_name": "model_flow_pipeline",
+      "passed": true,
+      "score": 1.0,
+      "details": {
+        "phase5_models": [
+          "perception_model",
+          "decision_model",
+          "control_model"
+        ],
+        "baking_results": {
+          "perception_model": {
+            "original_latency": 108.22556848927056,
+            "optimized_latency": 28.144971013298402,
+            "speedup_factor": 3.8452897477895553,
+            "accuracy_retention": 0.9970922415446939,
+            "compression_ratio": 0.869589554904416,
+            "memory_reduction": 0.6977634383779756
+          },
+          "decision_model": {
+            "original_latency": 98.07586321070411,
+            "optimized_latency": 29.614261624425446,
+            "speedup_factor": 3.3117781038920944,
+            "accuracy_retention": 0.9960490171619015,
+            "compression_ratio": 0.8330349704957392,
+            "memory_reduction": 0.7580380252470207
+          },
+          "control_model": {
+            "original_latency": 89.27248693838274,
+            "optimized_latency": 25.249193221997906,
+            "speedup_factor": 3.535657007076396,
+            "accuracy_retention": 0.9961860288164273,
+            "compression_ratio": 0.8797928866888076,
+            "memory_reduction": 0.6367362374877131
+          }
+        },
+        "phase7_models": [
+          "perception_model",
+          "decision_model",
+          "control_model"
+        ],
+        "flow_checks": {
+          "phase5_models_created": true,
+          "baking_process_completed": true,
+          "optimization_successful": true,
+          "phase7_models_ready": true,
+          "data_flow_integrity": true,
+          "format_compatibility": true,
+          "performance_targets_met": true,
+          "accuracy_preserved": true
+        },
+        "successful_optimizations": 3
+      },
+      "error_message": "",
+      "execution_time": 0.3186161518096924
+    },
+    {
+      "check_name": "performance_targets",
+      "passed": false,
+      "score": 0.0,
+      "details": {},
+      "error_message": "mat1 and mat2 shapes cannot be multiplied (32x100 and 1024x2048)",
+      "execution_time": 1.2189662456512451
+    },
+    {
+      "check_name": "quality_gates",
+      "passed": false,
+      "score": 0.75,
+      "details": {
+        "test_coverage": 0.9142544099923304,
+        "vulnerability_scan": {
+          "critical": 0,
+          "high": 1,
+          "medium": 1,
+          "low": 6,
+          "info": 12
+        },
+        "quality_metrics": {
+          "code_complexity": 2.5040264497699534,
+          "maintainability_index": 79.80033523683876,
+          "technical_debt_ratio": 0.04531878316249468,
+          "duplication_percentage": 0.013931695158332645
+        },
+        "nasa_compliance_score": 0.9364254409992331,
+        "nasa_compliance_items": {
+          "formal_specifications": 0.95,
+          "structured_programming": 0.98,
+          "strong_typing": 0.92,
+          "comprehensive_testing": 0.9142544099923304,
+          "configuration_management": 0.96,
+          "formal_code_reviews": 0.94,
+          "safety_analysis": 0.91,
+          "verification_validation": 0.93,
+          "change_control": 0.97,
+          "quality_assurance": 0.89
+        },
+        "quality_checks": {
+          "test_coverage_adequate": false,
+          "zero_critical_vulnerabilities": true,
+          "limited_high_vulnerabilities": true,
+          "code_complexity_acceptable": true,
+          "maintainability_good": true,
+          "technical_debt_low": true,
+          "nasa_compliance_met": "False",
+          "security_scan_passed": true
+        },
+        "test_files_found": 122,
+        "src_files_analyzed": 327
+      },
+      "error_message": "",
+      "execution_time": 0.4141538143157959
+    },
+    {
+      "check_name": "error_scenarios",
+      "passed": true,
+      "score": 1.0,
+      "details": {
+        "error_scenarios": {
+          "invalid_input": {
+            "handled": true,
+            "error": "mat1 and mat2 shapes cannot be multiplied (1x50 and 100x256)"
+          },
+          "memory_pressure": {
+            "handled": true,
+            "error": "Handled gracefully"
+          },
+          "model_corruption": {
+            "handled": true,
+            "error": "NaN/Inf detected"
+          },
+          "optimization_failure": {
+            "handled": true,
+            "error": "Graceful degradation"
+          },
+          "resource_exhaustion": {
+            "handled": true,
+            "error": "Resource management working"
+          }
+        },
+        "error_checks": {
+          "invalid_input_handled": true,
+          "memory_pressure_handled": true,
+          "corruption_detected": true,
+          "optimization_failure_graceful": true,
+          "resource_management": true,
+          "error_logging_present": true,
+          "recovery_mechanisms": true
+        },
+        "recovery_mechanisms_tested": 5
+      },
+      "error_message": "",
+      "execution_time": 1.5059449672698975
+    },
+    {
+      "check_name": "phase7_handoff",
+      "passed": false,
+      "score": 0.8571428571428571,
+      "details": {
+        "phase7_paths": {
+          "perception": "C:\\Users\\17175\\AppData\\Local\\Temp\\tmpguj4_6hf\\phase7_ready\\phase7_ready\\perception_adas_ready.pt",
+          "planning": "C:\\Users\\17175\\AppData\\Local\\Temp\\tmpguj4_6hf\\phase7_ready\\phase7_ready\\planning_adas_ready.pt",
+          "control": "C:\\Users\\17175\\AppData\\Local\\Temp\\tmpguj4_6hf\\phase7_ready\\phase7_ready\\control_adas_ready.pt"
+        },
+        "adas_validation": {
+          "perception": {
+            "error": "Error(s) in loading state_dict for ValidationTestModel:\n\tMissing key(s) in state_dict: \"backbone.0.weight\", \"backbone.0.bias\", \"backbone.1.weight\", \"backbone.1.bias\", \"backbone.1.running_mean\", \"backbone.1.running_var\", \"backbone.4.weight\", \"backbone.4.bias\", \"backbone.5.weight\", \"backbone.5.bias\", \"backbone.5.running_mean\", \"backbone.5.running_var\", \"backbone.7.weight\", \"backbone.7.bias\", \"backbone.8.weight\", \"backbone.8.bias\", \"backbone.8.running_mean\", \"backbone.8.running_var\", \"classifier.0.weight\", \"classifier.0.bias\", \"classifier.3.weight\", \"classifier.3.bias\", \"classifier.5.weight\", \"classifier.5.bias\". \n\tUnexpected key(s) in state_dict: \"base_model.backbone.0.weight\", \"base_model.backbone.0.bias\", \"base_model.backbone.1.weight\", \"base_model.backbone.1.bias\", \"base_model.backbone.1.running_mean\", \"base_model.backbone.1.running_var\", \"base_model.backbone.1.num_batches_tracked\", \"base_model.backbone.4.weight\", \"base_model.backbone.4.bias\", \"base_model.backbone.5.weight\", \"base_model.backbone.5.bias\", \"base_model.backbone.5.running_mean\", \"base_model.backbone.5.running_var\", \"base_model.backbone.5.num_batches_tracked\", \"base_model.backbone.7.weight\", \"base_model.backbone.7.bias\", \"base_model.backbone.8.weight\", \"base_model.backbone.8.bias\", \"base_model.backbone.8.running_mean\", \"base_model.backbone.8.running_var\", \"base_model.backbone.8.num_batches_tracked\", \"base_model.classifier.0.weight\", \"base_model.classifier.0.bias\", \"base_model.classifier.3.weight\", \"base_model.classifier.3.bias\", \"base_model.classifier.5.weight\", \"base_model.classifier.5.bias\". "
+          },
+          "planning": {
+            "error": "Error(s) in loading state_dict for ValidationTestModel:\n\tMissing key(s) in state_dict: \"conv_block.0.weight\", \"conv_block.0.bias\", \"conv_block.1.weight\", \"conv_block.1.bias\", \"conv_block.1.running_mean\", \"conv_block.1.running_var\", \"conv_block.3.weight\", \"conv_block.3.bias\", \"conv_block.4.weight\", \"conv_block.4.bias\", \"conv_block.4.running_mean\", \"conv_block.4.running_var\", \"conv_block.7.weight\", \"conv_block.7.bias\", \"conv_block.8.weight\", \"conv_block.8.bias\", \"conv_block.8.running_mean\", \"conv_block.8.running_var\", \"fc_block.0.weight\", \"fc_block.0.bias\", \"fc_block.3.weight\", \"fc_block.3.bias\", \"fc_block.6.weight\", \"fc_block.6.bias\". \n\tUnexpected key(s) in state_dict: \"base_model.conv_block.0.weight\", \"base_model.conv_block.0.bias\", \"base_model.conv_block.1.weight\", \"base_model.conv_block.1.bias\", \"base_model.conv_block.1.running_mean\", \"base_model.conv_block.1.running_var\", \"base_model.conv_block.1.num_batches_tracked\", \"base_model.conv_block.3.weight\", \"base_model.conv_block.3.bias\", \"base_model.conv_block.4.weight\", \"base_model.conv_block.4.bias\", \"base_model.conv_block.4.running_mean\", \"base_model.conv_block.4.running_var\", \"base_model.conv_block.4.num_batches_tracked\", \"base_model.conv_block.7.weight\", \"base_model.conv_block.7.bias\", \"base_model.conv_block.8.weight\", \"base_model.conv_block.8.bias\", \"base_model.conv_block.8.running_mean\", \"base_model.conv_block.8.running_var\", \"base_model.conv_block.8.num_batches_tracked\", \"base_model.fc_block.0.weight\", \"base_model.fc_block.0.bias\", \"base_model.fc_block.3.weight\", \"base_model.fc_block.3.bias\", \"base_model.fc_block.6.weight\", \"base_model.fc_block.6.bias\". "
+          },
+          "control": {
+            "error": "Error(s) in loading state_dict for ValidationTestModel:\n\tMissing key(s) in state_dict: \"linear1.weight\", \"linear1.bias\", \"linear2.weight\", \"linear2.bias\", \"linear3.weight\", \"linear3.bias\", \"output.weight\", \"output.bias\". \n\tUnexpected key(s) in state_dict: \"base_model.linear1.weight\", \"base_model.linear1.bias\", \"base_model.linear2.weight\", \"base_model.linear2.bias\", \"base_model.linear3.weight\", \"base_model.linear3.bias\", \"base_model.output.weight\", \"base_model.output.bias\". "
+          }
+        },
+        "deployment_requirements": {
+          "safety_certification_ready": true,
+          "real_time_constraints_met": true,
+          "deterministic_behavior": true,
+          "fail_safe_mechanisms": true,
+          "hardware_compatibility": true,
+          "regulatory_compliance": true,
+          "integration_interfaces": true,
+          "monitoring_hooks": true
+        },
+        "handoff_checks": {
+          "all_models_prepared": true,
+          "adas_format_valid": false,
+          "deployment_requirements_met": true,
+          "documentation_complete": true,
+          "testing_protocols_defined": true,
+          "rollback_procedures": true,
+          "integration_validated": true
+        },
+        "models_prepared": 3
+      },
+      "error_message": "",
+      "execution_time": 0.23540186882019043
+    }
+  ],
+  "overall_score": 0.7011904761904763,
+  "passed_checks": 2,
+  "failed_checks": 4,
+  "production_ready": false,
+  "nasa_compliance": 0.9364254409992331,
+  "recommendations": [
+    "Implement missing baking agents and establish coordination framework",
+    "Optimize system to meet <50ms inference, 75% compression, 99.5% accuracy targets",
+    "Increase test coverage to 95% and eliminate critical security vulnerabilities",
+    "Complete ADAS compatibility preparation for Phase 7 integration"
+  ],
+  "execution_time": 3.8477463722229004
+}

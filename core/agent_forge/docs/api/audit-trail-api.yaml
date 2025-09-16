@@ -1,0 +1,1278 @@
+openapi: 3.0.0
+info:
+  title: Enhanced Audit Trail Management API
+  version: 1.0.0
+  description: |
+    Comprehensive audit trail management API for DFARS 252.204-7012 compliance
+    and enterprise security monitoring. Provides tamper-evident logging,
+    real-time integrity verification, and comprehensive audit event management.
+
+    **Classification: CONTROLLED UNCLASSIFIED INFORMATION (CUI)**
+
+    **Compliance Standards:**
+    - DFARS 252.204-7012 Audit Requirements
+    - NIST SP 800-53 AU Controls
+    - ISO 27001:2013 A.12.4 Logging and Monitoring
+    - SOX Section 404 IT Controls
+
+    **Key Features:**
+    - Tamper-evident audit logging with cryptographic integrity
+    - Real-time audit event processing and correlation
+    - 7-year retention policy with automated lifecycle management
+    - Chain-of-custody maintenance for forensic analysis
+    - SIEM integration and real-time alerting
+    - Comprehensive search and reporting capabilities
+
+  contact:
+    name: Audit Services Team
+    email: audit@defense.contractor
+  license:
+    name: Proprietary Defense Contractor License
+    url: https://defense.contractor/audit-license
+
+servers:
+  - url: https://audit-api.defense.contractor/v1
+    description: Production Audit Trail Service
+  - url: https://audit-staging.defense.contractor/v1
+    description: Staging Environment
+
+security:
+  - AuditApiKey: []
+  - AuditAccess: []
+
+paths:
+  /audit/events:
+    post:
+      summary: Create Audit Event
+      description: |
+        Creates a new audit event with cryptographic integrity protection.
+        All events are immediately processed and added to the tamper-evident
+        audit chain with SHA-256 hash linking.
+
+        **Event Categories:**
+        - Authentication events (login, logout, failed attempts)
+        - Authorization events (access granted/denied, privilege changes)
+        - Data access events (file operations, database queries)
+        - System events (configuration changes, service operations)
+        - Security events (intrusion attempts, policy violations)
+
+      operationId: createAuditEvent
+      tags:
+        - Audit Events
+      security:
+        - AuditApiKey: []
+        - AuditAccess: [write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuditEventRequest'
+            example:
+              event_type: "authentication"
+              category: "user_login"
+              severity: "medium"
+              user_id: "john.smith@defense.contractor"
+              source_ip: "10.0.1.100"
+              resource: "CUI-classified-system"
+              action: "successful_login"
+              description: "User successfully authenticated via PIV card"
+              classification: "CUI//SP-PRIV"
+              additional_data:
+                authentication_method: "PIV_CARD"
+                session_id: "sess_20250914_001"
+                user_agent: "Mozilla/5.0..."
+      responses:
+        '201':
+          description: Audit event created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditEventResponse'
+              example:
+                event_id: "audit_20250914_123456_001"
+                timestamp: "2025-09-14T15:30:00.123Z"
+                integrity_hash: "a1b2c3d4e5f6..."
+                chain_position: 1234567
+                status: "recorded"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    get:
+      summary: Search Audit Events
+      description: |
+        Searches audit events with advanced filtering and sorting capabilities.
+        Supports complex queries for compliance reporting and security analysis.
+
+        **Search Capabilities:**
+        - Time-based filtering with precise timestamp ranges
+        - Multi-field text search across event descriptions
+        - Severity and category filtering
+        - User and resource-based filtering
+        - Geospatial filtering by source IP ranges
+
+      operationId: searchAuditEvents
+      tags:
+        - Audit Events
+      security:
+        - AuditApiKey: []
+        - AuditAccess: [read]
+      parameters:
+        - name: start_time
+          in: query
+          description: Start time for event search (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+          example: "2025-09-14T00:00:00Z"
+        - name: end_time
+          in: query
+          description: End time for event search (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+          example: "2025-09-14T23:59:59Z"
+        - name: event_type
+          in: query
+          description: Filter by event type
+          schema:
+            type: string
+            enum: [authentication, authorization, data_access, system_event, security_event]
+        - name: severity
+          in: query
+          description: Filter by severity level
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: user_id
+          in: query
+          description: Filter by specific user
+          schema:
+            type: string
+        - name: source_ip
+          in: query
+          description: Filter by source IP address or range
+          schema:
+            type: string
+        - name: resource
+          in: query
+          description: Filter by accessed resource
+          schema:
+            type: string
+        - name: action
+          in: query
+          description: Filter by specific action
+          schema:
+            type: string
+        - name: classification
+          in: query
+          description: Filter by data classification
+          schema:
+            type: string
+            enum: [UNCLASSIFIED, CUI//BASIC, CUI//SP-PRIV, CUI//SP-PROP]
+        - name: search_text
+          in: query
+          description: Full-text search across event descriptions
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of events per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: sort_by
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [timestamp, severity, user_id, event_type]
+            default: timestamp
+        - name: sort_order
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: Audit events retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditEventsResponse'
+
+  /audit/events/{eventId}:
+    get:
+      summary: Get Audit Event Details
+      description: |
+        Retrieves detailed information for a specific audit event including
+        full metadata, integrity verification, and chain linkage information.
+
+      operationId: getAuditEvent
+      tags:
+        - Audit Events
+      security:
+        - AuditApiKey: []
+        - AuditAccess: [read]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: Unique audit event identifier
+          schema:
+            type: string
+          example: "audit_20250914_123456_001"
+        - name: include_integrity
+          in: query
+          description: Include integrity verification details
+          schema:
+            type: boolean
+            default: true
+        - name: include_chain_context
+          in: query
+          description: Include adjacent events in chain for context
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Audit event details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditEventDetails'
+        '404':
+          description: Audit event not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /audit/integrity/verify:
+    post:
+      summary: Verify Audit Trail Integrity
+      description: |
+        Performs comprehensive integrity verification of the audit trail
+        including hash chain validation, tamper detection, and completeness checks.
+
+        **Verification Levels:**
+        - **Quick**: Verify recent chain segments (last 1000 events)
+        - **Standard**: Verify specified time range with full chain validation
+        - **Complete**: Full audit trail verification (may take significant time)
+
+      operationId: verifyAuditIntegrity
+      tags:
+        - Integrity Verification
+      security:
+        - AuditApiKey: []
+        - AuditAccess: [verify]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrityVerificationRequest'
+            example:
+              verification_level: "standard"
+              start_time: "2025-09-14T00:00:00Z"
+              end_time: "2025-09-14T23:59:59Z"
+              include_forensics: true
+      responses:
+        '200':
+          description: Integrity verification completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrityVerificationResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /audit/integrity/status:
+    get:
+      summary: Get Real-time Integrity Status
+      description: |
+        Retrieves real-time integrity status of the audit trail including
+        continuous monitoring results and any detected anomalies.
+
+      operationId: getIntegrityStatus
+      tags:
+        - Integrity Verification
+      security:
+        - AuditApiKey: []
+        - AuditAccess: [read]
+      responses:
+        '200':
+          description: Integrity status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrityStatusResponse'
+
+  /audit/reports/compliance:
+    post:
+      summary: Generate Compliance Report
+      description: |
+        Generates comprehensive compliance reports for various regulatory
+        frameworks including DFARS, SOX, and ISO 27001 requirements.
+
+        **Supported Report Types:**
+        - DFARS 252.204-7012 Compliance Report
+        - SOX Section 404 IT Controls Report
+        - ISO 27001 Audit Evidence Report
+        - NIST SP 800-53 Controls Assessment
+        - Custom compliance framework reports
+
+      operationId: generateComplianceReport
+      tags:
+        - Compliance Reporting
+      security:
+        - AuditApiKey: []
+        - AuditAccess: [report]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComplianceReportRequest'
+            example:
+              report_type: "dfars_252_204_7012"
+              report_period:
+                start_date: "2025-01-01T00:00:00Z"
+                end_date: "2025-09-14T23:59:59Z"
+              include_evidence: true
+              format: "pdf"
+              recipient_email: "compliance@defense.contractor"
+      responses:
+        '202':
+          description: Compliance report generation initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportGenerationResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /audit/reports/{reportId}/status:
+    get:
+      summary: Get Report Generation Status
+      description: |
+        Retrieves the status of a compliance report generation request.
+
+      operationId: getReportStatus
+      tags:
+        - Compliance Reporting
+      security:
+        - AuditApiKey: []
+        - AuditAccess: [read]
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          description: Unique report identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Report status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportStatusResponse'
+
+  /audit/reports/{reportId}/download:
+    get:
+      summary: Download Compliance Report
+      description: |
+        Downloads a completed compliance report in the requested format.
+
+      operationId: downloadReport
+      tags:
+        - Compliance Reporting
+      security:
+        - AuditApiKey: []
+        - AuditAccess: [read]
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          description: Unique report identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Report downloaded successfully
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.ms-excel:
+              schema:
+                type: string
+                format: binary
+            text/csv:
+              schema:
+                type: string
+
+  /audit/retention/policy:
+    get:
+      summary: Get Retention Policy Configuration
+      description: |
+        Retrieves current audit log retention policy configuration
+        including retention periods by event type and compliance requirements.
+
+      operationId: getRetentionPolicy
+      tags:
+        - Retention Management
+      security:
+        - AuditApiKey: []
+        - AuditAccess: [read]
+      responses:
+        '200':
+          description: Retention policy retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetentionPolicyResponse'
+
+    put:
+      summary: Update Retention Policy
+      description: |
+        Updates audit log retention policy configuration.
+        Requires administrative privileges and compliance approval.
+
+      operationId: updateRetentionPolicy
+      tags:
+        - Retention Management
+      security:
+        - AuditApiKey: []
+        - AuditAccess: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetentionPolicyUpdate'
+      responses:
+        '200':
+          description: Retention policy updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetentionPolicyResponse'
+
+  /audit/archive/create:
+    post:
+      summary: Create Audit Archive
+      description: |
+        Creates tamper-evident archive of audit events for long-term storage
+        and compliance requirements. Archives are cryptographically sealed
+        and include integrity verification data.
+
+      operationId: createAuditArchive
+      tags:
+        - Archive Management
+      security:
+        - AuditApiKey: []
+        - AuditAccess: [archive]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArchiveCreationRequest'
+      responses:
+        '202':
+          description: Archive creation initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchiveCreationResponse'
+
+  /audit/statistics/dashboard:
+    get:
+      summary: Get Audit Statistics Dashboard
+      description: |
+        Retrieves comprehensive audit statistics and metrics for
+        security monitoring and compliance dashboards.
+
+        **Dashboard Metrics:**
+        - Event volume trends and patterns
+        - Security event frequency and severity distribution
+        - User activity patterns and anomalies
+        - Resource access patterns
+        - Compliance coverage metrics
+        - System performance indicators
+
+      operationId: getAuditDashboard
+      tags:
+        - Analytics
+      security:
+        - AuditApiKey: []
+        - AuditAccess: [read]
+      parameters:
+        - name: time_range
+          in: query
+          description: Time range for statistics
+          schema:
+            type: string
+            enum: [1h, 24h, 7d, 30d, 90d]
+            default: 24h
+        - name: granularity
+          in: query
+          description: Data granularity
+          schema:
+            type: string
+            enum: [minute, hour, day, week]
+            default: hour
+      responses:
+        '200':
+          description: Dashboard statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditDashboardResponse'
+
+components:
+  schemas:
+    AuditEventRequest:
+      type: object
+      required:
+        - event_type
+        - category
+        - severity
+        - user_id
+        - source_ip
+        - resource
+        - action
+        - description
+      properties:
+        event_type:
+          type: string
+          enum: [authentication, authorization, data_access, system_event, security_event]
+          description: High-level event categorization
+        category:
+          type: string
+          description: Specific event category within type
+          example: "user_login"
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Event severity level
+        user_id:
+          type: string
+          description: User identifier associated with event
+        source_ip:
+          type: string
+          format: ipv4
+          description: Source IP address of the event
+        resource:
+          type: string
+          description: Resource or system component affected
+        action:
+          type: string
+          description: Specific action performed
+        description:
+          type: string
+          maxLength: 1000
+          description: Detailed event description
+        classification:
+          type: string
+          enum: [UNCLASSIFIED, CUI//BASIC, CUI//SP-PRIV, CUI//SP-PROP]
+          default: UNCLASSIFIED
+          description: Data classification level
+        session_id:
+          type: string
+          description: Session identifier if applicable
+        request_id:
+          type: string
+          description: Request identifier for correlation
+        additional_data:
+          type: object
+          additionalProperties: true
+          description: Additional event-specific data
+        tags:
+          type: array
+          items:
+            type: string
+          description: Event tags for categorization
+
+    AuditEventResponse:
+      type: object
+      required:
+        - event_id
+        - timestamp
+        - integrity_hash
+        - chain_position
+        - status
+      properties:
+        event_id:
+          type: string
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event creation timestamp with microsecond precision
+        integrity_hash:
+          type: string
+          description: SHA-256 hash for integrity verification
+        chain_position:
+          type: integer
+          format: int64
+          description: Position in the audit chain
+        status:
+          type: string
+          enum: [recorded, verified, archived]
+          description: Current event status
+        previous_hash:
+          type: string
+          description: Hash of previous event in chain
+
+    AuditEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEventSummary'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        search_metadata:
+          type: object
+          properties:
+            total_matches:
+              type: integer
+            search_time_ms:
+              type: integer
+            filters_applied:
+              type: array
+              items:
+                type: string
+
+    AuditEventSummary:
+      type: object
+      properties:
+        event_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        event_type:
+          type: string
+        category:
+          type: string
+        severity:
+          type: string
+        user_id:
+          type: string
+        source_ip:
+          type: string
+        resource:
+          type: string
+        action:
+          type: string
+        description:
+          type: string
+        classification:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    AuditEventDetails:
+      allOf:
+        - $ref: '#/components/schemas/AuditEventSummary'
+        - type: object
+          properties:
+            integrity_verification:
+              type: object
+              properties:
+                hash_valid:
+                  type: boolean
+                chain_valid:
+                  type: boolean
+                tamper_detected:
+                  type: boolean
+                verification_timestamp:
+                  type: string
+                  format: date-time
+            chain_context:
+              type: object
+              properties:
+                previous_event_id:
+                  type: string
+                next_event_id:
+                  type: string
+                chain_position:
+                  type: integer
+            additional_data:
+              type: object
+              additionalProperties: true
+            audit_metadata:
+              type: object
+              properties:
+                created_by:
+                  type: string
+                processing_time_ms:
+                  type: number
+                storage_location:
+                  type: string
+                retention_until:
+                  type: string
+                  format: date-time
+
+    IntegrityVerificationRequest:
+      type: object
+      required:
+        - verification_level
+      properties:
+        verification_level:
+          type: string
+          enum: [quick, standard, complete]
+          description: Scope of integrity verification
+        start_time:
+          type: string
+          format: date-time
+          description: Start time for verification range
+        end_time:
+          type: string
+          format: date-time
+          description: End time for verification range
+        include_forensics:
+          type: boolean
+          default: false
+          description: Include detailed forensic analysis
+        event_ids:
+          type: array
+          items:
+            type: string
+          description: Specific events to verify (optional)
+
+    IntegrityVerificationResponse:
+      type: object
+      properties:
+        verification_id:
+          type: string
+          description: Unique verification operation identifier
+        verification_level:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        verification_timestamp:
+          type: string
+          format: date-time
+        overall_status:
+          type: string
+          enum: [valid, compromised, warning]
+        events_verified:
+          type: integer
+          description: Total number of events verified
+        chain_segments_verified:
+          type: integer
+          description: Number of chain segments verified
+        integrity_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Overall integrity score (0-1)
+        findings:
+          type: array
+          items:
+            $ref: '#/components/schemas/IntegrityFinding'
+        performance_metrics:
+          type: object
+          properties:
+            verification_duration_ms:
+              type: integer
+            events_per_second:
+              type: number
+            memory_usage_mb:
+              type: number
+
+    IntegrityFinding:
+      type: object
+      properties:
+        finding_type:
+          type: string
+          enum: [hash_mismatch, missing_event, chain_break, timestamp_anomaly, duplicate_event]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        event_id:
+          type: string
+        description:
+          type: string
+        impact_assessment:
+          type: string
+        recommended_action:
+          type: string
+        forensic_data:
+          type: object
+          additionalProperties: true
+
+    IntegrityStatusResponse:
+      type: object
+      properties:
+        current_status:
+          type: string
+          enum: [healthy, warning, compromised]
+        last_verification:
+          type: string
+          format: date-time
+        chain_continuity:
+          type: boolean
+        recent_events_count:
+          type: integer
+          description: Events processed in last 24 hours
+        anomalies_detected:
+          type: array
+          items:
+            $ref: '#/components/schemas/IntegrityAnomaly'
+        real_time_metrics:
+          type: object
+          properties:
+            events_per_minute:
+              type: number
+            average_processing_time_ms:
+              type: number
+            storage_utilization_percent:
+              type: number
+
+    IntegrityAnomaly:
+      type: object
+      properties:
+        anomaly_type:
+          type: string
+        detected_at:
+          type: string
+          format: date-time
+        severity:
+          type: string
+        description:
+          type: string
+        affected_events:
+          type: array
+          items:
+            type: string
+
+    ComplianceReportRequest:
+      type: object
+      required:
+        - report_type
+        - report_period
+      properties:
+        report_type:
+          type: string
+          enum: [dfars_252_204_7012, sox_404, iso_27001, nist_sp_800_53, custom]
+          description: Type of compliance report to generate
+        report_period:
+          type: object
+          required:
+            - start_date
+            - end_date
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+        include_evidence:
+          type: boolean
+          default: true
+          description: Include supporting evidence in report
+        format:
+          type: string
+          enum: [pdf, excel, csv, json]
+          default: pdf
+          description: Report output format
+        filters:
+          type: object
+          properties:
+            event_types:
+              type: array
+              items:
+                type: string
+            severity_levels:
+              type: array
+              items:
+                type: string
+            users:
+              type: array
+              items:
+                type: string
+            resources:
+              type: array
+              items:
+                type: string
+        custom_controls:
+          type: array
+          items:
+            type: string
+          description: Custom compliance controls to include
+        recipient_email:
+          type: string
+          format: email
+          description: Email address for report delivery
+
+    ReportGenerationResponse:
+      type: object
+      properties:
+        report_id:
+          type: string
+          description: Unique report generation identifier
+        status:
+          type: string
+          enum: [queued, processing, completed, failed]
+        estimated_completion:
+          type: string
+          format: date-time
+        report_type:
+          type: string
+        requested_by:
+          type: string
+
+    ReportStatusResponse:
+      type: object
+      properties:
+        report_id:
+          type: string
+        status:
+          type: string
+          enum: [queued, processing, completed, failed]
+        progress_percentage:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+        current_stage:
+          type: string
+        events_processed:
+          type: integer
+        total_events:
+          type: integer
+        estimated_completion:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        download_url:
+          type: string
+          format: uri
+        error_message:
+          type: string
+
+    RetentionPolicyResponse:
+      type: object
+      properties:
+        default_retention_days:
+          type: integer
+          default: 2555
+          description: Default retention period (7 years)
+        retention_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Retention periods by event type
+        compliance_requirements:
+          type: array
+          items:
+            type: object
+            properties:
+              framework:
+                type: string
+              requirement:
+                type: string
+              minimum_retention_days:
+                type: integer
+        archive_policy:
+          type: object
+          properties:
+            archive_after_days:
+              type: integer
+            archive_format:
+              type: string
+            archive_location:
+              type: string
+        last_updated:
+          type: string
+          format: date-time
+        updated_by:
+          type: string
+
+    RetentionPolicyUpdate:
+      type: object
+      properties:
+        default_retention_days:
+          type: integer
+          minimum: 365
+          description: Must be at least 1 year for compliance
+        retention_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+        archive_policy:
+          type: object
+          properties:
+            archive_after_days:
+              type: integer
+            archive_format:
+              type: string
+            archive_location:
+              type: string
+        justification:
+          type: string
+          description: Reason for policy change
+
+    ArchiveCreationRequest:
+      type: object
+      required:
+        - archive_period
+      properties:
+        archive_period:
+          type: object
+          required:
+            - start_date
+            - end_date
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+        archive_format:
+          type: string
+          enum: [encrypted_zip, tar_gz_pgp, custom]
+          default: encrypted_zip
+        compression_level:
+          type: integer
+          minimum: 0
+          maximum: 9
+          default: 6
+        include_integrity_verification:
+          type: boolean
+          default: true
+        metadata_only:
+          type: boolean
+          default: false
+          description: Archive only metadata, not full event data
+
+    ArchiveCreationResponse:
+      type: object
+      properties:
+        archive_id:
+          type: string
+        status:
+          type: string
+          enum: [queued, processing, completed, failed]
+        estimated_completion:
+          type: string
+          format: date-time
+        events_to_archive:
+          type: integer
+        archive_size_estimate_mb:
+          type: number
+
+    AuditDashboardResponse:
+      type: object
+      properties:
+        time_range:
+          type: string
+        generated_at:
+          type: string
+          format: date-time
+        summary_metrics:
+          type: object
+          properties:
+            total_events:
+              type: integer
+            events_by_severity:
+              type: object
+              additionalProperties:
+                type: integer
+            unique_users:
+              type: integer
+            unique_resources:
+              type: integer
+            security_events_count:
+              type: integer
+        trend_data:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              event_count:
+                type: integer
+              severity_breakdown:
+                type: object
+                additionalProperties:
+                  type: integer
+        top_users:
+          type: array
+          items:
+            type: object
+            properties:
+              user_id:
+                type: string
+              event_count:
+                type: integer
+              last_activity:
+                type: string
+                format: date-time
+        top_resources:
+          type: array
+          items:
+            type: object
+            properties:
+              resource:
+                type: string
+              access_count:
+                type: integer
+              unique_users:
+                type: integer
+        security_alerts:
+          type: array
+          items:
+            type: object
+            properties:
+              alert_type:
+                type: string
+              count:
+                type: integer
+              severity:
+                type: string
+        compliance_coverage:
+          type: object
+          properties:
+            dfars_coverage_percent:
+              type: number
+              format: float
+            audit_completeness_percent:
+              type: number
+              format: float
+            retention_compliance_percent:
+              type: number
+              format: float
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total_pages:
+          type: integer
+        total_items:
+          type: integer
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+
+    ErrorResponse:
+      type: object
+      required:
+        - error_code
+        - message
+      properties:
+        error_code:
+          type: string
+        message:
+          type: string
+        details:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+
+  responses:
+    ValidationError:
+      description: Request validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error_code: "VALIDATION_ERROR"
+            message: "Invalid event_type parameter"
+            details: "event_type must be one of: authentication, authorization, data_access, system_event, security_event"
+            timestamp: "2025-09-14T15:30:00Z"
+            request_id: "req_audit_123456"
+
+    Unauthorized:
+      description: Authentication failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error_code: "UNAUTHORIZED"
+            message: "Invalid or expired audit API key"
+            timestamp: "2025-09-14T15:30:00Z"
+            request_id: "req_audit_123456"
+
+  securitySchemes:
+    AuditApiKey:
+      type: apiKey
+      in: header
+      name: X-Audit-API-Key
+      description: API key for audit trail service access
+
+    AuditAccess:
+      type: oauth2
+      description: OAuth 2.0 access control for audit operations
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.defense.contractor/oauth/token
+          scopes:
+            read: Read access to audit events and reports
+            write: Create new audit events
+            verify: Perform integrity verification operations
+            report: Generate compliance reports
+            archive: Create and manage audit archives
+            admin: Administrative access to audit system
+
+tags:
+  - name: Audit Events
+    description: Audit event creation and retrieval operations
+  - name: Integrity Verification
+    description: Audit trail integrity verification and monitoring
+  - name: Compliance Reporting
+    description: Regulatory compliance report generation
+  - name: Retention Management
+    description: Audit log retention policy management
+  - name: Archive Management
+    description: Audit data archival and long-term storage
+  - name: Analytics
+    description: Audit statistics and security analytics
+
+externalDocs:
+  description: DFARS 252.204-7012 Audit Requirements
+  url: https://www.acquisition.gov/dfars/252.204-7012-safeguarding-covered-defense-information-and-cyber-incident-reporting

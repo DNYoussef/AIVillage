@@ -1,0 +1,16 @@
+{
+  "package_id": "PACKAGE_1757934878",
+  "timestamp": 1757934878.3781767,
+  "model_type": "TestModel",
+  "validation_passed": true,
+  "validation_summary": {
+    "inference_capability": {
+      "passed": true,
+      "avg_latency_ms": 0.08973999647423625,
+      "max_latency_ms": 0.11419999646022916,
+      "inference_count": 20
+    },
+    "performance": {
+      "passed": true,
+      "performance_checks": {
+        "latency_ok": 

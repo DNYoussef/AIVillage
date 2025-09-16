@@ -1,0 +1,502 @@
+[
+  {
+    "generation": 1,
+    "best_fitness": 0.08414414403136583,
+    "avg_fitness": 0.062303942749486294,
+    "best_model": "gen1_recipe_7_7",
+    "winner_ids": [
+      "gen1_recipe_7_7",
+      "gen1_recipe_5_5"
+    ]
+  },
+  {
+    "generation": 2,
+    "best_fitness": 0.08594376698316515,
+    "avg_fitness": 0.05914520696822493,
+    "best_model": "gen2_winner_child_1_9",
+    "winner_ids": [
+      "gen2_winner_child_1_9",
+      "gen2_winner_child_1_12"
+    ]
+  },
+  {
+    "generation": 3,
+    "best_fitness": 0.08604974790441174,
+    "avg_fitness": 0.06449720030778627,
+    "best_model": "gen3_winner_child_1_17",
+    "winner_ids": [
+      "gen3_winner_child_1_17",
+      "gen3_winner_child_1_20"
+    ]
+  },
+  {
+    "generation": 4,
+    "best_fitness": 0.08607089605112285,
+    "avg_fitness": 0.0734553503326628,
+    "best_model": "gen4_winner_child_3_27",
+    "winner_ids": [
+      "gen4_winner_child_3_27",
+      "gen4_winner_child_3_30"
+    ]
+  },
+  {
+    "generation": 5,
+    "best_fitness": 0.08614943093079534,
+    "avg_fitness": 0.08132361613207299,
+    "best_model": "gen5_loser_group_39",
+    "winner_ids": [
+      "gen5_loser_group_39",
+      "gen5_winner_child_3_35"
+    ]
+  },
+  {
+    "generation": 6,
+    "best_fitness": 0.08602317718921589,
+    "avg_fitness": 0.07549401571837337,
+    "best_model": "gen6_winner_child_3_46",
+    "winner_ids": [
+      "gen6_winner_child_3_46",
+      "gen6_winner_child_1_41"
+    ]
+  },
+  {
+    "generation": 7,
+    "best_fitness": 0.086057414592914,
+    "avg_fitness": 0.08075816343935022,
+    "best_model": "gen7_loser_group_55",
+    "winner_ids": [
+      "gen7_loser_group_55",
+      "gen7_winner_child_1_52"
+    ]
+  },
+  {
+    "generation": 8,
+    "best_fitness": 0.08546840443358546,
+    "avg_fitness": 0.0791656987488326,
+    "best_model": "gen8_loser_group_63",
+    "winner_ids": [
+      "gen8_loser_group_63",
+      "gen8_winner_child_3_62"
+    ]
+  },
+  {
+    "generation": 9,
+    "best_fitness": 0.08613922084313891,
+    "avg_fitness": 0.08186106453850894,
+    "best_model": "gen9_loser_group_71",
+    "winner_ids": [
+      "gen9_loser_group_71",
+      "gen9_winner_child_1_68"
+    ]
+  },
+  {
+    "generation": 10,
+    "best_fitness": 0.08562039228183495,
+    "avg_fitness": 0.07860717288558751,
+    "best_model": "gen10_loser_group_79",
+    "winner_ids": [
+      "gen10_loser_group_79",
+      "gen10_winner_child_3_78"
+    ]
+  },
+  {
+    "generation": 11,
+    "best_fitness": 0.08574390484750188,
+    "avg_fitness": 0.08110142607297871,
+    "best_model": "gen11_winner_child_1_81",
+    "winner_ids": [
+      "gen11_winner_child_1_81",
+      "gen11_winner_child_3_83"
+    ]
+  },
+  {
+    "generation": 12,
+    "best_fitness": 0.08575603423355213,
+    "avg_fitness": 0.08056513372540614,
+    "best_model": "gen12_winner_child_3_91",
+    "winner_ids": [
+      "gen12_winner_child_3_91",
+      "gen12_winner_child_1_89"
+    ]
+  },
+  {
+    "generation": 13,
+    "best_fitness": 0.08580717285988751,
+    "avg_fitness": 0.08119527129577468,
+    "best_model": "gen13_loser_group_103",
+    "winner_ids": [
+      "gen13_loser_group_103",
+      "gen13_winner_child_3_102"
+    ]
+  },
+  {
+    "generation": 14,
+    "best_fitness": 0.08582041236367012,
+    "avg_fitness": 0.08149419181373424,
+    "best_model": "gen14_winner_child_3_107",
+    "winner_ids": [
+      "gen14_winner_child_3_107",
+      "gen14_winner_child_1_105"
+    ]
+  },
+  {
+    "generation": 15,
+    "best_fitness": 0.08575854300506612,
+    "avg_fitness": 0.08000130197637627,
+    "best_model": "gen15_winner_child_1_113",
+    "winner_ids": [
+      "gen15_winner_child_1_113",
+      "gen15_winner_child_3_115"
+    ]
+  },
+  {
+    "generation": 16,
+    "best_fitness": 0.08575347862171885,
+    "avg_fitness": 0.08125831962992465,
+    "best_model": "gen16_winner_child_1_124",
+    "winner_ids": [
+      "gen16_winner_child_1_124",
+      "gen16_winner_child_1_121"
+    ]
+  },
+  {
+    "generation": 17,
+    "best_fitness": 0.08574946176588416,
+    "avg_fitness": 0.0751897134331609,
+    "best_model": "gen17_winner_child_3_134",
+    "winner_ids": [
+      "gen17_winner_child_3_134",
+      "gen17_loser_group_135"
+    ]
+  },
+  {
+    "generation": 18,
+    "best_fitness": 0.0857500367815235,
+    "avg_fitness": 0.08146173218578687,
+    "best_model": "gen18_loser_group_143",
+    "winner_ids": [
+      "gen18_loser_group_143",
+      "gen18_winner_child_1_137"
+    ]
+  },
+  {
+    "generation": 19,
+    "best_fitness": 0.08573311911936221,
+    "avg_fitness": 0.07646813455270081,
+    "best_model": "gen19_winner_child_3_150",
+    "winner_ids": [
+      "gen19_winner_child_3_150",
+      "gen19_winner_child_3_147"
+    ]
+  },
+  {
+    "generation": 20,
+    "best_fitness": 0.08585660305774409,
+    "avg_fitness": 0.07376174454028846,
+    "best_model": "gen20_loser_group_159",
+    "winner_ids": [
+      "gen20_loser_group_159",
+      "gen20_winner_child_3_155"
+    ]
+  },
+  {
+    "generation": 21,
+    "best_fitness": 0.08579431158749308,
+    "avg_fitness": 0.08109108082701907,
+    "best_model": "gen21_winner_child_1_161",
+    "winner_ids": [
+      "gen21_winner_child_1_161",
+      "gen21_winner_child_3_163"
+    ]
+  },
+  {
+    "generation": 22,
+    "best_fitness": 0.08571765928505684,
+    "avg_fitness": 0.08113897998599823,
+    "best_model": "gen22_winner_child_1_172",
+    "winner_ids": [
+      "gen22_winner_child_1_172",
+      "gen22_winner_child_1_169"
+    ]
+  },
+  {
+    "generation": 23,
+    "best_fitness": 0.08586562052006998,
+    "avg_fitness": 0.0815323335300569,
+    "best_model": "gen23_loser_group_183",
+    "winner_ids": [
+      "gen23_loser_group_183",
+      "gen23_winner_child_1_177"
+    ]
+  },
+  {
+    "generation": 24,
+    "best_fitness": 0.08586565567683403,
+    "avg_fitness": 0.07510900996605556,
+    "best_model": "gen24_winner_child_1_185",
+    "winner_ids": [
+      "gen24_winner_child_1_185",
+      "gen24_winner_child_3_187"
+    ]
+  },
+  {
+    "generation": 25,
+    "best_fitness": 0.08566673784755688,
+    "avg_fitness": 0.08140290123300163,
+    "best_model": "gen25_winner_child_3_195",
+    "winner_ids": [
+      "gen25_winner_child_3_195",
+      "gen25_winner_child_1_196"
+    ]
+  },
+  {
+    "generation": 26,
+    "best_fitness": 0.0857540543925408,
+    "avg_fitness": 0.08092412664386475,
+    "best_model": "gen26_loser_group_207",
+    "winner_ids": [
+      "gen26_loser_group_207",
+      "gen26_winner_child_1_201"
+    ]
+  },
+  {
+    "generation": 27,
+    "best_fitness": 0.08576512247688668,
+    "avg_fitness": 0.08159112850397429,
+    "best_model": "gen27_loser_group_215",
+    "winner_ids": [
+      "gen27_loser_group_215",
+      "gen27_winner_child_3_214"
+    ]
+  },
+  {
+    "generation": 28,
+    "best_fitness": 0.08577071652333866,
+    "avg_fitness": 0.08109967444915006,
+    "best_model": "gen28_winner_child_3_219",
+    "winner_ids": [
+      "gen28_winner_child_3_219",
+      "gen28_winner_child_1_217"
+    ]
+  },
+  {
+    "generation": 29,
+    "best_fitness": 0.08568585097693135,
+    "avg_fitness": 0.08158637667708744,
+    "best_model": "gen29_winner_child_1_228",
+    "winner_ids": [
+      "gen29_winner_child_1_228",
+      "gen29_winner_child_1_225"
+    ]
+  },
+  {
+    "generation": 30,
+    "best_fitness": 0.08587307580451795,
+    "avg_fitness": 0.07724613508458436,
+    "best_model": "gen30_loser_group_239",
+    "winner_ids": [
+      "gen30_loser_group_239",
+      "gen30_winner_child_1_236"
+    ]
+  },
+  {
+    "generation": 31,
+    "best_fitness": 0.08583997008581304,
+    "avg_fitness": 0.08186737930394467,
+    "best_model": "gen31_loser_group_247",
+    "winner_ids": [
+      "gen31_loser_group_247",
+      "gen31_winner_child_1_241"
+    ]
+  },
+  {
+    "generation": 32,
+    "best_fitness": 0.08580392189851062,
+    "avg_fitness": 0.08165029724331235,
+    "best_model": "gen32_winner_child_3_254",
+    "winner_ids": [
+      "gen32_winner_child_3_254",
+      "gen32_winner_child_1_249"
+    ]
+  },
+  {
+    "generation": 33,
+    "best_fitness": 0.0857156475828472,
+    "avg_fitness": 0.0815141994697001,
+    "best_model": "gen33_loser_group_263",
+    "winner_ids": [
+      "gen33_loser_group_263",
+      "gen33_winner_child_3_259"
+    ]
+  },
+  {
+    "generation": 34,
+    "best_fitness": 0.08580044511697517,
+    "avg_fitness": 0.08066487377198764,
+    "best_model": "gen34_loser_group_271",
+    "winner_ids": [
+      "gen34_loser_group_271",
+      "gen34_winner_child_1_265"
+    ]
+  },
+  {
+    "generation": 35,
+    "best_fitness": 0.08563728925984421,
+    "avg_fitness": 0.08101024989654153,
+    "best_model": "gen35_loser_group_279",
+    "winner_ids": [
+      "gen35_loser_group_279",
+      "gen35_winner_child_1_273"
+    ]
+  },
+  {
+    "generation": 36,
+    "best_fitness": 0.0856014411152038,
+    "avg_fitness": 0.06983991191964331,
+    "best_model": "gen36_winner_child_1_281",
+    "winner_ids": [
+      "gen36_winner_child_1_281",
+      "gen36_winner_child_3_286"
+    ]
+  },
+  {
+    "generation": 37,
+    "best_fitness": 0.08574160656235454,
+    "avg_fitness": 0.07742868849954818,
+    "best_model": "gen37_loser_group_295",
+    "winner_ids": [
+      "gen37_loser_group_295",
+      "gen37_winner_child_3_291"
+    ]
+  },
+  {
+    "generation": 38,
+    "best_fitness": 0.08573431989199486,
+    "avg_fitness": 0.08138777876336777,
+    "best_model": "gen38_winner_child_3_299",
+    "winner_ids": [
+      "gen38_winner_child_3_299",
+      "gen38_loser_group_303"
+    ]
+  },
+  {
+    "generation": 39,
+    "best_fitness": 0.08576733713813889,
+    "avg_fitness": 0.08194412051584106,
+    "best_model": "gen39_winner_child_1_308",
+    "winner_ids": [
+      "gen39_winner_child_1_308",
+      "gen39_winner_child_3_310"
+    ]
+  },
+  {
+    "generation": 40,
+    "best_fitness": 0.0855746178209344,
+    "avg_fitness": 0.07688029252522116,
+    "best_model": "gen40_winner_child_3_315",
+    "winner_ids": [
+      "gen40_winner_child_3_315",
+      "gen40_winner_child_1_316"
+    ]
+  },
+  {
+    "generation": 41,
+    "best_fitness": 0.08550787084695397,
+    "avg_fitness": 0.07529311729515716,
+    "best_model": "gen41_loser_group_327",
+    "winner_ids": [
+      "gen41_loser_group_327",
+      "gen41_winner_child_3_323"
+    ]
+  },
+  {
+    "generation": 42,
+    "best_fitness": 0.08572851331517083,
+    "avg_fitness": 0.08167026859401251,
+    "best_model": "gen42_winner_child_3_331",
+    "winner_ids": [
+      "gen42_winner_child_3_331",
+      "gen42_loser_group_335"
+    ]
+  },
+  {
+    "generation": 43,
+    "best_fitness": 0.08570123069489825,
+    "avg_fitness": 0.07540984770629897,
+    "best_model": "gen43_winner_child_1_337",
+    "winner_ids": [
+      "gen43_winner_child_1_337",
+      "gen43_winner_child_3_339"
+    ]
+  },
+  {
+    "generation": 44,
+    "best_fitness": 0.085508515843339,
+    "avg_fitness": 0.08125634918221403,
+    "best_model": "gen44_loser_group_351",
+    "winner_ids": [
+      "gen44_loser_group_351",
+      "gen44_winner_child_1_348"
+    ]
+  },
+  {
+    "generation": 45,
+    "best_fitness": 0.08568546867277452,
+    "avg_fitness": 0.08112677116202509,
+    "best_model": "gen45_loser_group_359",
+    "winner_ids": [
+      "gen45_loser_group_359",
+      "gen45_winner_child_1_356"
+    ]
+  },
+  {
+    "generation": 46,
+    "best_fitness": 0.08562116552049996,
+    "avg_fitness": 0.08180749756905031,
+    "best_model": "gen46_winner_child_1_361",
+    "winner_ids": [
+      "gen46_winner_child_1_361",
+      "gen46_loser_group_367"
+    ]
+  },
+  {
+    "generation": 47,
+    "best_fitness": 0.08561566296592672,
+    "avg_fitness": 0.08187542395901282,
+    "best_model": "gen47_winner_child_1_369",
+    "winner_ids": [
+      "gen47_winner_child_1_369",
+      "gen47_winner_child_3_374"
+    ]
+  },
+  {
+    "generation": 48,
+    "best_fitness": 0.0856087758073892,
+    "avg_fitness": 0.08137023362982224,
+    "best_model": "gen48_winner_child_3_379",
+    "winner_ids": [
+      "gen48_winner_child_3_379",
+      "gen48_loser_group_383"
+    ]
+  },
+  {
+    "generation": 49,
+    "best_fitness": 0.08583810793155476,
+    "avg_fitness": 0.08175680059865904,
+    "best_model": "gen49_winner_child_1_388",
+    "winner_ids": [
+      "gen49_winner_child_1_388",
+      "gen49_winner_child_1_385"
+    ]
+  },
+  {
+    "generation": 50,
+    "best_fitness": 0.0857997655205497,
+    "avg_fitness": 0.0817276373472226,
+    "best_model": "gen50_loser_group_399",
+    "winner_ids": [
+      "gen50_loser_group_399",
+      "gen50_winner_child_1_393"
+    ]
+  }
+]
