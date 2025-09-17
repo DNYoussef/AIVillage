@@ -1,0 +1,346 @@
+---
+# AWS Load Balancer Controller (ALB Ingress)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: aivillage-fog-ingress
+  namespace: aivillage-fog
+  annotations:
+    # AWS Load Balancer Controller
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/backend-protocol: HTTP
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '15'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
+    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: '3'
+
+    # SSL/TLS Configuration
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:123456789012:certificate/abc123
+
+    # Performance and Security
+    alb.ingress.kubernetes.io/load-balancer-attributes: |
+      idle_timeout.timeout_seconds=300,
+      routing.http2.enabled=true,
+      access_logs.s3.enabled=true,
+      access_logs.s3.bucket=aivillage-alb-logs,
+      access_logs.s3.prefix=fog-ingress
+
+    # Rate Limiting and DDoS Protection
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+
+    # CORS Configuration
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://app.aivillage.com,https://dashboard.aivillage.com"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization,X-Constitutional-Tier,X-Privacy-Mode"
+
+    # WebSocket Support
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: "betanet-gateway-service"
+
+    # Load Balancing
+    alb.ingress.kubernetes.io/target-group-attributes: |
+      stickiness.enabled=true,
+      stickiness.lb_cookie.duration_seconds=300,
+      load_balancing.algorithm.type=round_robin
+spec:
+  rules:
+  - host: api.aivillage.com
+    http:
+      paths:
+      - path: /betanet
+        pathType: Prefix
+        backend:
+          service:
+            name: betanet-gateway-service
+            port:
+              number: 8080
+      - path: /fog
+        pathType: Prefix
+        backend:
+          service:
+            name: fog-coordinator-service
+            port:
+              number: 8080
+      - path: /metrics
+        pathType: Prefix
+        backend:
+          service:
+            name: betanet-gateway-service
+            port:
+              number: 9090
+  - host: ws.aivillage.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: betanet-gateway-service
+            port:
+              number: 8081
+  tls:
+  - hosts:
+    - api.aivillage.com
+    - ws.aivillage.com
+    secretName: aivillage-tls
+
+---
+# Monitoring Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: monitoring-ingress
+  namespace: monitoring
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/backend-protocol: HTTP
+    alb.ingress.kubernetes.io/healthcheck-path: /api/health
+
+    # Authentication
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: monitoring-auth
+    nginx.ingress.kubernetes.io/auth-realm: 'AIVillage Monitoring - Authentication Required'
+
+    # IP Whitelisting for Internal Access
+    nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/16,172.16.0.0/12,192.168.0.0/16"
+spec:
+  rules:
+  - host: monitoring.internal.aivillage.com
+    http:
+      paths:
+      - path: /grafana
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana-service
+            port:
+              number: 3000
+      - path: /prometheus
+        pathType: Prefix
+        backend:
+          service:
+            name: prometheus-service
+            port:
+              number: 9090
+      - path: /alertmanager
+        pathType: Prefix
+        backend:
+          service:
+            name: alertmanager
+            port:
+              number: 9093
+  tls:
+  - hosts:
+    - monitoring.internal.aivillage.com
+    secretName: monitoring-tls
+
+---
+# Global Rate Limiting with Redis
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-rate-limit-config
+  namespace: aivillage-fog
+data:
+  nginx.conf: |
+    events {
+        worker_connections 1024;
+    }
+
+    http {
+        # Rate limiting zones
+        limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+        limit_req_zone $binary_remote_addr zone=websocket:10m rate=50r/s;
+        limit_req_zone $http_x_constitutional_tier zone=constitutional:10m rate=100r/s;
+
+        # Connection limiting
+        limit_conn_zone $binary_remote_addr zone=addr:10m;
+
+        upstream betanet_backend {
+            least_conn;
+            server betanet-gateway-service:8080 max_fails=3 fail_timeout=30s;
+            keepalive 32;
+        }
+
+        upstream fog_backend {
+            least_conn;
+            server fog-coordinator-service:8080 max_fails=3 fail_timeout=30s;
+            keepalive 32;
+        }
+
+        server {
+            listen 80;
+            server_name api.aivillage.com;
+
+            # Security headers
+            add_header X-Frame-Options DENY;
+            add_header X-Content-Type-Options nosniff;
+            add_header X-XSS-Protection "1; mode=block";
+            add_header Strict-Transport-Security "max-age=31536000; includeSubDomains";
+
+            # Rate limiting
+            limit_req zone=api burst=20 nodelay;
+            limit_conn addr 10;
+
+            # Constitutional tier based routing
+            location /betanet {
+                # Enhanced rate limiting for Premium/Platinum tiers
+                if ($http_x_constitutional_tier = "Platinum") {
+                    set $tier_limit constitutional;
+                }
+                if ($http_x_constitutional_tier = "Gold") {
+                    set $tier_limit constitutional;
+                }
+
+                limit_req zone=$tier_limit burst=50 nodelay;
+
+                proxy_pass http://betanet_backend;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+
+                # Performance tuning
+                proxy_buffering on;
+                proxy_buffer_size 4k;
+                proxy_buffers 8 4k;
+                proxy_busy_buffers_size 8k;
+
+                # Timeouts optimized for <75ms target
+                proxy_connect_timeout 5s;
+                proxy_send_timeout 10s;
+                proxy_read_timeout 10s;
+            }
+
+            location /fog {
+                limit_req zone=api burst=30 nodelay;
+
+                proxy_pass http://fog_backend;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+        }
+
+        # WebSocket server
+        server {
+            listen 81;
+            server_name ws.aivillage.com;
+
+            location / {
+                limit_req zone=websocket burst=100 nodelay;
+
+                proxy_pass http://betanet_backend;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection "upgrade";
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+
+                # WebSocket specific timeouts
+                proxy_read_timeout 3600s;
+                proxy_send_timeout 3600s;
+                proxy_connect_timeout 5s;
+            }
+        }
+    }
+
+---
+# TLS Certificate Secret (placeholder - use cert-manager in production)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aivillage-tls
+  namespace: aivillage-fog
+type: kubernetes.io/tls
+data:
+  tls.crt: # Base64 encoded certificate
+  tls.key: # Base64 encoded private key
+
+---
+# Monitoring Authentication Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: monitoring-auth
+  namespace: monitoring
+type: Opaque
+data:
+  auth: # Base64 encoded htpasswd (admin:$password)
+
+---
+# Grafana Admin Password Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-secret
+  namespace: monitoring
+type: Opaque
+data:
+  admin-password: # Base64 encoded password
+
+---
+# Network Policy for Ingress Traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ingress-network-policy
+  namespace: aivillage-fog
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 8081
+    - protocol: TCP
+      port: 9090
+
+---
+# AWS Load Balancer Controller ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: aws-load-balancer-controller
+  namespace: kube-system
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/AmazonEKSLoadBalancerControllerRole
+
+---
+# Priority Class for Critical Services
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: high-priority
+value: 1000
+globalDefault: false
+description: "High priority class for critical AIVillage services"
+
+---
+# Priority Class for Monitoring
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: monitoring-priority
+value: 800
+globalDefault: false
+description: "Priority class for monitoring services"

@@ -1,0 +1,214 @@
+# Artillery Load Testing Configuration
+# Alternative to k6 for load testing
+
+config:
+  target: "http://localhost:8080"
+  phases:
+    # Warm-up phase
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm-up"
+
+    # Ramp-up phase
+    - duration: 120
+      arrivalRate: 5
+      rampTo: 50
+      name: "Ramp-up"
+
+    # Sustained load
+    - duration: 300
+      arrivalRate: 50
+      name: "Sustained Load"
+
+    # Stress test
+    - duration: 120
+      arrivalRate: 50
+      rampTo: 100
+      name: "Stress Test"
+
+    # Cool-down
+    - duration: 60
+      arrivalRate: 100
+      rampTo: 10
+      name: "Cool-down"
+
+  payload:
+    - path: "./test-data.csv"
+      fields:
+        - "userId"
+        - "email"
+        - "privacyTier"
+      order: "sequence"
+
+  variables:
+    protocols:
+      - "betanet"
+      - "bitchat"
+      - "p2p"
+      - "fog"
+
+    privacyTiers:
+      - "Bronze"
+      - "Silver"
+      - "Gold"
+      - "Platinum"
+
+  processor: "./artillery-processor.js"
+
+  plugins:
+    expect:
+      outputFormat: "json"
+
+    metrics-by-endpoint:
+      stripQueryString: true
+      includeQueryString: false
+
+    ensure:
+      thresholds:
+        - http.response_time.p95: 75
+        - http.response_time.p99: 150
+        - http.codes.200: 99
+      conditions:
+        - expression: "stats.scenariosCompleted > 100"
+
+scenarios:
+  # Basic request scenario
+  - name: "Basic Bridge Request"
+    weight: 40
+    flow:
+      - post:
+          url: "/bridge"
+          json:
+            jsonrpc: "2.0"
+            id: "{{ $randomString() }}"
+            method: "processRequest"
+            params:
+              protocol: "{{ protocols }}"
+              privacyTier: "{{ privacyTiers }}"
+              data:
+                type: "test"
+                content: "Artillery test {{ $randomNumber(1, 1000) }}"
+                timestamp: "{{ $timestamp() }}"
+              userContext:
+                userId: "{{ userId }}"
+                trustScore: "{{ $randomNumber(0, 1) }}"
+          expect:
+            - statusCode: 200
+            - contentType: "application/json"
+            - hasProperty: "result"
+          capture:
+            - json: "$.result.success"
+              as: "success"
+
+  # Privacy tier validation scenario
+  - name: "Privacy Tier Validation"
+    weight: 20
+    flow:
+      - post:
+          url: "/bridge"
+          json:
+            jsonrpc: "2.0"
+            id: "privacy-{{ $uuid() }}"
+            method: "validatePrivacy"
+            params:
+              privacyTier: "{{ privacyTiers }}"
+              data:
+                userId: "{{ userId }}"
+                email: "{{ email }}"
+                sensitive: true
+              userContext:
+                trustScore: "{{ $randomNumber(0, 1) }}"
+          expect:
+            - statusCode: 200
+          capture:
+            - json: "$.result.isValid"
+              as: "isValid"
+
+      - log: "Privacy validation result: {{ isValid }}"
+
+  # Protocol routing scenario
+  - name: "Protocol Routing"
+    weight: 20
+    flow:
+      - loop:
+        - post:
+            url: "/bridge"
+            json:
+              jsonrpc: "2.0"
+              id: "protocol-{{ $loopCount }}"
+              method: "routeProtocol"
+              params:
+                protocol: "{{ protocols }}"
+                data:
+                  index: "{{ $loopCount }}"
+                  test: true
+            expect:
+              - statusCode: 200
+              - responseTime: 100
+        count: 4
+
+  # Concurrent requests scenario
+  - name: "Concurrent Batch"
+    weight: 10
+    flow:
+      - parallel:
+        - post:
+            url: "/bridge"
+            json:
+              jsonrpc: "2.0"
+              id: "batch-1"
+              method: "ping"
+        - post:
+            url: "/bridge"
+            json:
+              jsonrpc: "2.0"
+              id: "batch-2"
+              method: "health"
+        - post:
+            url: "/bridge"
+            json:
+              jsonrpc: "2.0"
+              id: "batch-3"
+              method: "processRequest"
+              params:
+                protocol: "betanet"
+                data:
+                  test: true
+
+  # Health check scenario
+  - name: "Health Check"
+    weight: 10
+    flow:
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200
+            - contentType: "application/json"
+            - hasProperty: "status"
+          capture:
+            - json: "$.status"
+              as: "healthStatus"
+
+      - log: "System health: {{ healthStatus }}"
+
+# Reporting configuration
+reporting:
+  - type: "json"
+    filename: "artillery-report.json"
+
+  - type: "html"
+    filename: "artillery-report.html"
+
+  - type: "junit"
+    filename: "artillery-junit.xml"
+
+# Custom metrics
+customMetrics:
+  - name: "p95_latency_ok"
+    description: "Percentage of requests under 75ms P95"
+
+  - name: "privacy_tier_performance"
+    description: "Performance by privacy tier"
+
+  - name: "protocol_throughput"
+    description: "Throughput by protocol type"

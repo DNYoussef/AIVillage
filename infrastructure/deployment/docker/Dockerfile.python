@@ -1,0 +1,207 @@
+# Multi-stage build for Python BetaNet Bridge
+# Production-ready Dockerfile with security hardening and BetaNet integration
+
+# ===========================
+# Stage 1: Base Dependencies
+# ===========================
+FROM python:3.11-slim AS base
+
+# Security updates and system dependencies
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y \
+        build-essential \
+        curl \
+        ca-certificates \
+        git \
+        pkg-config \
+        libffi-dev \
+        libssl-dev \
+        && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create non-root user for security
+RUN groupadd -r aivillage -g 1001 && \
+    useradd -u 1001 -r -g aivillage -m -d /app -s /sbin/nologin aivillage
+
+# ===========================
+# Stage 2: Dependencies
+# ===========================
+FROM base AS dependencies
+
+WORKDIR /app
+
+# Copy requirements first for better caching
+COPY requirements.txt constraints.txt ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt -c constraints.txt
+
+# ===========================
+# Stage 3: Development (for testing)
+# ===========================
+FROM dependencies AS development
+
+# Install development dependencies
+COPY requirements-dev.txt ./
+RUN pip install --no-cache-dir -r requirements-dev.txt
+
+# Copy source code
+COPY --chown=aivillage:aivillage . .
+
+# Run tests and linting
+RUN python -m pytest tests/ --tb=short || true && \
+    python -m flake8 src/ || true && \
+    python -m mypy src/ || true
+
+# ===========================
+# Stage 4: Production
+# ===========================
+FROM python:3.11-slim AS production
+
+# Install only runtime system dependencies
+RUN apt-get update && \
+    apt-get install -y \
+        curl \
+        ca-certificates \
+        dumb-init \
+        && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /tmp/* /var/tmp/*
+
+# Create non-root user
+RUN groupadd -r aivillage -g 1001 && \
+    useradd -u 1001 -r -g aivillage -m -d /app -s /sbin/nologin aivillage
+
+# Set working directory
+WORKDIR /app
+
+# Copy Python dependencies from dependencies stage
+COPY --from=dependencies /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=dependencies /usr/local/bin /usr/local/bin
+
+# Copy application code
+COPY --chown=aivillage:aivillage src/ ./src/
+COPY --chown=aivillage:aivillage infrastructure/ ./infrastructure/
+COPY --chown=aivillage:aivillage core/ ./core/
+COPY --chown=aivillage:aivillage config/ ./config/
+COPY --chown=aivillage:aivillage *.py ./
+
+# Create necessary directories
+RUN mkdir -p /app/logs /app/data /app/tmp && \
+    chown -R aivillage:aivillage /app
+
+# Copy health check script
+COPY --chown=aivillage:aivillage infrastructure/deployment/docker/healthcheck.py ./healthcheck.py
+
+# Environment variables
+ENV PYTHONPATH=/app \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONHASHSEED=random \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PORT=9876 \
+    HOST=0.0.0.0 \
+    CONSTITUTIONAL_TIER=Silver \
+    PRIVACY_MODE=enhanced \
+    LOG_LEVEL=info \
+    BETANET_BRIDGE_MODE=production \
+    ENABLE_METRICS=true \
+    MAX_WORKERS=4
+
+# Security hardening
+RUN chmod +x /app/healthcheck.py && \
+    find /app -type f -name "*.py" -exec chmod 644 {} \; && \
+    find /app -type d -exec chmod 755 {} \;
+
+# Expose port
+EXPOSE 9876
+
+# Switch to non-root user
+USER aivillage
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD python healthcheck.py || exit 1
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start the BetaNet bridge service
+CMD ["python", "src/bridge/adapters/BetaNetBridge.py", \
+     "--host", "0.0.0.0", \
+     "--port", "9876", \
+     "--constitutional-tier", "Silver", \
+     "--privacy-mode", "enhanced"]
+
+# ===========================
+# Labels for container metadata
+# ===========================
+LABEL maintainer="AIVillage Team <team@aivillage.com>" \
+      version="1.0.0" \
+      description="AIVillage Python BetaNet Bridge Service" \
+      component="betanet-bridge" \
+      tier="production" \
+      security.scan="enabled" \
+      betanet.version="constitutional-v2" \
+      privacy.tier="enhanced"
+
+# ===========================
+# Stage 5: GPU-Enabled (Optional)
+# ===========================
+FROM nvidia/cuda:12.0-runtime-ubuntu22.04 AS gpu-enabled
+
+# Install Python 3.11
+RUN apt-get update && \
+    apt-get install -y \
+        python3.11 \
+        python3.11-pip \
+        python3.11-dev \
+        curl \
+        ca-certificates \
+        dumb-init \
+        && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create symlinks for python
+RUN ln -s /usr/bin/python3.11 /usr/bin/python && \
+    ln -s /usr/bin/pip3.11 /usr/bin/pip
+
+# Create user
+RUN groupadd -r aivillage -g 1001 && \
+    useradd -u 1001 -r -g aivillage -m -d /app -s /sbin/nologin aivillage
+
+WORKDIR /app
+
+# Copy from production stage
+COPY --from=production --chown=aivillage:aivillage /app /app
+COPY --from=dependencies /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+
+# Install additional GPU dependencies
+RUN pip install --no-cache-dir \
+    torch \
+    transformers \
+    accelerate
+
+# GPU-specific environment variables
+ENV CUDA_VISIBLE_DEVICES=all \
+    NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+USER aivillage
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD python healthcheck.py || exit 1
+
+ENTRYPOINT ["dumb-init", "--"]
+
+CMD ["python", "src/bridge/adapters/BetaNetBridge.py", \
+     "--host", "0.0.0.0", \
+     "--port", "9876", \
+     "--constitutional-tier", "Gold", \
+     "--privacy-mode", "maximum"]

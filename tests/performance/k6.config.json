@@ -1,0 +1,114 @@
+{
+  "scenarios": {
+    "baseline": {
+      "executor": "constant-vus",
+      "vus": 10,
+      "duration": "30s",
+      "exec": "default",
+      "tags": {
+        "scenario": "baseline"
+      }
+    },
+    "performance": {
+      "executor": "ramping-vus",
+      "startVUs": 0,
+      "stages": [
+        { "duration": "1m", "target": 25 },
+        { "duration": "2m", "target": 50 },
+        { "duration": "3m", "target": 50 },
+        { "duration": "1m", "target": 0 }
+      ],
+      "tags": {
+        "scenario": "performance"
+      }
+    },
+    "p95_validation": {
+      "executor": "constant-arrival-rate",
+      "rate": 100,
+      "duration": "5m",
+      "preAllocatedVUs": 50,
+      "maxVUs": 100,
+      "tags": {
+        "scenario": "p95_validation"
+      }
+    }
+  },
+  "thresholds": {
+    "http_req_duration": [
+      {
+        "threshold": "p(95)<75",
+        "abortOnFail": false,
+        "delayAbortEval": "10s"
+      },
+      {
+        "threshold": "p(99)<150",
+        "abortOnFail": false
+      }
+    ],
+    "http_req_failed": [
+      {
+        "threshold": "rate<0.01",
+        "abortOnFail": true,
+        "delayAbortEval": "30s"
+      }
+    ],
+    "http_reqs": [
+      {
+        "threshold": "rate>100",
+        "abortOnFail": false
+      }
+    ],
+    "vus_max": [
+      {
+        "threshold": "value<=200"
+      }
+    ]
+  },
+  "summaryTrendStats": [
+    "avg",
+    "min",
+    "med",
+    "max",
+    "p(50)",
+    "p(90)",
+    "p(95)",
+    "p(99)",
+    "p(99.9)",
+    "count"
+  ],
+  "summaryTimeUnit": "ms",
+  "noConnectionReuse": false,
+  "userAgent": "AIVillage-LoadTest/1.0",
+  "insecureSkipTLSVerify": false,
+  "throw": false,
+  "blacklistIPs": [],
+  "hosts": {
+    "localhost": "127.0.0.1"
+  },
+  "tlsAuth": [],
+  "tlsCipherSuites": [],
+  "tlsVersion": {
+    "min": "tls1.2",
+    "max": "tls1.3"
+  },
+  "systemTags": [
+    "proto",
+    "subproto",
+    "status",
+    "method",
+    "url",
+    "name",
+    "group",
+    "check",
+    "error",
+    "error_code",
+    "tls_version",
+    "scenario",
+    "service"
+  ],
+  "tags": {
+    "environment": "test",
+    "team": "platform",
+    "component": "bridge"
+  }
+}

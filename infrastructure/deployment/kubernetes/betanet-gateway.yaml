@@ -1,0 +1,430 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: betanet-gateway
+  namespace: aivillage-fog
+  labels:
+    app: betanet-gateway
+    component: protocol-bridge
+    version: v1.0.0
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 2
+  selector:
+    matchLabels:
+      app: betanet-gateway
+  template:
+    metadata:
+      labels:
+        app: betanet-gateway
+        component: protocol-bridge
+        version: v1.0.0
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: betanet-gateway-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 2001
+      initContainers:
+      - name: python-bridge-init
+        image: aivillage/betanet-bridge:latest
+        command: ['sh', '-c', 'python3 -c "import infrastructure.p2p.betanet.constitutional_transport; print(\"BetaNet modules available\")"']
+        env:
+        - name: PYTHONPATH
+          value: "/app"
+      containers:
+      - name: typescript-bridge
+        image: aivillage/bridge-orchestrator:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        - name: websocket
+          containerPort: 8081
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PYTHON_BRIDGE_HOST
+          value: "localhost"
+        - name: PYTHON_BRIDGE_PORT
+          value: "9876"
+        - name: CONSTITUTIONAL_TIER
+          value: "Silver"
+        - name: PRIVACY_MODE
+          value: "enhanced"
+        - name: ENABLE_MONITORING
+          value: "true"
+        - name: TARGET_P95_LATENCY
+          value: "75"
+        - name: CIRCUIT_BREAKER_ENABLED
+          value: "true"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        volumeMounts:
+        - name: bridge-config
+          mountPath: /app/config
+          readOnly: true
+      - name: python-bridge
+        image: aivillage/betanet-bridge:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: jsonrpc
+          containerPort: 9876
+          protocol: TCP
+        command: ["python3"]
+        args: ["/app/src/bridge/adapters/BetaNetBridge.py", "--host", "0.0.0.0", "--port", "9876"]
+        env:
+        - name: PYTHONPATH
+          value: "/app"
+        - name: CONSTITUTIONAL_TIER
+          value: "Silver"
+        - name: PRIVACY_MODE
+          value: "enhanced"
+        - name: LOG_LEVEL
+          value: "info"
+        - name: BETANET_BRIDGE_MODE
+          value: "production"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "400m"
+        livenessProbe:
+          tcpSocket:
+            port: jsonrpc
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: jsonrpc
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: python-config
+          mountPath: /app/config
+          readOnly: true
+        - name: betanet-data
+          mountPath: /data
+      volumes:
+      - name: bridge-config
+        configMap:
+          name: bridge-config
+      - name: python-config
+        configMap:
+          name: python-config
+      - name: betanet-data
+        persistentVolumeClaim:
+          claimName: betanet-data-pvc
+      nodeSelector:
+        node-type: protocol-bridge
+      tolerations:
+      - key: "protocol-bridge"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: betanet-gateway-service
+  namespace: aivillage-fog
+  labels:
+    app: betanet-gateway
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+spec:
+  type: LoadBalancer
+  selector:
+    app: betanet-gateway
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: websocket
+    port: 8081
+    targetPort: 8081
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 300
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: betanet-gateway-internal
+  namespace: aivillage-fog
+  labels:
+    app: betanet-gateway
+    scope: internal
+spec:
+  type: ClusterIP
+  selector:
+    app: betanet-gateway
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  - name: websocket
+    port: 8081
+    targetPort: 8081
+  - name: jsonrpc
+    port: 9876
+    targetPort: 9876
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bridge-config
+  namespace: aivillage-fog
+data:
+  config.json: |
+    {
+      "bridge": {
+        "pythonBridgeHost": "localhost",
+        "pythonBridgePort": 9876,
+        "constitutionalTier": "Silver",
+        "privacyMode": "enhanced",
+        "enableFogIntegration": true,
+        "enableConstitutionalValidation": true
+      },
+      "performance": {
+        "targetP95Latency": 75,
+        "circuitBreakerEnabled": true,
+        "maxConcurrentRequests": 1000,
+        "requestTimeout": 5000
+      },
+      "monitoring": {
+        "enabled": true,
+        "exporters": ["prometheus"],
+        "metricsPort": 9090
+      }
+    }
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: python-config
+  namespace: aivillage-fog
+data:
+  config.yaml: |
+    betanet:
+      constitutional_tier: "Silver"
+      privacy_mode: "enhanced"
+      enable_mixnode_routing: true
+      enable_zero_knowledge_proofs: true
+      enable_fog_integration: true
+    transport:
+      max_latency_ms: 75
+      enable_privacy_preservation: true
+      connection_pool_size: 10
+    logging:
+      level: "info"
+      format: "json"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: betanet-data-pvc
+  namespace: aivillage-fog
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: fast-ssd
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: betanet-gateway-sa
+  namespace: aivillage-fog
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: betanet-gateway-role
+  namespace: aivillage-fog
+rules:
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: betanet-gateway-binding
+  namespace: aivillage-fog
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: betanet-gateway-role
+subjects:
+- kind: ServiceAccount
+  name: betanet-gateway-sa
+  namespace: aivillage-fog
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: betanet-gateway-hpa
+  namespace: aivillage-fog
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: betanet-gateway
+  minReplicas: 3
+  maxReplicas: 15
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Pods
+    pods:
+      metric:
+        name: http_requests_per_second
+      target:
+        type: AverageValue
+        averageValue: "100"
+  - type: Pods
+    pods:
+      metric:
+        name: p95_latency_milliseconds
+      target:
+        type: AverageValue
+        averageValue: "50" # Scale up if P95 > 50ms to maintain <75ms target
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+      - type: Pods
+        value: 3
+        periodSeconds: 30
+    scaleDown:
+      stabilizationWindowSeconds: 180
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: betanet-gateway-pdb
+  namespace: aivillage-fog
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: betanet-gateway
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: betanet-gateway-netpol
+  namespace: aivillage-fog
+spec:
+  podSelector:
+    matchLabels:
+      app: betanet-gateway
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: aivillage-fog
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 8081
+    - protocol: TCP
+      port: 9090
+  - from: [] # Allow external traffic
+    ports:
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 8081
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: aivillage-fog
+  - to: [] # Allow external egress
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53

@@ -1,0 +1,315 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fog-coordinator
+  namespace: aivillage-fog
+  labels:
+    app: fog-coordinator
+    component: fog-computing
+    version: v1.0.0
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: fog-coordinator
+  template:
+    metadata:
+      labels:
+        app: fog-coordinator
+        component: fog-computing
+        version: v1.0.0
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: fog-coordinator-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
+      containers:
+      - name: fog-coordinator
+        image: aivillage/fog-coordinator:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        - name: grpc
+          containerPort: 8081
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: LOG_LEVEL
+          value: "info"
+        - name: BETANET_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: fog-config
+              key: betanet-endpoint
+        - name: CONSTITUTIONAL_TIER
+          value: "Silver"
+        - name: PRIVACY_MODE
+          value: "enhanced"
+        - name: MAX_FOG_NODES
+          value: "100"
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: fog-secrets
+              key: redis-url
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: fog-secrets
+              key: database-url
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+            ephemeral-storage: "1Gi"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+            ephemeral-storage: "2Gi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+        - name: fog-data
+          mountPath: /data
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: config-volume
+        configMap:
+          name: fog-config
+      - name: fog-data
+        persistentVolumeClaim:
+          claimName: fog-coordinator-pvc
+      - name: tmp
+        emptyDir: {}
+      nodeSelector:
+        node-type: fog-coordinator
+      tolerations:
+      - key: "fog-coordinator"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - fog-coordinator
+              topologyKey: kubernetes.io/hostname
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fog-coordinator-service
+  namespace: aivillage-fog
+  labels:
+    app: fog-coordinator
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+spec:
+  type: ClusterIP
+  selector:
+    app: fog-coordinator
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: grpc
+    port: 8081
+    targetPort: 8081
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fog-config
+  namespace: aivillage-fog
+data:
+  betanet-endpoint: "betanet-gateway-service:8080"
+  fog-node-discovery: "dns"
+  constitutional-validation: "strict"
+  privacy-mode: "enhanced"
+  log-level: "info"
+  metrics-enabled: "true"
+  tracing-enabled: "true"
+  config.yaml: |
+    fog:
+      coordinator:
+        max_nodes: 100
+        node_timeout: 300
+        health_check_interval: 30
+        load_balancing: "round-robin"
+      discovery:
+        method: "dns"
+        refresh_interval: 60
+      constitutional:
+        tier: "Silver"
+        validation_enabled: true
+        compliance_threshold: 0.95
+      privacy:
+        mode: "enhanced"
+        encryption: "aes-256-gcm"
+        key_rotation_interval: 86400
+      performance:
+        target_p95_latency: 75
+        circuit_breaker_enabled: true
+        max_concurrent_jobs: 1000
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fog-coordinator-pvc
+  namespace: aivillage-fog
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: fast-ssd
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fog-coordinator-sa
+  namespace: aivillage-fog
+  labels:
+    app: fog-coordinator
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: fog-coordinator-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["metrics.k8s.io"]
+  resources: ["pods", "nodes"]
+  verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: fog-coordinator-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: fog-coordinator-role
+subjects:
+- kind: ServiceAccount
+  name: fog-coordinator-sa
+  namespace: aivillage-fog
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: fog-coordinator-pdb
+  namespace: aivillage-fog
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: fog-coordinator
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: fog-coordinator-hpa
+  namespace: aivillage-fog
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: fog-coordinator
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Pods
+    pods:
+      metric:
+        name: active_fog_jobs
+      target:
+        type: AverageValue
+        averageValue: "30"
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60

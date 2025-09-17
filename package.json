@@ -1,0 +1,51 @@
+{
+  "name": "spek-working-implementations",
+  "version": "1.0.0",
+  "description": "Working implementations of Six Sigma telemetry, SBOM generation, and compliance matrix",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --testPathIgnorePatterns=integration --maxWorkers=2",
+    "test:quick": "jest --testNamePattern=\"should\" --maxWorkers=2",
+    "test:unit": "jest tests/unit tests/six-sigma tests/sbom tests/compliance --maxWorkers=2",
+    "test:domains": "jest tests/domains --runInBand",
+    "test:integration": "jest tests/integration --runInBand --testTimeout=30000",
+    "test:all": "jest --runInBand",
+    "test:watch": "jest --watch --testPathIgnorePatterns=integration",
+    "test:coverage": "jest --coverage --testPathIgnorePatterns=integration",
+    "test:debug": "node --inspect-brk ./node_modules/.bin/jest --runInBand",
+    "typecheck": "tsc --noEmit",
+    "lint": "echo 'Linting placeholder - requires eslint setup'",
+    "example:sixsigma": "node examples/six-sigma-example.js",
+    "example:sbom": "node examples/sbom-example.js",
+    "example:compliance": "node examples/compliance-example.js",
+    "examples": "npm run example:sixsigma && npm run example:sbom && npm run example:compliance"
+  },
+  "keywords": [
+    "spek",
+    "six-sigma",
+    "enterprise",
+    "compliance"
+  ],
+  "author": "SPEK Platform",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.4.0",
+    "jest": "^29.0.0",
+    "js-yaml": "^4.1.0",
+    "supertest": "^6.3.0",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@actions/core": "^1.10.0",
+    "@actions/github": "^6.0.0",
+    "@octokit/rest": "^20.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.0",
+    "express-rate-limit": "^6.7.0",
+    "helmet": "^6.1.0",
+    "semgrep": "^0.0.1",
+    "uuid": "^9.0.0",
+    "ws": "^8.13.0"
+  }
+}

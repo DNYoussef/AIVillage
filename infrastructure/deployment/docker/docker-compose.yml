@@ -1,0 +1,392 @@
+# Docker Compose for AIVillage Fog Computing Infrastructure
+# Local testing and development environment with full monitoring stack
+
+version: '3.8'
+
+# ===========================
+# SERVICES
+# ===========================
+services:
+
+  # ===========================
+  # Core Services
+  # ===========================
+
+  # Python BetaNet Bridge Service
+  betanet-bridge:
+    build:
+      context: ../../..
+      dockerfile: infrastructure/deployment/docker/Dockerfile.python
+      target: production
+    container_name: aivillage-betanet-bridge
+    restart: unless-stopped
+    ports:
+      - "9876:9876"
+    environment:
+      - PYTHONPATH=/app
+      - HOST=0.0.0.0
+      - PORT=9876
+      - CONSTITUTIONAL_TIER=Silver
+      - PRIVACY_MODE=enhanced
+      - LOG_LEVEL=info
+      - BETANET_BRIDGE_MODE=development
+      - ENABLE_METRICS=true
+    volumes:
+      - betanet-data:/app/data
+      - ./logs:/app/logs
+      - /tmp:/app/tmp
+    networks:
+      - aivillage-network
+    healthcheck:
+      test: ["CMD", "python", "healthcheck.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      - redis
+      - postgres
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.betanet.rule=Host(`localhost`) && PathPrefix(`/betanet`)"
+      - "traefik.http.services.betanet.loadbalancer.server.port=9876"
+
+  # TypeScript Bridge Orchestrator
+  bridge-orchestrator:
+    build:
+      context: ../../..
+      dockerfile: infrastructure/deployment/docker/Dockerfile.typescript
+      target: production
+    container_name: aivillage-bridge-orchestrator
+    restart: unless-stopped
+    ports:
+      - "8080:8080"  # HTTP API
+      - "8081:8081"  # WebSocket
+      - "9090:9090"  # Metrics
+    environment:
+      - NODE_ENV=development
+      - PORT=8080
+      - METRICS_PORT=9090
+      - PYTHON_BRIDGE_HOST=betanet-bridge
+      - PYTHON_BRIDGE_PORT=9876
+      - CONSTITUTIONAL_TIER=Silver
+      - PRIVACY_MODE=enhanced
+      - TARGET_P95_LATENCY=75
+      - CIRCUIT_BREAKER_ENABLED=true
+      - LOG_LEVEL=info
+      - LOG_FORMAT=json
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://aivillage:password@postgres:5432/aivillage
+    volumes:
+      - bridge-data:/app/data
+      - ./logs:/app/logs
+      - ./config:/app/config
+    networks:
+      - aivillage-network
+    healthcheck:
+      test: ["CMD", "node", "healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      - betanet-bridge
+      - redis
+      - postgres
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bridge.rule=Host(`localhost`)"
+      - "traefik.http.services.bridge.loadbalancer.server.port=8080"
+
+  # Fog Coordinator Service
+  fog-coordinator:
+    image: aivillage/fog-coordinator:latest
+    container_name: aivillage-fog-coordinator
+    restart: unless-stopped
+    ports:
+      - "8082:8080"  # HTTP API
+      - "8083:8081"  # gRPC
+    environment:
+      - NODE_ENV=development
+      - BETANET_ENDPOINT=http://betanet-bridge:9876
+      - CONSTITUTIONAL_TIER=Silver
+      - PRIVACY_MODE=enhanced
+      - MAX_FOG_NODES=50
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://aivillage:password@postgres:5432/aivillage
+    volumes:
+      - fog-data:/data
+      - ./config:/app/config
+    networks:
+      - aivillage-network
+    depends_on:
+      - redis
+      - postgres
+
+  # ===========================
+  # Infrastructure Services
+  # ===========================
+
+  # Redis for caching and session storage
+  redis:
+    image: redis:7-alpine
+    container_name: aivillage-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass redis_password
+    volumes:
+      - redis-data:/data
+    networks:
+      - aivillage-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    container_name: aivillage-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=aivillage
+      - POSTGRES_USER=aivillage
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - aivillage-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aivillage -d aivillage"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ===========================
+  # Monitoring Stack
+  # ===========================
+
+  # Prometheus monitoring
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: aivillage-prometheus
+    restart: unless-stopped
+    ports:
+      - "9091:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/rules:/etc/prometheus/rules:ro
+      - prometheus-data:/prometheus
+    networks:
+      - aivillage-network
+    depends_on:
+      - bridge-orchestrator
+
+  # Grafana dashboards
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: aivillage-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-worldmap-panel
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/dashboard-configs:/var/lib/grafana/dashboards:ro
+    networks:
+      - aivillage-network
+    depends_on:
+      - prometheus
+
+  # AlertManager for notifications
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: aivillage-alertmanager
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/config.yml:ro
+      - alertmanager-data:/alertmanager
+    networks:
+      - aivillage-network
+
+  # ===========================
+  # Development Tools
+  # ===========================
+
+  # Traefik reverse proxy for local development
+  traefik:
+    image: traefik:v3.0
+    container_name: aivillage-traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "8888:8080"  # Traefik dashboard
+    command:
+      - --api.dashboard=true
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --metrics.prometheus=true
+      - --metrics.prometheus.address=:8082
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - aivillage-network
+
+  # Jaeger for distributed tracing
+  jaeger:
+    image: jaegertracing/all-in-one:1.48
+    container_name: aivillage-jaeger
+    restart: unless-stopped
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # Jaeger collector
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - aivillage-network
+
+  # MinIO for S3-compatible storage
+  minio:
+    image: minio/minio:latest
+    container_name: aivillage-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=aivillage
+      - MINIO_ROOT_PASSWORD=password123
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - aivillage-network
+
+  # ===========================
+  # Testing Services
+  # ===========================
+
+  # Load testing service
+  artillery:
+    image: artilleryio/artillery:latest
+    container_name: aivillage-artillery
+    profiles: ["testing"]
+    volumes:
+      - ./testing/artillery-config.yml:/app/config.yml:ro
+      - ./testing/results:/app/results
+    networks:
+      - aivillage-network
+    command: run --config /app/config.yml
+
+  # Integration test runner
+  test-runner:
+    build:
+      context: ../../..
+      dockerfile: infrastructure/deployment/docker/Dockerfile.python
+      target: development
+    container_name: aivillage-test-runner
+    profiles: ["testing"]
+    environment:
+      - PYTHONPATH=/app
+      - TEST_MODE=integration
+      - BRIDGE_ENDPOINT=http://bridge-orchestrator:8080
+      - BETANET_ENDPOINT=http://betanet-bridge:9876
+    volumes:
+      - ../../..:/app
+      - ./testing/results:/app/test-results
+    networks:
+      - aivillage-network
+    command: python -m pytest tests/integration/ -v --html=/app/test-results/report.html
+    depends_on:
+      - bridge-orchestrator
+      - betanet-bridge
+
+# ===========================
+# NETWORKS
+# ===========================
+networks:
+  aivillage-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# ===========================
+# VOLUMES
+# ===========================
+volumes:
+  # Application data
+  betanet-data:
+    driver: local
+  bridge-data:
+    driver: local
+  fog-data:
+    driver: local
+
+  # Database storage
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+
+  # Monitoring data
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  alertmanager-data:
+    driver: local
+
+  # Development tools
+  minio-data:
+    driver: local
+
+# ===========================
+# DEVELOPMENT OVERRIDES
+# ===========================
+x-development: &development-overrides
+  environment:
+    - NODE_ENV=development
+    - LOG_LEVEL=debug
+  volumes:
+    - ../../..:/app
+    - /app/node_modules  # Prevent overwriting node_modules
+
+# ===========================
+# PRODUCTION OVERRIDES
+# ===========================
+x-production: &production-overrides
+  restart: always
+  environment:
+    - NODE_ENV=production
+    - LOG_LEVEL=info
+  deploy:
+    resources:
+      limits:
+        memory: 1G
+        cpus: '0.5'
+      reservations:
+        memory: 512M
+        cpus: '0.25'
